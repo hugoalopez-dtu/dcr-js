@@ -7,7 +7,7 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
-  <div id="io-dialog-main" class="pjs-io-dialog pjs-io-dialog-open keybindings-dialog">
+  <div id="io-dialog-main" class="pjs-io-dialog pjs-io-dialog-open keybindings-dialog hidden">
     <div class="pjs-io-dialog-content">
       <h1>Keyboard Shortcuts</h1>
       <table>
@@ -57,11 +57,21 @@
     </div>
   </div>
 
+  <div id="io-dialog-examples" class="pjs-io-dialog pjs-io-dialog-open keybindings-dialog hidden">
+    <div class="pjs-io-dialog-content">
+      <h1>Examples</h1>
+        <p>exampleexampleexampleexample</p>
+    </div>
+  </div>
+
   <div id="canvas"></div>
 
 
   <div id="io-editing-tools-buttons">
     <div class="pjs-buttons">
+        <button id="js-open-examples" class="pjs-buttons-active" title="Open examples" >
+        <span>Examples</span>
+      </button>
       <label class="toggle">
         <input id="colorToggle" type="checkbox" checked>
         <span class="slider"></span>

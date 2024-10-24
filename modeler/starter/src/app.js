@@ -45,7 +45,28 @@ function exitFullscreen() {
 const state = {
   fullScreen: false,
   keyboardHelp: false,
+  examples: false,
 };
+document
+  .getElementById('js-open-examples')
+  .addEventListener('click', function () {
+    state.examples = !state.examples;
+    let displayProp = 'none';
+    if (state.examples) {
+      displayProp = 'block';
+    }
+    document.getElementById('io-dialog-examples').style.display = displayProp;
+    
+  });
+document
+  .getElementById('io-dialog-examples')
+  .addEventListener('click', function () {
+    state.examples = !state.examples;
+    let displayProp = 'none';
+    if (!state.examples) {
+      document.getElementById('io-dialog-examples').style.display = displayProp;
+    }
+  });
 document
   .getElementById('js-toggle-fullscreen')
   .addEventListener('click', function () {

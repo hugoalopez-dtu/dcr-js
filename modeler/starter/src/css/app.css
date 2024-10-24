@@ -27,8 +27,8 @@ html, body, #canvas {
 
 /* screen interaction helpers & modal */
 
-#io-dialog-main{
-  display:none; /*default*/
+.hidden {
+  display:none;
 }
 
 #io-editing-tools-buttons {
