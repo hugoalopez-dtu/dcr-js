@@ -28,7 +28,16 @@ html, body, #canvas {
 /* screen interaction helpers & modal */
 
 .hidden {
-  display:none;
+  display: none;
+}
+
+#generated-examples {
+  
+}
+
+.example {
+  display: inline-block;
+  width: 50%;
 }
 
 #io-editing-tools-buttons {

@@ -269,3 +269,18 @@ function debounce(fn, timeout) {
     timer = setTimeout(fn, timeout);
   };
 }
+
+function generateExamples() {
+  const files = ["example_1.xml", "example_2.xml", "example_3.xml"];
+  // Create and append element for each file
+  const wrapper = document.getElementById("generated-examples");
+  for (var i = 0; i < files.length ; i++) {
+    var example = document.createElement('div');
+    example.className = "example"
+    var title = document.createElement('h2');
+    title.innerHTML = files[i];
+    example.append(title);
+    wrapper.append(example);
+  };
+}
+generateExamples();
