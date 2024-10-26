@@ -284,11 +284,24 @@ async function generateExamples() {
     files.pop(); // Remove last empty line
     files = files.map(name => name.split('.').slice(0, -1).join('.')); // Shave file extension off
     const wrapper = document.getElementById("generated-examples");
-    for (var i = 0; i < files.length ; i++) {
+    for (let i = 0; i < files.length ; i++) {
       var button = document.createElement('button');
       button.addEventListener('click', function () {
-        // alert save
-        // load chosen file
+        if (confirm("Are you sure? This will override your current diagram!")) {
+          fetch('./resources/examples/' + files[i]+ '.xml')
+            .then(response => {
+              if (!response.ok) {
+                alert("Failed to fetch example\nStatus code: " + response.status + " " + response.statusText);
+              } else {
+                return response.text();
+              }
+            }).then(data => {
+              console.log(data);
+              //openBoard(data);
+            });
+        } else {
+          state.examples = false; // keep examples open
+        }
       });
       button.className = 'example';
       var title = document.createElement('h2');
