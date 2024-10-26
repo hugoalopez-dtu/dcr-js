@@ -270,17 +270,26 @@ function debounce(fn, timeout) {
   };
 }
 
-function generateExamples() {
-  const files = ["example_1.xml", "example_2.xml", "example_3.xml"];
-  // Create and append element for each file
-  const wrapper = document.getElementById("generated-examples");
-  for (var i = 0; i < files.length ; i++) {
-    var example = document.createElement('div');
-    example.className = "example"
-    var title = document.createElement('h2');
-    title.innerHTML = files[i];
-    example.append(title);
-    wrapper.append(example);
-  };
+async function generateExamples() {
+  fetch('./resources/generated_examples.txt')
+  .then(response => {
+    if (!response.ok) {
+      document.getElementById("generated-examples").append(document.createElement('p').innerHTML ="Failed to load examples");
+      throw new Error('Failed to fetch examples status code: ' + response.status);
+    }
+    return response.text();
+  })
+  .then(data => {
+    const files = data.split('\n');
+    const wrapper = document.getElementById("generated-examples");
+    for (var i = 0; i < files.length ; i++) {
+      var example = document.createElement('div');
+      example.className = "example"
+      var title = document.createElement('h2');
+      title.innerHTML = files[i];
+      example.append(title);
+      wrapper.append(example);
+    };
+  })
 }
 generateExamples();
