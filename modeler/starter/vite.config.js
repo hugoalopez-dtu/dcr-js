@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   root: 'src',
-  assetsInclude: ['**/*.xml', '**/*.txt'],
+  assetsInclude: ['**/*.xml', '**/*.txt', '**/*.svg'],
   server: {
     hmr: false,
   },

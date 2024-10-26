@@ -1,42 +1,147 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<dcr:definitions xmlns:dcr="http://tk/schema/dcr" xmlns:dcrDi="http://tk/schema/dcrDi" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC">
-  <dcr:dcrGraph id="Graph">
-    <dcr:event id="Event_0r53tvy" description="" included="true" executed="false" pending="false" />
-    <dcr:event id="Event_03ujziz" description="" included="true" executed="false" pending="false" />
-    <dcr:relation id="Relation_0xef4r9" type="exclude" sourceRef="Event_0r53tvy" targetRef="Event_03ujziz" />
-    <dcr:event id="Event_0dttmou" description="" included="true" executed="false" pending="false" />
-    <dcr:relation id="Relation_0oel1ot" type="response" sourceRef="Event_03ujziz" targetRef="Event_0dttmou" />
-    <dcr:event id="Event_0jm2wtj" description="" included="true" executed="false" pending="false" />
-    <dcr:relation id="Relation_1u1owuu" type="include" sourceRef="Event_03ujziz" targetRef="Event_0jm2wtj" />
-  </dcr:dcrGraph>
-  <dcrDi:dcrRootBoard id="RootBoard">
-    <dcrDi:dcrPlane id="Plane" boardElement="Graph">
-      <dcrDi:relation id="Relation_0xef4r9_di" boardElement="Relation_0xef4r9">
-        <dcrDi:waypoint x="700" y="305" />
-        <dcrDi:waypoint x="755" y="305" />
-      </dcrDi:relation>
-      <dcrDi:relation id="Relation_0oel1ot_di" boardElement="Relation_0oel1ot">
-        <dcrDi:waypoint x="885" y="305" />
-        <dcrDi:waypoint x="945" y="305" />
-      </dcrDi:relation>
-      <dcrDi:relation id="Relation_1u1owuu_di" boardElement="Relation_1u1owuu">
-        <dcrDi:waypoint x="885" y="305" />
-        <dcrDi:waypoint x="920" y="305" />
-        <dcrDi:waypoint x="920" y="490" />
-        <dcrDi:waypoint x="945" y="490" />
-      </dcrDi:relation>
-      <dcrDi:dcrShape id="Event_0r53tvy_di" boardElement="Event_0r53tvy">
-        <dc:Bounds x="570" y="230" width="130" height="150" />
-      </dcrDi:dcrShape>
-      <dcrDi:dcrShape id="Event_03ujziz_di" boardElement="Event_03ujziz">
-        <dc:Bounds x="755" y="230" width="130" height="150" />
-      </dcrDi:dcrShape>
-      <dcrDi:dcrShape id="Event_0dttmou_di" boardElement="Event_0dttmou">
-        <dc:Bounds x="945" y="230" width="130" height="150" />
-      </dcrDi:dcrShape>
-      <dcrDi:dcrShape id="Event_0jm2wtj_di" boardElement="Event_0jm2wtj">
-        <dc:Bounds x="945" y="415" width="130" height="150" />
-      </dcrDi:dcrShape>
-    </dcrDi:dcrPlane>
-  </dcrDi:dcrRootBoard>
-</dcr:definitions>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_0sps5w1">
+          <custom>
+            <visualization>
+              <location xLoc="360" yLoc="270"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1moo7u9">
+          <custom>
+            <visualization>
+              <location xLoc="545" yLoc="50"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_02c28a0">
+          <custom>
+            <visualization>
+              <location xLoc="840" yLoc="50"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_13ca5qb">
+          <custom>
+            <visualization>
+              <location xLoc="735" yLoc="455"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_106eg0w">
+          <custom>
+            <visualization>
+              <location xLoc="545" yLoc="455"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0ihayq0">
+          <custom>
+            <visualization>
+              <location xLoc="925" yLoc="455"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels/>
+      <labelMappings/>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_0sps5w1" targetId="Event_1moo7u9">
+          <custom>
+            <waypoints>
+              <waypoint x="490" y="345"/>
+              <waypoint x="518" y="345"/>
+              <waypoint x="518" y="125"/>
+              <waypoint x="545" y="125"/>
+            </waypoints>
+            <id id="Relation_1o4xci3"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_02c28a0" targetId="Event_0ihayq0">
+          <custom>
+            <waypoints>
+              <waypoint x="905" y="200"/>
+              <waypoint x="905" y="530"/>
+              <waypoint x="925" y="530"/>
+            </waypoints>
+            <id id="Relation_0h6g6ne"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Event_0sps5w1" targetId="Event_106eg0w">
+          <custom>
+            <waypoints>
+              <waypoint x="490" y="345"/>
+              <waypoint x="520" y="345"/>
+              <waypoint x="520" y="530"/>
+              <waypoint x="545" y="530"/>
+            </waypoints>
+            <id id="Relation_1alodbk"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes>
+        <exclude sourceId="Event_1moo7u9" targetId="Event_13ca5qb">
+          <custom>
+            <waypoints>
+              <waypoint x="675" y="125"/>
+              <waypoint x="710" y="125"/>
+              <waypoint x="710" y="530"/>
+              <waypoint x="735" y="530"/>
+            </waypoints>
+            <id id="Relation_152g689"/>
+          </custom>
+        </exclude>
+      </excludes>
+      <includes>
+        <include sourceId="Event_1moo7u9" targetId="Event_02c28a0">
+          <custom>
+            <waypoints>
+              <waypoint x="675" y="125"/>
+              <waypoint x="840" y="125"/>
+            </waypoints>
+            <id id="Relation_1nhb59f"/>
+          </custom>
+        </include>
+      </includes>
+      <milestones/>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_0sps5w1"/>
+        <event id="Event_1moo7u9"/>
+        <event id="Event_02c28a0"/>
+        <event id="Event_13ca5qb"/>
+        <event id="Event_106eg0w"/>
+        <event id="Event_0ihayq0"/>
+      </included>
+      <pendingResponses/>
+    </marking>
+  </runtime>
+</dcrgraph>
