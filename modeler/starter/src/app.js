@@ -280,15 +280,24 @@ async function generateExamples() {
     return response.text();
   })
   .then(data => {
-    const files = data.split('\n');
+    var files = data.split('\n');
+    files.pop(); // Remove last empty line
+    files = files.map(name => name.split('.').slice(0, -1).join('.')); // Shave file extension off
     const wrapper = document.getElementById("generated-examples");
     for (var i = 0; i < files.length ; i++) {
-      var example = document.createElement('div');
-      example.className = "example"
+      var button = document.createElement('button');
+      button.addEventListener('click', function () {
+        // alert save
+        // load chosen file
+      });
+      button.className = 'example';
       var title = document.createElement('h2');
       title.innerHTML = files[i];
-      example.append(title);
-      wrapper.append(example);
+      var image = document.createElement('img');
+      image.src = './resources/examples_images/' + files[i] + '.svg';
+      button.append(title);
+      button.append(image);
+      wrapper.append(button);
     };
   })
 }
