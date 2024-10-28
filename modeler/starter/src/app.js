@@ -296,8 +296,13 @@ async function generateExamples() {
                 return response.text();
               }
             }).then(data => {
-              console.log(data);
-              //openBoard(data);
+              if(true) {
+                openCustomBoard(data);
+              } /*else {
+                openDCRPortalBoard(data);
+              }*/
+            }).catch (err => {
+              console.log(err);
             });
         } else {
           state.examples = false; // keep examples open
