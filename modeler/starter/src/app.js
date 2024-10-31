@@ -296,11 +296,11 @@ async function generateExamples() {
                 return response.text();
               }
             }).then(data => {
-              if(true) {
+              if(data.includes('<?xml')) { // type check which type of save file. Only one of them has magic number '<?xml'
                 openCustomBoard(data);
-              } /*else {
+              } else {
                 openDCRPortalBoard(data);
-              }*/
+              }
             }).catch (err => {
               console.log(err);
             });
