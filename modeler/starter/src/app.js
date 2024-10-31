@@ -320,3 +320,17 @@ async function generateExamples() {
   })
 }
 generateExamples();
+
+/* Code for accessing elements in the modeler and their attributes
+modeler.getElementRegistry().forEach(element => {
+        console.log(element);
+        if (element.type === 'dcr:Event') {
+          console.log(element.businessObject.get('pending'));
+          console.log(element.businessObject.get('included'));
+          console.log(element.businessObject.get('executed'));
+        } else if (element.type === 'dcr:Relation') {
+          console.log(element.businessObject.get('type'));
+          console.log(element.businessObject.get('sourceRef').id)
+        }
+    });
+ */
