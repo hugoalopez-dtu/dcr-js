@@ -326,6 +326,16 @@ async function generateExamples() {
 }
 generateExamples();
 
+document.getElementById('search').addEventListener('input', e => {
+  const value = e.target.value;
+  let elements = [];
+  elements = Array.from(document.getElementsByClassName('example'));
+  elements.forEach(element => {
+    const visible = element.children[0].innerHTML.includes(value);
+    element.style.display = visible ? 'inline-block' : 'none';
+  });
+});
+
 /* Code for accessing elements in the modeler and their attributes
 modeler.getElementRegistry().forEach(element => {
         console.log(element);
