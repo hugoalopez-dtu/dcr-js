@@ -104,6 +104,7 @@ document
 document
   .getElementById('js-start-simulation')
   .addEventListener('click', function () {
+    window.alert('Simulation mode is ON')
     /*let elementRegistry = modeler.get('elementRegistry')
     elementRegistry.forEach(element => {
       console.log(element);
@@ -150,6 +151,7 @@ document
   eventBus.on('element.click', (event) => {
       event.preventDefault();
       event.stopPropagation();
+
       modeler.get('modeling').updateProperties(event.element, { executed: true });
   });
 
