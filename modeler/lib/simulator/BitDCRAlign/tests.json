@@ -1,0 +1,282 @@
+[
+    {
+        "trace": [
+            "Create Case",
+            "UO Propose meeting dates",
+            "Hold meeting"
+        ],
+        "context": [
+            "UO Propose meeting dates",
+            "Hold meeting",
+            "Create Case"
+        ],
+        "polarity": "+",
+        "description": "pos t0 running example",
+        "id": "t0pos"
+    },
+    {
+        "trace": [
+            "Hold meeting"
+        ],
+        "context": [
+            "Hold meeting",
+            "Create Case"
+        ],
+        "polarity": "-",
+        "description": "neg t1 running example",
+        "id": "t1neg"
+    },
+    {
+        "trace": [
+            "Create Case"
+        ],
+        "context": [
+            "Hold meeting",
+            "Create Case"
+        ],
+        "polarity": "+",
+        "description": "pos t2 running example",
+        "id": "t2pos"
+    },
+    {
+        "trace": [
+            "Create Case",
+            "UO Propose meeting dates",
+            "Hold meeting"
+        ],
+        "context": [
+            "Create Case",
+            "UO Propose meeting dates",
+            "Hold meeting",
+            "Name"
+        ],
+        "polarity": "-",
+        "description": "neg t3 running example",
+        "id": "t3neg"
+    },
+    {
+        "trace": [
+            "Create Case",
+            "Hold meeting",
+            "Hold meeting",
+            "Hold meeting"
+        ],
+        "context": [
+            "Hold meeting",
+            "Create Case"
+        ],
+        "polarity": "+",
+        "description": "holding multiple meetings",
+        "id": "t4pos"
+    },
+    {
+        "trace": [
+            "UO Propose meeting dates",
+            "Cancel meeting"
+        ],
+        "context": [
+            "Cancel meeting",
+            "UO Propose meeting dates"
+        ],
+        "polarity": "+",
+        "description": "EO cancels meeting",
+        "id": "t5pos"
+    },
+    {
+        "trace": [
+            "Create Case",
+            "UO Propose meeting dates"
+        ],
+        "context": [
+            "Cancel meeting",
+            "UO Propose meeting dates",
+            "Hold meeting",
+            "Create Case"
+        ],
+        "polarity": "-",
+        "description": "pending hold meeting",
+        "id": "t6neg"
+    },
+    {
+        "trace": [
+            "Union Download document",
+            "Union Upload document"
+        ],
+        "context": [
+            "LC Upload document",
+            "UO Upload document",
+            "Union Download document",
+            "EO Upload document",
+            "Union Upload document"
+        ],
+        "polarity": "-",
+        "description": "download document before first upload document",
+        "id": "t7neg"
+    },
+    {
+        "trace": [
+            "UO Propose meeting dates",
+            "EO Propose dates",
+            "EO Accept",
+            "UO Accept"
+        ],
+        "context": [
+            "UO Propose meeting dates",
+            "UO Accept",
+            "EO Accept",
+            "EO Propose dates"
+        ],
+        "polarity": "-",
+        "description": "UO Accept immediately after EO Accept",
+        "id": "t8neg"
+    },
+    {
+        "trace": [
+            "Add meeting date",
+            "Add meeting date",
+            "Create Case"
+        ],
+        "context": [
+            "Create Case",
+            "Add meeting date"
+        ],
+        "polarity": "-",
+        "description": "Add meeting date only twice union context only",
+        "id": "t9neg"
+    },
+    {
+        "trace": [
+            "Create Case",
+            "Create Case"
+        ],
+        "context": [
+            "Create Case"
+        ],
+        "polarity": "-",
+        "description": "Create case twice not possible",
+        "id": "t10neg"
+    },
+    {
+        "trace": [
+            "Add meeting date",
+            "Add meeting date",
+            "Add meeting date",
+            "Create Case"
+        ],
+        "context": [
+            "Add meeting date",
+            "Create Case"
+        ],
+        "polarity": "+",
+        "description": "Always create case once",
+        "id": "t11pos"
+    },
+    {
+        "trace": [
+            "Hold meeting",
+            "UO Report case to Labour court",
+            "EO Report case to Labour court"
+        ],
+        "context": [
+            "UO Report case to Labour court",
+            "Hold meeting",
+            "EO Report case to Labour court"
+        ],
+        "polarity": "-",
+        "description": "Only one lc",
+        "id": "t12neg"
+    },
+    {
+        "trace": [
+            "UO Propose meeting dates",
+            "EO Accept",
+            "Hold meeting"
+        ],
+        "context": [
+            "Cancel meeting",
+            "UO Propose meeting dates",
+            "EO Accept",
+            "Hold meeting",
+            "UO Accept",
+            "EO Propose dates"
+        ],
+        "polarity": "+",
+        "description": "accept and hold meeting",
+        "id": "t13pos"
+    },
+    {
+        "trace": [
+            "Create Case",
+            "UO Propose meeting dates"
+        ],
+        "context": [
+            "UO Propose meeting dates",
+            "Assign case id and transfer case",
+            "Create Case"
+        ],
+        "polarity": "-",
+        "description": "create to propose no assign case id",
+        "id": "t14neg"
+    },
+    {
+        "trace": [
+            "Name",
+            "Address",
+            "EO Edit name"
+        ],
+        "context": [
+            "Address",
+            "EO Edit address",
+            "EO Edit name",
+            "Name"
+        ],
+        "polarity": "+",
+        "description": "metadata management",
+        "id": "t15pos"
+    },
+    {
+        "trace": [
+            "Name",
+            "EO Edit address",
+            "EO Edit name"
+        ],
+        "context": [
+            "Address",
+            "EO Edit address",
+            "EO Edit name",
+            "Name"
+        ],
+        "polarity": "-",
+        "description": "metadata management",
+        "id": "t16neg"
+    },
+    {
+        "trace": [
+            "Hold meeting",
+            "LC Download document"
+        ],
+        "context": [
+            "UO Report case to Labour court",
+            "Hold meeting",
+            "EO Report case to Labour court",
+            "LC Download document"
+        ],
+        "polarity": "-",
+        "description": "labour court cant handle their documents",
+        "id": "t17neg"
+    },
+    {
+        "trace": [
+            "UO Propose meeting dates",
+            "Cancel meeting"
+        ],
+        "context": [
+            "Cancel meeting",
+            "UO Propose meeting dates",
+            "EO Propose dates"
+        ],
+        "polarity": "-",
+        "description": "EO cancels meeting but never proposes",
+        "id": "t18neg"
+    }
+]

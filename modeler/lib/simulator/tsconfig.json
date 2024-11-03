@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "commonjs",
+    "allowJs": true,
+    "checkJs": true,
+    "outDir": "./dist",
+    "rootDir": "./BitDCRAlign",
+    "strict": true
+  },
+  "include": [
+    "BitDCRAlign/src/**/*"
+  ],
+  "exclude": ["node_modules"]
+}
