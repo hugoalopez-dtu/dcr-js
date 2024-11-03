@@ -326,10 +326,11 @@ async function generateExamples() {
 }
 generateExamples();
 
+
+// Search examples
 document.getElementById('search').addEventListener('input', e => {
   const value = e.target.value;
-  let elements = [];
-  elements = Array.from(document.getElementsByClassName('example'));
+  let elements = Array.from(document.getElementsByClassName('example'));
   elements.forEach(element => {
     const visible = element.children[0].innerHTML.includes(value);
     element.style.display = visible ? 'inline-block' : 'none';
