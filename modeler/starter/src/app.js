@@ -68,6 +68,11 @@ document
     }
   });
 document
+  .getElementById('examples')
+  .addEventListener('click', function (event) {
+    event.stopPropagation();
+  })
+document
   .getElementById('js-toggle-fullscreen')
   .addEventListener('click', function () {
     state.fullScreen = !state.fullScreen;
@@ -301,11 +306,11 @@ async function generateExamples() {
               } else {
                 openDCRPortalBoard(data);
               }
+              document.getElementById('io-dialog-examples').style.display = 'none';
+              state.examples = !state.examples;
             }).catch (err => {
               console.log(err);
             });
-        } else {
-          state.examples = false; // keep examples open
         }
       });
       button.className = 'example';
