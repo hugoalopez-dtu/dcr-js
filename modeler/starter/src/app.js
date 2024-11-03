@@ -135,6 +135,7 @@ document
         'shape.move.start',
         'spaceTool.selection.start',
         'lasso.start',
+        'lasso.selection.init',
         'resize.start',
         'create.start',
     ];
@@ -145,6 +146,12 @@ document
         event.stopPropagation();
       });
     });
+
+  eventBus.on('element.click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      modeler.get('modeling').updateProperties(event.element, { executed: true });
+  });
 
     let modeling = modeler.get('modeling');
     console.log(modeling);
