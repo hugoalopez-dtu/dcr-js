@@ -12,14 +12,6 @@ html, body, #canvas {
   padding: 5px;
 }
 
-.simulation-button {
-  position: fixed;
-  bottom: 0px;
-  right: 0px;
-  padding: 10px;
-  margin: 20px;
-}
-
 .bottom-buttons .pjs-buttons {
   align-items: center;
 }
