@@ -329,10 +329,10 @@ generateExamples();
 
 // Search examples
 document.getElementById('search').addEventListener('input', e => {
-  const value = e.target.value;
+  const value = e.target.value.toLowerCase();
   let elements = Array.from(document.getElementsByClassName('example'));
   elements.forEach(element => {
-    const visible = element.children[0].innerHTML.includes(value);
+    const visible = element.children[0].innerHTML.toLowerCase().includes(value);
     element.style.display = visible ? 'inline-block' : 'none';
   });
 });
