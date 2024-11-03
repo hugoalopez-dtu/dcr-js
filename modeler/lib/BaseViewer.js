@@ -494,10 +494,6 @@ BaseViewer.prototype.getModules = function () {
   return this._modules;
 };
 
-BaseViewer.prototype.getElementRegistry = function () {
-  return this.get('elementRegistry');
-};
-
 /**
  * Remove all drawn elements from the viewer.
  *

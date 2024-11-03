@@ -101,6 +101,54 @@ document
       document.getElementById('io-dialog-main').style.display = displayProp;
     }
   });
+document
+  .getElementById('js-start-simulation')
+  .addEventListener('click', function () {
+    /*let elementRegistry = modeler.get('elementRegistry')
+    elementRegistry.forEach(element => {
+      console.log(element);
+    });
+
+
+    // TODO start simulation
+    let ids = [];
+    elementRegistry.forEach(element => {
+      if (element.type === 'dcr:Relation') {
+        if (element.businessObject.get('type') === 'condition') {
+          console.log(element.businessObject.get('targetRef').id);
+          ids.push(element.businessObject.get('targetRef').id);
+        }
+      }
+    });
+
+    elementRegistry.forEach(element => {
+      if (element.type === 'dcr:Event') {
+        if (ids.includes(element.businessObject.id)) {
+          //element.businessObject.set('pending', true);
+          modeler.get('modeling').updateProperties(element, { pending: true });
+        }
+      }
+    });*/
+    // TODO Remove interaction for element
+    let eventBus = modeler.get('eventBus');
+    const interactionEvents = [
+        'shape.move.start',
+        'spaceTool.selection.start',
+        'lasso.start',
+        'resize.start',
+        'create.start',
+    ];
+
+    interactionEvents.forEach(event => {
+      eventBus.on(event, (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+    });
+
+    let modeling = modeler.get('modeling');
+    console.log(modeling);
+  });
 
 /* file functions */
 function openFile(file, callback) {
