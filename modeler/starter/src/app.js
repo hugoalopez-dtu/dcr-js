@@ -68,6 +68,11 @@ document
     }
   });
 document
+  .getElementById('examples')
+  .addEventListener('click', function (event) {
+    event.stopPropagation();
+  })
+document
   .getElementById('js-toggle-fullscreen')
   .addEventListener('click', function () {
     state.fullScreen = !state.fullScreen;
@@ -301,11 +306,11 @@ async function generateExamples() {
               } else {
                 openDCRPortalBoard(data);
               }
+              document.getElementById('io-dialog-examples').style.display = 'none';
+              state.examples = !state.examples;
             }).catch (err => {
               console.log(err);
             });
-        } else {
-          state.examples = false; // keep examples open
         }
       });
       button.className = 'example';
@@ -320,6 +325,17 @@ async function generateExamples() {
   })
 }
 generateExamples();
+
+
+// Search examples
+document.getElementById('search').addEventListener('input', e => {
+  const value = e.target.value.toLowerCase();
+  let elements = Array.from(document.getElementsByClassName('example'));
+  elements.forEach(element => {
+    const visible = element.children[0].innerHTML.toLowerCase().includes(value);
+    element.style.display = visible ? 'inline-block' : 'none';
+  });
+});
 
 /* Code for accessing elements in the modeler and their attributes
 modeler.getElementRegistry().forEach(element => {
