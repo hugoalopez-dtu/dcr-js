@@ -177,6 +177,12 @@ function stopSimulation() {
     document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
     document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
     window.alert('Simulation mode is OFF');
+
+    modeler.get('elementRegistry').forEach(element => {
+        if (element.type === 'dcr:Event') {
+            modeler.get('modeling').updateProperties(element, { pending: false, included: true, executed: false });
+        }
+    });
 }
 
 /* file functions */
