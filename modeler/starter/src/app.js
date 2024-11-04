@@ -101,10 +101,10 @@ document
       document.getElementById('io-dialog-main').style.display = displayProp;
     }
   });
+let simulating = false;
 document
   .getElementById('js-start-simulation')
   .addEventListener('click', function () {
-    window.alert('Simulation mode is ON')
     /*let elementRegistry = modeler.get('elementRegistry')
     elementRegistry.forEach(element => {
       console.log(element);
@@ -131,33 +131,53 @@ document
       }
     });*/
     // TODO Remove interaction for element
+    if (!simulating) {
+        startSimulation();
+    } else {
+        stopSimulation();
+    }
+    let modeling = modeler.get('modeling');
+  });
+
+function startSimulation() {
+    simulating = true;
     let eventBus = modeler.get('eventBus');
+    console.log(eventBus);
+    document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
+    document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
     const interactionEvents = [
         'shape.move.start',
         'spaceTool.selection.start',
         'lasso.start',
         'lasso.selection.init',
-        'resize.start',
-        'create.start',
     ];
 
     interactionEvents.forEach(event => {
-      eventBus.on(event, (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-      });
+        eventBus.on(event, (event) => {
+            if (simulating) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
     });
 
-  eventBus.on('element.click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
+    eventBus.on('element.click', (event) => {
+        if (simulating) {
+            event.preventDefault();
+            event.stopPropagation();
 
-      modeler.get('modeling').updateProperties(event.element, { executed: true });
-  });
+            modeler.get('modeling').updateProperties(event.element, {executed: true});
+        }
+    });
+    window.alert('Simulation mode is ON');
+}
 
-    let modeling = modeler.get('modeling');
-    console.log(modeling);
-  });
+function stopSimulation() {
+    simulating = false;
+    document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
+    document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
+    window.alert('Simulation mode is OFF');
+}
 
 /* file functions */
 function openFile(file, callback) {
