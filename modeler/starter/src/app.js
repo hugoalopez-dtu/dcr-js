@@ -169,14 +169,12 @@ function startSimulation() {
             modeler.get('modeling').updateProperties(event.element, {executed: true});
         }
     });
-    window.alert('Simulation mode is ON');
 }
 
 function stopSimulation() {
     simulating = false;
     document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
     document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
-    window.alert('Simulation mode is OFF');
 
     modeler.get('elementRegistry').forEach(element => {
         if (element.type === 'dcr:Event') {
