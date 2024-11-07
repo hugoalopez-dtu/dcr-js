@@ -9,10 +9,8 @@ import { execute, isEnabled } from "./align";
 let graph: DCRGraph;
 
 export const executeEvent  = (event: Event) => {
-    console.log("Execute event: " + event);
     if (!isEnabled(event, graph)) return;
     execute(event, graph);
-    console.log("Executed successfully");
 }
 
 export const startSimulator = (elementReg: any) => {
@@ -75,7 +73,6 @@ export const startSimulator = (elementReg: any) => {
             }
         }
     });
-    console.log(dcrGraph);
     graph = dcrGraph;
 }
 
@@ -85,9 +82,7 @@ export const updateGraph = (elementReg: any, modeler: any) => {
             modeler.get('modeling').updateProperties(element, {executed: graph.marking.executed.has(element.id)});
             modeler.get('modeling').updateProperties(element, {included: graph.marking.included.has(element.id)});
             modeler.get('modeling').updateProperties(element, {pending: graph.marking.pending.has(element.id)});
-            if (isEnabled(element.id, graph)) {
-
-            }
+            modeler.get('modeling').updateProperties(element, {enabled: isEnabled(element.id, graph)});
         }
     });
 }

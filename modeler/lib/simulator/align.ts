@@ -32,7 +32,6 @@ const isAccepting = (graph: DCRGraph): boolean => {
 
 export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
   if (!graph.marking.included.has(event)) {
-    console.log("1");
     return false;
   }
   for (const cEvent of graph.conditionsFor[event]) {
@@ -41,7 +40,6 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
       graph.marking.included.has(cEvent) &&
       !graph.marking.executed.has(cEvent)
     ) {
-      console.log("2");
       return false;
     }
   }
@@ -51,7 +49,6 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
       graph.marking.included.has(mEvent) &&
       graph.marking.pending.has(mEvent)
     ) {
-      console.log("3");
       return false;
     }
   }

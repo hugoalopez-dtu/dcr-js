@@ -502,10 +502,8 @@ BaseViewer.prototype.getModules = function () {
 
 BaseViewer.prototype.startSimulation = function () {
   simulatorInit(this);
-  console.log("Test");
-  let elementRegistry = this.get('elementRegistry');
-  console.log("Simulation started");
   simulatorStart(this.get('elementRegistry'));
+  simulatorUpdate(this.get('elementRegistry'), this);
 }
 
 BaseViewer.prototype.simulatorExecute = function (element) {
