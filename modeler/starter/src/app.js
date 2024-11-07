@@ -164,7 +164,7 @@ function stopSimulation() {
 
     modeler.get('elementRegistry').forEach(element => {
         if (element.type === 'dcr:Event') {
-            modeler.get('modeling').updateProperties(element, { pending: false, included: true, executed: false });
+            modeler.get('modeling').updateProperties(element, { pending: false, included: true, executed: false, enabled: false });
         }
     });
 }
