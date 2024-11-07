@@ -8,6 +8,7 @@ import DCRModeler from 'dcr-graph-diagram-modeler';
 
 import emptyBoardXML from './resources/emptyBoard.xml?raw';
 import sampleBoardXML from './resources/sampleBoard.xml?raw';
+import {executeEvent as simulatorExecute} from "../../lib/simulator/simulator";
 
 // modeler instance
 var modeler = new DCRModeler({
@@ -108,35 +109,14 @@ document
     /*let elementRegistry = modeler.get('elementRegistry')
     elementRegistry.forEach(element => {
       console.log(element);
-    });
-
-
-    // TODO start simulation
-    let ids = [];
-    elementRegistry.forEach(element => {
-      if (element.type === 'dcr:Relation') {
-        if (element.businessObject.get('type') === 'condition') {
-          console.log(element.businessObject.get('targetRef').id);
-          ids.push(element.businessObject.get('targetRef').id);
-        }
-      }
-    });
-
-    elementRegistry.forEach(element => {
-      if (element.type === 'dcr:Event') {
-        if (ids.includes(element.businessObject.id)) {
-          //element.businessObject.set('pending', true);
-          modeler.get('modeling').updateProperties(element, { pending: true });
-        }
-      }
     });*/
+
     // TODO Remove interaction for element
     if (!simulating) {
         startSimulation();
     } else {
         stopSimulation();
     }
-    let modeling = modeler.get('modeling');
   });
 
 function startSimulation() {
@@ -166,9 +146,15 @@ function startSimulation() {
             event.preventDefault();
             event.stopPropagation();
 
-            modeler.get('modeling').updateProperties(event.element, {executed: true});
+            const element = event.element;
+            if (element.type === 'dcr:Event') {
+                modeler.simulatorExecute(element.id);
+            }
+            //modeler.get('modeling').updateProperties(event.element, {executed: true});
         }
     });
+
+    modeler.startSimulation();
 }
 
 function stopSimulation() {

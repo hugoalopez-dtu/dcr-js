@@ -28,6 +28,12 @@ import saveDCRXML from './DCRXML';
 import XMLConverter from './XMLConverter';
 import DCRPortalConverter from './DCRPortalConverter';
 
+import simulatorInit from './simulator/init';
+import {
+  startSimulator as simulatorStart,
+  executeEvent as simulatorExecute,
+  updateGraph as simulatorUpdate,
+} from './simulator/simulator';
 
 
 
@@ -494,6 +500,19 @@ BaseViewer.prototype.getModules = function () {
   return this._modules;
 };
 
+BaseViewer.prototype.startSimulation = function () {
+  simulatorInit(this);
+  console.log("Test");
+  let elementRegistry = this.get('elementRegistry');
+  console.log("Simulation started");
+  simulatorStart(this.get('elementRegistry'));
+}
+
+BaseViewer.prototype.simulatorExecute = function (element) {
+  simulatorExecute(element);
+  simulatorUpdate(this.get('elementRegistry'), this);
+}
+
 /**
  * Remove all drawn elements from the viewer.
  *
@@ -725,6 +744,7 @@ function findRootBoard(definitions, boardId) {
     return element.id === boardId;
   }) || null;
 }
+
 
 /* <project-logo> */
 
