@@ -321,7 +321,9 @@ export default function DCRRenderer(
         assign({
           fill: getFillColor(element, defaultFillColor),
           fillOpacity: HIGH_FILL_OPACITY,
-          stroke: enabled ? 'green' : getStrokeColor(element, defaultStrokeColor),
+          stroke: enabled && executed ? 'green' 
+          : enabled ? 'yellow'
+          : getStrokeColor(element, defaultStrokeColor),
           strokeWidth: enabled ? 3 : 2,
           'stroke-dasharray': included ? undefined : '12, 5',
         }),
