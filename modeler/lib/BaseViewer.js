@@ -66,6 +66,7 @@ export default function BaseViewer(options) {
   /* </project-logo> */
 
   this._init(this._container, this._moddle, options);
+  simulatorInit(); // Initialize simulator TODO find better placement for this
 }
 
 inherits(BaseViewer, Diagram);

@@ -106,12 +106,11 @@ let simulating = false;
 document
   .getElementById('js-start-simulation')
   .addEventListener('click', function () {
-    /*let elementRegistry = modeler.get('elementRegistry')
+    let elementRegistry = modeler.get('elementRegistry')
     elementRegistry.forEach(element => {
       console.log(element);
-    });*/
+    });
 
-    // TODO Remove interaction for element
     if (!simulating) {
         startSimulation();
     } else {
@@ -120,9 +119,9 @@ document
   });
 
 function startSimulation() {
+    // TODO Remove interaction for element
     simulating = true;
     let eventBus = modeler.get('eventBus');
-    console.log(eventBus);
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
     const interactionEvents = [
@@ -150,7 +149,6 @@ function startSimulation() {
             if (element.type === 'dcr:Event') {
                 modeler.simulatorExecute(element.id);
             }
-            //modeler.get('modeling').updateProperties(event.element, {executed: true});
         }
     });
 
