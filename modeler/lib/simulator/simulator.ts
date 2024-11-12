@@ -50,7 +50,15 @@ export const startSimulator = (elementReg: any) => {
             dcrGraph.responseTo[element.id] = new Set();
             dcrGraph.includesTo[element.id] = new Set();
             dcrGraph.excludesTo[element.id] = new Set();
-            dcrGraph.marking.included.add(element.id);
+            if (element.businessObject.get('pending')) {
+                dcrGraph.marking.pending.add(element.id);
+            }
+            if (element.businessObject.get('executed')) {
+                dcrGraph.marking.executed.add(element.id);
+            }
+            if (element.businessObject.get('included')) {
+                dcrGraph.marking.included.add(element.id);
+            }
         }
         switch (element.type) {
             case 'dcr:Event':
@@ -124,12 +132,15 @@ const addRelation =
 }
 
 export const updateGraph = (elementReg: any, modeler: any) => {
-    elementReg.forEach((element: any) => {
-        if (element.type === 'dcr:Event') {
-            modeler.get('modeling').updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
-            modeler.get('modeling').updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
-            modeler.get('modeling').updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
-            modeler.get('modeling').updateProperties(element, {enabled: isEnabled(element.id, dcrGraph)});
-        }
+    events.forEach((element: any) => {
+        modeler.get('modeling').updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
+        modeler.get('modeling').updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
+        modeler.get('modeling').updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
+        modeler.get('modeling').updateProperties(element, {enabled: isEnabled(element.id, dcrGraph)});
+    });
+    subProcesses.forEach((element: any) => {
+        modeler.get('modeling').updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
+        modeler.get('modeling').updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
+        modeler.get('modeling').updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
     });
 }
