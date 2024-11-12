@@ -1,5 +1,5 @@
-import { attr as svgAttr, create as svgCreate } from 'tiny-svg';
-import { svgGroup } from './markers.js';
+import { attr as svgAttr, create as svgCreate, transform } from 'tiny-svg';
+import { svgGroup, getTransform } from './markers.js';
 
 export function conditionMarker(marker, path, strokeColor) {
   svgAttr(path, {
@@ -12,8 +12,7 @@ export function responseMarker(marker, path, strokeColor) {
   svgAttr(path, {
     markerStart: marker('default-response-flow-start', strokeColor, strokeColor),
     markerEnd: marker('default-response-flow-end', strokeColor, strokeColor),
-    stroke: strokeColor,
-    orient: "auto"
+    stroke: strokeColor
   });
 }
 
@@ -24,17 +23,17 @@ export function includeMarker(marker, path, strokeColor) {
   });
 }
 
-export function excludeMarker(marker, path, strokeColor) {
+export function excludeMarker(marker, path, strokeColor, fill, startDirection, endDirection) {
   svgAttr(path, {
-    markerEnd: marker('default-exclude-flow-end', strokeColor, strokeColor),
-    stroke: strokeColor   //red
+    markerEnd: marker('default-exclude-flow-end', strokeColor, strokeColor, startDirection, endDirection),
+    stroke: strokeColor
   });
 }
 
 export function milestoneMarker(marker, path, strokeColor) {
   svgAttr(path, {
     markerEnd: marker('default-milestone-flow-end', strokeColor, strokeColor),
-    stroke: strokeColor   //purple
+    stroke: strokeColor
   });
 }
 
@@ -45,207 +44,206 @@ export function spawnMarker(marker, path, strokeColor) {
   });
 }
 
-export function createMarker(addMarker, id, type, fill, stroke) {
+export function createMarker(addMarker, id, type, fill, stroke, startDirection, endDirection) {
   
   if (type === 'default-response-flow-end') {
-    var responseflowEnd = svgCreate('path');
-    svgAttr(responseflowEnd, {
-      d: 'm 1 5 l 0 -3 l 7 3 l -7 3 z',
-
+    var background = svgCreate('rect');
+    svgAttr(background, {
+      x: 18,
+      y: 9.15,
+      width: 2,
+      height: 1.7,
+      fill: 'white',
     });
 
+    var arrowHead = svgCreate('path');
+    svgAttr(arrowHead, {
+      d: "M10 14.5L10 5.5L20 10L10 14.5Z",
+    });
+
+    var responseGroup = svgGroup([background, arrowHead]);
+
     addMarker(id, {
-      element: responseflowEnd,
+      element: responseGroup,
+      scale: 0.8,
       attrs: {
         fill: fill,
-        stroke: stroke,
-        strokeLinecap: 'butt',
       },
-      ref: { x: 8.7, y: 5 },
-      scale: 0.8,
+      ref: { x: 20.65, y: 10 },
     });
   }
 
   if (type === 'default-response-flow-start') {
-    var responseflowStart = svgCreate('path');
-    svgAttr(responseflowStart, {
-      
-      d: 'M 12.24,6.64 C 12.24,8.74 10.60,10.44 8.58,10.44 6.56,10.44 4.92,8.74 4.92,6.64 4.92,4.54 6.56,'+
-      '2.84 8.58,2.84 10.60,2.84 12.24,4.54 12.24,6.64 Z',
+    var circle = svgCreate('circle');
+    svgAttr(circle, {
+      cx: 4,
+      cy: 10,
+      r: 4
     });
 
     addMarker(id, {
-      element: responseflowStart,
+      element: circle,
+      scale: 0.8,
       attrs: {
         fill: fill,
-        stroke: stroke,
-        strokeLinecap: 'butt'
       },
-      ref: { x: 4.2, y: 6.6 },
-      scale: 0.55,
+      ref: { x: -0.65, y: 10 },
     });
   }
 
 
 
   if (type === 'default-exclude-flow-end') {
+    var percentTranslate;
+
+    if (endDirection === 'right-to-left') {
+      percentTranslate = 'translate(12.1, 0)'
+    } else if (endDirection === 'left-to-right') {
+      percentTranslate = ''
+    } else if (endDirection === 'top-to-bottom') {
+      percentTranslate = 'translate(6,6.5)';
+    } else {
+      percentTranslate = 'translate(6, -6)';
+    }
+
     var background = svgCreate('rect');
     svgAttr(background, {
-      x: 10,
-      y: 4,
-      width: 20,
-      height: 100,
+      x: 8,
+      y: 9.15,
+      width: 12,
+      height: 1.7,
       fill: 'white',
-      stroke: 'none',
+    });
+    
+    var arrowHead = svgCreate('path');
+    svgAttr(arrowHead, {
+      d: "M2 14.5L2 5.5L12 10L2 14.5Z",
     });
 
-    var excludeflowEnd = svgCreate('path');
-    svgAttr(excludeflowEnd, {
-
-      d: 'M 18.28,0.00 C 18.28,0.00 20.00,0.92 20.00,0.92 20.00,0.92 11.84,14.84 11.84,14.84 11.84,'+
-      '14.84 10.12,13.92 10.12,13.92 10.12,13.92 18.28,0.00 18.28,0.00 Z M 16.61,13.64 C 16.61,'+
-      '14.39 17.23,15.00 18.01,15.00 18.78,15.00 19.41,14.39 19.41,13.64 19.41,12.88 18.78,12.27 18.01,'+
-      '12.27 17.23,12.27 16.61,12.88 16.61,13.64 Z M 13.74,1.47 C 13.74,2.22 13.11,2.83 12.34,2.83 11.56,'+
-      '2.83 10.94,2.22 10.94,1.47 10.94,0.72 11.56,0.11 12.34,0.11 13.11,0.11 13.74,0.72 13.74,'+
-      '1.47 Z M 12.25,7.81 C 12.25,7.81 6.13,11.23 6.13,11.23 6.13,11.23 -0.00,14.65 -0.00,14.65 -0.00,'+
-      '14.65 0.02,7.78 0.02,7.78 0.02,7.78 0.03,0.92 0.03,0.92 0.03,0.92 6.14,4.36 6.14,4.36 6.14,'+
-      '4.36 12.25,7.81 12.25,7.81 Z',
-
+    var percentSign = svgCreate('path');
+    svgAttr(percentSign, {
+      d: "M13.8 9.6C14.7941 9.6 15.6 8.79411 15.6 7.8C15.6 6.80589 14.7941 6 13.8 6C12.8059 6 12 6.80589 12 7.8C12 8.79411 12.8059 9.6 13.8 9.6ZM13.8 8.4C14.1314 8.4 14.4 8.13137 14.4 7.8C14.4 7.46863 14.1314 7.2 13.8 7.2C13.4686 7.2 13.2 7.46863 13.2 7.8C13.2 8.13137 13.4686 8.4 13.8 8.4ZM12.9485 13.9647L12.1 13.1162L19.1162 6.1L19.9647 6.94852L12.9485 13.9647ZM20 12.2C20 13.1941 19.1941 14 18.2 14C17.2059 14 16.4 13.1941 16.4 12.2C16.4 11.2059 17.2059 10.4 18.2 10.4C19.1941 10.4 20 11.2059 20 12.2ZM18.8 12.2C18.8 12.5314 18.5314 12.8 18.2 12.8C17.8686 12.8 17.6 12.5314 17.6 12.2C17.6 11.8686 17.8686 11.6 18.2 11.6C18.5314 11.6 18.8 11.8686 18.8 12.2Z",
+      fillRule: "evenodd",
+      clipRule: "evenodd"
     });
 
-    var excludeflowGroup = svgGroup([background, excludeflowEnd]);
+    svgAttr(percentSign, {
+      transform: percentTranslate + " " + getTransform(endDirection)
+    });
+
+    var excludeGroup = svgGroup([background, arrowHead, percentSign]);
 
     addMarker(id, {
-      element: excludeflowGroup,
-      scale: 0.4,
+      element: excludeGroup,
+      scale: 0.8,
       attrs: {
-        fill: fill,
-        stroke: stroke,
-        strokeLinecap: 'butt',
+        fill: fill
       },
-      ref: { x: 21, y: 7.73 },
-    });
-  }
-
-  if (type === 'default-exclude-flow-start') {
-    var excludeflowStart = svgCreate('path');
-    svgAttr(excludeflowStart, {
-
-      d: 'M 12.24,6.64 C 12.24,8.74 10.60,10.44 8.58,10.44 6.56,10.44 4.92,8.74 4.92,'+
-      '6.64 4.92,4.54 6.56,2.84 8.58,2.84 10.60,2.84 12.24,4.54 12.24,6.64 Z',
-    });
-
-    addMarker(id, {
-      element: excludeflowStart,
-      attrs: {
-        fill: fill, 
-        stroke: stroke,
-        strokeLinecap: 'butt'
-      },
-      ref: { x: 4.2, y: 7.2 },
-      scale: 0.55,
+      ref: { x: 20.65, y: 10 },
     });
   }
 
   if (type === 'default-include-flow-end') {
-    var includeflowEnd = svgCreate('path');
-    svgAttr(includeflowEnd, {
-
-      d: 'M 18.35,5.99 C 18.35,5.99 15.08,5.99 15.08,5.99 15.08,5.99 15.08,2.66 15.08,2.66 15.08,2.35 14.83,2.10 14.53,'+
-      '2.10 14.23,2.10 13.99,2.35 13.99,2.66 13.99,2.66 13.99,5.99 13.99,5.99 13.99,5.99 10.72,5.99 10.72,5.99 10.42,'+
-      '5.99 10.17,6.24 10.17,6.54 10.17,6.85 10.42,7.10 10.72,7.10 10.72,7.10 13.99,7.10 13.99,7.10 13.99,7.10 13.99,'+
-      '10.43 13.99,10.43 13.99,10.73 14.23,10.98 14.53,10.98 14.83,10.98 15.08,10.73 15.08,10.43 15.08,10.43 15.08,'+
-      '7.10 15.08,7.10 15.08,7.10 18.35,7.10 18.35,7.10 18.65,7.10 18.89,6.85 18.89,6.54 18.89,6.24 18.65,5.99 18.35,'+
-      '5.99 18.35,5.99 18.35,5.99 18.35,5.99 Z M 10.53,6.59 C 10.53,6.59 5.27,9.52 5.27,9.52 5.27,9.52 0.00,12.46 0.00,'+
-      '12.46 0.00,12.46 0.01,6.57 0.01,6.57 0.01,6.57 0.03,0.69 0.03,0.69 0.03,0.69 5.28,3.64 5.28,3.64 5.28,3.64 10.53,'+
-      '6.59 10.53,6.59 Z'
-
+    var background = svgCreate('rect');
+    svgAttr(background, {
+      x: 8,
+      y: 9.15,
+      width: 12,
+      height: 1.7,
+      fill: 'white',
     });
+
+    var plus = svgCreate('path');
+    svgAttr(plus, {
+      d: "M20 10.7H16.7V14H15.3V10.7H12L12 9.3H15.3V6L16.7 6V9.3H20V10.7Z",
+    });
+
+    var arrowHead = svgCreate('path');
+    svgAttr(arrowHead, {
+      d: "M2 14.5L2 5.5L12 10L2 14.5Z",
+    });
+
+    var includeGroup = svgGroup([background, arrowHead, plus]);
 
     addMarker(id, {
-      element: includeflowEnd,
+      element: includeGroup,
+      scale: 0.8,
       attrs: {
-        fill: fill, 
-        stroke: stroke,
-        strokeLinecap: 'butt'
+        fill: fill,
       },
-      ref: { x: 20.6, y: 6.6 },
-      scale: 0.55,
-    });
-  }
-
-  if (type === 'default-include-flow-start') {
-    var includeflowStart = svgCreate('path');
-    svgAttr(includeflowStart, {
-
-      d: 'M 12.24,6.64 C 12.24,8.74 10.60,10.44 8.58,10.44 6.56,10.44 4.92,8.74 4.92,6.64 4.92,'+
-      '4.54 6.56,2.84 8.58,2.84 10.60,2.84 12.24,4.54 12.24,6.64 Z',
-    });
-
-    addMarker(id, {
-      element: includeflowStart,
-      attrs: {
-        fill: fill, 
-        stroke: stroke,
-        strokeLinecap: 'butt'
-      },
-      ref: { x: 4.2, y: 7.2 },
-      scale: 0.55,
+      ref: { x: 20.65, y: 10 },
     });
   }
 
   if (type === 'default-condition-flow-end') {
-    var conditionflowEnd = svgCreate('path');
-    svgAttr(conditionflowEnd, {
-
-      d: 'M 17.83,7.19 C 17.83,9.29 16.20,10.99 14.18,10.99 12.16,10.99 10.52,9.29 10.52,'+
-      '7.19 10.52,5.09 12.16,3.38 14.18,3.38 16.20,3.38 17.83,5.09 17.83,7.19 Z M 10.59,7.18 C 10.59,7.18 5.29,9.56 5.29,9.56 5.29,9.56 -0.00,11.94 -0.00,11.94 -0.00,11.94 0.01,7.16 0.01,7.16 0.01,7.16 0.03,2.37 0.03,2.37 0.03,2.37 5.31,4.77 5.31,4.77 5.31,4.77 10.59,7.18 10.59,7.18 Z',
-
+    var background = svgCreate('rect');
+    svgAttr(background, {
+      x: 9,
+      y: 9.15,
+      width: 4,
+      height: 1.7,
+      fill: 'white',
     });
 
+    var circle = svgCreate('circle');
+    svgAttr(circle, {
+      cx: 16,
+      cy: 10,
+      r: 4
+    });
+
+    var arrowHead = svgCreate('path');
+    svgAttr(arrowHead, {
+      d: "M2 14.5L2 5.5L12 10L2 14.5Z",
+    });
+
+    var conditionGroup = svgGroup([background, circle, arrowHead]);
+
     addMarker(id, {
-      element: conditionflowEnd,
+      element: conditionGroup,
+      scale: 0.8,
       attrs: {
         fill: fill,
-        stroke: stroke,
-        strokeLinecap: 'butt'
-        
       },
-      ref: { x: 19.1, y: 7.2 },
-      scale: 0.55,
+      ref: { x: 20.65, y: 10 },
     });
   }
 
   if (type === 'default-milestone-flow-end') {
-    var milestoneArrowEnd = svgCreate('path');
-    svgAttr(milestoneArrowEnd, {
-      d: 'm 1 5 l 0 -3 l 7 3 l -7 3 z',
-      fill: stroke,
-      // 'stroke-width': 0.3,
-      transform: 'translate(-5, 3.5) scale(1.3)'
+    var background = svgCreate('rect');
+    svgAttr(background, {
+      x: 8,
+      y: 9.15,
+      width: 12,
+      height: 1.7,
+      fill: 'white',
     });
 
-    var milestoneflowEnd = svgCreate('rect');
-    svgAttr(milestoneflowEnd, {
-      x: 0,
-      y: 0,
-      width: 8,
-      height: 8,
-      transform: 'rotate(-45 0 0) translate(-2, 12) scale(0.6)'
+    var squareBorder = svgCreate('path');
+    svgAttr(squareBorder, {
+      d: "M10 9.99925L14.9992 5L19.9985 9.99925L14.9992 14.9985L10 9.99925Z"
     });
 
-    var milestoneflowGroup = svgGroup([milestoneArrowEnd, milestoneflowEnd]);
+    var squareFill = svgCreate('path');
+    svgAttr(squareFill, {
+      d: "M11.98 9.99919L14.9993 6.97985L18.0187 9.99919L14.9993 13.0185L11.98 9.99919Z",
+      fill: 'white'
+    });
+
+    var arrowHead = svgCreate('path');
+    svgAttr(arrowHead, {
+      d: "M-4.801e-07 14.5L-8.66976e-08 5.5L10 10L-4.801e-07 14.5Z",
+    });
+
+    var milestoneGroup = svgGroup([background, arrowHead, squareBorder, squareFill]);
 
     addMarker(id, {
-      element: milestoneflowGroup,
-      attrs: {
-        stroke: stroke,
-        'stroke-width': '2',
-        strokeLinecap: 'butt',
-        fill: 'white'
-      },
-      ref: { x: 15, y: 10 },
+      element: milestoneGroup,
       scale: 0.8,
+      attrs: {
+        fill: fill,
+      },
+      ref: { x: 20.65, y: 10 },
     });
   }
 
