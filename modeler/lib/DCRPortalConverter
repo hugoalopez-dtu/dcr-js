@@ -288,6 +288,8 @@ function getRelationType(relationGroup){
   return t;
 }
 
+// TODO: Improve algorithm.
+// The current algorithm is very simple and therefore needs improvement based on various positional possibilities.
 function handleRelations(xml, bpmn, parentMap) {
   for (let relationGroup of Object.values(xml.specification[0].constraints[0])) {
     if (relationGroup[0] === '') continue;
