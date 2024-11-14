@@ -1,17 +1,19 @@
 import {
     DCRGraph,
     Event,
-    EventMap
+    EventMap,
+    Marking
 } from "./types";
 
 import { execute, isEnabled } from "./align";
-import { clear } from "min-dom";
+import { copyMarking } from "./utility";
 
 let dcrGraph: DCRGraph;
 let events: Set<any>;
 let relations: Set<any>;
 let nestings: Set<any>;
 let subProcesses: Set<any>;
+let originalMarking: Marking;
 
 const clearGraph = () => {
     dcrGraph = {
@@ -43,6 +45,8 @@ export const startSimulator = (elementReg: any) => {
     clearGraph();
 
     elementReg.forEach((element: any) => {
+        
+        // Add events to the graph
         if (element.type === 'dcr:Event' ||element.type === 'dcr:SubProcess') {
             dcrGraph.events.add(element.id);
             dcrGraph.conditionsFor[element.id] = new Set();
@@ -60,6 +64,8 @@ export const startSimulator = (elementReg: any) => {
                 dcrGraph.marking.included.add(element.id);
             }
         }
+
+        // Save the different types of elements in separate sets
         switch (element.type) {
             case 'dcr:Event':
                 events.add(element);
@@ -75,6 +81,11 @@ export const startSimulator = (elementReg: any) => {
                 break;
         }
     });
+
+    // Save the original marking
+    originalMarking = copyMarking(dcrGraph.marking);
+
+    // Add relations to the graph
     relations.forEach((element: any) => {
         switch (element.businessObject.get('type')) {
             case 'condition':
@@ -108,6 +119,8 @@ export const startSimulator = (elementReg: any) => {
 
 const addRelation =
     (relationSet: EventMap, source: string, target: string) => {
+    
+    // Handle Nesting groupings by adding relations for all nested elements
     if (source.includes('Nesting')) {
         nestings.forEach((element: any) => {
             if (element.id === source) {
@@ -127,10 +140,12 @@ const addRelation =
         });
     }
 
+    // Add direct relation if neither source nor target is a Nesting group
     if (!source.includes('Nesting') && !target.includes('Nesting')) 
         relationSet[source].add(target);
 }
 
+// Update the visual representation of the graph with the new states/markings
 export const updateGraph = (elementReg: any, modeler: any) => {
     events.forEach((element: any) => {
         modeler.get('modeling').updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
@@ -143,4 +158,9 @@ export const updateGraph = (elementReg: any, modeler: any) => {
         modeler.get('modeling').updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
         modeler.get('modeling').updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
     });
+}
+
+// Restore original marking for events and sub processes
+export const restoreStates = () => {
+    dcrGraph.marking = copyMarking(originalMarking);
 }

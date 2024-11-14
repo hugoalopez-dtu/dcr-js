@@ -106,11 +106,14 @@ let simulating = false;
 document
   .getElementById('js-start-simulation')
   .addEventListener('click', function () {
+
+    // Only for debugging purposes
     let elementRegistry = modeler.get('elementRegistry')
     elementRegistry.forEach(element => {
       console.log(element);
     });
 
+    // Handle simulation
     if (!simulating) {
         startSimulation();
     } else {
@@ -124,6 +127,8 @@ function startSimulation() {
     let eventBus = modeler.get('eventBus');
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
+
+    // Define events that should be prevented
     const interactionEvents = [
         'shape.move.start',
         'spaceTool.selection.start',
@@ -131,6 +136,7 @@ function startSimulation() {
         'lasso.selection.init',
     ];
 
+    // Override interactions for certain events in diagram-js
     interactionEvents.forEach(event => {
         eventBus.on(event, (event) => {
             if (simulating) {
@@ -140,6 +146,7 @@ function startSimulation() {
         });
     });
 
+    // Override clicks on events to execute them
     eventBus.on('element.click', (event) => {
         if (simulating) {
             event.preventDefault();
@@ -160,9 +167,11 @@ function stopSimulation() {
     document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
     document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
 
+    // Restore states for events and set enabled to false
+    modeler.simulatorRestoreStates();
     modeler.get('elementRegistry').forEach(element => {
         if (element.type === 'dcr:Event') {
-            modeler.get('modeling').updateProperties(element, { pending: false, included: true, executed: false, enabled: false });
+            modeler.get('modeling').updateProperties(element, { enabled: false });
         }
     });
 }

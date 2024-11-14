@@ -33,6 +33,7 @@ import {
   startSimulator as simulatorStart,
   executeEvent as simulatorExecute,
   updateGraph as simulatorUpdate,
+  restoreStates as simulatorRestoreStates
 } from './simulator/simulator';
 
 
@@ -509,6 +510,11 @@ BaseViewer.prototype.startSimulation = function () {
 
 BaseViewer.prototype.simulatorExecute = function (element) {
   simulatorExecute(element);
+  simulatorUpdate(this.get('elementRegistry'), this);
+}
+
+BaseViewer.prototype.simulatorRestoreStates = function () {
+  simulatorRestoreStates();
   simulatorUpdate(this.get('elementRegistry'), this);
 }
 
