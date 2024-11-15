@@ -87,31 +87,23 @@ export const startSimulator = (elementReg: any) => {
 
     // Add relations to the graph
     relations.forEach((element: any) => {
+        const source: string = element.businessObject.get('sourceRef' ).id;
+        const target: string = element.businessObject.get('targetRef' ).id;
         switch (element.businessObject.get('type')) {
             case 'condition':
-                addRelation(dcrGraph.conditionsFor,
-                    element.businessObject.get('targetRef' ).id,
-                    element.businessObject.get('sourceRef' ).id);
+                addRelation(dcrGraph.conditionsFor, target, source);
                 break;
             case 'milestone':
-                addRelation(dcrGraph.milestonesFor,
-                    element.businessObject.get('targetRef' ).id,
-                    element.businessObject.get('sourceRef' ).id);
+                addRelation(dcrGraph.milestonesFor, target, source);
                 break;
             case 'response':
-                addRelation(dcrGraph.responseTo,
-                    element.businessObject.get('sourceRef' ).id,
-                    element.businessObject.get('targetRef' ).id);
+                addRelation(dcrGraph.responseTo, source, target);
                 break;
             case 'include':
-                addRelation(dcrGraph.includesTo,
-                    element.businessObject.get('sourceRef' ).id,
-                    element.businessObject.get('targetRef' ).id);
+                addRelation(dcrGraph.includesTo, source, target);
                 break;
             case 'exclude':
-                addRelation(dcrGraph.excludesTo,
-                    element.businessObject.get('sourceRef' ).id,
-                    element.businessObject.get('targetRef' ).id);
+                addRelation(dcrGraph.excludesTo, source, target);
                 break;
         }
     });
@@ -146,17 +138,15 @@ const addRelation =
 }
 
 // Update the visual representation of the graph with the new states/markings
-export const updateGraph = (elementReg: any, modeler: any) => {
-    events.forEach((element: any) => {
-        modeler.get('modeling').updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
-        modeler.get('modeling').updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
-        modeler.get('modeling').updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
-        modeler.get('modeling').updateProperties(element, {enabled: isEnabled(element.id, dcrGraph)});
+export const updateGraph = (modeler: any) => {
+    const modeling = modeler.get('modeling');
+    [...events, ...subProcesses].forEach((element: any) => {
+        modeling.updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
+        modeling.updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
+        modeling.updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
     });
-    subProcesses.forEach((element: any) => {
-        modeler.get('modeling').updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
-        modeler.get('modeling').updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
-        modeler.get('modeling').updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
+    events.forEach((element: any) => {
+        modeling.updateProperties(element, {enabled: isEnabled(element.id, dcrGraph)});
     });
 }
 

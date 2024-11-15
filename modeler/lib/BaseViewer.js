@@ -505,17 +505,17 @@ BaseViewer.prototype.getModules = function () {
 BaseViewer.prototype.startSimulation = function () {
   simulatorInit(this);
   simulatorStart(this.get('elementRegistry'));
-  simulatorUpdate(this.get('elementRegistry'), this);
+  simulatorUpdate(this);
 }
 
 BaseViewer.prototype.simulatorExecute = function (element) {
   simulatorExecute(element);
-  simulatorUpdate(this.get('elementRegistry'), this);
+  simulatorUpdate(this);
 }
 
 BaseViewer.prototype.simulatorRestoreStates = function () {
   simulatorRestoreStates();
-  simulatorUpdate(this.get('elementRegistry'), this);
+  simulatorUpdate(this);
 }
 
 /**
