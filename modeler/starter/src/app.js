@@ -8,7 +8,6 @@ import DCRModeler from 'dcr-graph-diagram-modeler';
 
 import emptyBoardXML from './resources/emptyBoard.xml?raw';
 import sampleBoardXML from './resources/sampleBoard.xml?raw';
-import {executeEvent as simulatorExecute} from "../../lib/simulator/simulator";
 
 // modeler instance
 var modeler = new DCRModeler({
