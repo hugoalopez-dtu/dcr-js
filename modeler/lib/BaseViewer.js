@@ -504,7 +504,7 @@ BaseViewer.prototype.getModules = function () {
 
 BaseViewer.prototype.startSimulation = function () {
   simulatorInit(this);
-  simulatorStart(this.get('elementRegistry'));
+  simulatorStart(this.get('elementRegistry').get('Graph'));
   simulatorUpdate(this);
 }
 
