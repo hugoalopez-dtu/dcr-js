@@ -30,6 +30,7 @@ export interface EventMap {
 
 export interface DCRGraph {
   events: Set<Event>;
+  subProcesses: Set<DCRGraph>;
   conditionsFor: EventMap;
   milestonesFor: EventMap;
   responseTo: EventMap;

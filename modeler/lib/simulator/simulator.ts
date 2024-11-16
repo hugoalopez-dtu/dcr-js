@@ -8,16 +8,20 @@ import {
 import { execute, isEnabled } from "./align";
 import { copyMarking } from "./utility";
 
-let dcrGraph: DCRGraph;
-let events: Set<any>;
-let relations: Set<any>;
-let nestings: Set<any>;
-let subProcesses: Set<any>;
+interface FullGraph {
+    dcrGraph: DCRGraph;
+    events: Set<any>;
+    relations: Set<any>;
+    nestings: Set<any>;
+    subProcesses: Set<any>;
+}
+
 let originalMarking: Marking;
 
-const clearGraph = () => {
-    dcrGraph = {
+const initGraph = (graph: FullGraph) => {
+    graph.dcrGraph = {
         events: new Set(),
+        subProcesses: new Set(),
         conditionsFor: {},
         milestonesFor: {},
         responseTo: {},
@@ -29,11 +33,11 @@ const clearGraph = () => {
             pending: new Set(),
         },
     }
-    
-    events = new Set();
-    relations = new Set();
-    nestings = new Set();
-    subProcesses = new Set();
+
+    graph.events = new Set();
+    graph.relations = new Set();
+    graph.nestings = new Set();
+    graph.subProcesses = new Set();
 }
 
 export const executeEvent  = (event: Event) => {
@@ -41,44 +45,48 @@ export const executeEvent  = (event: Event) => {
     execute(event, dcrGraph);
 }
 
-export const startSimulator = (elementReg: any) => {
-    clearGraph();
+export const startGraph = (root: any) => {
+    const graph: FullGraph = {} as FullGraph;
+    initGraph(graph);
 
-    elementReg.forEach((element: any) => {
-        
-        // Add events to the graph
-        if (element.type === 'dcr:Event' ||element.type === 'dcr:SubProcess') {
-            dcrGraph.events.add(element.id);
-            dcrGraph.conditionsFor[element.id] = new Set();
-            dcrGraph.milestonesFor[element.id] = new Set();
-            dcrGraph.responseTo[element.id] = new Set();
-            dcrGraph.includesTo[element.id] = new Set();
-            dcrGraph.excludesTo[element.id] = new Set();
-            if (element.businessObject.get('pending')) {
-                dcrGraph.marking.pending.add(element.id);
-            }
-            if (element.businessObject.get('executed')) {
-                dcrGraph.marking.executed.add(element.id);
-            }
-            if (element.businessObject.get('included')) {
-                dcrGraph.marking.included.add(element.id);
-            }
-        }
-
+    root.children.forEach((element: any) => {
         // Save the different types of elements in separate sets
         switch (element.type) {
             case 'dcr:Event':
-                events.add(element);
+                graph.events.add(element);
                 break;
             case 'dcr:Relation':
-                relations.add(element);
+                graph.relations.add(element);
                 break;
             case 'dcr:Nesting':
-                nestings.add(element);
+                graph.nestings.add(element);
                 break;
             case 'dcr:SubProcess':
-                subProcesses.add(element);
+                graph.subProcesses.add(element);
                 break;
+        }
+    });
+
+    graph.subProcesses.forEach((element: any) => {
+        startGraph(element);
+    });
+
+    // Add events to the graph
+    [...graph.events, ...graph.subProcesses].forEach((element: any) => {
+        graph.dcrGraph.events.add(element.id);
+        graph.dcrGraph.conditionsFor[element.id] = new Set();
+        graph.dcrGraph.milestonesFor[element.id] = new Set();
+        graph.dcrGraph.responseTo[element.id] = new Set();
+        graph.dcrGraph.includesTo[element.id] = new Set();
+        graph.dcrGraph.excludesTo[element.id] = new Set();
+        if (element.businessObject.get('pending')) {
+            graph.dcrGraph.marking.pending.add(element.id);
+        }
+        if (element.businessObject.get('executed')) {
+            graph.dcrGraph.marking.executed.add(element.id);
+        }
+        if (element.businessObject.get('included')) {
+            graph.dcrGraph.marking.included.add(element.id);
         }
     });
 
