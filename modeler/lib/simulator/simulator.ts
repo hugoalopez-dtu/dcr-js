@@ -25,6 +25,7 @@ export const executeEvent  = (eventElement: any) => {
 const initGraph = (root: any): DCRGraph => {
     let graph: DCRGraph = {} as DCRGraph;
     graph = clearGraph(graph);
+    graph.id = root.id;
     console.log("Root:");
     console.log(root);
 
@@ -34,7 +35,9 @@ const initGraph = (root: any): DCRGraph => {
     const subProcessElements = root.children.filter((element: any) => element.type === 'dcr:SubProcess');
 
     subProcessElements.forEach((element: any) => {
-        graph.subProcesses.add(initGraph(element));
+        let subProcess = initGraph(element);
+        subProcess.parent = graph;
+        graph.subProcesses.add(subProcess);
     });
 
     // Add events to the graph
@@ -131,8 +134,10 @@ const addRelation =
 
 const clearGraph = (graph: DCRGraph): DCRGraph => {
     graph = {
+        id: '',
         events: new Set(),
         subProcesses: new Set(),
+        parent: null,
         conditionsFor: {},
         milestonesFor: {},
         responseTo: {},

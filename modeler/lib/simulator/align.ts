@@ -34,6 +34,9 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
   if (!graph.marking.included.has(event)) {
     return false;
   }
+  if (graph.parent && !isEnabled(graph.id, graph.parent)) {
+    return false;
+  }
   for (const cEvent of graph.conditionsFor[event]) {
     // If an event conditioning for event is included and not executed
     if (
