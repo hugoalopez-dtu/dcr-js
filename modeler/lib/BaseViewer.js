@@ -32,7 +32,7 @@ import simulatorInit from './simulator/init';
 import {
   startSimulator as simulatorStart,
   executeEvent as simulatorExecute,
-  updateGraph as simulatorUpdate,
+  updateRootGraph as simulatorUpdate,
   restoreStates as simulatorRestoreStates
 } from './simulator/simulator';
 

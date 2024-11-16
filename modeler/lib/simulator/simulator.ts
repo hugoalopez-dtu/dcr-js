@@ -147,17 +147,25 @@ const clearGraph = (graph: DCRGraph): DCRGraph => {
     return graph;
 }
 
+export const updateRootGraph = (modeler: any) => {
+    const modeling = modeler.get('modeling');
+    updateGraph(modeling, modeler.get('elementRegistry'), rootGraph);
+}
+
 // Update the visual representation of the graph with the new states/markings
-export const updateGraph = (modeler: any) => {
-    /*const modeling = modeler.get('modeling');
-    [...events, ...subProcesses].forEach((element: any) => {
-        modeling.updateProperties(element, {executed: dcrGraph.marking.executed.has(element.id)});
-        modeling.updateProperties(element, {included: dcrGraph.marking.included.has(element.id)});
-        modeling.updateProperties(element, {pending: dcrGraph.marking.pending.has(element.id)});
+const updateGraph = (modeling: any, elementReg: any, graph: DCRGraph) => {
+    graph.events.forEach((event: any) => {
+        let element = elementReg.get(event);
+        modeling.updateProperties(element, {executed: graph.marking.executed.has(event)});
+        modeling.updateProperties(element, {included: graph.marking.included.has(event)});
+        modeling.updateProperties(element, {pending: graph.marking.pending.has(event)});
+        if (event.includes('Event')) {
+            modeling.updateProperties(element, {enabled: isEnabled(event, graph)});
+        }
     });
-    events.forEach((element: any) => {
-        modeling.updateProperties(element, {enabled: isEnabled(element.id, dcrGraph)});
-    });*/
+    graph.subProcesses.forEach((subProcess: any) => {
+        updateGraph(modeling, elementReg, subProcess);
+    });
 }
 
 // Restore original marking for events and sub processes
