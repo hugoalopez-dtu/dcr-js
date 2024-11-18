@@ -12,22 +12,32 @@ let rootGraph: DCRGraph;
 
 export const startSimulator = (root: any) => {
     rootGraph = initGraph(root);
-    console.log("Simulator graph:");
-    console.log(rootGraph);
 }
 
 export const executeEvent  = (eventElement: any) => {
-    /*const event: Event = eventElement.id;
-    if (!isEnabled(event, dcrGraph)) return;
-    execute(event, dcrGraph);*/
+    const event: Event = eventElement.id;
+
+    let parentGraph: DCRGraph | null = findParentGraph(event, rootGraph);
+    if (!parentGraph) return;
+
+    if (!isEnabled(event, parentGraph)) return;
+    execute(event, parentGraph);
+}
+
+const findParentGraph = (event: Event, graph: DCRGraph): DCRGraph | null => {
+    if (graph.events.has(event)) return graph;
+    let parentGraph: DCRGraph | null = null;
+    graph.subProcesses.forEach((subProcess: DCRGraph) => {
+        let ret = findParentGraph(event, subProcess);
+        if (ret) parentGraph = ret;
+    });
+    return parentGraph;
 }
 
 const initGraph = (root: any): DCRGraph => {
     let graph: DCRGraph = {} as DCRGraph;
     graph = clearGraph(graph);
     graph.id = root.id;
-    console.log("Root:");
-    console.log(root);
 
     const eventElements = root.children.filter((element: any) => element.type === 'dcr:Event');
     const relationElements = root.children.filter((element: any) => element.type === 'dcr:Relation');
@@ -135,9 +145,9 @@ const addRelation =
 const clearGraph = (graph: DCRGraph): DCRGraph => {
     graph = {
         id: '',
+        parent: null,
         events: new Set(),
         subProcesses: new Set(),
-        parent: null,
         conditionsFor: {},
         milestonesFor: {},
         responseTo: {},

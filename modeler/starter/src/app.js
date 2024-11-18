@@ -106,12 +106,6 @@ document
   .getElementById('js-start-simulation')
   .addEventListener('click', function () {
 
-    // Only for debugging purposes
-    let elementRegistry = modeler.get('elementRegistry')
-    elementRegistry.forEach(element => {
-      console.log(element);
-    });
-
     // Handle simulation
     if (!simulating) {
         startSimulation();
@@ -153,7 +147,7 @@ function startSimulation() {
 
             const element = event.element;
             if (element.type === 'dcr:Event') {
-                modeler.simulatorExecute(element.id);
+                modeler.simulatorExecute(element);
             }
         }
     });

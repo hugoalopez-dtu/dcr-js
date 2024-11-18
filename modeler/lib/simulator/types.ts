@@ -30,9 +30,9 @@ export interface EventMap {
 
 export interface DCRGraph {
   id: string;
+  parent: DCRGraph | null;
   events: Set<Event>;
   subProcesses: Set<DCRGraph>;
-  parent: DCRGraph | null;
   conditionsFor: EventMap;
   milestonesFor: EventMap;
   responseTo: EventMap;

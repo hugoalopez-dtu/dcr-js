@@ -21,7 +21,7 @@ export const execute = (event: Event, graph: DCRGraph) => {
   for (const iEvent of graph.includesTo[event]) {
     graph.marking.included.add(iEvent);
   }
-  if (graph.parent && isAccepting(graph.parent)) {
+  if (graph.parent && isAccepting(graph)) {
     execute(graph.id, graph.parent);
   }
 };
