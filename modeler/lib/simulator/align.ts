@@ -21,6 +21,9 @@ export const execute = (event: Event, graph: DCRGraph) => {
   for (const iEvent of graph.includesTo[event]) {
     graph.marking.included.add(iEvent);
   }
+  if (graph.parent && isAccepting(graph.parent)) {
+    execute(graph.id, graph.parent);
+  }
 };
 
 const isAccepting = (graph: DCRGraph): boolean => {
