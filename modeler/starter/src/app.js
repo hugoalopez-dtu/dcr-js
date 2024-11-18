@@ -144,6 +144,9 @@ function clearSimulation() {
 }
 
 function startSimulation() {
+    const selection = modeler.get("selection");
+    selection.select([]);
+
     simulating = true;
     let eventBus = modeler.get('eventBus');
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
@@ -180,6 +183,9 @@ function startSimulation() {
             if (element.type === 'dcr:Event') {
                 modeler.simulatorExecute(element);
             }
+
+            const selection = modeler.get("selection");
+            selection.select([]);
         }
     });
 
