@@ -49,7 +49,6 @@ export const executeEvent  = (eventElement: any) => {
             appendSimulationLog(eventName + " is missing a milestone");
             return;
     }
-    if (isEnabled(event, parentGraph) != 0) return;
     execute(event, parentGraph);
     logExcecution(eventElement);
     addToTrace(eventElement);
