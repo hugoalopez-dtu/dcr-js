@@ -32,13 +32,20 @@ const isAccepting = (graph: DCRGraph): boolean => {
     copySet(graph.marking.pending).intersect(graph.marking.included).size === 0
   );
 };
-
-export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
+/*
+* Returns a number indicating the state of the event
+* 0: enabled
+* 1: not included
+* 2: parent not enabled
+* 3: missing condition
+* 4: missing milestone
+*/
+export const isEnabled = (event: Event, graph: DCRGraph): number => {
   if (!graph.marking.included.has(event)) {
-    return false;
+    return 1;
   }
-  if (graph.parent && !isEnabled(graph.id, graph.parent)) {
-    return false;
+  if (graph.parent && isEnabled(graph.id, graph.parent) != 0) {
+    return 2;
   }
   for (const cEvent of graph.conditionsFor[event]) {
     // If an event conditioning for event is included and not executed
@@ -46,7 +53,7 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
       graph.marking.included.has(cEvent) &&
       !graph.marking.executed.has(cEvent)
     ) {
-      return false;
+      return 3;
     }
   }
   for (const mEvent of graph.milestonesFor[event]) {
@@ -55,10 +62,10 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
       graph.marking.included.has(mEvent) &&
       graph.marking.pending.has(mEvent)
     ) {
-      return false;
+      return 4;
     }
   }
-  return true;
+  return 0;
 };
 
 const getEnabled = (graph: DCRGraph): Set<Event> => {

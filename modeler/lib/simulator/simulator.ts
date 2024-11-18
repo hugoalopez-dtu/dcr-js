@@ -25,11 +25,31 @@ export const startSimulator = (root: any) => {
 
 export const executeEvent  = (eventElement: any) => {
     const event: Event = eventElement.id;
+    var eventName: String = eventElement.businessObject.description;
+    if (eventName == null || eventName === "") {
+        eventName = "Unnamed event";
+    }
 
     let parentGraph: DCRGraph | null = findParentGraph(event, rootGraph);
     if (!parentGraph) return;
 
-    if (!isEnabled(event, parentGraph)) return;
+    switch(isEnabled(event, parentGraph)) {
+        case 0:
+            break;
+        case 1:
+            appendSimulationLog(eventName + " is not included");
+            return;
+        case 2:
+            appendSimulationLog("Parent of " + eventName + " is not enabled");
+            return;
+        case 3:
+            appendSimulationLog(eventName + " is missing a condition");
+            return;
+        case 4:
+            appendSimulationLog(eventName + " is missing a milestone");
+            return;
+    }
+    if (isEnabled(event, parentGraph) != 0) return;
     execute(event, parentGraph);
     logExcecution(eventElement);
     addToTrace(eventElement);
@@ -186,7 +206,7 @@ const updateGraph = (modeling: any, elementReg: any, graph: DCRGraph) => {
         modeling.updateProperties(element, {included: graph.marking.included.has(event)});
         modeling.updateProperties(element, {pending: graph.marking.pending.has(event)});
         if (event.includes('Event')) {
-            modeling.updateProperties(element, {enabled: isEnabled(event, graph)});
+            modeling.updateProperties(element, {enabled: isEnabled(event, graph) === 0});
         }
     });
     graph.subProcesses.forEach((subProcess: any) => {
