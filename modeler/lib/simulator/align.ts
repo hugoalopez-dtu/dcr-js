@@ -21,6 +21,9 @@ export const execute = (event: Event, graph: DCRGraph) => {
   for (const iEvent of graph.includesTo[event]) {
     graph.marking.included.add(iEvent);
   }
+  if (graph.parent && isAccepting(graph)) {
+    execute(graph.id, graph.parent);
+  }
 };
 
 const isAccepting = (graph: DCRGraph): boolean => {
@@ -32,6 +35,9 @@ const isAccepting = (graph: DCRGraph): boolean => {
 
 export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
   if (!graph.marking.included.has(event)) {
+    return false;
+  }
+  if (graph.parent && !isEnabled(graph.id, graph.parent)) {
     return false;
   }
   for (const cEvent of graph.conditionsFor[event]) {

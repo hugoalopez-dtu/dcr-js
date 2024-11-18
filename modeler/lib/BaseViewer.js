@@ -32,8 +32,8 @@ import simulatorInit from './simulator/init';
 import {
   startSimulator as simulatorStart,
   executeEvent as simulatorExecute,
-  updateGraph as simulatorUpdate,
-  restoreStates as simulatorRestoreStates
+  updateRootGraph as simulatorUpdate,
+  restoreMarkings as simulatorRestoreMarkings
 } from './simulator/simulator';
 
 
@@ -504,7 +504,7 @@ BaseViewer.prototype.getModules = function () {
 
 BaseViewer.prototype.startSimulation = function () {
   simulatorInit(this);
-  simulatorStart(this.get('elementRegistry'));
+  simulatorStart(this.get('elementRegistry').get('dcrGraph'));
   simulatorUpdate(this);
 }
 
@@ -514,7 +514,7 @@ BaseViewer.prototype.simulatorExecute = function (element) {
 }
 
 BaseViewer.prototype.simulatorRestoreStates = function () {
-  simulatorRestoreStates();
+  simulatorRestoreMarkings();
   simulatorUpdate(this);
 }
 
