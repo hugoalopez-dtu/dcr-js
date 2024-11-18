@@ -14,6 +14,7 @@ declare global {
 // --------------------- DCR Graph Types ---------------------
 // -----------------------------------------------------------
 
+export type Id = string;
 export type Event = string;
 
 export interface Marking {
@@ -29,7 +30,7 @@ export interface EventMap {
 }
 
 export interface DCRGraph {
-  id: string;
+  id: Id;
   parent: DCRGraph | null;
   events: Set<Event>;
   subProcesses: Set<DCRGraph>;

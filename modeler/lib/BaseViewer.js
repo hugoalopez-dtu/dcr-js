@@ -33,7 +33,7 @@ import {
   startSimulator as simulatorStart,
   executeEvent as simulatorExecute,
   updateRootGraph as simulatorUpdate,
-  restoreStates as simulatorRestoreStates
+  restoreMarkings as simulatorRestoreMarkings
 } from './simulator/simulator';
 
 
@@ -514,7 +514,7 @@ BaseViewer.prototype.simulatorExecute = function (element) {
 }
 
 BaseViewer.prototype.simulatorRestoreStates = function () {
-  simulatorRestoreStates();
+  simulatorRestoreMarkings();
   simulatorUpdate(this);
 }
 

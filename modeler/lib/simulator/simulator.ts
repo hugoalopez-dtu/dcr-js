@@ -3,10 +3,17 @@ import {
     Event,
     EventMap,
     Marking,
+    Id
 } from "./types";
 
 import { execute, isEnabled } from "./align";
 import { copyMarking } from "./utility";
+
+interface Markings {
+    [key: Id]: Marking;
+}
+
+let originalMarkings: Markings = {};
 
 let rootGraph: DCRGraph;
 
@@ -58,7 +65,7 @@ const initGraph = (root: any): DCRGraph => {
     addNestings(graph, nestingElements);
 
     // Save the original marking
-    //graph.originalMarking = copyMarking(graph.dcrGraph.marking);
+    originalMarkings[graph.id] = copyMarking(graph.marking);
 
     // Add relations to the graph
     relationElements.forEach((element: any) => {
@@ -184,6 +191,13 @@ const updateGraph = (modeling: any, elementReg: any, graph: DCRGraph) => {
 }
 
 // Restore original marking for events and sub processes
-export const restoreStates = () => {
-    //dcrGraph.marking = copyMarking(originalMarking);
+export const restoreMarkings = () => {
+    restoreSpecificGraphMarkings(rootGraph);
+}
+
+export const restoreSpecificGraphMarkings = (graph: DCRGraph) => {
+    graph.marking = copyMarking(originalMarkings[graph.id]);
+    graph.subProcesses.forEach((subProcess: DCRGraph) => {
+        restoreSpecificGraphMarkings(subProcess);
+    });
 }
