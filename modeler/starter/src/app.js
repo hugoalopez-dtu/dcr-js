@@ -127,6 +127,9 @@ function startSimulation() {
     let eventBus = modeler.get('eventBus');
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
+    document.getElementById('js-open-examples').style.display = 'none'
+    document.getElementById('js-open-files').style.display = 'none'
+
 
     // Define events that should be prevented
     const interactionEvents = [
@@ -166,6 +169,9 @@ function stopSimulation() {
     simulating = false;
     document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
     document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
+    document.getElementById('js-open-examples').style.display = 'block'
+    document.getElementById('js-open-files').style.display = 'block'
+
 
     // Restore states for events and set enabled to false
     modeler.simulatorRestoreStates();
