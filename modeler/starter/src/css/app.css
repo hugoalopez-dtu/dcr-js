@@ -198,3 +198,29 @@ input:checked + .slider:before {
 :before {
   border-radius: 50%;
 }
+
+.sidepanel {
+  z-index: 1;
+  position: fixed;
+  right: 0%;
+  bottom: 0%;
+  height: 50%;
+  width: 400px;
+  box-shadow: 0px 0px 10px 0px black;
+  background-color: #dddddd;
+  padding: 0.5rem;
+}
+
+.sidepanel p {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.sidepanel #simulation-trace, #simulation-log {
+  overflow-y: scroll;
+  height: 50%;
+}
+
+#trace {
+  overflow-wrap: anywhere;
+}

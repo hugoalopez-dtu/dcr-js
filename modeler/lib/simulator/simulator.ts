@@ -8,6 +8,8 @@ import {
 
 import { execute, isEnabled } from "./align";
 import { copyMarking } from "./utility";
+import { appendSimulationLog } from "../../starter/src/app";
+import { addToSimulationTrace } from "../../starter/src/app";
 
 interface Markings {
     [key: Id]: Marking;
@@ -29,6 +31,8 @@ export const executeEvent  = (eventElement: any) => {
 
     if (!isEnabled(event, parentGraph)) return;
     execute(event, parentGraph);
+    logExcecution(eventElement);
+    addToTrace(eventElement);
 }
 
 const findParentGraph = (event: Event, graph: DCRGraph): DCRGraph | null => {
@@ -200,4 +204,21 @@ export const restoreSpecificGraphMarkings = (graph: DCRGraph) => {
     graph.subProcesses.forEach((subProcess: DCRGraph) => {
         restoreSpecificGraphMarkings(subProcess);
     });
+}
+
+function logExcecution(event: any) {
+    var eventName: String = event.businessObject.description;
+    if (eventName == null || eventName === "") {
+        appendSimulationLog("Executed Unnamed event");
+    } else {
+        appendSimulationLog("Executed  "+ eventName);
+    }
+}
+
+function addToTrace(event: any) {
+    var eventName: String = event.businessObject.description;
+    if (eventName == null || eventName === "") {
+        eventName = "Unnamed event";
+    }
+    addToSimulationTrace(eventName);
 }

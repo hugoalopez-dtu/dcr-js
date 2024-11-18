@@ -108,11 +108,40 @@ document
 
     // Handle simulation
     if (!simulating) {
-        startSimulation();
+      startSimulation();
+      document.getElementById('simulation-sidepanel').style.display = 'block';
     } else {
-        stopSimulation();
+      stopSimulation();
+      document.getElementById('simulation-sidepanel').style.display = 'none';
+      clearSimulation();
     }
   });
+
+export function appendSimulationLog(message) {
+  const log = document.getElementById('simulation-log');
+  const logElement = document.createElement('p');
+  logElement.innerHTML = message;
+  if (document.getElementById('log-headline').firstChild) {
+    log.insertBefore(logElement, document.getElementById('log-headline').nextSibling);
+  }
+}
+  
+export function addToSimulationTrace(message) {
+  const trace = document.getElementById('trace');
+  if (trace.innerHTML === "") {
+    trace.innerHTML = message;
+  } else {
+    trace.innerHTML = trace.innerHTML + "&#x2192;" + message;
+  }
+}
+  
+function clearSimulation() {
+  const log = document.getElementById('simulation-log');
+  document.getElementById('trace').innerHTML = "";
+  while(log.childNodes.length > 2) {
+    log.removeChild(log.lastChild);
+  }
+}
 
 function startSimulation() {
     // TODO Remove interaction for element
