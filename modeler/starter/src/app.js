@@ -101,7 +101,7 @@ document
       document.getElementById('io-dialog-main').style.display = displayProp;
     }
   });
-let simulating = false;
+export let simulating = false;
 document
   .getElementById('js-start-simulation')
   .addEventListener('click', function () {
@@ -144,13 +144,12 @@ function clearSimulation() {
 }
 
 function startSimulation() {
-    // TODO Remove interaction for element
     simulating = true;
     let eventBus = modeler.get('eventBus');
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
-    document.getElementById('js-open-examples').style.display = 'none'
-    document.getElementById('js-open-files').style.display = 'none'
+    document.getElementById('js-open-examples').style.display = 'none';
+    document.getElementById('js-open-files').style.display = 'none';
 
 
     // Define events that should be prevented
