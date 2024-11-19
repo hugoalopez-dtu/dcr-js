@@ -67,7 +67,7 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
     // Inner element: Vertical line
     var verticalLine = svgCreate('path');
     svgAttr(verticalLine, {
-      d: 'M12 0.8V5.5',
+      d: 'M12 0.8V5',
       'stroke-width': 2.3,
       'stroke-linecap': 'round',
       transform: 'translate(-2, 5)'
@@ -134,11 +134,11 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
     // Inner element: Minus sign
     var minusSign = svgCreate('path');
     svgAttr(minusSign, {
-      d: 'M16 12H8',
+      d: 'M16 12H10',
       fill: stroke,
       'stroke-width': 2,
       'stroke-linecap': 'round',
-      transform: 'translate(-2, -2)'
+      transform: 'translate(-3, -2)'
     });
 
     // Group the elements together
@@ -242,68 +242,45 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
   }
 
   if (type === 'proposed-condition-flow-end') {
-    var conditionflowEnd = svgCreate('circle');
-    svgAttr(conditionflowEnd, {
+    var circle = svgCreate('circle');
+    svgAttr(circle, {
       cx: 10,
       cy: 10,
       r: 9,
-    });
-
-    // Inner circle
-    var innerCircle = svgCreate('circle');
-    svgAttr(innerCircle, {
-      cx: 6,
-      cy: 10,
-      r: 2.2,
       fill: 'white',
       stroke: stroke,
-      'stroke-width': 2,
-      transform: 'translate(0.2, 0)'
+      strokeWidth: 2
     });
 
-    // Horizontal line
-    var horizontalLine = svgCreate('path');
-    svgAttr(horizontalLine, {
-      d: 'M5,10 h6 a1,1 0 0 1 1,1 v0 a1,1 0 0 1 -1,1 h-6 a1,1 0 0 1 -1,-1 v0 a1,1 0 0 1 1,-1 z',
-      fill: stroke,
-      'stroke-width': 0.06,
-      transform: 'translate(4, -1)'
+    var keyCircle = svgCreate('circle');
+    svgAttr(keyCircle, {
+      cx: 6.5,
+      cy: 10,
+      r: 2.1,
+      stroke: stroke,
+      strokeWidth: 2
     });
 
-    // Vertical lines
-    var verticalLine1 = svgCreate('path');
-    svgAttr(verticalLine1, {
-      d: 'M10,8 v2 a1,1 0 0 1 -1,1 h0 a1,1 0 0 1 -1,-1 v-2 a1,1 0 0 1 1,-1 h0 a1,1 0 0 1 1,1 z',
-      fill: stroke,
-      'stroke-width': 0.06,
-      transform: 'translate(3.5, 2)'
-    });
-
-    var verticalLine2 = svgCreate('path');
-    svgAttr(verticalLine2, {
-      d: 'M10,8 v2 a1,1 0 0 1 -1,1 h0 a1,1 0 0 1 -1,-1 v-2 a1,1 0 0 1 1,-1 h0 a1,1 0 0 1 1,1 z',
-      fill: stroke,
-      'stroke-width': 0.06,
-      transform: 'translate(6.5, 2)'
+    var keyLine = svgCreate('path');
+    svgAttr(keyLine, {
+      d: "M9.5 10H12.5M15.5 12.5V10H12.5M12.5 10V12.5",
+      stroke: stroke,
+      strokeWidth: 2,
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
     });
 
     // Group the elements together
-    var excludeGroup = svgGroup([conditionflowEnd, innerCircle, horizontalLine, verticalLine1, verticalLine2]);
+    var conditionGroup = svgGroup([circle, keyCircle, keyLine]);
 
 
     addMarker(id, {
-      element: excludeGroup,
+      element: conditionGroup,
+      scale: 0.5,
       attrs: {
-        stroke: stroke,
-        'stroke-width': '2',
-        fill: 'white',
-        transform: getTransform(endDirection)
+        fill: fill,
       },
-      ref: {
-        x: 21,
-        y: 10
-      },
-      scale: 0.5
+      ref: { x: 20.65, y: 10 },
     });
   }
 
@@ -329,67 +306,45 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
   }
 
   if (type === 'proposed-milestone-flow-end') {
-    var milestoneflowEnd = svgCreate('circle');
-    svgAttr(milestoneflowEnd, {
+    var circle = svgCreate('circle');
+    svgAttr(circle, {
       cx: 10,
       cy: 10,
       r: 9,
-    });
-
-    // Inner circle
-    var innerCircle = svgCreate('circle');
-    svgAttr(innerCircle, {
-      cx: 6,
-      cy: 10,
-      r: 2.2,
       fill: 'white',
       stroke: stroke,
-      'stroke-width': 2,
-      transform: 'translate(0.2, 0)'
+      strokeWidth: 2
     });
 
-    // Horizontal line
-    var horizontalLine = svgCreate('path');
-    svgAttr(horizontalLine, {
-      d: 'M5,10 h6 a1,1 0 0 1 1,1 v0 a1,1 0 0 1 -1,1 h-6 a1,1 0 0 1 -1,-1 v0 a1,1 0 0 1 1,-1 z',
-      fill: stroke,
-      'stroke-width': 0.06,
-      transform: 'translate(4, -1)'
+    var keyCircle = svgCreate('circle');
+    svgAttr(keyCircle, {
+      cx: 6.5,
+      cy: 10,
+      r: 2.1,
+      stroke: stroke,
+      strokeWidth: 2
     });
 
-    // Vertical lines
-    var verticalLine1 = svgCreate('path');
-    svgAttr(verticalLine1, {
-      d: 'M10,8 v2 a1,1 0 0 1 -1,1 h0 a1,1 0 0 1 -1,-1 v-2 a1,1 0 0 1 1,-1 h0 a1,1 0 0 1 1,1 z',
-      fill: stroke,
-      'stroke-width': 0.06,
-      transform: 'translate(3.5, 2)'
-    });
-
-    var verticalLine2 = svgCreate('path');
-    svgAttr(verticalLine2, {
-      d: 'M10,8 v2 a1,1 0 0 1 -1,1 h0 a1,1 0 0 1 -1,-1 v-2 a1,1 0 0 1 1,-1 h0 a1,1 0 0 1 1,1 z',
-      fill: stroke,
-      'stroke-width': 0.06,
-      transform: 'translate(6.5, 2)'
+    var keyLine = svgCreate('path');
+    svgAttr(keyLine, {
+      d: "M9.5 10H12.5M15.5 12.5V10H12.5M12.5 10V12.5",
+      stroke: stroke,
+      strokeWidth: 2,
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
     });
 
     // Group the elements together
-    var milestoneGroup = svgGroup([milestoneflowEnd, innerCircle, horizontalLine, verticalLine1, verticalLine2]);
+    var conditionGroup = svgGroup([circle, keyCircle, keyLine]);
+
 
     addMarker(id, {
-      element: milestoneGroup,
+      element: conditionGroup,
+      scale: 0.5,
       attrs: {
-        stroke: stroke,
-        'stroke-width': '2',
-        fill: 'white',
-        transform: getTransform(endDirection)
+        fill: fill,
       },
-      ref: {
-        x: 21,
-        y: 10
-      },
-      scale: 0.5
+      ref: { x: 20.65, y: 10 },
     });
   }
 
@@ -427,7 +382,7 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
     svgAttr(dot, {
       cx: 3,
       cy: 6.5,
-      r: 0.15,
+      r: 0.1,
     });
 
     var excl = svgGroup([verticalLine, dot]);

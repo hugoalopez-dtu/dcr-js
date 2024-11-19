@@ -46,17 +46,19 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       y: 1,
       width: 18,
       height: 18,
-      rx: 2,
-      ry: 2
+      rx: 1,
+      ry: 1,
+      fill: stroke
     });
 
     // Inner element: Vertical line
     var verticalLine = svgCreate('path');
     svgAttr(verticalLine, {
-      d: 'M12 0.8V5.5',
+      d: 'M12 0.8V5',
       'stroke-width': 2.3,
       'stroke-linecap': 'round',
-      transform: 'translate(-2, 5)'
+      transform: 'translate(-2, 5)',
+      stroke: 'white'
     });
 
     // Inner element: Dot
@@ -65,21 +67,22 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       cx: 10,
       cy: 14,
       r: 0.21,
+      fill: 'white',
+      stroke: 'white'
     });
 
     // Group the elements together
-    var excludeflowGroup = svgGroup([responseflowStart, verticalLine, dot]);
+    var responseGroup = svgGroup([responseflowStart, verticalLine, dot]);
 
     addMarker(id, {
-      element: excludeflowGroup,
+      element: responseGroup,
       attrs: {
         stroke: stroke,
         'stroke-width': '2',
-        fill: 'white',
         transform: getTransform(startDirection)
       },
       ref: {
-        x: -0.95,
+        x: -0.6,
         y: 10
       },
       scale: 0.5,
@@ -93,18 +96,19 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       y: 1,
       width: 18,
       height: 18,
-      rx: 2,
-      ry: 2
+      rx: 1,
+      ry: 1,
+      fill: stroke
     });
   
     // Inner element: Minus sign
     var minusSign = svgCreate('path');
     svgAttr(minusSign, {
-      d: 'M16 12H8',
-      fill: stroke,
+      d: 'M16 12H10',
       'stroke-width': 2,
       'stroke-linecap': 'round',
-      transform: 'translate(-2, -2)'
+      transform: 'translate(-3, -2)',
+      stroke: 'white'
     });
 
   
@@ -116,11 +120,10 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       attrs: {
         stroke: stroke,
         'stroke-width': '2',
-        fill: 'white',
         transform: getTransform(startDirection)
       },
       ref: {
-        x: -0.95,
+        x: -0.6,
         y: 10
       },
       scale: 0.5
@@ -134,18 +137,19 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       y: 1,
       width: 18,
       height: 18,
-      rx: 2,
-      ry: 2
+      rx: 1,
+      ry: 1,
+      fill: stroke
     });
 
     // Inner element: Plus sign
     var plusSign = svgCreate('path');
     svgAttr(plusSign, {
       d: 'M16 12L8 12M12 16L12 8',
-      fill: stroke,
       'stroke-width': 2,
       'stroke-linecap': 'round',
-      transform: 'translate(-2, -2)'
+      transform: 'translate(-2, -2)',
+      stroke: 'white'
     });
 
     // Group the elements together
@@ -156,11 +160,10 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       attrs: {
         stroke: stroke,
         'stroke-width': '2',
-        fill: 'white',
         transform: getTransform(startDirection)
       },
       ref: {
-        x: -0.95,
+        x: -0.6,
         y: 10
       },
       scale: 0.5
@@ -172,15 +175,15 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
     svgAttr(conditionflowEndPath, {
       cx: 10,
       cy: 10,
-      r: 9,
+      r: 9
     });
   
     addMarker(id, {
       element: conditionflowEndPath,
       attrs: {
         stroke: stroke,
+        fill: 'white',
         'stroke-width': '2',
-        fill: 'white'
       },
       ref: {
         x: 21,
@@ -196,15 +199,17 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       cx: 10,
       cy: 10,
       r: 9,
+      fill: stroke
     });
 
     // Inner element: Vertical line
     var verticalLine = svgCreate('path');
     svgAttr(verticalLine, {
-      d: 'M12 0.8V5.5',
+      d: 'M12 0.8V5',
       'stroke-width': 2.3,
       'stroke-linecap': 'round',
-      transform: 'translate(-2, 5)'
+      transform: 'translate(-2, 5)',
+      stroke: 'white'
     });
 
     // Inner element: Dot
@@ -213,6 +218,8 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       cx: 10,
       cy: 14,
       r: 0.21,
+      fill: 'white',
+      stroke: 'white'
     });
 
     // Group the elements together
@@ -223,7 +230,6 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       attrs: {
         stroke: stroke,
         'stroke-width': '2',
-        fill: 'white',
         transform: getTransform(endDirection)
       },
       ref: {
