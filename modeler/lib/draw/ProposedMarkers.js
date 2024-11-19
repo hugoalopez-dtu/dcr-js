@@ -279,6 +279,7 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       scale: 0.5,
       attrs: {
         fill: fill,
+        transform: getTransform(endDirection)
       },
       ref: { x: 20.65, y: 10 },
     });
@@ -343,6 +344,7 @@ export function createMarker(addMarker, id, type, fill, stroke, startDirection, 
       scale: 0.5,
       attrs: {
         fill: fill,
+        transform: getTransform(endDirection)
       },
       ref: { x: 20.65, y: 10 },
     });
