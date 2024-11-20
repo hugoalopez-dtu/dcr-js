@@ -134,7 +134,7 @@ export function addToSimulationTrace(message) {
   if (trace.innerHTML === "") {
     trace.innerHTML = message;
   } else {
-    trace.innerHTML = trace.innerHTML + "&#x2192;" + message;
+    trace.innerHTML = trace.innerHTML + ", " + message;
   }
 }
   
