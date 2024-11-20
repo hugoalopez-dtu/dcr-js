@@ -152,6 +152,8 @@ function startSimulation() {
 
     simulating = true;
     let eventBus = modeler.get('eventBus');
+    console.log(eventBus);
+
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
     document.getElementById('js-restart-simulation').style.display = 'block';
@@ -163,20 +165,19 @@ function startSimulation() {
     // Define events that should be prevented
     const interactionEvents = [
         'shape.move.start',
-        'spaceTool.selection.start',
-        'lasso.start',
-        'lasso.selection.init',
+        'element.dblclick',
     ];
 
     // Override interactions for certain events in diagram-js
     interactionEvents.forEach(event => {
-        eventBus.on(event, (event) => {
+        eventBus.on(event, 3000, (event) => {
             if (simulating) {
-                event.preventDefault();
-                event.stopPropagation();
+              return false;
             }
         });
     });
+
+    console.log(eventBus);
 
     // Override clicks on events to execute them
     eventBus.on('element.click', (event) => {
