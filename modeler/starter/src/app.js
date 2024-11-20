@@ -152,7 +152,6 @@ function startSimulation() {
 
     simulating = true;
     let eventBus = modeler.get('eventBus');
-    console.log(eventBus);
 
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
@@ -177,7 +176,6 @@ function startSimulation() {
         });
     });
 
-    console.log(eventBus);
 
     // Override clicks on events to execute them
     eventBus.on('element.click', (event) => {
