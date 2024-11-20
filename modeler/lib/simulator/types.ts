@@ -30,14 +30,19 @@ export interface EventMap {
 }
 
 export interface DCRGraph {
-  id: Id;
-  parent: DCRGraph | null;
   events: Set<Event>;
-  subProcesses: Set<DCRGraph>;
+  subProcesses: Set<SubProcess>;
   conditionsFor: EventMap;
   milestonesFor: EventMap;
   responseTo: EventMap;
   includesTo: EventMap;
   excludesTo: EventMap;
   marking: Marking;
+}
+
+export interface SubProcess {
+  id: Id;
+  parent: SubProcess | DCRGraph;
+  events: Set<Event>;
+  subProcesses: Set<SubProcess>;
 }

@@ -3,7 +3,8 @@ import {
     Event,
     EventMap,
     Marking,
-    Id
+    Id,
+    SubProcess
 } from "./types";
 
 import { execute, isEnabled } from "./align";
@@ -11,16 +12,12 @@ import { copyMarking } from "./utility";
 import { appendSimulationLog } from "../../starter/src/app";
 import { addToSimulationTrace } from "../../starter/src/app";
 
-interface Markings {
-    [key: Id]: Marking;
-}
+let originalMarking: Marking;
 
-let originalMarkings: Markings = {};
+let graph: DCRGraph;
 
-let rootGraph: DCRGraph;
-
-export const startSimulator = (root: any) => {
-    rootGraph = initGraph(root);
+export const startSimulator = (elementReg: any) => {
+    initGraph(elementReg);
 }
 
 export const executeEvent  = (eventElement: any) => {
@@ -30,10 +27,13 @@ export const executeEvent  = (eventElement: any) => {
         eventName = "Unnamed event";
     }
 
-    let parentGraph: DCRGraph | null = findParentGraph(event, rootGraph);
-    if (!parentGraph) return;
+    let group: DCRGraph | SubProcess | null = findElementGroup(event, graph);
+    if (!group) {
+        appendSimulationLog("Event not found in graph");
+        return;
+    }
 
-    switch(isEnabled(event, parentGraph)) {
+    switch(isEnabled(event, graph, group)) {
         case 0:
             break;
         case 1:
@@ -49,46 +49,46 @@ export const executeEvent  = (eventElement: any) => {
             appendSimulationLog(eventName + " is missing a milestone");
             return;
     }
-    execute(event, parentGraph);
+    execute(event, graph, group);
     logExcecution(eventElement);
     addToTrace(eventElement);
 }
 
-const findParentGraph = (event: Event, graph: DCRGraph): DCRGraph | null => {
-    if (graph.events.has(event)) return graph;
-    let parentGraph: DCRGraph | null = null;
-    graph.subProcesses.forEach((subProcess: DCRGraph) => {
-        let ret = findParentGraph(event, subProcess);
-        if (ret) parentGraph = ret;
+const findElementGroup = (event: Event, group: DCRGraph | SubProcess): DCRGraph | SubProcess | null => {
+    if (group.events.has(event)) return group;
+    
+    let childGroup: DCRGraph | SubProcess | null = null;
+    
+    group.subProcesses.forEach((subProcess: SubProcess) => {
+        let ret = findElementGroup(event, subProcess);
+        if (ret) childGroup = ret;
     });
-    return parentGraph;
+
+    return childGroup;
 }
 
-const initGraph = (root: any): DCRGraph => {
-    let graph: DCRGraph = {} as DCRGraph;
+const initGraph = (elementReg: any) => {
     graph = clearGraph(graph);
-    graph.id = root.id;
 
+    const relationElements = elementReg.filter((element: any) => element.type === 'dcr:Relation');
+
+    const root = elementReg.get('dcrGraph');
     const eventElements = root.children.filter((element: any) => element.type === 'dcr:Event');
-    const relationElements = root.children.filter((element: any) => element.type === 'dcr:Relation');
     const nestingElements = root.children.filter((element: any) => element.type === 'dcr:Nesting');
     const subProcessElements = root.children.filter((element: any) => element.type === 'dcr:SubProcess');
-
-    subProcessElements.forEach((element: any) => {
-        let subProcess = initGraph(element);
-        subProcess.parent = graph;
-        graph.subProcesses.add(subProcess);
-    });
 
     // Add events to the graph
     addEvents(graph, eventElements);
     addEvents(graph, subProcessElements);
 
+    // Add subprocesses to the graph
+    addSubProcesses(graph, subProcessElements);
+
     // Add events from nested elements to the graph
     addNestings(graph, nestingElements);
 
     // Save the original marking
-    originalMarkings[graph.id] = copyMarking(graph.marking);
+    originalMarking = copyMarking(graph.marking);
 
     // Add relations to the graph
     relationElements.forEach((element: any) => {
@@ -112,28 +112,55 @@ const initGraph = (root: any): DCRGraph => {
                 break;
         }
     });
-    return graph;
 }
 
-const addNestings = (graph: DCRGraph, elements: Set<any>) => {
+const addSubProcesses = (parent: DCRGraph | SubProcess, elements: Set<any>) => {
+    elements.forEach((element: any) => {
+        const subProcess: SubProcess = {
+            id: element.id,
+            parent: parent,
+            events: new Set(),
+            subProcesses: new Set()
+        }
+
+        // Find events, subprocesses and nestings
+        const eventElements = element.children.filter((element: any) => element.type === 'dcr:Event');
+        const subProcessElements = element.children.filter((element: any) => element.type === 'dcr:SubProcess');
+        const nestingElements = element.children.filter((element: any) => element.type === 'dcr:Nesting');
+
+        // Add events to the graph
+        addEvents(subProcess, eventElements);
+        addEvents(subProcess, subProcessElements);
+
+        // Add subprocesses to the graph
+        addSubProcesses(subProcess, subProcessElements);
+
+        // Add events from nested elements to the graph
+        addNestings(subProcess, nestingElements);
+
+        // Add subprocess to parent graph
+        parent.subProcesses.add(subProcess);
+    });
+}
+
+const addNestings = (parent: DCRGraph | SubProcess, elements: Set<any>) => {
     elements.forEach((element: any) => {
         const eventElements = element.children.filter((element: any) => element.type === 'dcr:Event');
         const nestingElements = element.children.filter((element: any) => element.type === 'dcr:Nesting');
         const subProcessElements = element.children.filter((element: any) => element.type === 'dcr:SubProcess');
-        addEvents(graph, eventElements);
-        addEvents(graph, subProcessElements);
-        addNestings(graph, nestingElements);
+        addEvents(parent, eventElements);
+        addEvents(parent, subProcessElements);
+        addNestings(parent, nestingElements);
+        addSubProcesses(parent, subProcessElements);
     });
 }
 
-const addEvents = (graph: DCRGraph, elements: Set<any>) => {
+const addEvents = (parent: DCRGraph | SubProcess, elements: Set<any>) => {
     elements.forEach((element: any) => {
-        graph.events.add(element.id);
-        graph.conditionsFor[element.id] = new Set();
-        graph.milestonesFor[element.id] = new Set();
-        graph.responseTo[element.id] = new Set();
-        graph.includesTo[element.id] = new Set();
-        graph.excludesTo[element.id] = new Set();
+        // Add event to subprocess
+        parent.events.add(element.id);
+
+        // Add marking for event in graph
         if (element.businessObject.get('pending')) {
             graph.marking.pending.add(element.id);
         }
@@ -143,12 +170,18 @@ const addEvents = (graph: DCRGraph, elements: Set<any>) => {
         if (element.businessObject.get('included')) {
             graph.marking.included.add(element.id);
         }
+
+        // Initialize relations for event in graph
+        graph.conditionsFor[element.id] = new Set();
+        graph.milestonesFor[element.id] = new Set();
+        graph.responseTo[element.id] = new Set();
+        graph.includesTo[element.id] = new Set();
+        graph.excludesTo[element.id] = new Set();
     });
 }
 
 const addRelation =
     (relationSet: EventMap, nestings: Set<any>, source: string, target: string) => {
-    
     // Handle Nesting groupings by adding relations for all nested elements
     if (source.includes('Nesting')) {
         nestings.forEach((element: any) => {
@@ -174,8 +207,6 @@ const addRelation =
 
 const clearGraph = (graph: DCRGraph): DCRGraph => {
     graph = {
-        id: '',
-        parent: null,
         events: new Set(),
         subProcesses: new Set(),
         conditionsFor: {},
@@ -194,35 +225,28 @@ const clearGraph = (graph: DCRGraph): DCRGraph => {
 
 export const updateRootGraph = (modeler: any) => {
     const modeling = modeler.get('modeling');
-    updateGraph(modeling, modeler.get('elementRegistry'), rootGraph);
+    update(modeling, modeler.get('elementRegistry'), graph);
 }
 
 // Update the visual representation of the graph with the new states/markings
-const updateGraph = (modeling: any, elementReg: any, graph: DCRGraph) => {
-    graph.events.forEach((event: any) => {
+const update = (modeling: any, elementReg: any, group: DCRGraph | SubProcess) => {
+    group.events.forEach((event: any) => {
         let element = elementReg.get(event);
         modeling.updateProperties(element, {executed: graph.marking.executed.has(event)});
         modeling.updateProperties(element, {included: graph.marking.included.has(event)});
         modeling.updateProperties(element, {pending: graph.marking.pending.has(event)});
         if (event.includes('Event')) {
-            modeling.updateProperties(element, {enabled: isEnabled(event, graph) === 0});
+            modeling.updateProperties(element, {enabled: isEnabled(event, graph, group) === 0});
         }
     });
-    graph.subProcesses.forEach((subProcess: any) => {
-        updateGraph(modeling, elementReg, subProcess);
+    group.subProcesses.forEach((subProcess: any) => {
+        update(modeling, elementReg, subProcess);
     });
 }
 
 // Restore original marking for events and sub processes
 export const restoreMarkings = () => {
-    restoreSpecificGraphMarkings(rootGraph);
-}
-
-export const restoreSpecificGraphMarkings = (graph: DCRGraph) => {
-    graph.marking = copyMarking(originalMarkings[graph.id]);
-    graph.subProcesses.forEach((subProcess: DCRGraph) => {
-        restoreSpecificGraphMarkings(subProcess);
-    });
+    graph.marking = copyMarking(originalMarking);
 }
 
 function logExcecution(event: any) {

@@ -2,11 +2,12 @@ import {
   DCRGraph,
   Event,
   Marking,
+  SubProcess
 } from "./types";
 import { copySet, copyMarking } from "./utility";
 
 // Mutates graph's marking
-export const execute = (event: Event, graph: DCRGraph) => {
+export const execute = (event: Event, graph: DCRGraph, group: DCRGraph | SubProcess) => {
   graph.marking.executed.add(event);
   graph.marking.pending.delete(event);
   // Add sink of all response relations to pending
@@ -21,17 +22,19 @@ export const execute = (event: Event, graph: DCRGraph) => {
   for (const iEvent of graph.includesTo[event]) {
     graph.marking.included.add(iEvent);
   }
-  if (graph.parent && isAccepting(graph)) {
-    execute(graph.id, graph.parent);
+  if ('parent' in group && isAccepting(group, graph)) {
+    execute(group.id, graph, group.parent);
   }
 };
 
-const isAccepting = (graph: DCRGraph): boolean => {
-  // Graph is accepting if the intersections between pending and included events is empty
+const isAccepting = (group: SubProcess, graph: DCRGraph): boolean => {
+  // Group is accepting if the intersections between pending and included events is empty for the events in the group
+  let pending = copySet(graph.marking.pending).intersect(graph.marking.included)
   return (
-    copySet(graph.marking.pending).intersect(graph.marking.included).size === 0
+    pending.intersect(group.events).size === 0
   );
 };
+
 /*
 * Returns a number indicating the state of the event
 * 0: enabled
@@ -39,13 +42,16 @@ const isAccepting = (graph: DCRGraph): boolean => {
 * 2: parent not enabled
 * 3: missing condition
 * 4: missing milestone
+* group is what the event is a part of, either a DCRGraph or a SubProcess to inherit conditions from the parent
 */
-export const isEnabled = (event: Event, graph: DCRGraph): number => {
+export const isEnabled = (event: Event, graph: DCRGraph, group: SubProcess | DCRGraph): number => {
   if (!graph.marking.included.has(event)) {
     return 1;
   }
-  if (graph.parent && isEnabled(graph.id, graph.parent) != 0) {
-    return 2;
+  if ('parent' in group) {
+    if (isEnabled(group.id, graph, group.parent) != 0) {
+      return 2;
+    }
   }
   for (const cEvent of graph.conditionsFor[event]) {
     // If an event conditioning for event is included and not executed
@@ -66,30 +72,6 @@ export const isEnabled = (event: Event, graph: DCRGraph): number => {
     }
   }
   return 0;
-};
-
-const getEnabled = (graph: DCRGraph): Set<Event> => {
-  const retSet = copySet(graph.events);
-  for (const event of graph.events) {
-    if (!graph.marking.included.has(event)) retSet.delete(event);
-    for (const otherEvent of graph.conditionsFor[event]) {
-      if (
-        graph.marking.included.has(otherEvent) &&
-        !graph.marking.executed.has(otherEvent)
-      )
-        retSet.delete(event);
-    }
-  }
-  return retSet;
-};
-
-// Executes fun without permanent side effects to the graphs marking
-const newGraphEnv = <T>(graph: DCRGraph, fun: () => T): T => {
-  const oldMarking = graph.marking;
-  graph.marking = copyMarking(graph.marking);
-  const retval = fun();
-  graph.marking = oldMarking;
-  return retval;
 };
 
 // Converts a marking to a uniquely identifying string (naively)
