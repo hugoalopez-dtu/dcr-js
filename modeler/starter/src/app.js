@@ -109,12 +109,15 @@ document
     // Handle simulation
     if (!simulating) {
       startSimulation();
-      document.getElementById('simulation-sidepanel').style.display = 'block';
     } else {
       stopSimulation();
-      document.getElementById('simulation-sidepanel').style.display = 'none';
-      clearSimulation();
     }
+  });
+  document
+  .getElementById('js-restart-simulation')
+  .addEventListener('click', function () {
+    modeler.simulatorRestoreStates();
+    clearSimulation();
   });
 
 export function appendSimulationLog(message) {
@@ -151,8 +154,10 @@ function startSimulation() {
     let eventBus = modeler.get('eventBus');
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
+    document.getElementById('js-restart-simulation').style.display = 'block';
     document.getElementById('js-open-examples').style.display = 'none';
     document.getElementById('js-open-files').style.display = 'none';
+    document.getElementById('simulation-sidepanel').style.display = 'block';
 
 
     // Define events that should be prevented
@@ -196,8 +201,11 @@ function stopSimulation() {
     simulating = false;
     document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
     document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
+    document.getElementById('js-restart-simulation').style.display = 'none';
     document.getElementById('js-open-examples').style.display = 'block'
     document.getElementById('js-open-files').style.display = 'block'
+    document.getElementById('simulation-sidepanel').style.display = 'none';
+    clearSimulation();
 
 
     // Restore states for events and set enabled to false
