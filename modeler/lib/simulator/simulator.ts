@@ -7,6 +7,7 @@ import {
     SubProcess
 } from "./types";
 
+import init from './init';
 import { execute, isEnabled } from "./align";
 import { copyMarking } from "./utility";
 import { appendSimulationLog } from "../../starter/src/app";
@@ -17,6 +18,7 @@ let originalMarking: Marking;
 let graph: DCRGraph;
 
 export const startSimulator = (elementReg: any) => {
+    init();
     initGraph(elementReg);
 }
 

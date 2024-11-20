@@ -28,7 +28,6 @@ import saveDCRXML from './DCRXML';
 import XMLConverter from './XMLConverter';
 import DCRPortalConverter from './DCRPortalConverter';
 
-import simulatorInit from './simulator/init';
 import {
   startSimulator as simulatorStart,
   executeEvent as simulatorExecute,
@@ -67,7 +66,6 @@ export default function BaseViewer(options) {
   /* </project-logo> */
 
   this._init(this._container, this._moddle, options);
-  simulatorInit(); // Initialize simulator TODO find better placement for this
 }
 
 inherits(BaseViewer, Diagram);
@@ -503,7 +501,6 @@ BaseViewer.prototype.getModules = function () {
 };
 
 BaseViewer.prototype.startSimulation = function () {
-  simulatorInit(this);
   simulatorStart(this.get('elementRegistry'));
   simulatorUpdate(this);
 }
