@@ -206,7 +206,6 @@ function stopSimulation() {
     document.getElementById('simulation-sidepanel').style.display = 'none';
     clearSimulation();
 
-
     // Restore states for events and set enabled to false
     modeler.simulatorRestoreStates();
     modeler.get('elementRegistry').forEach(element => {
@@ -214,6 +213,9 @@ function stopSimulation() {
             modeler.get('modeling').updateProperties(element, { enabled: false });
         }
     });
+
+    // Clear command stack log to prevent undo from using property updates during simulation
+    modeler.get('modeling')._commandStack.clear();
 }
 
 /* file functions */
