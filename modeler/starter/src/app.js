@@ -171,11 +171,21 @@ function startSimulation() {
     interactionEvents.forEach(event => {
         eventBus.on(event, 3000, (event) => {
             if (simulating) {
-              return false;
+                event.preventDefault();
+                event.stopPropagation();
             }
         });
     });
 
+    // Man kan ikke bare stoppe entries til commandstacken?
+    
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey && simulating && (event.key === 'v' || event.key === 'z' || event.key === 'y' || (event.shiftKey && event.key === 'z'))) {
+          event.preventDefault(); // Prevent the default action for paste, undo and redo
+          event.stopPropagation();
+      }
+    });
+  
 
     // Override clicks on events to execute them
     eventBus.on('element.click', (event) => {
