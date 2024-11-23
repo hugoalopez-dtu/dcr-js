@@ -1,6 +1,6 @@
 # DCR-js: an open-source web editor for DCR graphs
 
-[Try it live!](https://hugoalopez-dtu.github.io/dcr-js/)
+[Try it live!](https://thespicyone.github.io/dcr-js/)
 
 What is DCR Graphs? A novel [Business Process Management](https://en.wikipedia.org/wiki/Business_process_management) notation, that is ideal for processes with lots of flexibility, like those in healthcare, municipal administration, or in general, Knowledge Intensive Processes. The notation allows you to describe processes as if you were describing a game, focusing on the rules.
 
