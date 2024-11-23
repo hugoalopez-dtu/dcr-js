@@ -223,4 +223,5 @@ input:checked + .slider:before {
 
 #trace {
   overflow-wrap: anywhere;
+  word-break: keep-all;
 }

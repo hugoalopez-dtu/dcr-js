@@ -131,6 +131,7 @@ export function appendSimulationLog(message) {
   
 export function addToSimulationTrace(message) {
   const trace = document.getElementById('trace');
+   message = message.replace(/\s/g, "\u00A0");
   if (trace.innerHTML === "") {
     trace.innerHTML = message;
   } else {
