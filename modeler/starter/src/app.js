@@ -406,7 +406,7 @@ function debounce(fn, timeout) {
 }
 
 async function generateExamples() {
-  fetch('./assets/generated_examples.txt')
+  fetch('../examples/generated_examples.txt')
   .then(response => {
     if (!response.ok) {
       document.getElementById("generated-examples").append(document.createElement('p').innerHTML ="Failed to load examples");
@@ -423,7 +423,7 @@ async function generateExamples() {
       var button = document.createElement('button');
       button.addEventListener('click', function () {
         if (confirm("Are you sure? This will override your current diagram!")) {
-          fetch('./assets/examples/' + files[i]+ '.xml')
+          fetch('../examples/diagrams/' + files[i]+ '.xml')
             .then(response => {
               if (!response.ok) {
                 alert("Failed to fetch example\nStatus code: " + response.status + " " + response.statusText);
@@ -447,7 +447,7 @@ async function generateExamples() {
       var title = document.createElement('h2');
       title.innerHTML = files[i];
       var image = document.createElement('img');
-      image.src = './assets/images/examples/' + files[i] + '.svg';
+      image.src = '../examples/images/' + files[i] + '.svg';
       button.append(title);
       button.append(image);
       wrapper.append(button);
