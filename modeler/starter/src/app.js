@@ -152,6 +152,7 @@ function startSimulation() {
 
     simulating = true;
     let eventBus = modeler.get('eventBus');
+    console.log(eventBus);
 
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
@@ -165,6 +166,10 @@ function startSimulation() {
     const interactionEvents = [
         'shape.move.start',
         'element.dblclick',
+        'connectionSegment.move.start',
+        'commandStack.connection.updateWaypoints.canExecute',
+        'commandStack.connection.reconnect.canExecute'
+
     ];
 
     // Override interactions for certain events in diagram-js
