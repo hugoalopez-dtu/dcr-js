@@ -131,7 +131,7 @@ export function appendSimulationLog(message) {
   
 export function addToSimulationTrace(message) {
   const trace = document.getElementById('trace');
-   message = message.replace(/\s/g, "\u00A0");
+  message = message.replace(/\s/g, "\u00A0");
   if (trace.innerHTML === "") {
     trace.innerHTML = message;
   } else {
@@ -153,7 +153,6 @@ function startSimulation() {
 
     simulating = true;
     let eventBus = modeler.get('eventBus');
-    console.log(eventBus);
 
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
@@ -169,7 +168,8 @@ function startSimulation() {
         'element.dblclick',
         'connectionSegment.move.start',
         'commandStack.connection.updateWaypoints.canExecute',
-        'commandStack.connection.reconnect.canExecute'
+        'commandStack.connection.reconnect.canExecute',
+        'element.hover',
 
     ];
 
