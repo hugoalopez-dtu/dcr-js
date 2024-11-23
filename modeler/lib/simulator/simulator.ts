@@ -189,7 +189,11 @@ const addRelation =
         nestings.forEach((element: any) => {
             if (element.id === source) {
                 element.children.forEach((nestedElement: any) => {
-                    addRelation(relationSet, nestings, nestedElement.id, target);
+                    if (nestedElement.type === 'dcr:SubProcess' || 
+                        nestedElement.type === 'dcr:Event' || 
+                        nestedElement.type === 'dcr:Nesting') {
+                        addRelation(relationSet, nestings, nestedElement.id, target);
+                    }
                 });
             }
         });
@@ -197,7 +201,11 @@ const addRelation =
         nestings.forEach((element: any) => {
             if (element.id === target) {
                 element.children.forEach((nestedElement: any) => {
-                    addRelation(relationSet, nestings, source, nestedElement.id);
+                    if (nestedElement.type === 'dcr:SubProcess' || 
+                        nestedElement.type === 'dcr:Event' || 
+                        nestedElement.type === 'dcr:Nesting') {
+                        addRelation(relationSet, nestings, source, nestedElement.id);
+                    }
                 });
             }
         });
