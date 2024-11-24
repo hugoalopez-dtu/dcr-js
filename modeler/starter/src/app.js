@@ -68,6 +68,11 @@ document
     }
   });
 document
+  .getElementById('examples')
+  .addEventListener('click', function (event) {
+    event.stopPropagation();
+  })
+document
   .getElementById('js-toggle-fullscreen')
   .addEventListener('click', function () {
     state.fullScreen = !state.fullScreen;
@@ -96,6 +101,136 @@ document
       document.getElementById('io-dialog-main').style.display = displayProp;
     }
   });
+export let simulating = false;
+document
+  .getElementById('js-start-simulation')
+  .addEventListener('click', function () {
+
+    // Handle simulation
+    if (!simulating) {
+      startSimulation();
+    } else {
+      stopSimulation();
+    }
+  });
+  document
+  .getElementById('js-restart-simulation')
+  .addEventListener('click', function () {
+    modeler.simulatorRestoreStates();
+    clearSimulation();
+  });
+
+export function appendSimulationLog(message) {
+  const log = document.getElementById('simulation-log');
+  const logElement = document.createElement('p');
+  logElement.innerHTML = message;
+  if (document.getElementById('log-headline').firstChild) {
+    log.insertBefore(logElement, document.getElementById('log-headline').nextSibling);
+  }
+}
+  
+export function addToSimulationTrace(message) {
+  const trace = document.getElementById('trace');
+  message = message.replace(/\s/g, "\u00A0");
+  if (trace.innerHTML === "") {
+    trace.innerHTML = message;
+  } else {
+    trace.innerHTML = trace.innerHTML + ", " + message;
+  }
+}
+  
+function clearSimulation() {
+  const log = document.getElementById('simulation-log');
+  document.getElementById('trace').innerHTML = "";
+  while(log.childNodes.length > 2) {
+    log.removeChild(log.lastChild);
+  }
+}
+
+function startSimulation() {
+    const selection = modeler.get("selection");
+    selection.select([]);
+
+    simulating = true;
+    let eventBus = modeler.get('eventBus');
+
+    document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
+    document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
+    document.getElementById('js-restart-simulation').style.display = 'block';
+    document.getElementById('js-open-examples').style.display = 'none';
+    document.getElementById('js-open-files').style.display = 'none';
+    document.getElementById('simulation-sidepanel').style.display = 'block';
+
+
+    // Define events that should be prevented
+    const interactionEvents = [
+        'shape.move.start',
+        'element.dblclick',
+        'connectionSegment.move.start',
+        'commandStack.connection.updateWaypoints.canExecute',
+        'commandStack.connection.reconnect.canExecute',
+        'element.hover',
+
+    ];
+
+    // Override interactions for certain events in diagram-js
+    interactionEvents.forEach(event => {
+        eventBus.on(event, 3000, (event) => {
+            if (simulating) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+    });
+    
+    document.addEventListener('keydown', function(event) {
+      if (event.ctrlKey && simulating && (event.key === 'v' || event.key === 'z'
+          || event.key === 'y' || (event.shiftKey && event.key === 'z'))) {
+          event.preventDefault(); // Prevent the default action for paste, undo and redo
+          event.stopPropagation();
+      }
+    });
+
+    // Override clicks on events to execute them
+    eventBus.on('element.click', (event) => {
+        if (simulating) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const element = event.element;
+            if (element.type === 'dcr:Event') {
+                modeler.simulatorExecute(element);
+            }
+
+            const selection = modeler.get("selection");
+            selection.select([]);
+        }
+    });
+
+    modeler.startSimulation();
+}
+
+function stopSimulation() {
+    simulating = false;
+    document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
+    document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
+    document.getElementById('js-restart-simulation').style.display = 'none';
+    document.getElementById('js-open-examples').style.display = 'block'
+    document.getElementById('js-open-files').style.display = 'block'
+    document.getElementById('simulation-sidepanel').style.display = 'none';
+    clearSimulation();
+
+    // Restore states for events and set enabled to false
+    modeler.simulatorRestoreStates();
+    modeler.get('elementRegistry').forEach(element => {
+        if (element.type === 'dcr:Event') {
+            modeler.get('modeling').updateProperties(element, { enabled: false });
+        }
+    });
+
+    // Clear command stack log to prevent undo from using property updates during simulation
+    modeler.get('modeling')._commandStack.clear();
+}
 
 /* file functions */
 function openFile(file, callback) {
@@ -271,7 +406,7 @@ function debounce(fn, timeout) {
 }
 
 async function generateExamples() {
-  fetch('./resources/generated_examples.txt')
+  fetch('examples/generated_examples.txt')
   .then(response => {
     if (!response.ok) {
       document.getElementById("generated-examples").append(document.createElement('p').innerHTML ="Failed to load examples");
@@ -280,16 +415,68 @@ async function generateExamples() {
     return response.text();
   })
   .then(data => {
-    const files = data.split('\n');
+    var files = data.split('\n');
+    files.pop(); // Remove last empty line
+    files = files.map(name => name.split('.').slice(0, -1).join('.')); // Shave file extension off
     const wrapper = document.getElementById("generated-examples");
-    for (var i = 0; i < files.length ; i++) {
-      var example = document.createElement('div');
-      example.className = "example"
+    for (let i = 0; i < files.length ; i++) {
+      var button = document.createElement('button');
+      button.addEventListener('click', function () {
+        if (confirm("Are you sure? This will override your current diagram!")) {
+          fetch('examples/diagrams/' + files[i]+ '.xml')
+            .then(response => {
+              if (!response.ok) {
+                alert("Failed to fetch example\nStatus code: " + response.status + " " + response.statusText);
+              } else {
+                return response.text();
+              }
+            }).then(data => {
+              if(data.includes('<?xml')) { // type check which type of save file. Only one of them has magic number '<?xml'
+                openCustomBoard(data);
+              } else {
+                openDCRPortalBoard(data);
+              }
+              document.getElementById('io-dialog-examples').style.display = 'none';
+              state.examples = !state.examples;
+            }).catch (err => {
+              console.log(err);
+            });
+        }
+      });
+      button.className = 'example';
       var title = document.createElement('h2');
       title.innerHTML = files[i];
-      example.append(title);
-      wrapper.append(example);
+      var image = document.createElement('img');
+      image.src = 'examples/images/' + files[i] + '.svg';
+      button.append(title);
+      button.append(image);
+      wrapper.append(button);
     };
   })
 }
 generateExamples();
+
+
+// Search examples
+document.getElementById('search').addEventListener('input', e => {
+  const value = e.target.value.toLowerCase();
+  let elements = Array.from(document.getElementsByClassName('example'));
+  elements.forEach(element => {
+    const visible = element.children[0].innerHTML.toLowerCase().includes(value);
+    element.style.display = visible ? 'inline-block' : 'none';
+  });
+});
+
+/* Code for accessing elements in the modeler and their attributes
+modeler.getElementRegistry().forEach(element => {
+        console.log(element);
+        if (element.type === 'dcr:Event') {
+          console.log(element.businessObject.get('pending'));
+          console.log(element.businessObject.get('included'));
+          console.log(element.businessObject.get('executed'));
+        } else if (element.type === 'dcr:Relation') {
+          console.log(element.businessObject.get('type'));
+          console.log(element.businessObject.get('sourceRef').id)
+        }
+    });
+ */

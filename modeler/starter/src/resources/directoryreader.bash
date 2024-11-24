@@ -1,4 +1,4 @@
-cat /dev/null > generated_examples.txt
-cd examples
-pwd
-ls >> ../generated_examples.txt
+#!/bin/bash
+cd "${0%/*}"
+cd ../../public/examples/diagrams
+ls > ../generated_examples.txt

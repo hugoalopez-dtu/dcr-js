@@ -1,6 +1,7 @@
 import inherits from 'inherits-browser';
 
 import KeyboardBindings from 'diagram-js/lib/features/keyboard/KeyboardBindings';
+import { simulating } from '../../../starter/src/app';
 
 
 /**
@@ -47,13 +48,14 @@ DCRKeyboardBindings.prototype.registerBindings = function(keyboard, editorAction
   // select all elements
   // CTRL + A
   addListener('selectElements', function(context) {
+    if (!simulating) { 
+      var event = context.keyEvent;
 
-    var event = context.keyEvent;
+      if (keyboard.isKey([ 'a', 'A' ], event) && keyboard.isCmd(event)) {
+        editorActions.trigger('selectElements');
 
-    if (keyboard.isKey([ 'a', 'A' ], event) && keyboard.isCmd(event)) {
-      editorActions.trigger('selectElements');
-
-      return true;
+        return true;
+      }
     }
   });
 
@@ -73,69 +75,73 @@ DCRKeyboardBindings.prototype.registerBindings = function(keyboard, editorAction
   // activate space tool
   // S
   addListener('spaceTool', function(context) {
+    if (!simulating) { 
+      var event = context.keyEvent;
 
-    var event = context.keyEvent;
+      if (keyboard.hasModifier(event)) {
+        return;
+      }
 
-    if (keyboard.hasModifier(event)) {
-      return;
-    }
+      if (keyboard.isKey([ 's', 'S' ], event)) {
+        editorActions.trigger('spaceTool');
 
-    if (keyboard.isKey([ 's', 'S' ], event)) {
-      editorActions.trigger('spaceTool');
-
-      return true;
-    }
+        return true;
+      }
+  }
   });
 
   // activate lasso tool
   // L
   addListener('lassoTool', function(context) {
+    if (!simulating) { 
+      var event = context.keyEvent;
 
-    var event = context.keyEvent;
+      if (keyboard.hasModifier(event)) {
+        return;
+      }
 
-    if (keyboard.hasModifier(event)) {
-      return;
-    }
+      if (keyboard.isKey([ 'l', 'L' ], event)) {
+        editorActions.trigger('lassoTool');
 
-    if (keyboard.isKey([ 'l', 'L' ], event)) {
-      editorActions.trigger('lassoTool');
-
-      return true;
-    }
+        return true;
+      }
+  }
   });
 
   // activate hand tool
   // H
   addListener('handTool', function(context) {
+    if (!simulating) { 
+      var event = context.keyEvent;
 
-    var event = context.keyEvent;
+      if (keyboard.hasModifier(event)) {
+        return;
+      }
 
-    if (keyboard.hasModifier(event)) {
-      return;
-    }
+      if (keyboard.isKey([ 'h', 'H' ], event)) {
+        editorActions.trigger('handTool');
 
-    if (keyboard.isKey([ 'h', 'H' ], event)) {
-      editorActions.trigger('handTool');
-
-      return true;
+        return true;
+      }
     }
   });
 
   // activate direct editing
   // E
   addListener('directEditing', function(context) {
+    if (!simulating) { 
+      var event = context.keyEvent;
 
-    var event = context.keyEvent;
+      if (keyboard.hasModifier(event)) {
+        return;
+      }
 
-    if (keyboard.hasModifier(event)) {
-      return;
+      if (keyboard.isKey([ 'e', 'E' ], event)) {
+        editorActions.trigger('directEditing');
+
+        return true;
+      }
     }
-
-    if (keyboard.isKey([ 'e', 'E' ], event)) {
-      editorActions.trigger('directEditing');
-
-      return true;
-    }
-  });
+    });
 
 };
