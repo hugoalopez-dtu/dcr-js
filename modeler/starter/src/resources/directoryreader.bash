@@ -1,4 +1,4 @@
 #!/bin/bash
 cd "${0%/*}"
-cd examples
+cd ../../public/examples/diagrams
 ls > ../generated_examples.txt
