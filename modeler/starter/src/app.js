@@ -4,6 +4,8 @@ import './assets/odm.css';
 import 'diagram-js/assets/diagram-js.css';
 import 'bpmn-font/dist/css/bpmn.css';
 
+import { setSimulating as keyBindingsSetSimulating } from '../../lib/features/keyboard/DCRKeyboardBindings';
+
 import DCRModeler from 'dcr-graph-diagram-modeler';
 
 import emptyBoardXML from './resources/emptyBoard.xml?raw';
@@ -120,7 +122,7 @@ document
     clearSimulation();
   });
 
-export function appendSimulationLog(message) {
+function appendSimulationLog(message) {
   const log = document.getElementById('simulation-log');
   const logElement = document.createElement('p');
   logElement.innerHTML = message;
@@ -129,7 +131,7 @@ export function appendSimulationLog(message) {
   }
 }
   
-export function addToSimulationTrace(message) {
+function addToSimulationTrace(message) {
   const trace = document.getElementById('trace');
   message = message.replace(/\s/g, "\u00A0");
   if (trace.innerHTML === "") {
@@ -152,6 +154,7 @@ function startSimulation() {
     selection.select([]);
 
     simulating = true;
+    keyBindingsSetSimulating(simulating);
     let eventBus = modeler.get('eventBus');
 
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
@@ -199,7 +202,11 @@ function startSimulation() {
 
             const element = event.element;
             if (element.type === 'dcr:Event') {
-                modeler.simulatorExecute(element);
+                let ret = modeler.simulatorExecute(element);
+                appendSimulationLog(ret[0]);
+                if (ret.length > 1) {
+                    addToSimulationTrace(ret[1]);
+                }
             }
 
             const selection = modeler.get("selection");
@@ -212,6 +219,7 @@ function startSimulation() {
 
 function stopSimulation() {
     simulating = false;
+    keyBindingsSetSimulating(simulating);
     document.getElementsByClassName('djs-palette').item(0).style.display = 'block';
     document.getElementById('js-start-simulation').innerHTML = 'Start simulation';
     document.getElementById('js-restart-simulation').style.display = 'none';

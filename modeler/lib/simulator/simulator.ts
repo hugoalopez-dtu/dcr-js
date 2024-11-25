@@ -10,8 +10,6 @@ import {
 import init from './init';
 import { execute, isEnabled } from "./align";
 import { copyMarking } from "./utility";
-import { appendSimulationLog } from "../../starter/src/app";
-import { addToSimulationTrace } from "../../starter/src/app";
 
 let originalMarking: Marking;
 
@@ -22,7 +20,7 @@ export const startSimulator = (elementReg: any) => {
     initGraph(elementReg);
 }
 
-export const executeEvent  = (eventElement: any) => {
+export const executeEvent  = (eventElement: any): string[] => {
     const event: Event = eventElement.id;
     var eventName: String = eventElement.businessObject.description;
     if (eventName == null || eventName === "") {
@@ -31,29 +29,23 @@ export const executeEvent  = (eventElement: any) => {
 
     let group: DCRGraph | SubProcess | null = findElementGroup(event, graph);
     if (!group) {
-        appendSimulationLog("Event not found in graph");
-        return;
+        return ["Event not found in graph"];
     }
 
     switch(isEnabled(event, graph, group)) {
         case 0:
             break;
         case 1:
-            appendSimulationLog(eventName + " is not included");
-            return;
+            return [eventName + " is not included"];
         case 2:
-            appendSimulationLog("Parent of " + eventName + " is not enabled");
-            return;
+            return ["Parent of " + eventName + " is not enabled"];
         case 3:
-            appendSimulationLog(eventName + " is missing a condition");
-            return;
+            return [eventName + " is missing a condition"];
         case 4:
-            appendSimulationLog(eventName + " is missing a milestone");
-            return;
+            return [eventName + " is missing a milestone"];
     }
     execute(event, graph, group);
-    logExcecution(eventElement);
-    addToTrace(eventElement);
+    return [logExcecutionString(eventElement), TraceString(eventElement)];
 }
 
 const findElementGroup = (event: Event, group: DCRGraph | SubProcess): DCRGraph | SubProcess | null => {
@@ -259,19 +251,19 @@ export const restoreMarkings = () => {
     graph.marking = copyMarking(originalMarking);
 }
 
-function logExcecution(event: any) {
+function logExcecutionString(event: any): string {
     var eventName: String = event.businessObject.description;
     if (eventName == null || eventName === "") {
-        appendSimulationLog("Executed Unnamed event");
+        return ("Executed Unnamed event");
     } else {
-        appendSimulationLog("Executed  "+ eventName);
+        return ("Executed  "+ eventName);
     }
 }
 
-function addToTrace(event: any) {
+function TraceString(event: any): string {
     var eventName: String = event.businessObject.description;
     if (eventName == null || eventName === "") {
         eventName = "Unnamed event";
     }
-    addToSimulationTrace(eventName);
+    return (eventName.toString());
 }

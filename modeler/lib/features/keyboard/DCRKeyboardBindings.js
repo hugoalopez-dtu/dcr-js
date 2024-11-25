@@ -1,8 +1,6 @@
 import inherits from 'inherits-browser';
 
 import KeyboardBindings from 'diagram-js/lib/features/keyboard/KeyboardBindings';
-import { simulating } from '../../../starter/src/app';
-
 
 /**
  * DCR specific keyboard bindings.
@@ -19,6 +17,11 @@ DCRKeyboardBindings.$inject = [
   'injector'
 ];
 
+var simulating = false;
+
+export const setSimulating = function(sim) {
+  simulating = sim;
+}
 
 /**
  * Register available keyboard bindings.

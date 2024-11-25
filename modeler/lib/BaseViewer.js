@@ -506,8 +506,9 @@ BaseViewer.prototype.startSimulation = function () {
 }
 
 BaseViewer.prototype.simulatorExecute = function (element) {
-  simulatorExecute(element);
+  let ret = simulatorExecute(element);
   simulatorUpdate(this);
+  return ret;
 }
 
 BaseViewer.prototype.simulatorRestoreStates = function () {
