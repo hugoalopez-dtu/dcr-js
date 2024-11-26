@@ -216,9 +216,17 @@ input:checked + .slider:before {
   margin: 0;
 }
 
-.sidepanel #simulation-trace, #simulation-log {
-  overflow-y: scroll;
-  height: 50%;
+#simulation-trace {
+  height: 60%;
+}
+
+#simulation-log {
+  height: 30%;
+}
+
+#trace-block, #feedback {
+  height: 70%;
+  overflow-y: auto;
 }
 
 #trace {

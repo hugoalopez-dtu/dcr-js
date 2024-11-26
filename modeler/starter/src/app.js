@@ -123,12 +123,8 @@ document
   });
 
 function appendSimulationLog(message) {
-  const log = document.getElementById('simulation-log');
-  const logElement = document.createElement('p');
-  logElement.innerHTML = message;
-  if (document.getElementById('log-headline').firstChild) {
-    log.insertBefore(logElement, document.getElementById('log-headline').nextSibling);
-  }
+  const log = document.getElementById('feedback');
+  log.innerHTML = message;
 }
   
 function addToSimulationTrace(message) {
@@ -142,11 +138,8 @@ function addToSimulationTrace(message) {
 }
   
 function clearSimulation() {
-  const log = document.getElementById('simulation-log');
   document.getElementById('trace').innerHTML = "";
-  while(log.childNodes.length > 2) {
-    log.removeChild(log.lastChild);
-  }
+  document.getElementById('feedback').innerHTML = "";
 }
 
 function startSimulation() {
@@ -156,6 +149,8 @@ function startSimulation() {
     simulating = true;
     keyBindingsSetSimulating(simulating);
     let eventBus = modeler.get('eventBus');
+
+    console.log(modeler.get('elementRegistry'));
 
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
