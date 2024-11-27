@@ -4,7 +4,7 @@ import {
   Marking,
   SubProcess
 } from "./types";
-import { copySet, copyMarking } from "./utility";
+import { copySet } from "./utility";
 
 // Mutates graph's marking
 export const execute = (event: Event, graph: DCRGraph, group: DCRGraph | SubProcess) => {

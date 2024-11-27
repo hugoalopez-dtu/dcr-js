@@ -9,7 +9,7 @@ import {
 
 import init from './init';
 import { execute, isEnabled } from "./align";
-import { copyMarking } from "./utility";
+import { copyMarking, copySet } from "./utility";
 
 let originalMarking: Marking;
 
@@ -45,7 +45,7 @@ export const executeEvent  = (eventElement: any): string[] => {
             return [eventName + " is missing a milestone"];
     }
     execute(event, graph, group);
-    return [logExcecutionString(eventElement), TraceString(eventElement)];
+    return [logExcecutionString(eventElement), traceString(eventElement)];
 }
 
 const findElementGroup = (event: Event, group: DCRGraph | SubProcess): DCRGraph | SubProcess | null => {
@@ -260,10 +260,19 @@ function logExcecutionString(event: any): string {
     }
 }
 
-function TraceString(event: any): string {
+function traceString(event: any): string {
     var eventName: String = event.businessObject.description;
     if (eventName == null || eventName === "") {
         eventName = "Unnamed event";
     }
     return (eventName.toString());
+}
+
+export function getPendingEvents(elementReg: any): string[] {
+    let pendingEvents: string[] = [];
+    let pending = copySet(graph.marking.pending).intersect(graph.marking.included)
+    for (const event of pending) {
+        pendingEvents.push(elementReg.get(event).businessObject.description);
+    }
+    return pendingEvents;
 }
