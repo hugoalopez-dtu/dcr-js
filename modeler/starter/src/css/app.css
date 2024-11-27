@@ -204,7 +204,7 @@ input:checked + .slider:before {
   position: fixed;
   right: 0%;
   bottom: 0%;
-  height: 50%;
+  height: 70%;
   width: 400px;
   box-shadow: 0px 0px 10px 0px black;
   background-color: #dddddd;
@@ -217,14 +217,18 @@ input:checked + .slider:before {
 }
 
 #simulation-trace {
-  height: 60%;
+  height: 40%;
 }
 
 #simulation-log {
+  height: 20%;
+}
+
+#simulation-missing-events {
   height: 30%;
 }
 
-#trace-block, #feedback {
+#trace-block, #feedback, #missing-events {
   height: 70%;
   overflow-y: auto;
 }

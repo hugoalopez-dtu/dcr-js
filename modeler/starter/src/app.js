@@ -5,6 +5,7 @@ import 'diagram-js/assets/diagram-js.css';
 import 'bpmn-font/dist/css/bpmn.css';
 
 import { setSimulating as keyBindingsSetSimulating } from '../../lib/features/keyboard/DCRKeyboardBindings';
+import { getPendingEvents } from '../../../modeler/lib/simulator/simulator.ts';
 
 import DCRModeler from 'dcr-graph-diagram-modeler';
 
@@ -140,6 +141,7 @@ function addToSimulationTrace(message) {
 function clearSimulation() {
   document.getElementById('trace').innerHTML = "";
   document.getElementById('feedback').innerHTML = "";
+  document.getElementById('missing-events').innerHTML = "";
 }
 
 function startSimulation() {
@@ -207,9 +209,19 @@ function startSimulation() {
             const selection = modeler.get("selection");
             selection.select([]);
         }
+        updatePendingEvents();
     });
 
     modeler.startSimulation();
+}
+
+function updatePendingEvents() {
+    const events = getPendingEvents(modeler.get('elementRegistry')).join(', ');
+    if (events === '') {
+      document.getElementById('missing-events').innerHTML = 'Graph is accepting';
+    } else {
+      document.getElementById('missing-events').innerHTML = events;
+    }
 }
 
 function stopSimulation() {
