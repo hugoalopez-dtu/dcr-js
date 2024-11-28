@@ -152,15 +152,12 @@ function startSimulation() {
     keyBindingsSetSimulating(simulating);
     let eventBus = modeler.get('eventBus');
 
-    console.log(modeler.get('elementRegistry'));
-
     document.getElementsByClassName('djs-palette').item(0).style.display = 'none';
     document.getElementById('js-start-simulation').innerHTML = 'Stop simulation';
     document.getElementById('js-restart-simulation').style.display = 'block';
     document.getElementById('js-open-examples').style.display = 'none';
     document.getElementById('js-open-files').style.display = 'none';
     document.getElementById('simulation-sidepanel').style.display = 'block';
-
 
     // Define events that should be prevented
     const interactionEvents = [
@@ -183,10 +180,11 @@ function startSimulation() {
         });
     });
     
+    // Prevent the default action for paste, undo and redo
     document.addEventListener('keydown', function(event) {
       if (event.ctrlKey && simulating && (event.key === 'v' || event.key === 'z'
           || event.key === 'y' || (event.shiftKey && event.key === 'z'))) {
-          event.preventDefault(); // Prevent the default action for paste, undo and redo
+          event.preventDefault(); 
           event.stopPropagation();
       }
     });
@@ -206,6 +204,7 @@ function startSimulation() {
                 }
             }
 
+            // Unselect everything, prevents selecting elements during simulation
             const selection = modeler.get("selection");
             selection.select([]);
         }
@@ -213,6 +212,7 @@ function startSimulation() {
     });
 
     modeler.startSimulation();
+    updatePendingEvents();
 }
 
 function updatePendingEvents() {
