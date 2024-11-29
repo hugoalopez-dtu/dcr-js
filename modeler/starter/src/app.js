@@ -121,6 +121,7 @@ document
   .addEventListener('click', function () {
     modeler.simulatorRestoreStates();
     clearSimulation();
+    updatePendingEvents();
   });
 
 function appendSimulationLog(message) {
