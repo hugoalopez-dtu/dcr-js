@@ -249,7 +249,7 @@ ContextPadProvider.prototype.getContextPadEntries = function (element) {
         'dcr:Event',
         'od-no-font-icon-object',
         translate('Append new DCR Event'),
-        { attrs: { included: true, pending: false, executed: false } }
+        { attrs: { included: true, pending: false, executed: false, enabled: false } }
       ),
     });
   }

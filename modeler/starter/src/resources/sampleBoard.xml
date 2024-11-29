@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dcr:definitions xmlns:dcr="http://tk/schema/dcr" xmlns:dcrDi="http://tk/schema/dcrDi"
                 xmlns:dc="http://www.omg.org/spec/DD/20100524/DC">
-    <dcr:dcrGraph id="Board_debug">
+    <dcr:dcrGraph id="dcrGraph">
         <dcr:relation name="components" id="Link_Object_2669_to_Object_2837_type_components" type="components"
                  sourceRef="Object_2669" targetRef="Object_2837"/>
         <dcr:relation name="components" id="Link_Object_2669_to_Object_2838_type_components" type="components"

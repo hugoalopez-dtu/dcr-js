@@ -311,6 +311,7 @@ export default function DCRRenderer(
       let included = element.businessObject.get('included');
       let pending = element.businessObject.get('pending');
       let executed = element.businessObject.get('executed');
+      let enabled = element.businessObject.get('enabled');
 
       var rect = drawRect(
         parentGfx,
@@ -320,8 +321,8 @@ export default function DCRRenderer(
         assign({
           fill: getFillColor(element, defaultFillColor),
           fillOpacity: HIGH_FILL_OPACITY,
-          stroke: getStrokeColor(element, defaultStrokeColor),
-          strokeWidth: 2,
+          stroke: enabled ? 'green' : getStrokeColor(element, defaultStrokeColor),
+          strokeWidth: enabled ? 3 : 2,
           'stroke-dasharray': included ? undefined : '12, 5',
         }),
         attrs

@@ -104,7 +104,7 @@ PaletteProvider.prototype.getPaletteEntries = function (element) {
       'dcr-elements',
       'od-icon-object',
       translate('Create a DCR Event'),
-      { attrs: { included: true, pending: false, executed: false } }
+      { attrs: { included: true, pending: false, executed: false, enabled: false } }
     ),
     'object-linker': {
       group: 'dcr-elements',
@@ -122,7 +122,7 @@ PaletteProvider.prototype.getPaletteEntries = function (element) {
       'dcr-elements',
       'bpmn-icon-subprocess-expanded', 
       translate('Create a Single-Instance SubProcess'),
-      { attrs: { included: true, pending: false, executed: false } }
+      { attrs: { included: true, pending: false, executed: false, enabled: false } }
     ),
 
     'create-nesting': createAction(

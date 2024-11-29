@@ -309,6 +309,8 @@ input, textarea {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   border-radius: 2px;
   height: auto;
+  max-height: 70%;
+  overflow-y: scroll;
  }
 
 .pjs-io-dialog-section {
