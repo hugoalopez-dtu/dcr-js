@@ -42,7 +42,7 @@ jobs:
       - name: npm dist
         run: "cd modeler/starter && npm run build"
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v4
         with:
           # Upload entire repository
           path: 'modeler/starter/src/dist'
