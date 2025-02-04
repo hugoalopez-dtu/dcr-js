@@ -7,7 +7,7 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
-  <div id="io-dialog-main" class="pjs-io-dialog pjs-io-dialog-open keybindings-dialog">
+  <div id="io-dialog-main" class="pjs-io-dialog pjs-io-dialog-open keybindings-dialog hidden">
     <div class="pjs-io-dialog-content">
       <h1>Keyboard Shortcuts</h1>
       <table>
@@ -57,11 +57,47 @@
     </div>
   </div>
 
+  <div id="simulation-sidepanel" class="sidepanel hidden">
+    <div id="simulation-log">
+      <h2 id="log-headline">Simulation feedback</h2>
+      <p id="feedback"></p>
+    </div>
+    <div id="simulation-trace">
+      <h2 id="trace-headline">Simulation trace</h2>
+      <div id="trace-block">
+        <p id="trace"></p>
+      </div>
+    </div>
+    <div id="simulation-missing-events">
+      <h2>Missing events</h2>
+      <p id="missing-events"></p>
+    </div>
+  </div>
+
+  <div id="io-dialog-examples" class="pjs-io-dialog pjs-io-dialog-open hidden">
+    <div id="examples" class="pjs-io-dialog-content">
+      <h1>Examples</h1>
+        <p>Choose an example to to view it in the editor. <b>Warning </b>this will override your current diagram</p>
+        <label for="search">Search examples</label>
+        <input type="search" id="search">
+        <div id="generated-examples"></div>
+    </div>
+  </div>
+
   <div id="canvas"></div>
 
 
   <div id="io-editing-tools-buttons">
     <div class="pjs-buttons">
+        <button id="js-restart-simulation" class="pjs-buttons-active" title="Restart simulation" style="display: none" >
+        <span>Restart simulation</span>
+      </button>
+        <button id="js-open-examples" class="pjs-buttons-active" title="Open examples" >
+        <span>Examples</span>
+      </button>
+      <button id="js-start-simulation" class="pjs-buttons-active" title="Start simulation">
+        Start simulation
+      </button>
       <label class="toggle">
         <input id="colorToggle" type="checkbox" checked>
         <span class="slider"></span>
@@ -85,7 +121,7 @@
   </div>
 
   <div class="bottom-buttons">
-    <div class="pjs-buttons">
+    <div id = "js-open-files" class="pjs-buttons">
       <span>
         open
       </span>
