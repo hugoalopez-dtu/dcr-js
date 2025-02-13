@@ -150,7 +150,7 @@ function addNesting(dcr, parent, element, object) {
 
   handleLabels(dcr, element);
   handleRoles(object, element);
-  
+
   handleDimensions(object, element);
 
   object.event = [];

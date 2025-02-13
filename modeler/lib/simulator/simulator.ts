@@ -20,7 +20,7 @@ export const startSimulator = (elementReg: any) => {
     initGraph(elementReg);
 }
 
-export const executeEvent  = (eventElement: any): string[] => {
+export const executeEvent = (eventElement: any): string[] => {
     const event: Event = eventElement.id;
     var eventName: String = eventElement.businessObject.description;
     if (eventName == null || eventName === "") {
@@ -32,7 +32,7 @@ export const executeEvent  = (eventElement: any): string[] => {
         return ["Event not found in graph"];
     }
 
-    switch(isEnabled(event, graph, group)) {
+    switch (isEnabled(event, graph, group)) {
         case 0:
             break;
         case 1:
@@ -50,9 +50,9 @@ export const executeEvent  = (eventElement: any): string[] => {
 
 const findElementGroup = (event: Event, group: DCRGraph | SubProcess): DCRGraph | SubProcess | null => {
     if (group.events.has(event)) return group;
-    
+
     let childGroup: DCRGraph | SubProcess | null = null;
-    
+
     group.subProcesses.forEach((subProcess: SubProcess) => {
         let ret = findElementGroup(event, subProcess);
         if (ret) childGroup = ret;
@@ -86,8 +86,8 @@ const initGraph = (elementReg: any) => {
 
     // Add relations to the graph
     relationElements.forEach((element: any) => {
-        const source: string = element.businessObject.get('sourceRef' ).id;
-        const target: string = element.businessObject.get('targetRef' ).id;
+        const source: string = element.businessObject.get('sourceRef').id;
+        const target: string = element.businessObject.get('targetRef').id;
         switch (element.businessObject.get('type')) {
             case 'condition':
                 addRelation(graph.conditionsFor, nestingElements, target, source);
@@ -176,36 +176,36 @@ const addEvents = (parent: DCRGraph | SubProcess, elements: Set<any>) => {
 
 const addRelation =
     (relationSet: EventMap, nestings: Set<any>, source: string, target: string) => {
-    // Handle Nesting groupings by adding relations for all nested elements
-    if (source.includes('Nesting')) {
-        nestings.forEach((element: any) => {
-            if (element.id === source) {
-                element.children.forEach((nestedElement: any) => {
-                    if (nestedElement.type === 'dcr:SubProcess' || 
-                        nestedElement.type === 'dcr:Event' || 
-                        nestedElement.type === 'dcr:Nesting') {
-                        addRelation(relationSet, nestings, nestedElement.id, target);
-                    }
-                });
-            }
-        });
-    } else if (target.includes('Nesting')) {
-        nestings.forEach((element: any) => {
-            if (element.id === target) {
-                element.children.forEach((nestedElement: any) => {
-                    if (nestedElement.type === 'dcr:SubProcess' || 
-                        nestedElement.type === 'dcr:Event' || 
-                        nestedElement.type === 'dcr:Nesting') {
-                        addRelation(relationSet, nestings, source, nestedElement.id);
-                    }
-                });
-            }
-        });
-    } else {
-        // Add direct relation if neither source nor target is a Nesting group
-        relationSet[source].add(target);
+        // Handle Nesting groupings by adding relations for all nested elements
+        if (source.includes('Nesting')) {
+            nestings.forEach((element: any) => {
+                if (element.id === source) {
+                    element.children.forEach((nestedElement: any) => {
+                        if (nestedElement.type === 'dcr:SubProcess' ||
+                            nestedElement.type === 'dcr:Event' ||
+                            nestedElement.type === 'dcr:Nesting') {
+                            addRelation(relationSet, nestings, nestedElement.id, target);
+                        }
+                    });
+                }
+            });
+        } else if (target.includes('Nesting')) {
+            nestings.forEach((element: any) => {
+                if (element.id === target) {
+                    element.children.forEach((nestedElement: any) => {
+                        if (nestedElement.type === 'dcr:SubProcess' ||
+                            nestedElement.type === 'dcr:Event' ||
+                            nestedElement.type === 'dcr:Nesting') {
+                            addRelation(relationSet, nestings, source, nestedElement.id);
+                        }
+                    });
+                }
+            });
+        } else {
+            // Add direct relation if neither source nor target is a Nesting group
+            relationSet[source].add(target);
+        }
     }
-}
 
 const clearGraph = (graph: DCRGraph): DCRGraph => {
     graph = {
@@ -234,11 +234,11 @@ export const updateRootGraph = (modeler: any) => {
 const update = (modeling: any, elementReg: any, group: DCRGraph | SubProcess) => {
     group.events.forEach((event: any) => {
         let element = elementReg.get(event);
-        modeling.updateProperties(element, {executed: graph.marking.executed.has(event)});
-        modeling.updateProperties(element, {included: graph.marking.included.has(event)});
-        modeling.updateProperties(element, {pending: graph.marking.pending.has(event)});
+        modeling.updateProperties(element, { executed: graph.marking.executed.has(event) });
+        modeling.updateProperties(element, { included: graph.marking.included.has(event) });
+        modeling.updateProperties(element, { pending: graph.marking.pending.has(event) });
         if (event.includes('Event')) {
-            modeling.updateProperties(element, {enabled: isEnabled(event, graph, group) === 0});
+            modeling.updateProperties(element, { enabled: isEnabled(event, graph, group) === 0 });
         }
     });
     group.subProcesses.forEach((subProcess: any) => {
@@ -256,7 +256,7 @@ function logExcecutionString(event: any): string {
     if (eventName == null || eventName === "") {
         return ("Executed Unnamed event");
     } else {
-        return ("Executed  "+ eventName);
+        return ("Executed  " + eventName);
     }
 }
 

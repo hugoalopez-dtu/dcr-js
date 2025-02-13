@@ -28,12 +28,12 @@ import saveDCRXML from './DCRXML';
 import XMLConverter from './XMLConverter';
 import DCRPortalConverter from './DCRPortalConverter';
 
-import {
-  startSimulator as simulatorStart,
-  executeEvent as simulatorExecute,
-  updateRootGraph as simulatorUpdate,
-  restoreMarkings as simulatorRestoreMarkings
-} from './simulator/simulator';
+//import {
+//  startSimulator as simulatorStart,
+//  executeEvent as simulatorExecute,
+//  updateRootGraph as simulatorUpdate,
+//  restoreMarkings as simulatorRestoreMarkings
+//} from './simulator/simulator.ts';
 
 
 
@@ -500,21 +500,21 @@ BaseViewer.prototype.getModules = function () {
   return this._modules;
 };
 
-BaseViewer.prototype.startSimulation = function () {
-  simulatorStart(this.get('elementRegistry'));
-  simulatorUpdate(this);
-}
-
-BaseViewer.prototype.simulatorExecute = function (element) {
-  let ret = simulatorExecute(element);
-  simulatorUpdate(this);
-  return ret;
-}
-
-BaseViewer.prototype.simulatorRestoreStates = function () {
-  simulatorRestoreMarkings();
-  simulatorUpdate(this);
-}
+//BaseViewer.prototype.startSimulation = function () {
+//  simulatorStart(this.get('elementRegistry'));
+//  simulatorUpdate(this);
+//}
+//
+//BaseViewer.prototype.simulatorExecute = function (element) {
+//  let ret = simulatorExecute(element);
+//  simulatorUpdate(this);
+//  return ret;
+//}
+//
+//BaseViewer.prototype.simulatorRestoreStates = function () {
+//  simulatorRestoreMarkings();
+//  simulatorUpdate(this);
+//}
 
 /**
  * Remove all drawn elements from the viewer.

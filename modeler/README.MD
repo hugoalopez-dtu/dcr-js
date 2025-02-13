@@ -1,5 +1,9 @@
 ## DCR graph diagram modeler
 
+Now part of the refactored dcr-js project. The modeler has been copied over into the refactored app. Touch at your own peril
+
+# DEPRECATED
+
 ## Development
 
 ### Installing dependencies

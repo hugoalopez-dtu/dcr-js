@@ -1,2 +1,0 @@
-Arrange meeting.xml
-Prescribe medicine.xml
