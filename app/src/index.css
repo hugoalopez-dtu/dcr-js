@@ -1,7 +1,7 @@
-@import '~diagram-js/assets/diagram-js.css';
-@import '~bpmn-font/dist/css/bpmn.css';
-@import '~bpmn-font/dist/css/bpmn-embedded.css';
-@import '~bpmn-font/dist/css/bpmn-codes.css';
+@import 'diagram-js/assets/diagram-js.css';
+@import 'bpmn-font/dist/css/bpmn.css';
+@import 'bpmn-font/dist/css/bpmn-embedded.css';
+@import 'bpmn-font/dist/css/bpmn-codes.css';
 
 @import './assets/odm.css';
 
