@@ -1,14 +1,27 @@
-import Modeler from './Modeler';
-import ColumnContainer from './utilComponents/ColumnContainer';
+import { useState } from "react";
+import ModelerState from "./components/ModelerState";
+import Button from "./utilComponents/Button";
 
-import emptyBoardXML from './resources/emptyBoard';
-import sampleBoardXML from './resources/sampleBoard';
+export enum StateEnum {
+    Modeler,
+    Test
+}
 
-function App() {
-  return (
-    //<p>This should show a modeller:</p>
-    <Modeler initXml={sampleBoardXML} />
-  )
+export interface StateProps {
+  setState: (state: StateEnum) => void;
+}
+
+const App = () => {
+    const [state, setState] = useState(StateEnum.Modeler);
+    switch (state) {
+      case StateEnum.Modeler:
+        return <ModelerState setState={setState}/>;
+      case StateEnum.Test:
+        return <>
+          <div>Hello there! This is a small test!</div>
+          <Button onClick={() => setState(StateEnum.Modeler)}>Go Back</Button>
+        </>
+    }
 }
 
 export default App;
