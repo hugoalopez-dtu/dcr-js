@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import DCRModeler from "modeler";
 
 interface ModelerProps {
