@@ -1,6 +1,8 @@
 class DCRModeler {
     constructor(options: any): void;
 
+    destroy(): void;
+
     importXML(xml: string): Promise<void>;
     importCustomXML(xml: string): Promise<void>;
     importDCRPortalXML(xml: string): Promise<void>;

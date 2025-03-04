@@ -22,13 +22,13 @@ export default function BaseModeler(options) {
   BaseViewer.call(this, options);
 
   // hook ID collection into the modeler
-  this.on('import.parse.complete', function(event) {
+  this.on('import.parse.complete', function (event) {
     if (!event.error) {
       this._collectIds(event.definitions, event.context);
     }
   }, this);
 
-  this.on('diagram.destroy', function() {
+  this.on('diagram.destroy', function () {
     this.get('moddle').ids.clear();
   }, this);
 }
@@ -41,13 +41,13 @@ inherits(BaseModeler, BaseViewer);
  *
  * @param {Object} options
  */
-BaseModeler.prototype._createModdle = function(options) {
+BaseModeler.prototype._createModdle = function (options) {
   var moddle = BaseViewer.prototype._createModdle.call(this, options);
 
   // attach ids to moddle to be able to track
   // and validated ids in the XML document
   // tree
-  moddle.ids = new Ids([ 32, 36, 1 ]);
+  moddle.ids = new Ids([32, 36, 1]);
 
   return moddle;
 };
@@ -59,11 +59,11 @@ BaseModeler.prototype._createModdle = function(options) {
  * @param {ModdleElement} definitions
  * @param {Context} context
  */
-BaseModeler.prototype._collectIds = function(definitions, context) {
+BaseModeler.prototype._collectIds = function (definitions, context) {
 
   var moddle = definitions.$model,
-      ids = moddle.ids,
-      id;
+    ids = moddle.ids,
+    id;
 
   // remove references from previous import
   ids.clear();

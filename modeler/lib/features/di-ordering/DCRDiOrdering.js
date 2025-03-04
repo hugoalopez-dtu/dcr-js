@@ -5,7 +5,7 @@ import {
   filter,
   map
 } from 'min-dash';
- 
+
 import { selfAndAllChildren } from 'diagram-js/lib/util/Elements';
 
 
@@ -17,14 +17,14 @@ export default function DCRDiOrdering(eventBus, canvas) {
 
   function orderDi() {
     var root = canvas.getRootElement(),
-        rootDi = getBusinessObject(root).di,
-        elements,
-        diElements;
+      rootDi = getBusinessObject(root).di,
+      elements,
+      diElements;
 
-    elements = selfAndAllChildren([ root ], false);
+    elements = selfAndAllChildren([root], false);
 
     // only odDi:Shape can be direct children of odDi:Plane
-    elements = filter(elements, function(element) {
+    elements = filter(elements, function (element) {
       return element !== root && !element.labelTarget;
     });
 
@@ -34,4 +34,4 @@ export default function DCRDiOrdering(eventBus, canvas) {
   }
 }
 
-DCRDiOrdering.$inject = [ 'eventBus', 'canvas' ];
+DCRDiOrdering.$inject = ['eventBus', 'canvas'];

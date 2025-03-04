@@ -18,8 +18,8 @@ import UpdateLabelHandler from '../label-editing/cmd/UpdateLabelHandler';
  * @param {DCRRules} dcrRules
  */
 export default function Modeling(
-    eventBus, elementFactory, commandStack,
-    dcrRules) {
+  eventBus, elementFactory, commandStack,
+  dcrRules) {
 
   BaseModeling.call(this, eventBus, elementFactory, commandStack);
 
@@ -36,7 +36,7 @@ Modeling.$inject = [
 ];
 
 
-Modeling.prototype.getHandlers = function() {
+Modeling.prototype.getHandlers = function () {
   var handlers = BaseModeling.prototype.getHandlers.call(this);
 
   handlers['element.updateProperties'] = UpdatePropertiesHandler;
@@ -48,7 +48,7 @@ Modeling.prototype.getHandlers = function() {
 };
 
 
-Modeling.prototype.updateLabel = function(element, newLabel, newBounds, hints) {
+Modeling.prototype.updateLabel = function (element, newLabel, newBounds, hints) {
   this._commandStack.execute('element.updateLabel', {
     element: element,
     newLabel: newLabel,
@@ -58,14 +58,14 @@ Modeling.prototype.updateLabel = function(element, newLabel, newBounds, hints) {
 };
 
 
-Modeling.prototype.updateProperties = function(element, properties) {
+Modeling.prototype.updateProperties = function (element, properties) {
   this._commandStack.execute('element.updateProperties', {
     element: element,
     properties: properties
   });
 };
 
-Modeling.prototype.claimId = function(id, moddleElement) {
+Modeling.prototype.claimId = function (id, moddleElement) {
   this._commandStack.execute('id.updateClaim', {
     id: id,
     element: moddleElement,
@@ -74,14 +74,14 @@ Modeling.prototype.claimId = function(id, moddleElement) {
 };
 
 
-Modeling.prototype.unclaimId = function(id, moddleElement) {
+Modeling.prototype.unclaimId = function (id, moddleElement) {
   this._commandStack.execute('id.updateClaim', {
     id: id,
     element: moddleElement
   });
 };
 
-Modeling.prototype.connect = function(source, target, attrs, hints) {
+Modeling.prototype.connect = function (source, target, attrs, hints) {
 
   var dcrRules = this._dcrRules;
 

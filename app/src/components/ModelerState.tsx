@@ -3,12 +3,12 @@ import DCRModeler from "modeler";
 import styled from "styled-components";
 
 import emptyBoardXML from '../resources/emptyBoard';
-import sampleBoardXML from '../resources/sampleBoard';
-import { useState } from 'react';
+import { useRef } from 'react';
 import Button from '../utilComponents/Button';
 
 import { saveAs } from 'file-saver';
 import { StateEnum, StateProps } from '../App';
+import FileUploadButton from '../utilComponents/FileUploadButton';
 
 const BottomButtons = styled.div`
   position: fixed;
@@ -28,39 +28,35 @@ const ButtonTitle = styled.div`
 `
 
 const ModelerState = ({ setState }: StateProps) => {
-  const [modeler, setModeler] = useState<DCRModeler>(new DCRModeler({}));
-  const [xml, setXml] = useState<string>(sampleBoardXML);
+  const modelerRef = useRef<DCRModeler | null>(null);
 
-  // State to reset modeller even without updating the XML.
-  // This is necessary due to the fact that the modeller maintains it's own state, so react doesn't know when to update.
-  // https://www.nikgraf.com/blog/using-reacts-key-attribute-to-remount-a-component
-  const [modelerKey, setModelerKey] = useState<number>(0);
-  const resetModeler = () => setModelerKey(modelerKey + 1);
-
-  const open = (data: string) => () => {
-    setXml(data);
-    resetModeler();
+  const open = (data: string) => {
+    console.log(data);
+    modelerRef.current?.importXML(data).catch((e) => console.log(e));
   }
 
   const saveAsXML = async () => {
-    const data = await modeler.saveXML({format: true});
+    if (!modelerRef.current) return;
+
+    const data = await modelerRef.current.saveXML({ format: true });
     const blob = new Blob([data.xml]);
-    saveAs(blob, "dcr-board.xml"); 
+    saveAs(blob, "dcr-board.xml");
   }
 
   const saveAsSvg = async () => {
-    const data = await modeler.saveSVG();
+    if (!modelerRef.current) return;
+    const data = await modelerRef.current.saveSVG();
     const blob = new Blob([data.svg]);
-    saveAs(blob, "dcr-board.svg"); 
+    saveAs(blob, "dcr-board.svg");
   }
 
   return (
     <>
-      <Modeler key={modelerKey} xml={xml} setModeler={setModeler} />
+      <Modeler modelerRef={modelerRef} />
       <BottomButtons>
         <ButtonTitle>Open:</ButtonTitle>
-        <Button onClick={() => {}}>Editor XML</Button>
-        <Button onClick={open(emptyBoardXML)}>New Diagram</Button>
+        <FileUploadButton fileCallback={(contents) => open(contents)}>Editor XML</FileUploadButton>
+        <Button onClick={() => open(emptyBoardXML)}>New Diagram</Button>
         <ButtonTitle>Download:</ButtonTitle>
         <Button onClick={saveAsXML}>Export XML</Button>
         <Button onClick={saveAsSvg}>Export SVG</Button>

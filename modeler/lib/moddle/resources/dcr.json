@@ -48,6 +48,11 @@
           "name": "pending",
           "isAttr": true,
           "type": "Boolean"
+        },
+        {
+          "name": "enabled",
+          "isAttr": true,
+          "type": "Boolean"
         }
       ]
     },

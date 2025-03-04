@@ -341,6 +341,8 @@ BaseViewer.prototype.saveXML = function (options) {
 
   options = options || {};
 
+  console.log(this);
+
   var self = this;
 
   var definitions = this._definitions;

@@ -3,8 +3,8 @@ import ModelerState from "./components/ModelerState";
 import Button from "./utilComponents/Button";
 
 export enum StateEnum {
-    Modeler,
-    Test
+  Modeler,
+  Test
 }
 
 export interface StateProps {
@@ -12,16 +12,16 @@ export interface StateProps {
 }
 
 const App = () => {
-    const [state, setState] = useState(StateEnum.Modeler);
-    switch (state) {
-      case StateEnum.Modeler:
-        return <ModelerState setState={setState}/>;
-      case StateEnum.Test:
-        return <>
-          <div>Hello there! This is a small test!</div>
-          <Button onClick={() => setState(StateEnum.Modeler)}>Go Back</Button>
-        </>
-    }
+  const [state, setState] = useState(StateEnum.Modeler);
+  switch (state) {
+    case StateEnum.Modeler:
+      return <ModelerState setState={setState} />;
+    case StateEnum.Test:
+      return <>
+        <div>Hello there! This is a small test!</div>
+        <Button onClick={() => setState(StateEnum.Modeler)}>Go Back</Button>
+      </>
+  }
 }
 
 export default App;

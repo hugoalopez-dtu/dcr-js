@@ -454,23 +454,23 @@ export default function DCRRenderer(
           dcrSettings.get('blackRelations') ? colorBlack : colorCondition, //yellow
           fill, startDirection, endDirection);
       } else if (type === 'response') {
-        markers.responseMarker(marker, path, 
+        markers.responseMarker(marker, path,
           dcrSettings.get('blackRelations') ? colorBlack : colorResponse, //blue
           fill, startDirection, endDirection);
       } else if (type === 'include') {
-        markers.includeMarker(marker, path, 
+        markers.includeMarker(marker, path,
           dcrSettings.get('blackRelations') ? colorBlack : colorInclude, //green
           fill, startDirection, endDirection);
       } else if (type === 'exclude') {
-        markers.excludeMarker(marker, path, 
+        markers.excludeMarker(marker, path,
           dcrSettings.get('blackRelations') ? colorBlack : colorExclude, //red
           fill, startDirection, endDirection);
       } else if (type === 'milestone') {
-        markers.milestoneMarker(marker, path, 
+        markers.milestoneMarker(marker, path,
           dcrSettings.get('blackRelations') ? colorBlack : colorMilestone, //purple
           fill, startDirection, endDirection);
       } else if (type === 'spawn') {
-        markers.spawnMarker(marker, path, 
+        markers.spawnMarker(marker, path,
           dcrSettings.get('blackRelations') ? colorBlack : "#4D6180", //green
           fill, startDirection, endDirection);
       }

@@ -48,7 +48,7 @@ DCRModdle.prototype = Object.create(Moddle.prototype);
  *
  * @returns {Promise<ParseResult, ParseError>}
  */
-DCRModdle.prototype.fromXML = function(xmlStr, typeName, options) {
+DCRModdle.prototype.fromXML = function (xmlStr, typeName, options) {
   if (!isString(typeName)) {
     options = typeName;
     typeName = 'dcr:Definitions';
@@ -56,7 +56,7 @@ DCRModdle.prototype.fromXML = function(xmlStr, typeName, options) {
 
   var reader = new Reader(assign({ model: this, lax: false }, options));
   var rootHandler = reader.handler(typeName);
-  
+
   return reader.fromXML(xmlStr, rootHandler);
 };
 
@@ -76,10 +76,12 @@ DCRModdle.prototype.fromXML = function(xmlStr, typeName, options) {
  *
  * @returns {Promise<SerializationResult, Error>}
  */
-DCRModdle.prototype.toXML = function(element, options) {
+DCRModdle.prototype.toXML = function (element, options) {
+
+  console.log(element);
   var writer = new Writer(options);
 
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     try {
       var result = writer.toXML(element);
 
