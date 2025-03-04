@@ -28,7 +28,7 @@ const Menu = styled.ul`
     top: 0;
     right: 0;
     height: 100%;
-    width: 20%;
+    width: 18em;
     border-left: 2px solid Black;
     display: flex;
     flex-direction: column;
