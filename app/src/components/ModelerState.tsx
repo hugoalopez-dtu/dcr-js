@@ -4,27 +4,26 @@ import styled from "styled-components";
 
 import emptyBoardXML from '../resources/emptyBoard';
 import { useRef } from 'react';
-import Button from '../utilComponents/Button';
 
 import { saveAs } from 'file-saver';
 import { StateEnum, StateProps } from '../App';
-import FileUploadButton from '../utilComponents/FileUploadButton';
+import FileUpload from '../utilComponents/FileUpload';
+import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-const BottomButtons = styled.div`
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  overflow: hidden;
-  padding: 1em;
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.5em;
-`
-const ButtonTitle = styled.div`
-  font-weight: bold;
-  margin-top: auto;
-  margin-bottom: auto;
+import { BiDownload, BiPlus, BiSolidCamera, BiSolidFolderOpen } from 'react-icons/bi';
+
+const StyledFileUpload = styled.div`
+  width: 100%;
+  & > label > svg {
+    font-size: 25px;
+  }
+  & > label {
+    padding: 1em;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    cursor: pointer;
+  }
 `
 
 const ModelerState = ({ setState }: StateProps) => {
@@ -50,17 +49,36 @@ const ModelerState = ({ setState }: StateProps) => {
     saveAs(blob, "dcr-board.svg");
   }
 
+  const menuElements: Array<ModalMenuElement> = [
+    {
+      icon: <BiPlus />,
+      text: "New Diagram",
+      onClick: () => open(emptyBoardXML),
+    },{
+      element: (
+        <StyledFileUpload>
+          <FileUpload accept="text/xml" fileCallback={(contents) => open(contents)}>
+            <BiSolidFolderOpen />
+            <>Editor XML</>
+          </FileUpload>
+        </StyledFileUpload>),
+    },
+    {
+      icon: <BiDownload />,
+      text: "Download Editor XML",
+      onClick: saveAsXML
+    },
+    {
+      icon: <BiSolidCamera />,
+      text: "Download SVG",
+      onClick: saveAsSvg,
+    } 
+  ]
+
   return (
     <>
       <Modeler modelerRef={modelerRef} />
-      <BottomButtons>
-        <ButtonTitle>Open:</ButtonTitle>
-        <FileUploadButton fileCallback={(contents) => open(contents)}>Editor XML</FileUploadButton>
-        <Button onClick={() => open(emptyBoardXML)}>New Diagram</Button>
-        <ButtonTitle>Download:</ButtonTitle>
-        <Button onClick={saveAsXML}>Export XML</Button>
-        <Button onClick={saveAsSvg}>Export SVG</Button>
-      </BottomButtons>
+      <ModalMenu elements={menuElements}/>
     </>
   )
 }
