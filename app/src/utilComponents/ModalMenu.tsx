@@ -16,18 +16,21 @@ const MenuIcon = styled(BiMenu) <{ open: boolean; }>`
     cursor: pointer;
 `
 
-const Menu = styled.ul`
+const Menu = styled.div`
     position: fixed;
     top: 0;
     right: 0;
-    height: 100%;
+    height: 100vh;
     width: 18em;
     box-shadow: 0px 0px 5px 0px grey;
     display: flex;
     flex-direction: column;
     padding-top: 5em;
+    padding-bottom: 5em;
     font-size: 20px;
     background-color: white;
+    justify-content: space-between;
+    box-sizing: border-box;
 `
 
 const MenuItem = styled.li`
@@ -72,7 +75,8 @@ type CustomModelMenuElement = {
 export type ModalMenuElement = RegularModalMenuElement | CustomModelMenuElement;
 
 interface ModalMenuProps {
-    elements: Array<ModalMenuElement>
+    elements: Array<ModalMenuElement>,
+    bottomElements?: Array<ModalMenuElement>
 }
 
 const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
@@ -82,7 +86,7 @@ const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
 // Renders a modal menu that toggles in the top right corner.
 // Elements can either be objects with an icon, a description, and an onClick handler, or they can be a concrete element.
 // If the Element is custom, styling is your own job!!!
-const ModalMenu = ({ elements }: ModalMenuProps) => {
+const ModalMenu = ({ elements, bottomElements }: ModalMenuProps) => {
     const [open, setOpen] = useState(false);
 
     const renderElement = (element: ModalMenuElement, idx: number) => {
@@ -107,7 +111,12 @@ const ModalMenu = ({ elements }: ModalMenuProps) => {
         <>
             {open ?
                 <Menu>
-                    {elements.map((element, idx) => renderElement(element, idx))}
+                    <ul>
+                        {elements.map((element, idx) => renderElement(element, idx))}
+                    </ul>
+                    {bottomElements && <ul>
+                        {bottomElements.map((element, idx) => renderElement(element, idx + elements.length))}
+                    </ul>}
                 </Menu> : null}
             <MenuIcon onClick={() => setOpen(!open)} open={open} />
         </>

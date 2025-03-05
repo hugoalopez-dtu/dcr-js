@@ -10,7 +10,7 @@ import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiDownload, BiHome, BiPlus, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
+import { BiDownload, BiExitFullscreen, BiExpand, BiFullscreen, BiHome, BiPlus, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toast';
@@ -33,9 +33,12 @@ const StyledFileUpload = styled.div`
 const ModelerState = ({ setState }: StateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const modelerRef = useRef<DCRModeler | null>(null);
 
   useEffect(() => {
+    // Fetch examples
     fetch('examples/generated_examples.txt')
       .then(response => {
         if (!response.ok) {
@@ -49,6 +52,14 @@ const ModelerState = ({ setState }: StateProps) => {
         files = files.map(name => name.split('.').slice(0, -1).join('.')); // Shave file extension off
         setExamplesData(files);
       })
+
+    // Add listener to fullscreen changes
+    function onFullscreenChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
 
   const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
@@ -101,12 +112,28 @@ const ModelerState = ({ setState }: StateProps) => {
     }
   ]
 
+  const bottomElements: Array<ModalMenuElement> = [
+    {
+      icon: <BiPlus />,
+      text: "New Diagram",
+      onClick: () => null,
+    }
+  ]
+
   return (
     <>
       <Modeler modelerRef={modelerRef} />
       <TopRightIcons>
+        {isFullscreen ?
+          <BiExitFullscreen title='Exit Fullscreen'
+            onClick={() => { document.exitFullscreen(); setIsFullscreen(false) }}
+          />
+          :
+          <BiFullscreen title='Enter Fullscreen'
+            onClick={() => { document.documentElement.requestFullscreen(); setIsFullscreen(true) }}
+          />}
         <BiHome onClick={() => setState(StateEnum.Home)} />
-        <ModalMenu elements={menuElements} />
+        <ModalMenu elements={menuElements} bottomElements={bottomElements} />
       </TopRightIcons>
       {examplesOpen && <Examples
         examplesData={examplesData}

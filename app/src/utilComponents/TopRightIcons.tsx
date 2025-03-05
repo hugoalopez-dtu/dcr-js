@@ -6,14 +6,14 @@ interface TopRightIconProps {
 }
 
 const Container = styled.div`
-    position: absolute;
+    position: fixed;
     top: 0;
     right: 0;
     overflow: hidden;
     display: flex;
     & > svg {
         margin: 0.5em;
-        z-index: 1000;
+        z-index: 0;
         border: 2px solid black;
         border-radius: 50%;
         padding: 5px;

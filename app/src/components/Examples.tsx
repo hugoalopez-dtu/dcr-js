@@ -79,12 +79,16 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML }: 
             </TextBox>
             <FlexBox direction="row" justify="space-around">
                 {examplesData.map((exampleStr) => {
-                    return (
-                        <Example key={exampleStr} onClick={() => exampleClick(exampleStr)}>
-                            <ExampleText>{exampleStr}</ExampleText>
-                            <Img src={`examples/images/${exampleStr}.svg`} />
-                        </Example>
-                    )
+                    if (exampleStr.toLowerCase().includes(searchStr.toLowerCase())) {
+                        return (
+                            <Example key={exampleStr} onClick={() => exampleClick(exampleStr)}>
+                                <ExampleText>{exampleStr}</ExampleText>
+                                <Img src={`examples/images/${exampleStr}.svg`} />
+                            </Example>
+                        )
+                    } else {
+                        <></>
+                    }
                 })}
             </FlexBox>
         </Popup>
