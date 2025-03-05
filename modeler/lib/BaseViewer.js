@@ -66,6 +66,10 @@ export default function BaseViewer(options) {
   /* </project-logo> */
 
   this._init(this._container, this._moddle, options);
+
+  this.importCustomXML = this.importCustomXML.bind(this);
+  this.importXML = this.importXML.bind(this);
+  this.importDCRPortalXML = this.importCustomXML.bind(this);
 }
 
 inherits(BaseViewer, Diagram);
@@ -111,7 +115,6 @@ inherits(BaseViewer, Diagram);
  * @returns {Promise<ImportXMLResult, ImportXMLError>}
  */
 BaseViewer.prototype.importXML = function (xml, rootBoard) {
-
   var self = this;
 
   return new Promise(function (resolve, reject) {
@@ -165,6 +168,8 @@ BaseViewer.prototype.importXML = function (xml, rootBoard) {
 };
 
 BaseViewer.prototype.importCustomXML = async function (xml, rootBoard) {
+  var self = this;
+  console.log(self);
   return this.importXML(await XMLConverter(xml), rootBoard);
 };
 

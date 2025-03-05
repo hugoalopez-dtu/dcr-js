@@ -4,7 +4,8 @@ import Button from "./utilComponents/Button";
 
 export enum StateEnum {
   Modeler,
-  Test
+  Home,
+  Simulation,
 }
 
 export interface StateProps {
@@ -16,10 +17,10 @@ const App = () => {
   switch (state) {
     case StateEnum.Modeler:
       return <ModelerState setState={setState} />;
-    case StateEnum.Test:
+    case StateEnum.Home:
       return <>
-        <div>Hello there! This is a small test!</div>
-        <Button onClick={() => setState(StateEnum.Modeler)}>Go Back</Button>
+        <div>Hello there! This is home</div>
+        <Button onClick={() => setState(StateEnum.Modeler)}>Modeler</Button>
       </>
   }
 }

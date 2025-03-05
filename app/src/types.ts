@@ -1,0 +1,1 @@
+export type Children = string | React.JSX.Element | React.JSX.Element[];

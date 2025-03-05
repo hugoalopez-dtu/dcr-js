@@ -1,10 +1,11 @@
 import styled from "styled-components";
 import Button from "./Button"
 import React from 'react';
+import { Children } from "../types";
 
 interface FileUploadButtonProps {
     fileCallback: (contents: string) => void;
-    children: string | React.JSX.Element | React.JSX.Element[];
+    children: Children;
     accept?: string;
 }
 

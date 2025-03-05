@@ -5,14 +5,7 @@ import React, { useState } from "react";
 import { IconType } from "react-icons";
 
 
-const MenuIcon = styled(BiMenu)<{ open: boolean; }>`
-    position: fixed;
-    top: 0;
-    right: 0;
-    overflow: hidden;
-    margin-top: 1em;
-    margin-right: 1em;
-    border: 2px solid ${props => props.open ? "White" : "Black"};
+const MenuIcon = styled(BiMenu) <{ open: boolean; }>`
     border-radius: 50%;
     padding: 5px;
     font-size: 30px;
@@ -29,11 +22,12 @@ const Menu = styled.ul`
     right: 0;
     height: 100%;
     width: 18em;
-    border-left: 2px solid Black;
+    box-shadow: 0px 0px 5px 0px grey;
     display: flex;
     flex-direction: column;
     padding-top: 5em;
     font-size: 20px;
+    background-color: white;
 `
 
 const MenuItem = styled.li`
@@ -69,7 +63,7 @@ type RegularModalMenuElement = {
     icon: React.JSX.Element,
     text: string,
     onClick: () => void
-} 
+}
 
 type CustomModelMenuElement = {
     element: React.JSX.Element,
@@ -90,7 +84,7 @@ const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
 // If the Element is custom, styling is your own job!!!
 const ModalMenu = ({ elements }: ModalMenuProps) => {
     const [open, setOpen] = useState(false);
-    
+
     const renderElement = (element: ModalMenuElement, idx: number) => {
         if (isRegularElement(element)) {
             const { icon, text, onClick } = element;
@@ -108,16 +102,16 @@ const ModalMenu = ({ elements }: ModalMenuProps) => {
             )
         }
     }
-    
+
     return (
         <>
-            {open ? 
+            {open ?
                 <Menu>
-                    {elements.map( (element, idx) => renderElement(element, idx))}
+                    {elements.map((element, idx) => renderElement(element, idx))}
                 </Menu> : null}
-            <MenuIcon onClick={()=> setOpen(!open)} open={open} />
+            <MenuIcon onClick={() => setOpen(!open)} open={open} />
         </>
     )
 }
 
- export default ModalMenu;
+export default ModalMenu;
