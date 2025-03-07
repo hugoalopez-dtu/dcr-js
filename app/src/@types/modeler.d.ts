@@ -10,6 +10,8 @@ class DCRModeler {
     saveXML({ format: boolean }): Promise<{ xml: string }>;
     saveDCRXML(): Promise<{ xml: string }>
     saveSVG(): Promise<{ svg: string }>
+
+    set(key: string, value: any): void;
 }
 
 

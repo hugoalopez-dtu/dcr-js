@@ -10,6 +10,16 @@ const TextBox = styled.div`
     margin: 2em;
 `
 
+const Loading = styled.div`
+    z-index: 1000;
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    cursor: wait;
+`
+
 const Example = styled.div`
     height: 20em;
     width: 20em;
@@ -39,19 +49,23 @@ interface ExampleProps {
 }
 
 const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML }: ExampleProps) => {
-
+    const [loading, setLoading] = useState(false);
     const [searchStr, setSearchStr] = useState("");
 
     const exampleClick = (exampleStr: string) => {
         if (confirm("Are you sure? This will override your current diagram!")) {
+            console.log(document.body.style.cursor);
+            setLoading(true);
+
             fetch('examples/diagrams/' + exampleStr + '.xml')
                 .then(response => {
                     if (!response.ok) {
-                        alert("Failed to fetch example\nStatus code: " + response.status + " " + response.statusText);
+                        toast.error("Failed to fetch example...");
                     } else {
                         return response.text();
                     }
                 }).then(data => {
+                    setLoading(false);
                     if (data) {
                         if (data.includes('<?xml')) { // type check which type of save file. Only one of them has magic number '<?xml'
                             openCustomXML(data);
@@ -65,11 +79,13 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML }: 
 
                 }).catch(err => {
                     console.log(err);
-                });
+                })
         }
     }
 
     return (
+        <>
+        {loading && <Loading />}
         <Popup close={() => setExamplesOpen(false)} >
             <TextBox>
                 <h1>Examples</h1>
@@ -77,7 +93,7 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML }: 
                 <p>Search examples:</p>
                 <input type="text" onChange={(event) => setSearchStr(event.target.value)} />
             </TextBox>
-            <FlexBox direction="row" justify="space-around">
+            <FlexBox direction="row" $justify="space-around">
                 {examplesData.map((exampleStr) => {
                     if (exampleStr.toLowerCase().includes(searchStr.toLowerCase())) {
                         return (
@@ -92,6 +108,7 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML }: 
                 })}
             </FlexBox>
         </Popup>
+        </>
     )
 }
 

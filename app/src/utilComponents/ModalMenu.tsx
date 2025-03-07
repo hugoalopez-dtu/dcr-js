@@ -53,10 +53,6 @@ const CustomMenuItem = styled.li`
     flex-direction: row;
     justify-content: space-between;
     cursor: pointer;
-    &:hover {
-        color: white;
-        background-color: Gainsboro;
-    }
     & > svg {
         font-size: 25px;
     }
@@ -76,7 +72,9 @@ export type ModalMenuElement = RegularModalMenuElement | CustomModelMenuElement;
 
 interface ModalMenuProps {
     elements: Array<ModalMenuElement>,
-    bottomElements?: Array<ModalMenuElement>
+    bottomElements?: Array<ModalMenuElement>,
+    open: boolean,
+    setOpen: (val: boolean) => void
 }
 
 const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
@@ -86,8 +84,8 @@ const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
 // Renders a modal menu that toggles in the top right corner.
 // Elements can either be objects with an icon, a description, and an onClick handler, or they can be a concrete element.
 // If the Element is custom, styling is your own job!!!
-const ModalMenu = ({ elements, bottomElements }: ModalMenuProps) => {
-    const [open, setOpen] = useState(false);
+const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) => {
+    
 
     const renderElement = (element: ModalMenuElement, idx: number) => {
         if (isRegularElement(element)) {
@@ -100,7 +98,7 @@ const ModalMenu = ({ elements, bottomElements }: ModalMenuProps) => {
             )
         } else {
             return (
-                <CustomMenuItem key={idx}>
+                <CustomMenuItem key={idx} >
                     {element.element}
                 </CustomMenuItem>
             )

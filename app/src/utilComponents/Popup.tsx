@@ -14,8 +14,9 @@ const Background = styled.div`
 
 const Window = styled.div`
     position: absolute;
-    top: 20%;
-    left: 20%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: white;
     opacity: 1;
 `

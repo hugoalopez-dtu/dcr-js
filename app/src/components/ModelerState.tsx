@@ -15,6 +15,7 @@ import { BiDownload, BiExitFullscreen, BiExpand, BiFullscreen, BiHome, BiPlus, B
 import Examples from './Examples';
 import { toast } from 'react-toast';
 import TopRightIcons from '../utilComponents/TopRightIcons';
+import Toggle from '../utilComponents/Toggle';
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -28,11 +29,18 @@ const StyledFileUpload = styled.div`
     justify-content: space-between;
     cursor: pointer;
   }
+  &:hover {
+      color: white;
+      background-color: Gainsboro;
+  } 
 `
 
 const ModelerState = ({ setState }: StateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const modelerRef = useRef<DCRModeler | null>(null);
@@ -85,11 +93,11 @@ const ModelerState = ({ setState }: StateProps) => {
     {
       icon: <BiPlus />,
       text: "New Diagram",
-      onClick: () => open(emptyBoardXML, modelerRef.current?.importXML),
+      onClick: () => { open(emptyBoardXML, modelerRef.current?.importXML); setMenuOpen(false) },
     }, {
       element: (
         <StyledFileUpload>
-          <FileUpload accept="text/xml" fileCallback={(contents) => open(contents, modelerRef.current?.importXML)}>
+          <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
             <BiSolidFolderOpen />
             <>Editor XML</>
           </FileUpload>
@@ -98,25 +106,23 @@ const ModelerState = ({ setState }: StateProps) => {
     {
       icon: <BiDownload />,
       text: "Download Editor XML",
-      onClick: saveAsXML
+      onClick: () => { saveAsXML(); setMenuOpen(false) },
     },
     {
       icon: <BiSolidCamera />,
       text: "Download SVG",
-      onClick: saveAsSvg,
+      onClick: () => { saveAsSvg(); setMenuOpen(false) },
     },
     {
       icon: <BiSolidDashboard />,
       text: "Examples",
-      onClick: () => setExamplesOpen(true),
+      onClick: () => { setMenuOpen(false); setExamplesOpen(true) },
     }
   ]
 
   const bottomElements: Array<ModalMenuElement> = [
     {
-      icon: <BiPlus />,
-      text: "New Diagram",
-      onClick: () => null,
+      element: <Toggle onChange={(e) => modelerRef.current?.set("blackRelations", e.target.checked.toString())}/>
     }
   ]
 
@@ -133,7 +139,7 @@ const ModelerState = ({ setState }: StateProps) => {
             onClick={() => { document.documentElement.requestFullscreen(); setIsFullscreen(true) }}
           />}
         <BiHome onClick={() => setState(StateEnum.Home)} />
-        <ModalMenu elements={menuElements} bottomElements={bottomElements} />
+        <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen}/>
       </TopRightIcons>
       {examplesOpen && <Examples
         examplesData={examplesData}

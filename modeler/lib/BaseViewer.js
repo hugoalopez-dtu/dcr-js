@@ -592,6 +592,20 @@ BaseViewer.prototype.off = function (event, callback) {
   this.get('eventBus').off(event, callback);
 };
 
+const baseSettings = {
+    markerNotation: "defaultMarkers",
+    blackRelations: "false",
+}
+
+BaseViewer.prototype.set = function(key, value) {
+  console.log("Trying to set!", key, value);
+  this.get("commandStack").execute('settings.update', {
+    settings: baseSettings, 
+    key,
+    value
+  });
+}
+
 BaseViewer.prototype.attachTo = function (parentNode) {
 
   if (!parentNode) {

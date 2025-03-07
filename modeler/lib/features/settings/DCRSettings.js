@@ -58,9 +58,10 @@ UpdateSettingsHandler.$inject = [
 ];
 
 UpdateSettingsHandler.prototype.execute = function (context) {
+  console.log("Executing something over here!");
   context.oldValue = context.settings[context.key];
   context.settings[context.key] = context.value;
-
+  console.log("got through");
   return this._elementRegistry.filter(function (element) {
     return is(element, 'dcr:Relation');
   });
