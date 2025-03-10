@@ -3,9 +3,6 @@ import ElementRegistry from "diagram-js/lib/core/ElementRegistry";
 import { is } from "../../util/ModelUtil";
 import EventBus from "diagram-js/lib/core/EventBus";
 
-const defaultSettings = {
-  markerNotation: "defaultMarkers"
-};
 
 /**
  * DCR specific keyboard bindings.
@@ -13,16 +10,22 @@ const defaultSettings = {
  * @param {CommandStack} commandStack
  * @param {EventBus} eventBus
  */
+
+
+export const settings = {
+  markerNotation: "defaultMarkers",
+  blackRelations: false,
+};
+
 export default function DCRSettings(commandStack, eventBus) {
-  this.settings = { ...defaultSettings };
 
   this.get = (key) => {
-    return this.settings[key];
+    return settings[key];
   };
 
   this.set = (key, value) => {
     commandStack.execute('settings.update', {
-      settings: this.settings,
+      settings: {},
       key,
       value
     });
@@ -58,9 +61,9 @@ UpdateSettingsHandler.$inject = [
 ];
 
 UpdateSettingsHandler.prototype.execute = function (context) {
-  console.log("Executing something over here!");
-  context.oldValue = context.settings[context.key];
-  context.settings[context.key] = context.value;
+  console.log("Executing something over here!", settings);
+  context.oldValue = settings[context.key];
+  settings[context.key] = context.value;
   console.log("got through");
   return this._elementRegistry.filter(function (element) {
     return is(element, 'dcr:Relation');
@@ -68,7 +71,7 @@ UpdateSettingsHandler.prototype.execute = function (context) {
 };
 
 UpdateSettingsHandler.prototype.revert = function (context) {
-  context.settings[context.key] = context.oldValue;
+  settings[context.key] = context.oldValue;
 
   return this._elementRegistry.filter(function (element) {
     return is(element, 'dcr:Relation');

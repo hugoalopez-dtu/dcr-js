@@ -16,6 +16,8 @@ import Examples from './Examples';
 import { toast } from 'react-toast';
 import TopRightIcons from '../utilComponents/TopRightIcons';
 import Toggle from '../utilComponents/Toggle';
+import DropDown from '../utilComponents/DropDown';
+import { isSettingsVal } from '../types';
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -33,6 +35,20 @@ const StyledFileUpload = styled.div`
       color: white;
       background-color: Gainsboro;
   } 
+`
+
+const MenuElement = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1em;
+  cursor: default;
+`
+
+const Label = styled.label`
+  margin-top: auto;
+  margin-bottom: auto;
 `
 
 const ModelerState = ({ setState }: StateProps) => {
@@ -122,7 +138,21 @@ const ModelerState = ({ setState }: StateProps) => {
 
   const bottomElements: Array<ModalMenuElement> = [
     {
-      element: <Toggle onChange={(e) => modelerRef.current?.set("blackRelations", e.target.checked.toString())}/>
+      element:
+        <MenuElement>
+          <Toggle initChecked={true} onChange={(e) => modelerRef.current?.set("blackRelations", !e.target.checked)} />
+          <Label>Coloured Relations</Label>
+        </MenuElement>
+    },
+    {
+      element:
+        <MenuElement>
+          <DropDown
+            options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
+            onChange={(option) => isSettingsVal(option) && modelerRef.current?.set("markerNotation", option)}
+          />
+          <Label>Relation Notation</Label>
+        </MenuElement>
     }
   ]
 
@@ -139,7 +169,7 @@ const ModelerState = ({ setState }: StateProps) => {
             onClick={() => { document.documentElement.requestFullscreen(); setIsFullscreen(true) }}
           />}
         <BiHome onClick={() => setState(StateEnum.Home)} />
-        <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen}/>
+        <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen} />
       </TopRightIcons>
       {examplesOpen && <Examples
         examplesData={examplesData}

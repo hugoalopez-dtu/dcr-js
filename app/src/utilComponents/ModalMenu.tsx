@@ -21,7 +21,7 @@ const Menu = styled.div`
     top: 0;
     right: 0;
     height: 100vh;
-    width: 18em;
+    width: 20em;
     box-shadow: 0px 0px 5px 0px grey;
     display: flex;
     flex-direction: column;
@@ -85,7 +85,7 @@ const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
 // Elements can either be objects with an icon, a description, and an onClick handler, or they can be a concrete element.
 // If the Element is custom, styling is your own job!!!
 const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) => {
-    
+
 
     const renderElement = (element: ModalMenuElement, idx: number) => {
         if (isRegularElement(element)) {

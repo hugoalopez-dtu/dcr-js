@@ -44,16 +44,17 @@ const Input = styled.input`
 `;
 
 interface ToggleProps {
-    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  initChecked: boolean;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-const Toggle = ({onChange}: ToggleProps) => {
-  const [checked, setChecked] = useState(false);
+const Toggle = ({ initChecked, onChange }: ToggleProps) => {
+  const [checked, setChecked] = useState(initChecked);
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        onChange(e);
-        setChecked(e.target.checked);
-    }
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onChange(e);
+    setChecked(e.target.checked);
+  }
 
   return (
     <Label>

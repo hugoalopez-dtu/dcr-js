@@ -1,3 +1,4 @@
+
 class DCRModeler {
     constructor(options: any): void;
 
@@ -11,7 +12,7 @@ class DCRModeler {
     saveDCRXML(): Promise<{ xml: string }>
     saveSVG(): Promise<{ svg: string }>
 
-    set(key: string, value: any): void;
+    set(key: SettingsKey, value: SettingsVal): void;
 }
 
 
