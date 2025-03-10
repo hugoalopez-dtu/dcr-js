@@ -10,7 +10,7 @@ import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiDownload, BiExitFullscreen, BiExpand, BiFullscreen, BiHome, BiPlus, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
+import { BiDownload, BiExitFullscreen, BiFullscreen, BiHome, BiPlus, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toast';

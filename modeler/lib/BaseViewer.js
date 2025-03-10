@@ -27,6 +27,7 @@ import {
 import saveDCRXML from './DCRXML';
 import XMLConverter from './XMLConverter';
 import DCRPortalConverter from './DCRPortalConverter';
+import { setSetting } from './features/settings/DCRSettings';
 
 //import {
 //  startSimulator as simulatorStart,
@@ -593,12 +594,7 @@ BaseViewer.prototype.off = function (event, callback) {
 };
 
 BaseViewer.prototype.set = function (key, value) {
-  console.log("Trying to set!", key, value);
-  this.get("commandStack").execute('settings.update', {
-    settings: {}, // Legacy parameter that I'm scared to remove.
-    key,
-    value
-  });
+  setSetting(key, value);
 }
 
 BaseViewer.prototype.attachTo = function (parentNode) {

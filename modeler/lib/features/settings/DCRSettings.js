@@ -17,31 +17,22 @@ export const settings = {
   blackRelations: false,
 };
 
+export const getSetting = (key) => {
+  return settings[key];
+};
+
+let globalCommandStack;
+
+export const setSetting = (key, value) => {
+  globalCommandStack.execute('settings.update', {
+    settings: {},
+    key,
+    value
+  });
+};
+
 export default function DCRSettings(commandStack, eventBus) {
-
-  this.get = (key) => {
-    return settings[key];
-  };
-
-  this.set = (key, value) => {
-    commandStack.execute('settings.update', {
-      settings: {},
-      key,
-      value
-    });
-  };
-
-  // Hook existing buttons into the settings
-  const flowAppearanceButton = document.getElementById('js-dropdown-flow-appearance');
-  flowAppearanceButton?.addEventListener('change', (e) => {
-    this.set('markerNotation', e.target.value);
-  });
-
-  const colorToggle = document.getElementById('colorToggle');
-  colorToggle?.addEventListener('change', (e) => {
-    this.set('blackRelations', !e.target.checked);
-  });
-
+  globalCommandStack = commandStack;
   commandStack.registerHandler('settings.update', UpdateSettingsHandler);
 }
 
@@ -61,10 +52,8 @@ UpdateSettingsHandler.$inject = [
 ];
 
 UpdateSettingsHandler.prototype.execute = function (context) {
-  console.log("Executing something over here!", settings);
   context.oldValue = settings[context.key];
   settings[context.key] = context.value;
-  console.log("got through");
   return this._elementRegistry.filter(function (element) {
     return is(element, 'dcr:Relation');
   });
