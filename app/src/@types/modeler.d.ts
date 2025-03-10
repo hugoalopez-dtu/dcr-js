@@ -12,7 +12,12 @@ class DCRModeler {
     saveDCRXML(): Promise<{ xml: string }>
     saveSVG(): Promise<{ svg: string }>
 
-    set(key: SettingsKey, value: SettingsVal): void;
+    setSetting(key: SettingsKey, value: SettingsVal): void;
+
+    on(channel: string, callback: (event: any) => void);
+    off(channel: string, callback: (event: any) => void);
+
+    get(key: string): any;
 }
 
 

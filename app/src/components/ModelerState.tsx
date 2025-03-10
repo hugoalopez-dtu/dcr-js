@@ -18,6 +18,7 @@ import TopRightIcons from '../utilComponents/TopRightIcons';
 import Toggle from '../utilComponents/Toggle';
 import DropDown from '../utilComponents/DropDown';
 import { isSettingsVal } from '../types';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -75,7 +76,7 @@ const GraphNameInput = styled.input`
   appearance: none;
   border: none;
   &:focus {
-    box-shadow: none;
+    outline: 2px dashed black;
   }
 `
 
@@ -83,6 +84,8 @@ type ModelerStateProps = {
   savedGraphs: DCRGraphRepository;
   setSavedGraphs: (repository: DCRGraphRepository) => void;
 } & StateProps;
+
+const initGraphName = "DCR-JS Graph"
 
 const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
@@ -96,8 +99,8 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStatePro
 
   const modelerRef = useRef<DCRModeler | null>(null);
 
-  const [graphName, setGraphName] = useState<string>("New DCR Graph - 1");
-  let graphId = "";
+  const [graphName, setGraphName] = useState<string>(initGraphName);
+  const [graphId, setGraphId] = useState<string>("");
 
   const saveGraph = () => {
     let shouldSave = true;
@@ -108,12 +111,15 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStatePro
       modelerRef.current?.saveXML({ format: false }).then(data => {
         const newSavedGraphs = { ...savedGraphs };
         newSavedGraphs[graphName] = data.xml;
+        setGraphId(graphName);
         setSavedGraphs(newSavedGraphs);
         setLoading(false);
-        toast.success("Graph saved!")
+        toast.success("Graph saved!");
       });
     }
   }
+
+  useHotkeys("ctrl+s", saveGraph, { preventDefault: true });
 
   useEffect(() => {
     // Fetch examples
@@ -141,7 +147,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStatePro
   }, []);
 
   const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
-    parse && parse(data).then(_ => graphId = "").catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
+    parse && parse(data).then(_ => { setGraphName(initGraphName); setGraphId("") }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
   }
 
   const saveAsXML = async () => {
@@ -200,7 +206,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStatePro
     {
       element:
         <MenuElement>
-          <Toggle initChecked={true} onChange={(e) => modelerRef.current?.set("blackRelations", !e.target.checked)} />
+          <Toggle initChecked={true} onChange={(e) => modelerRef.current?.setSetting("blackRelations", !e.target.checked)} />
           <Label>Coloured Relations</Label>
         </MenuElement>
     },
@@ -209,7 +215,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStatePro
         <MenuElement>
           <DropDown
             options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
-            onChange={(option) => isSettingsVal(option) && modelerRef.current?.set("markerNotation", option)}
+            onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
           />
           <Label>Relation Notation</Label>
         </MenuElement>

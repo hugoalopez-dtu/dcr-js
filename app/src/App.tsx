@@ -10,6 +10,8 @@ export enum StateEnum {
 }
 
 export interface StateProps {
+  savedGraphs: DCRGraphRepository;
+  setSavedGraphs: (repository: DCRGraphRepository) => void;
   setState: (state: StateEnum) => void;
 }
 
@@ -25,7 +27,7 @@ const App = () => {
     case StateEnum.Modeler:
       return <ModelerState savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} setState={setState} />;
     case StateEnum.Home:
-      return <HomeState setState={setState} />
+      return <HomeState setState={setState} savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} />
   }
 }
 

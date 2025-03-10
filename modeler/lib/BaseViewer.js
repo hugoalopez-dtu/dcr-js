@@ -169,8 +169,6 @@ BaseViewer.prototype.importXML = function (xml, rootBoard) {
 };
 
 BaseViewer.prototype.importCustomXML = async function (xml, rootBoard) {
-  var self = this;
-  console.log(self);
   return this.importXML(await XMLConverter(xml), rootBoard);
 };
 
@@ -593,7 +591,7 @@ BaseViewer.prototype.off = function (event, callback) {
   this.get('eventBus').off(event, callback);
 };
 
-BaseViewer.prototype.set = function (key, value) {
+BaseViewer.prototype.setSetting = function (key, value) {
   setSetting(key, value);
 }
 
