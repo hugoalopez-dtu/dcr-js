@@ -6,11 +6,11 @@ import emptyBoardXML from '../resources/emptyBoard';
 import { useEffect, useRef, useState } from 'react';
 
 import { saveAs } from 'file-saver';
-import { StateEnum, StateProps } from '../App';
+import { DCRGraphRepository, StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiDownload, BiExitFullscreen, BiFullscreen, BiHome, BiPlus, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
+import { BiDownload, BiExitFullscreen, BiFullscreen, BiHome, BiPlus, BiSave, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toast';
@@ -51,7 +51,40 @@ const Label = styled.label`
   margin-bottom: auto;
 `
 
-const ModelerState = ({ setState }: StateProps) => {
+const Loading = styled.div`
+    z-index: 1000;
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    cursor: wait;
+`
+
+const GraphNameInput = styled.input`
+  position: fixed;
+  top: 0;
+  left: 50%;
+  text-align: center;
+  z-index: 5;
+  margin-top: 0.5em;
+  transform: translateX(-50%);
+  font-size: 30px;
+  width: fit-content;
+  background: transparent;
+  appearance: none;
+  border: none;
+  &:focus {
+    box-shadow: none;
+  }
+`
+
+type ModelerStateProps = {
+  savedGraphs: DCRGraphRepository;
+  setSavedGraphs: (repository: DCRGraphRepository) => void;
+} & StateProps;
+
+const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
 
@@ -59,7 +92,28 @@ const ModelerState = ({ setState }: StateProps) => {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+
   const modelerRef = useRef<DCRModeler | null>(null);
+
+  const [graphName, setGraphName] = useState<string>("New DCR Graph - 1");
+  let graphId = "";
+
+  const saveGraph = () => {
+    let shouldSave = true;
+    if (savedGraphs[graphName] && graphName !== graphId) shouldSave = confirm(`This will overwrite the previously saved graph '${graphName}'. Are you sure you wish to continue?`);
+
+    if (shouldSave) {
+      setLoading(true);
+      modelerRef.current?.saveXML({ format: false }).then(data => {
+        const newSavedGraphs = { ...savedGraphs };
+        newSavedGraphs[graphName] = data.xml;
+        setSavedGraphs(newSavedGraphs);
+        setLoading(false);
+        toast.success("Graph saved!")
+      });
+    }
+  }
 
   useEffect(() => {
     // Fetch examples
@@ -87,7 +141,7 @@ const ModelerState = ({ setState }: StateProps) => {
   }, []);
 
   const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
-    parse && parse(data).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
+    parse && parse(data).then(_ => graphId = "").catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
   }
 
   const saveAsXML = async () => {
@@ -110,7 +164,13 @@ const ModelerState = ({ setState }: StateProps) => {
       icon: <BiPlus />,
       text: "New Diagram",
       onClick: () => { open(emptyBoardXML, modelerRef.current?.importXML); setMenuOpen(false) },
-    }, {
+    },
+    {
+      icon: <BiSave />,
+      text: "Save Graph",
+      onClick: () => { saveGraph(); setMenuOpen(false) },
+    },
+    {
       element: (
         <StyledFileUpload>
           <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
@@ -158,6 +218,11 @@ const ModelerState = ({ setState }: StateProps) => {
 
   return (
     <>
+      <GraphNameInput
+        value={graphName}
+        onChange={e => setGraphName(e.target.value)}
+      />
+      {loading && <Loading />}
       <Modeler modelerRef={modelerRef} />
       <TopRightIcons>
         {isFullscreen ?
@@ -176,6 +241,7 @@ const ModelerState = ({ setState }: StateProps) => {
         openCustomXML={(xml) => open(xml, modelerRef.current?.importCustomXML)}
         openDCRXML={(xml) => open(xml, modelerRef.current?.importDCRPortalXML)}
         setExamplesOpen={setExamplesOpen}
+        setLoading={setLoading}
       />}
     </>
   )

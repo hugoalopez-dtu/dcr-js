@@ -8,7 +8,7 @@ class DCRModeler {
     importCustomXML(xml: string): Promise<void>;
     importDCRPortalXML(xml: string): Promise<void>;
 
-    saveXML({ format: boolean }): Promise<{ xml: string }>;
+    saveXML(options: { format: boolean }): Promise<{ xml: string }>;
     saveDCRXML(): Promise<{ xml: string }>
     saveSVG(): Promise<{ svg: string }>
 

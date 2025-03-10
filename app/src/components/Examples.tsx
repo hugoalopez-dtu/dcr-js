@@ -10,16 +10,6 @@ const TextBox = styled.div`
     margin: 2em;
 `
 
-const Loading = styled.div`
-    z-index: 1000;
-    position: fixed;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    left: 0;
-    cursor: wait;
-`
-
 const Example = styled.div`
     height: 20em;
     width: 20em;
@@ -46,10 +36,11 @@ interface ExampleProps {
     setExamplesOpen: (val: boolean) => void;
     openCustomXML: (xml: string) => void;
     openDCRXML: (dcrXML: string) => void;
+    setLoading: (val: boolean) => void;
 }
 
-const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML }: ExampleProps) => {
-    const [loading, setLoading] = useState(false);
+const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML, setLoading }: ExampleProps) => {
+
     const [searchStr, setSearchStr] = useState("");
 
     const exampleClick = (exampleStr: string) => {
@@ -85,29 +76,28 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML }: 
 
     return (
         <>
-        {loading && <Loading />}
-        <Popup close={() => setExamplesOpen(false)} >
-            <TextBox>
-                <h1>Examples</h1>
-                <p>Choose an example to to view it in the editor. Warning this will override your current diagram!</p>
-                <p>Search examples:</p>
-                <input type="text" onChange={(event) => setSearchStr(event.target.value)} />
-            </TextBox>
-            <FlexBox direction="row" $justify="space-around">
-                {examplesData.map((exampleStr) => {
-                    if (exampleStr.toLowerCase().includes(searchStr.toLowerCase())) {
-                        return (
-                            <Example key={exampleStr} onClick={() => exampleClick(exampleStr)}>
-                                <ExampleText>{exampleStr}</ExampleText>
-                                <Img src={`examples/images/${exampleStr}.svg`} />
-                            </Example>
-                        )
-                    } else {
-                        <></>
-                    }
-                })}
-            </FlexBox>
-        </Popup>
+            <Popup close={() => setExamplesOpen(false)} >
+                <TextBox>
+                    <h1>Examples</h1>
+                    <p>Choose an example to to view it in the editor. Warning this will override your current diagram!</p>
+                    <p>Search examples:</p>
+                    <input type="text" onChange={(event) => setSearchStr(event.target.value)} />
+                </TextBox>
+                <FlexBox direction="row" $justify="space-around">
+                    {examplesData.map((exampleStr) => {
+                        if (exampleStr.toLowerCase().includes(searchStr.toLowerCase())) {
+                            return (
+                                <Example key={exampleStr} onClick={() => exampleClick(exampleStr)}>
+                                    <ExampleText>{exampleStr}</ExampleText>
+                                    <Img src={`examples/images/${exampleStr}.svg`} />
+                                </Example>
+                            )
+                        } else {
+                            <></>
+                        }
+                    })}
+                </FlexBox>
+            </Popup>
         </>
     )
 }
