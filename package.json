@@ -28,6 +28,7 @@
   },
   "workspaces": [
     "modeler",
-    "app"
+    "app",
+    "dcr-engine"
   ]
 }

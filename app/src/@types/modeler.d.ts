@@ -1,4 +1,3 @@
-
 class DCRModeler {
     constructor(options: any): void;
 
@@ -17,7 +16,11 @@ class DCRModeler {
     on(channel: string, callback: (event: any) => void);
     off(channel: string, callback: (event: any) => void);
 
-    get(key: string): any;
+    getElementRegistry(): any;
+    getSelection(): any;
+
+    updateRendering(graph: DCRGraph): void;
+    setSimulating(val: boolean): void;
 }
 
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ModelerState from "./components/ModelerState";
-import Button from "./utilComponents/Button";
 import HomeState from "./components/HomeState";
+import SimulatorState from "./components/SimulatorState";
 
 export enum StateEnum {
   Modeler,
@@ -20,14 +20,16 @@ export type DCRGraphRepository = {
 }
 
 const App = () => {
-  const [state, setState] = useState(StateEnum.Modeler);
+  const [state, setState] = useState(StateEnum.Simulation);
   const [savedGraphs, setSavedGraphs] = useState<DCRGraphRepository>({});
 
   switch (state) {
     case StateEnum.Modeler:
       return <ModelerState savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} setState={setState} />;
     case StateEnum.Home:
-      return <HomeState setState={setState} savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} />
+      return <HomeState setState={setState} savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} />;
+    case StateEnum.Simulation:
+      return <SimulatorState setState={setState} savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} />;
   }
 }
 

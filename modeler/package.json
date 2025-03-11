@@ -1,6 +1,7 @@
 {
   "name": "modeler",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "all": "run-s lint test",
     "lint": "eslint .",

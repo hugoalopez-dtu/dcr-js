@@ -80,14 +80,9 @@ const GraphNameInput = styled.input`
   }
 `
 
-type ModelerStateProps = {
-  savedGraphs: DCRGraphRepository;
-  setSavedGraphs: (repository: DCRGraphRepository) => void;
-} & StateProps;
-
 const initGraphName = "DCR-JS Graph"
 
-const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: ModelerStateProps) => {
+const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
 

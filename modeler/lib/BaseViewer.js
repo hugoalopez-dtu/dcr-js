@@ -29,6 +29,10 @@ import XMLConverter from './XMLConverter';
 import DCRPortalConverter from './DCRPortalConverter';
 import { setSetting } from './features/settings/DCRSettings';
 
+import { setSimulating } from './features/keyboard/DCRKeyboardBindings';
+
+import { isEnabled } from "dcr-engine";
+
 //import {
 //  startSimulator as simulatorStart,
 //  executeEvent as simulatorExecute,
@@ -71,6 +75,7 @@ export default function BaseViewer(options) {
   this.importCustomXML = this.importCustomXML.bind(this);
   this.importXML = this.importXML.bind(this);
   this.importDCRPortalXML = this.importCustomXML.bind(this);
+  this.getSelection = this.getSelection.bind(this);
 }
 
 inherits(BaseViewer, Diagram);
@@ -345,8 +350,6 @@ BaseViewer.prototype.saveXML = function (options) {
 
   options = options || {};
 
-  console.log(this);
-
   var self = this;
 
   var definitions = this._definitions;
@@ -566,6 +569,40 @@ BaseViewer.prototype.destroy = function () {
   // dom detach
   domRemove(this._container);
 };
+
+// Update the visual representation of the graph with the states/markings of graph
+const update = (graph, modeling, elementReg, group) => {
+  console.log(graph);
+  group.events.forEach((event) => {
+      let element = elementReg.get(event);
+      modeling.updateProperties(element, {executed: graph.marking.executed.has(event)});
+      modeling.updateProperties(element, {included: graph.marking.included.has(event)});
+      modeling.updateProperties(element, {pending: graph.marking.pending.has(event)});
+      if (event.includes('Event')) {
+          modeling.updateProperties(element, {enabled: isEnabled(event, graph, group).enabled});
+      }
+  });
+  group.subProcesses.forEach((subProcess) => {
+      update(graph, modeling, elementReg, subProcess);
+  });
+}
+
+BaseViewer.prototype.setSimulating = function (val) {
+  setSimulating(val);
+}
+
+BaseViewer.prototype.getSelection = function () {
+  return this.get('selection');
+}
+
+BaseViewer.prototype.getElementRegistry = function () {
+  return this.get('elementRegistry');
+}
+
+BaseViewer.prototype.updateRendering = function (graph) {
+  const modeling = this.get('modeling');
+  update(graph, modeling, this.get('elementRegistry'), graph);
+}
 
 /**
  * Register an event listener
