@@ -7,6 +7,25 @@ import Modeler from "./Modeler";
 
 import { DCRGraph, SubProcess, Event, isEnabled, execute, copyMarking, moddleToDCR } from "dcr-engine";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
+import FullScreenIcon from "../utilComponents/FullScreenIcon";
+import styled from "styled-components";
+import Toggle from "../utilComponents/Toggle";
+import DropDown from "../utilComponents/DropDown";
+import { isSettingsVal } from "../types";
+
+const MenuElement = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1em;
+  cursor: default;
+`
+
+const Label = styled.label`
+  margin-top: auto;
+  margin-bottom: auto;
+`
 
 const SimulatorState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
@@ -105,13 +124,34 @@ const SimulatorState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) =
         })
     });
 
+    const bottomElements: Array<ModalMenuElement> = [
+        {
+            element:
+                <MenuElement>
+                    <Toggle initChecked={true} onChange={(e) => modelerRef.current?.setSetting("blackRelations", !e.target.checked)} />
+                    <Label>Coloured Relations</Label>
+                </MenuElement>
+        },
+        {
+            element:
+                <MenuElement>
+                    <DropDown
+                        options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
+                        onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
+                    />
+                    <Label>Relation Notation</Label>
+                </MenuElement>
+        }
+    ]
+
     return (
         <>
             <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: eventClick }} />
             <TopRightIcons>
+                <FullScreenIcon />
                 <BiReset onClick={reset} />
                 <BiHome onClick={() => setState(StateEnum.Home)} />
-                <ModalMenu elements={menuElements} open={menuOpen} setOpen={setMenuOpen} />
+                <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
             </TopRightIcons>
         </>
     )

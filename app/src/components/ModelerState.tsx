@@ -19,6 +19,7 @@ import Toggle from '../utilComponents/Toggle';
 import DropDown from '../utilComponents/DropDown';
 import { isSettingsVal } from '../types';
 import { useHotkeys } from 'react-hotkeys-hook';
+import FullScreenIcon from '../utilComponents/FullScreenIcon';
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -88,8 +89,6 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
   const [loading, setLoading] = useState(false);
 
   const modelerRef = useRef<DCRModeler | null>(null);
@@ -131,14 +130,6 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
         files = files.map(name => name.split('.').slice(0, -1).join('.')); // Shave file extension off
         setExamplesData(files);
       })
-
-    // Add listener to fullscreen changes
-    function onFullscreenChange() {
-      setIsFullscreen(Boolean(document.fullscreenElement));
-    }
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-
-    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
 
   const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
@@ -226,14 +217,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
       {loading && <Loading />}
       <Modeler modelerRef={modelerRef} />
       <TopRightIcons>
-        {isFullscreen ?
-          <BiExitFullscreen title='Exit Fullscreen'
-            onClick={() => { document.exitFullscreen(); setIsFullscreen(false) }}
-          />
-          :
-          <BiFullscreen title='Enter Fullscreen'
-            onClick={() => { document.documentElement.requestFullscreen(); setIsFullscreen(true) }}
-          />}
+        <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />
         <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen} />
       </TopRightIcons>
