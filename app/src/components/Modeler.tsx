@@ -13,18 +13,6 @@ interface ModelerProps {
     }
 }
 
-class EventBusLogger {
-    constructor(eventBus: any) {
-        const fire = eventBus.fire.bind(eventBus);
-
-        eventBus.fire = (type: any, data: any) => {
-            console.log(type, data);
-
-            fire(type, data);
-        };
-    }
-}
-
 const Modeler = ({ modelerRef, override }: ModelerProps) => {
 
     useEffect(() => {
@@ -59,7 +47,7 @@ const Modeler = ({ modelerRef, override }: ModelerProps) => {
 
             //const logger = new EventBusLogger(initModeler.get("eventBus"));
 
-            initModeler.importXML(sampleBoardXML).then(() => {
+            initModeler.importXML(emptyBoardXML).then(() => {
                 modelerRef.current = initModeler;
                 if (override) {
                     const graph = moddleToDCR(modelerRef.current.getElementRegistry());

@@ -20,7 +20,7 @@ export type DCRGraphRepository = {
 }
 
 const App = () => {
-  const [state, setState] = useState(StateEnum.Simulation);
+  const [state, setState] = useState(StateEnum.Home);
   const [savedGraphs, setSavedGraphs] = useState<DCRGraphRepository>({});
 
   switch (state) {
