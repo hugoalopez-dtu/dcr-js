@@ -33,15 +33,6 @@ import { setSimulating } from './features/keyboard/DCRKeyboardBindings';
 
 import { isEnabled } from "dcr-engine";
 
-//import {
-//  startSimulator as simulatorStart,
-//  executeEvent as simulatorExecute,
-//  updateRootGraph as simulatorUpdate,
-//  restoreMarkings as simulatorRestoreMarkings
-//} from './simulator/simulator.ts';
-
-
-
 /**
  * A base viewer for dcr graph diagrams.
  *
@@ -509,22 +500,6 @@ BaseViewer.prototype.getModules = function () {
   return this._modules;
 };
 
-//BaseViewer.prototype.startSimulation = function () {
-//  simulatorStart(this.get('elementRegistry'));
-//  simulatorUpdate(this);
-//}
-//
-//BaseViewer.prototype.simulatorExecute = function (element) {
-//  let ret = simulatorExecute(element);
-//  simulatorUpdate(this);
-//  return ret;
-//}
-//
-//BaseViewer.prototype.simulatorRestoreStates = function () {
-//  simulatorRestoreMarkings();
-//  simulatorUpdate(this);
-//}
-
 /**
  * Remove all drawn elements from the viewer.
  *
@@ -572,18 +547,17 @@ BaseViewer.prototype.destroy = function () {
 
 // Update the visual representation of the graph with the states/markings of graph
 const update = (graph, modeling, elementReg, group) => {
-  console.log(graph);
   group.events.forEach((event) => {
-      let element = elementReg.get(event);
-      modeling.updateProperties(element, {executed: graph.marking.executed.has(event)});
-      modeling.updateProperties(element, {included: graph.marking.included.has(event)});
-      modeling.updateProperties(element, {pending: graph.marking.pending.has(event)});
-      if (event.includes('Event')) {
-          modeling.updateProperties(element, {enabled: isEnabled(event, graph, group).enabled});
-      }
+    let element = elementReg.get(event);
+    modeling.updateProperties(element, { executed: graph.marking.executed.has(event) });
+    modeling.updateProperties(element, { included: graph.marking.included.has(event) });
+    modeling.updateProperties(element, { pending: graph.marking.pending.has(event) });
+    if (event.includes('Event')) {
+      modeling.updateProperties(element, { enabled: isEnabled(event, graph, group).enabled });
+    }
   });
   group.subProcesses.forEach((subProcess) => {
-      update(graph, modeling, elementReg, subProcess);
+    update(graph, modeling, elementReg, subProcess);
   });
 }
 
@@ -794,48 +768,3 @@ function findRootBoard(definitions, boardId) {
     return element.id === boardId;
   }) || null;
 }
-
-
-/* <project-logo> */
-
-// import {
-//   open as openPoweredBy,
-//   BPMNIO_IMG
-// } from './util/PoweredByUtil';
-
-// import {
-//   event as domEvent
-// } from 'min-dom';
-
-// /**
-//  * Adds the project logo to the diagram container as
-//  * required by the bpmn.io license.
-//  *
-//  * @see http://bpmn.io/license
-//  *
-//  * @param {Element} container
-//  */
-// function addProjectLogo(container) {
-//   var img = BPMNIO_IMG;
-
-//   var linkMarkup =
-//     '<a href="http://bpmn.io" ' +
-//     'target="_blank" ' +
-//     'class="bjs-powered-by" ' +
-//     'title="Powered by bpmn.io" ' +
-//     'style="position: absolute; bottom: 15px; right: 15px; z-index: 100">' +
-//     img +
-//     '</a>';
-
-//   var linkElement = domify(linkMarkup);
-
-//   container.appendChild(linkElement);
-
-//   domEvent.bind(linkElement, 'click', function (event) {
-//     openPoweredBy();
-
-//     event.preventDefault();
-//   });
-// }
-
-/* </project-logo> */

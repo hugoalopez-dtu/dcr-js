@@ -89,7 +89,6 @@ Modeler.prototype._interactionModules = [
 ];
 
 Modeler.prototype._modelingModules = [
-
   // modeling components
   AutoplaceModule,
   AlignElementsModule,

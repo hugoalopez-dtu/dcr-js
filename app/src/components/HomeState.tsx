@@ -38,17 +38,17 @@ const ImgLabel = styled.label`
 const HomeState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
     return (
         <>
-        <Header>DCR-JS</Header>
-        <FlexBox direction="row" $justify="space-around">
-            <ImgContainer onClick={() => setState(StateEnum.Modeler)}>
-                <ImgLabel>Modeling</ImgLabel>
-                <Img src="icons/modeling.svg" />
-            </ImgContainer>
-            <ImgContainer onClick={() => setState(StateEnum.Simulation)}>
-                <ImgLabel>Simulation</ImgLabel>
-                <Img src="icons/simulation.svg" />
-            </ImgContainer>
-        </FlexBox>
+            <Header>DCR-JS</Header>
+            <FlexBox direction="row" $justify="space-around">
+                <ImgContainer onClick={() => setState(StateEnum.Modeler)}>
+                    <ImgLabel>Modeling</ImgLabel>
+                    <Img src="icons/modeling.svg" />
+                </ImgContainer>
+                <ImgContainer onClick={() => setState(StateEnum.Simulation)}>
+                    <ImgLabel>Simulation</ImgLabel>
+                    <Img src="icons/simulation.svg" />
+                </ImgContainer>
+            </FlexBox>
         </>
     )
 }

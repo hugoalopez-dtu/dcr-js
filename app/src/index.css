@@ -16,3 +16,11 @@ body,
   margin: 0;
   overflow: hidden;
 }
+
+.simulating .djs-hit-all {
+  cursor: pointer;
+}
+
+.simulating .djs-element .djs-hit-stroke {
+  cursor: default;
+}
