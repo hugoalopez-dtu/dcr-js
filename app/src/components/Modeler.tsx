@@ -78,7 +78,7 @@ const Modeler = ({ modelerRef, override }: ModelerProps) => {
     }, [])
 
     return (
-        <div className="simulating" id="canvas" />
+        <div className={override ? "simulating" : ""} id="canvas" />
     );
 }
 
