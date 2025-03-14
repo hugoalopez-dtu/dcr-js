@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://axel0087.github.io/dcr-js/",
   "scripts": {
     "start": "vite",
     "lint": "eslint .",

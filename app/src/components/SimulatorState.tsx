@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toast";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiHome, BiLeftArrowCircle, BiReset, BiSolidFolderOpen, BiX } from "react-icons/bi";
+import { BiHome, BiLeftArrowCircle, BiSolidFolderOpen, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
 import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAccepting } from "dcr-engine";
