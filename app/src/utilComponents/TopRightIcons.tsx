@@ -12,7 +12,7 @@ const Container = styled.div`
     overflow: hidden;
     display: flex;
     & > svg {
-        margin: 0.5em;
+        margin: 0.5rem;
         z-index: 0;
         border: 2px solid black;
         border-radius: 50%;

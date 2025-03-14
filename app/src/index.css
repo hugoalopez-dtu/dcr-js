@@ -17,8 +17,17 @@ body,
   overflow: hidden;
 }
 
+/* Hacky classnames to dynamically control modeler styling */
 .simulating .djs-hit-all {
   cursor: pointer;
+}
+
+.conformance .djs-hit-all {
+  cursor: default;
+}
+
+.conformance .djs-element .djs-hit-stroke {
+  cursor: default;
 }
 
 .simulating .djs-element .djs-hit-stroke {

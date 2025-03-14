@@ -9,7 +9,7 @@ interface DropDownProps {
 }
 
 const Select = styled.select`
-    padding: 0.5em;
+    padding: 0.5rem;
     font-size: 20px;
     background-color: white;
     border: 2px solid gainsboro;

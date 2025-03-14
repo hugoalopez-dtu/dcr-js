@@ -27,7 +27,7 @@ const StyledFileUpload = styled.div`
     font-size: 25px;
   }
   & > label {
-    padding: 1em;
+    padding: 1rem;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -44,7 +44,7 @@ const MenuElement = styled.div`
   flex-direction: row;
   justify-content: space-between;
   width: 100%;
-  padding: 1em;
+  padding: 1rem;
   cursor: default;
 `
 
@@ -69,7 +69,7 @@ const GraphNameInput = styled.input`
   left: 50%;
   text-align: center;
   z-index: 5;
-  margin-top: 0.5em;
+  margin-top: 0.5rem;
   transform: translateX(-50%);
   font-size: 30px;
   width: fit-content;

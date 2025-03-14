@@ -1,17 +1,17 @@
 import styled from "styled-components";
 import Button from "./Button"
-import React from 'react';
+import React, { useId } from 'react';
 import { Children } from "../types";
 
-interface FileUploadButtonProps {
+interface FileUploadProps {
     fileCallback: (contents: string) => void;
     children: Children;
     accept?: string;
 }
 
-// returning a styled component allows the caller to further style it.
+const FileUpload = ({ fileCallback, accept, children }: FileUploadProps) => {
 
-const FileUploadButton = ({ fileCallback, accept, children }: FileUploadButtonProps) => {
+    const id = useId();
 
     function openFile(file: File): Promise<string> {
         return new Promise((resolve, reject) => {
@@ -47,18 +47,20 @@ const FileUploadButton = ({ fileCallback, accept, children }: FileUploadButtonPr
         }
     };
 
+    console.log(accept);
+
     return (<>
         <input
             type="file"
             accept={accept ? accept : ""}
             style={{ display: "none" }}
-            id="contained-button-file"
+            id={id}
             onChange={handleFileChange}
         />
-        <label htmlFor="contained-button-file">
+        <label htmlFor={id}>
             {children}
         </label >
     </>)
 }
 
-export default FileUploadButton;
+export default FileUpload;

@@ -4,12 +4,14 @@ import emptyBoardXML from "../resources/emptyBoard";
 import sampleBoardXML from "../resources/sampleBoard";
 import styled from "styled-components";
 import { copyMarking, DCRGraph, moddleToDCR } from "dcr-engine";
+import { DCRGraphS } from "dcr-engine/src/types";
 
 interface ModelerProps {
     modelerRef: React.RefObject<DCRModeler | null>,
     override?: {
-        graphRef: React.RefObject<{ initial: DCRGraph, current: DCRGraph } | null>,
+        graphRef: React.RefObject<{ initial: DCRGraph, current: DCRGraph } | { initial: DCRGraphS, current: DCRGraphS } | null>,
         overrideOnclick: (e: any) => void;
+        canvasClassName?: string;
     }
 }
 
@@ -60,7 +62,11 @@ const Modeler = ({ modelerRef, override }: ModelerProps) => {
                     initModeler.updateRendering(graph);
 
                     // Override clicks on events
-                    initModeler.on('element.click', override.overrideOnclick);
+                    initModeler.on('element.click', (e) => { 
+                        override.overrideOnclick(e); // Unselect everything, prevents selecting elements during simulation
+                        const selection = initModeler.getSelection();
+                        selection.select([]);
+                    });
                 }
             }).catch((e: any) => console.log(id, `
                 This error happens in development because the component is mounted twice due to Strict Mode. 
@@ -78,7 +84,7 @@ const Modeler = ({ modelerRef, override }: ModelerProps) => {
     }, [])
 
     return (
-        <div className={override ? "simulating" : ""} id="canvas" />
+        <div className={override?.canvasClassName ? override.canvasClassName : ""} id="canvas" />
     );
 }
 

@@ -21,23 +21,24 @@ const Menu = styled.div`
     top: 0;
     right: 0;
     height: 100vh;
-    width: 20em;
+    width: 30rem;
     box-shadow: 0px 0px 5px 0px grey;
     display: flex;
     flex-direction: column;
-    padding-top: 5em;
-    padding-bottom: 5em;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
     font-size: 20px;
     background-color: white;
     justify-content: space-between;
     box-sizing: border-box;
+    overflow: scroll;
 `
 
 const MenuItem = styled.li`
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding: 1em;
+    padding: 1rem;
     cursor: pointer;
     &:hover {
         color: white;

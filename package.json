@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "start": "yarn workspace app start",
-    "build": "yarn workspace app build",
     "test": "yarn workspace app test",
-    "eject": "yarn workspace app eject"
+    "eject": "yarn workspace app eject",
+    "predeploy": "yarn workspace app build",
+    "deploy": "gh-pages -d dist"
   },
   "eslintConfig": {
     "extends": [
@@ -30,5 +31,8 @@
     "modeler",
     "app",
     "dcr-engine"
-  ]
+  ],
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
 }

@@ -7,14 +7,14 @@ import { toast } from "react-toast";
 
 
 const TextBox = styled.div`
-    margin: 2em;
+    margin: 2rem;
 `
 
 const Example = styled.div`
-    height: 20em;
-    width: 20em;
-    margin: 0.5em;
-    padding: 0.5em;
+    height: 20rem;
+    width: 20rem;
+    margin: 0.5rem;
+    padding: 0.5rem;
     &:hover {
         background: Gainsboro
     }
@@ -28,7 +28,7 @@ const Img = styled.img`
 
 const ExampleText = styled.h3`
     text-align: center;
-    margin: 0 0 1em 0;
+    margin: 0 0 1rem 0;
 `
 
 interface ExampleProps {

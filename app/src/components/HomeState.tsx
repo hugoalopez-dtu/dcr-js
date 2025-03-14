@@ -12,8 +12,8 @@ const ImgContainer = styled.div`
     display: flex;
     flex-direction: column;
     border-radius: 50%;
-    width: 30em;
-    height: 30em;
+    width: 30rem;
+    height: 30rem;
     color: white;
     cursor: pointer;
     &:hover {
@@ -22,8 +22,8 @@ const ImgContainer = styled.div`
 `
 
 const Img = styled.img`
-    width: 20em;
-    height: 20em;
+    width: 20rem;
+    height: 20rem;
     background-color: gainsboro;
     border-radius: 50%;
     margin: auto;
@@ -32,21 +32,26 @@ const Img = styled.img`
 const ImgLabel = styled.label`
     text-align: center;
     font-size: 40px;
-    margin-top: 1em;
+    margin-top: 1rem;
 `
 
+// Logos from https://www.svgrepo.com/collection/education-sephia-filled-icons/
 const HomeState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
     return (
         <>
             <Header>DCR-JS</Header>
             <FlexBox direction="row" $justify="space-around">
                 <ImgContainer onClick={() => setState(StateEnum.Modeler)}>
-                    <ImgLabel>Modeling</ImgLabel>
+                    <ImgLabel><br/>Modeling</ImgLabel>
                     <Img src="icons/modeling.svg" />
                 </ImgContainer>
                 <ImgContainer onClick={() => setState(StateEnum.Simulation)}>
-                    <ImgLabel>Simulation</ImgLabel>
+                    <ImgLabel><br/>Simulation</ImgLabel>
                     <Img src="icons/simulation.svg" />
+                </ImgContainer>
+                <ImgContainer onClick={() => setState(StateEnum.Conformance)}>
+                    <ImgLabel>Conformance <br/> Checking</ImgLabel>
+                    <Img src="icons/conformance.svg" />
                 </ImgContainer>
             </FlexBox>
         </>

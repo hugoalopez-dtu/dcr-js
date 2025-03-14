@@ -31,7 +31,7 @@ import { setSetting } from './features/settings/DCRSettings';
 
 import { setSimulating } from './features/keyboard/DCRKeyboardBindings';
 
-import { isEnabled } from "dcr-engine";
+import { isEnabled, isEnabledS } from "dcr-engine";
 
 /**
  * A base viewer for dcr graph diagrams.
@@ -553,7 +553,7 @@ const update = (graph, modeling, elementReg, group) => {
     modeling.updateProperties(element, { included: graph.marking.included.has(event) });
     modeling.updateProperties(element, { pending: graph.marking.pending.has(event) });
     if (event.includes('Event')) {
-      modeling.updateProperties(element, { enabled: isEnabled(event, graph, group).enabled });
+      modeling.updateProperties(element, { enabled: isEnabledS(event, graph, group).enabled });
     }
   });
   group.subProcesses.forEach((subProcess) => {

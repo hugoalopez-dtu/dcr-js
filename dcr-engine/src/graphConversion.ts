@@ -4,27 +4,15 @@ import {
     EventMap,
     Marking,
     Id,
-    SubProcess
+    SubProcess,
+    DCRGraphS
 } from "./types";
 
 import init from './init';
 import { execute, isEnabled } from "./executionEngine";
 import { copySet } from "./utility";
 
-const findElementGroup = (event: Event, group: DCRGraph | SubProcess): DCRGraph | SubProcess | null => {
-    if (group.events.has(event)) return group;
-    
-    let childGroup: DCRGraph | SubProcess | null = null;
-    
-    group.subProcesses.forEach((subProcess: SubProcess) => {
-        let ret = findElementGroup(event, subProcess);
-        if (ret) childGroup = ret;
-    });
-
-    return childGroup;
-}
-
-export const moddleToDCR = (elementReg: any): DCRGraph => {
+export const moddleToDCR = (elementReg: any): DCRGraphS => {
     const graph = emptyGraph();
 
     // Ensure that set operations have been initialized
@@ -76,7 +64,7 @@ export const moddleToDCR = (elementReg: any): DCRGraph => {
     return graph;
 }
 
-const addSubProcesses = (graph: DCRGraph, parent: DCRGraph | SubProcess, elements: Set<any>) => {
+const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Set<any>) => {
     elements.forEach((element: any) => {
         const subProcess: SubProcess = {
             id: element.id,
@@ -105,7 +93,7 @@ const addSubProcesses = (graph: DCRGraph, parent: DCRGraph | SubProcess, element
     });
 }
 
-const addNestings = (graph: DCRGraph, parent: DCRGraph | SubProcess, elements: Set<any>) => {
+const addNestings = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Set<any>) => {
     elements.forEach((element: any) => {
         const eventElements = element.children.filter((element: any) => element.type === 'dcr:Event');
         const nestingElements = element.children.filter((element: any) => element.type === 'dcr:Nesting');
@@ -117,10 +105,15 @@ const addNestings = (graph: DCRGraph, parent: DCRGraph | SubProcess, elements: S
     });
 }
 
-const addEvents = (graph: DCRGraph, parent: DCRGraph | SubProcess, elements: Set<any>) => {
+const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Set<any>) => {
     elements.forEach((element: any) => {
         // Add event to subprocess
+        const label = element.businessObject.get('description');
         parent.events.add(element.id);
+        graph.labels.add(label);
+        graph.labelMap[element.id] = label;
+        if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
+        graph.labelMapInv[label].add(element.id);
 
         // Add marking for event in graph
         if (element.businessObject.get('pending')) {
@@ -132,8 +125,8 @@ const addEvents = (graph: DCRGraph, parent: DCRGraph | SubProcess, elements: Set
         if (element.businessObject.get('included')) {
             graph.marking.included.add(element.id);
         }
-
-        // Initialize relations for event in graph
+    
+        // Initialize relations for event in graph 
         graph.conditionsFor[element.id] = new Set();
         graph.milestonesFor[element.id] = new Set();
         graph.responseTo[element.id] = new Set();
@@ -176,9 +169,12 @@ const addRelation =
 }
 
 
-const emptyGraph = (): DCRGraph => {
+const emptyGraph = (): DCRGraphS => {
     return {
         events: new Set(),
+        labels: new Set(),
+        labelMap: {},
+        labelMapInv: {},
         subProcesses: new Set(),
         conditionsFor: {},
         milestonesFor: {},

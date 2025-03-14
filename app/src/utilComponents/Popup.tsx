@@ -25,7 +25,7 @@ const CloseIcon = styled(BiX)`
     position: absolute;
     top: 0;
     right: 0;
-    margin: 1em;
+    margin: 1rem;
     font-size: 30px;
     color: grey;
     cursor: pointer;
