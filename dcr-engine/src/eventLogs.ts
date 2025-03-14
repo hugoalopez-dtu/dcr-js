@@ -1,4 +1,3 @@
-import fs from "fs";
 import parser, { j2xParser } from "fast-xml-parser";
 import { EventLog, Event, Trace, XMLLog, XMLEvent } from "./types";
 

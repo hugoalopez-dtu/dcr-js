@@ -1,16 +1,10 @@
 import {
-    DCRGraph,
-    Event,
     EventMap,
-    Marking,
-    Id,
     SubProcess,
     DCRGraphS
 } from "./types";
 
 import init from './init';
-import { execute, isEnabled } from "./executionEngine";
-import { copySet } from "./utility";
 
 export const moddleToDCR = (elementReg: any): DCRGraphS => {
     const graph = emptyGraph();

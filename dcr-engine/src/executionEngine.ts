@@ -3,7 +3,6 @@ import {
   DCRGraph,
   Event,
   isSubProcess,
-  Marking,
   SubProcess
 } from "./types";
 import { copySet } from "./utility";

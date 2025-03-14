@@ -3,7 +3,7 @@ import { StateEnum, StateProps } from "../App";
 import Modeler from "./Modeler";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
-import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiReset, BiSolidFolderOpen, BiUpload, BiX } from "react-icons/bi";
+import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiSolidFolderOpen, BiUpload, BiX } from "react-icons/bi";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import styled from "styled-components";
 import Toggle from "../utilComponents/Toggle";
@@ -156,7 +156,7 @@ type LogResults = Array<{
 const ResultCount = styled.div`
     display: flex;
     flex-direction: row;
-    
+
     & > svg {
     display: block;
     color: white;

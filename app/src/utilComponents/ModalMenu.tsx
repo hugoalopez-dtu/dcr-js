@@ -1,8 +1,7 @@
 import styled from "styled-components";
 
 import { BiMenu } from "react-icons/bi";
-import React, { useState } from "react";
-import { IconType } from "react-icons";
+import React from "react";
 
 
 const MenuIcon = styled(BiMenu) <{ open: boolean; }>`

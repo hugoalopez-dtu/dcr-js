@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import { StateEnum, StateProps } from "../App";
-import Button from "../utilComponents/Button";
 import FlexBox from "../utilComponents/FlexBox";
 
 const Header = styled.h1`
@@ -36,7 +35,7 @@ const ImgLabel = styled.label`
 `
 
 // Logos from https://www.svgrepo.com/collection/education-sephia-filled-icons/
-const HomeState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
+const HomeState = ({ setState }: StateProps) => {
     return (
         <>
             <Header>DCR-JS</Header>

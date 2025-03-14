@@ -1,4 +1,4 @@
-import type { DCRGraph, EventMap, Marking, Event } from "./types";
+import type { DCRGraph, EventMap, Marking } from "./types";
 
 export const avg = (arr: Array<number>): number => arr.reduce((partialSum, a) => partialSum + a, 0) / arr.length;
 
@@ -40,7 +40,7 @@ export const relationCount = (model: DCRGraph) => {
   let count = 0;
   const relCount = (rel: EventMap) => {
     for (const e in rel) {
-      for (const j of rel[e]) {
+      for (const _ of rel[e]) {
         count += 1;
       }
     }

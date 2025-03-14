@@ -6,11 +6,11 @@ import emptyBoardXML from '../resources/emptyBoard';
 import { useEffect, useRef, useState } from 'react';
 
 import { saveAs } from 'file-saver';
-import { DCRGraphRepository, StateEnum, StateProps } from '../App';
+import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiDownload, BiExitFullscreen, BiFullscreen, BiHome, BiPlus, BiSave, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
+import { BiDownload,  BiHome, BiPlus, BiSave, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toast';

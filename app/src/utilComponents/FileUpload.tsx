@@ -1,6 +1,4 @@
-import styled from "styled-components";
-import Button from "./Button"
-import React, { useId } from 'react';
+import { useId } from 'react';
 import { Children } from "../types";
 
 interface FileUploadProps {

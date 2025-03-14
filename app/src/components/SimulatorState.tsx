@@ -5,7 +5,7 @@ import TopRightIcons from "../utilComponents/TopRightIcons";
 import { BiHome, BiLeftArrowCircle, BiReset, BiSolidFolderOpen } from "react-icons/bi";
 import Modeler from "./Modeler";
 
-import { DCRGraph, SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR } from "dcr-engine";
+import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR } from "dcr-engine";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";
@@ -50,7 +50,7 @@ const Label = styled.label`
   margin-top: auto;
   margin-bottom: auto;
 `
-
+/*
 const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
     position: fixed;
     top: 0;
@@ -83,9 +83,9 @@ const TraceWindow = styled.div`
     background-color: gainsboro;
     box-sizing: border-box;
     overflow: scroll;
-`
+` */
 
-const SimulatorState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
+const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 

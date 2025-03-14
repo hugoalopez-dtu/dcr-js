@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import DCRModeler from "modeler";
 import emptyBoardXML from "../resources/emptyBoard";
-import sampleBoardXML from "../resources/sampleBoard";
-import styled from "styled-components";
 import { copyMarking, DCRGraph, moddleToDCR } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine/src/types";
 

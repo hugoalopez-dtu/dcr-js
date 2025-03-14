@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { Children } from "../types";
+import { useState } from "react";
 import Popup from "../utilComponents/Popup";
 import styled from "styled-components";
 import FlexBox from "../utilComponents/FlexBox";

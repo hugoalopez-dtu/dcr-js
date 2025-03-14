@@ -6,8 +6,7 @@
     "start": "yarn workspace app start",
     "test": "yarn workspace app test",
     "eject": "yarn workspace app eject",
-    "predeploy": "yarn workspace app build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "yarn workspace app deploy"
   },
   "eslintConfig": {
     "extends": [
@@ -32,7 +31,5 @@
     "app",
     "dcr-engine"
   ],
-  "devDependencies": {
-    "gh-pages": "^6.3.0"
-  }
+  "devDependencies": {}
 }
