@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toast";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiHome, BiLeftArrowCircle, BiReset, BiSolidFolderOpen } from "react-icons/bi";
+import { BiHome, BiLeftArrowCircle, BiReset, BiSolidFolderOpen, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
-import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR } from "dcr-engine";
+import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAccepting } from "dcr-engine";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";
@@ -13,7 +13,12 @@ import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
 import { isSettingsVal } from "../types";
 import FileUpload from "../utilComponents/FileUpload";
-import { DCRGraphS } from "dcr-engine/src/types";
+import { DCRGraphS, EventLog, Trace } from "dcr-engine/src/types";
+import Button from "../utilComponents/Button";
+import FlexBox from "../utilComponents/FlexBox";
+
+import { saveAs } from 'file-saver';
+import { writeEventLog } from "dcr-engine/src/eventLogs";
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -50,7 +55,7 @@ const Label = styled.label`
   margin-top: auto;
   margin-bottom: auto;
 `
-/*
+
 const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
     position: fixed;
     top: 0;
@@ -83,27 +88,102 @@ const TraceWindow = styled.div`
     background-color: gainsboro;
     box-sizing: border-box;
     overflow: scroll;
-` */
+`
+
+const EventLogInput = styled.input`
+    font-size: 30px;
+    width: fit-content;
+    background: transparent;
+    appearance: none;
+    border: none;
+    margin-bottom: 0.5rem;
+    &:focus {
+      outline: 2px dashed black;
+    }
+`
+
+const ResultsElement = styled.li<{ $simulating: boolean, $selected: boolean; }>`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 1rem 0.5rem 1rem;
+  cursor: ${props => !props.$simulating ? "pointer" : "default" };
+  box-sizing: border-box;
+  color: ${ props => props.$selected ? "white" : "black"};
+  background-color: ${ props => props.$selected ? "gainsboro" : "white"};
+
+  ${props => !props.$simulating ? `&:hover {
+      color: white;
+      background-color: Gainsboro;
+  }` : ""}
+
+  & > svg {
+    color: white;
+    border-radius: 50%;
+  }
+`
+
+const ResultsHeader = styled.h1`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: 30px;
+  font-weight: normal;
+  margin: 1rem;
+`
+
+const CloseTrace = styled(BiX)`
+  display: block;
+  height: 30px;
+  width: 30px;
+  margin: auto;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  cursor: pointer;
+  &:hover {
+    color: white;
+  }
+`
+
+const Activity = styled.li`
+  width: 100%;
+  padding: 0.5rem 1rem 0.5rem 1rem;
+  box-sizing: border-box;
+`
 
 const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const [selectedTrace, setSelectedTrace] = useState<{traceId: string, trace: Trace} | null>(null);
+    const [eventLog, setEventLog] = useState<{
+        name: string,
+        traces: Array<{traceId: string, trace: Trace}>,
+    }>({ name: "Unnamed Event Log", traces: [ ]});
+
+    const isSimulatingRef = useRef<boolean>(false);
+    const traceRef = useRef<{traceId: number, trace: Array<string>} | null>(null);
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
         if (data.includes("multi-instance=\"true\"")) {
             toast.error("Multi-instance subprocesses not supported...");
         } else {
-            parse && parse(data).then((_) => {
-                if (modelerRef.current && graphRef.current) {
-                    const graph = moddleToDCR(modelerRef.current.getElementRegistry());
-                    graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
-                    modelerRef.current.updateRendering(graph);
-                }
+            if (eventLog.traces.length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
+                parse && parse(data).then((_) => {
+                    if (modelerRef.current && graphRef.current) {
+                        const graph = moddleToDCR(modelerRef.current.getElementRegistry());
+                        graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
+                        modelerRef.current.updateRendering(graph);
+                        setEventLog({ name: "Unnamed Event Log", traces: [ ]});
+                        isSimulatingRef.current = false;
+                        traceRef.current = null;
+                        setSelectedTrace(null);
+                    }
+                }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
             }
-        ).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
-    }
+        }
     } 
 
     const findElementGroup = (event: Event, group: DCRGraphS | SubProcess): DCRGraphS | SubProcess | null => {
@@ -157,10 +237,14 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     }
 
     const eventClick = (event: any) => {
-        if (!modelerRef.current || !graphRef.current) return;
+        if (!isSimulatingRef.current || !traceRef.current || !modelerRef.current || !graphRef.current) return;
 
         const response = executeEvent(event.element, graphRef.current.current);
         console.log(response);
+        if (response.executedEvent !== "") {
+            traceRef.current.trace.push(response.executedEvent);
+            setSelectedTrace( { traceId: "Trace " + traceRef.current.traceId, trace: [...traceRef.current.trace] });
+        }
         modelerRef.current.updateRendering(graphRef.current.current);
     }
 
@@ -170,6 +254,20 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
             modelerRef.current.updateRendering(graphRef.current.current);
         }
     }
+
+    const saveEventLog = () => {
+        if (!modelerRef.current || !graphRef.current) return;
+        const logToExport: EventLog = {
+            events: graphRef.current?.initial.events,
+            traces: {}
+        }
+        for (const entry of eventLog.traces) {
+            logToExport.traces[entry.traceId] = entry.trace;
+        }
+        const data = writeEventLog(logToExport);
+        const blob = new Blob([data]);
+        saveAs(blob, `${eventLog.name}.xes`);
+      }
 
     const menuElements: Array<ModalMenuElement> = [    {
         element: (
@@ -212,9 +310,67 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     return (
         <>
             <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: eventClick, canvasClassName: "simulating" }} />
+            <ResultsWindow $traceSelected={selectedTrace !== null}>
+                <EventLogInput value={eventLog.name} onChange={(e) => setEventLog({ ...eventLog, name: e.target.value })}/>
+                {eventLog.traces.map( ({trace, traceId }) => 
+                    <ResultsElement 
+                        $simulating={isSimulatingRef.current} 
+                        $selected={selectedTrace !== null && selectedTrace.traceId === traceId} 
+                        key={traceId} 
+                        onClick={() => {
+                            if (!isSimulatingRef.current) setSelectedTrace({trace, traceId}) 
+                        }}
+                    >
+                        {traceId}
+                    </ResultsElement>)}
+                <FlexBox direction="row" $justify="space-around">
+                <Button disabled={isSimulatingRef.current} onClick={() => {
+                    isSimulatingRef.current = true;
+                    const traceId = eventLog.traces.length;
+                    setEventLog( {...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: []}]});
+                    setSelectedTrace({ traceId: "Trace " + traceId, trace: []});
+                    traceRef.current = { traceId, trace: [] };
+                }}>
+                    Add new trace
+                </Button>
+                <Button disabled={isSimulatingRef.current} onClick={saveEventLog}>
+                    Export log
+                </Button>
+                </FlexBox>
+            </ResultsWindow>
+            {selectedTrace && <TraceWindow>
+             <ResultsHeader>
+              {selectedTrace.traceId}
+              <CloseTrace onClick={() => {
+                if (isSimulatingRef.current) {
+                    console.log("trying to remove trace: ", selectedTrace.traceId);
+                    setEventLog( {...eventLog, traces: eventLog.traces.filter( entry => entry.traceId !== selectedTrace.traceId)});
+                }
+                isSimulatingRef.current = false;
+                setSelectedTrace(null);
+                reset();
+              }}/>
+             </ResultsHeader>
+             <ul>
+              {selectedTrace.trace.map( (activity, idx) => <Activity key={activity + idx}>{activity}</Activity>)}
+             </ul>
+             {isSimulatingRef.current && <Button onClick={() => {
+                if (!graphRef.current?.current) return;
+                if (isAccepting(graphRef.current.current) && traceRef.current) {
+                    isSimulatingRef.current = false;
+                    const eventLogCopy = {...eventLog, traces: [...eventLog.traces]};
+                    eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
+                    setSelectedTrace(null);
+                    reset();
+                } else {
+                    toast.warn("Graphs is not accepting...");
+                }
+             }}>
+                Finalize trace
+             </Button>}
+            </TraceWindow>}
             <TopRightIcons>
                 <FullScreenIcon />
-                <BiReset onClick={reset} />
                 <BiHome onClick={() => setState(StateEnum.Home)} />
                 <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
             </TopRightIcons>

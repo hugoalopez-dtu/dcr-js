@@ -7,7 +7,7 @@ import ConformanceCheckingState from "./components/ConformanceCheckingState";
 export enum StateEnum {
   Modeler,
   Home,
-  Simulation,
+  Simulator,
   Conformance,
 }
 
@@ -21,10 +21,8 @@ export type DCRGraphRepository = {
   [name: string]: string;
 }
 
-
-
 const App = () => {
-  const [state, setState] = useState(StateEnum.Conformance);
+  const [state, setState] = useState(StateEnum.Home);
   const [savedGraphs, setSavedGraphs] = useState<DCRGraphRepository>({
     "Sample Graph": `<?xml version="1.0" encoding="UTF-8"?>
 <dcr:definitions xmlns:dcr="http://tk/schema/dcr" xmlns:dcrDi="http://tk/schema/dcrDi" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC">
@@ -64,19 +62,7 @@ const App = () => {
       </dcrDi:dcrShape>
     </dcrDi:dcrPlane>
   </dcrDi:dcrRootBoard>
-</dcr:definitions>`,
-    "asdasdasd": "",
-    "asdasdasdasd": "",
-    "asfafwasd": "",
-    "adwadasd": "",
-    "awdadsadaw": "",
-    "awdawdawdas": "",
-    "1asdasdasd": "",
-    "1asdasdasdasd": "",
-    "1asfafwasd": "",
-    "1adwadasd": "",
-    "1awdadsadaw": "",
-    "1awdawdawdas": "",
+</dcr:definitions>`
   });
 
   switch (state) {
@@ -84,7 +70,7 @@ const App = () => {
       return <ModelerState savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} setState={setState} />;
     case StateEnum.Home:
       return <HomeState setState={setState} savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} />;
-    case StateEnum.Simulation:
+    case StateEnum.Simulator:
       return <SimulatorState setState={setState} savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} />;
     case StateEnum.Conformance:
       return <ConformanceCheckingState setState={setState} savedGraphs={savedGraphs} setSavedGraphs={setSavedGraphs} />;

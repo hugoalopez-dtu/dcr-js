@@ -184,7 +184,7 @@ const ConformanceCheckingState = ({savedGraphs, setState}: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraph, current: DCRGraph } | null>(null);
     
-    const [logResults, setLogResults] = useState<LogResults>([]);//[ { traceId: "Trace 1", trace: ["a", "b", "c"]}, { traceId: "Trace 2", trace: [], isPositive: false}, { traceId: "Trace 3", trace: [], isPositive: true}, { traceId: "Trace 4", trace: []}]);
+    const [logResults, setLogResults] = useState<LogResults>([]);
     const [selectedTrace, setSelectedTrace] = useState<{traceId: string, trace: Trace} | null>(null);
 
     const { positiveCount, negativeCount } = useMemo<{positiveCount: number, negativeCount: number}>(() => {
@@ -309,7 +309,7 @@ const ConformanceCheckingState = ({savedGraphs, setState}: StateProps) => {
               <CloseTrace onClick={() => setSelectedTrace(null)}/>
              </ResultsHeader>
              <ul>
-              {selectedTrace.trace.map( activity => <Activity>{activity}</Activity>)}
+              {selectedTrace.trace.map( (activity, idx )=> <Activity key={activity + idx }>{activity}</Activity>)}
              </ul>
             </TraceWindow>}
             <TopRightIcons>
