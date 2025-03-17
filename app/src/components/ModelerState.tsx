@@ -13,7 +13,7 @@ import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 import { BiDownload,  BiHome, BiPlus, BiSave, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
 
 import Examples from './Examples';
-import { toast } from 'react-toast';
+import { toast } from 'react-toastify';
 import TopRightIcons from '../utilComponents/TopRightIcons';
 import Toggle from '../utilComponents/Toggle';
 import DropDown from '../utilComponents/DropDown';

@@ -10,7 +10,7 @@ import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
 import { isSettingsVal } from "../types";
 import { copyMarking, DCRGraph, moddleToDCR, parseLog, replayTrace } from "dcr-engine";
-import { toast } from "react-toast";
+import { toast } from "react-toastify";
 import FileUpload from "../utilComponents/FileUpload";
 import { Trace } from "dcr-engine";
 

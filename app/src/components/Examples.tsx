@@ -2,7 +2,7 @@ import { useState } from "react";
 import Popup from "../utilComponents/Popup";
 import styled from "styled-components";
 import FlexBox from "../utilComponents/FlexBox";
-import { toast } from "react-toast";
+import { toast } from "react-toastify";
 
 
 const TextBox = styled.div`

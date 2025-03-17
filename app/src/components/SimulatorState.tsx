@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
-import { toast } from "react-toast";
+import { toast } from "react-toastify";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import { BiHome, BiLeftArrowCircle, BiSolidFolderOpen, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
