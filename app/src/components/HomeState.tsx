@@ -42,15 +42,15 @@ const HomeState = ({ setState }: StateProps) => {
             <FlexBox direction="row" $justify="space-around">
                 <ImgContainer onClick={() => setState(StateEnum.Modeler)}>
                     <ImgLabel><br/>Modeling</ImgLabel>
-                    <Img src="icons/modeling.svg" />
+                    <Img src="dcr-js/icons/modeling.svg" />
                 </ImgContainer>
                 <ImgContainer onClick={() => setState(StateEnum.Simulator)}>
                     <ImgLabel><br/>Simulation</ImgLabel>
-                    <Img src="icons/simulation.svg" />
+                    <Img src="dcr-js/icons/simulation.svg" />
                 </ImgContainer>
                 <ImgContainer onClick={() => setState(StateEnum.Conformance)}>
                     <ImgLabel>Conformance <br/> Checking</ImgLabel>
-                    <Img src="icons/conformance.svg" />
+                    <Img src="dcr-js/icons/conformance.svg" />
                 </ImgContainer>
             </FlexBox>
         </>

@@ -11,7 +11,9 @@ const Container = styled.div`
     right: 0;
     overflow: hidden;
     display: flex;
+    z-index: 15;
     & > svg {
+        background-color: white;
         margin: 0.5rem;
         z-index: 0;
         border: 2px solid black;

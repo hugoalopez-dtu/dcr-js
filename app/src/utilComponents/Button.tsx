@@ -5,8 +5,12 @@ const Button = styled.button`
     padding: 8px;
     border: 1px solid black;
     border-radius: 5px;
-    background: Gainsboro;
-    box-shadow: 0px 2px 2px 0 rgba(0, 0, 0, 0.1);
+    background-color: white;
+    box-shadow: 0px 1px 1px 0 grey;
+
+    &:hover {
+        background-color: gainsboro;
+    }
 `
 
 export default Button

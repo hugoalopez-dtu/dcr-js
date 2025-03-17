@@ -65,8 +65,8 @@ const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
     box-shadow: ${ props => props.$traceSelected ? "none" : "0px 0px 5px 0px grey"};
     display: flex;
     flex-direction: column;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
     font-size: 20px;
     background-color: white;
     box-sizing: border-box;
@@ -82,12 +82,13 @@ const TraceWindow = styled.div`
     box-shadow: 0px 0 5px 0px grey;
     display: flex;
     flex-direction: column;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
     font-size: 20px;
     background-color: gainsboro;
     box-sizing: border-box;
     overflow: scroll;
+    z-index: 4;
 `
 
 const EventLogInput = styled.input`
@@ -97,6 +98,8 @@ const EventLogInput = styled.input`
     appearance: none;
     border: none;
     margin-bottom: 0.5rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.5rem;
+    margin: 0.25rem 0.5rem 0.25rem 0.5rem;
     &:focus {
       outline: 2px dashed black;
     }
@@ -130,7 +133,8 @@ const ResultsHeader = styled.h1`
   justify-content: space-between;
   font-size: 30px;
   font-weight: normal;
-  margin: 1rem;
+  padding: 0.5rem 1rem 0.5rem 1rem;
+  margin: 0;
 `
 
 const CloseTrace = styled(BiX)`
@@ -152,6 +156,30 @@ const Activity = styled.li`
   box-sizing: border-box;
 `
 
+const GreyOut = styled.div`
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    cursor: default;
+    opacity: 50%;
+    background-color: grey;
+    z-index: 3;
+`
+
+const FinalizeButton = styled(Button)`
+    margin: auto;
+    margin-bottom: 0;
+    width: fit-content;
+`
+
+enum SimulatingEnum {
+    Default,
+    Wild,
+    Not
+}
+
 const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
@@ -163,7 +191,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
         traces: Array<{traceId: string, trace: Trace}>,
     }>({ name: "Unnamed Event Log", traces: [ ]});
 
-    const isSimulatingRef = useRef<boolean>(false);
+    const isSimulatingRef = useRef<SimulatingEnum>(SimulatingEnum.Not);
     const traceRef = useRef<{traceId: number, trace: Array<string>} | null>(null);
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
@@ -177,7 +205,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                         graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
                         modelerRef.current.updateRendering(graph);
                         setEventLog({ name: "Unnamed Event Log", traces: [ ]});
-                        isSimulatingRef.current = false;
+                        isSimulatingRef.current = SimulatingEnum.Not;
                         traceRef.current = null;
                         setSelectedTrace(null);
                     }
@@ -217,6 +245,9 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     }
 
     const executeEvent = (eventElement: any, graph: DCRGraphS): { msg: string, executedEvent: string } => {
+        // Allow anything in Wild mode
+        if (isSimulatingRef.current === SimulatingEnum.Wild) return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement) };
+        
         const event: Event = eventElement.id;
         let eventName: String = eventElement.businessObject?.description;
         if (eventName == null || eventName === "") {
@@ -237,7 +268,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     }
 
     const eventClick = (event: any) => {
-        if (!isSimulatingRef.current || !traceRef.current || !modelerRef.current || !graphRef.current) return;
+        if (isSimulatingRef.current === SimulatingEnum.Not || !traceRef.current || !modelerRef.current || !graphRef.current) return;
 
         const response = executeEvent(event.element, graphRef.current.current);
         console.log(response);
@@ -309,44 +340,53 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
 
     return (
         <>
+            {isSimulatingRef.current === SimulatingEnum.Not ? <GreyOut /> : null}
             <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: eventClick, canvasClassName: "simulating" }} />
             <ResultsWindow $traceSelected={selectedTrace !== null}>
                 <EventLogInput value={eventLog.name} onChange={(e) => setEventLog({ ...eventLog, name: e.target.value })}/>
                 {eventLog.traces.map( ({trace, traceId }) => 
                     <ResultsElement 
-                        $simulating={isSimulatingRef.current} 
+                        $simulating={isSimulatingRef.current !== SimulatingEnum.Not} 
                         $selected={selectedTrace !== null && selectedTrace.traceId === traceId} 
                         key={traceId} 
                         onClick={() => {
-                            if (!isSimulatingRef.current) setSelectedTrace({trace, traceId}) 
+                            if (isSimulatingRef.current === SimulatingEnum.Not) setSelectedTrace({trace, traceId}) 
                         }}
                     >
                         {traceId}
                     </ResultsElement>)}
-                <FlexBox direction="row" $justify="space-around">
-                <Button disabled={isSimulatingRef.current} onClick={() => {
-                    isSimulatingRef.current = true;
-                    const traceId = eventLog.traces.length;
-                    setEventLog( {...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: []}]});
-                    setSelectedTrace({ traceId: "Trace " + traceId, trace: []});
-                    traceRef.current = { traceId, trace: [] };
-                }}>
-                    Add new trace
-                </Button>
-                <Button disabled={isSimulatingRef.current} onClick={saveEventLog}>
-                    Export log
-                </Button>
+                <FlexBox direction="row" $justify="space-around" style={{marginTop: "auto"}}>
+                    <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={() => {
+                        isSimulatingRef.current = SimulatingEnum.Default;
+                        const traceId = eventLog.traces.length;
+                        setEventLog( {...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: []}]});
+                        setSelectedTrace({ traceId: "Trace " + traceId, trace: []});
+                        traceRef.current = { traceId, trace: [] };
+                    }}>
+                        Add new trace
+                    </Button>
+                    <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={() => {
+                        isSimulatingRef.current = SimulatingEnum.Wild;
+                        const traceId = eventLog.traces.length;
+                        setEventLog( {...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: []}]});
+                        setSelectedTrace({ traceId: "Trace " + traceId, trace: []});
+                        traceRef.current = { traceId, trace: [] };
+                    }}>
+                        Add non-conforming trace
+                    </Button>
+                    <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={saveEventLog}>
+                        Export log
+                    </Button>
                 </FlexBox>
             </ResultsWindow>
             {selectedTrace && <TraceWindow>
              <ResultsHeader>
               {selectedTrace.traceId}
               <CloseTrace onClick={() => {
-                if (isSimulatingRef.current) {
-                    console.log("trying to remove trace: ", selectedTrace.traceId);
+                if (isSimulatingRef.current !== SimulatingEnum.Not) {
                     setEventLog( {...eventLog, traces: eventLog.traces.filter( entry => entry.traceId !== selectedTrace.traceId)});
                 }
-                isSimulatingRef.current = false;
+                isSimulatingRef.current = SimulatingEnum.Not;
                 setSelectedTrace(null);
                 reset();
               }}/>
@@ -354,10 +394,10 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
              <ul>
               {selectedTrace.trace.map( (activity, idx) => <Activity key={activity + idx}>{activity}</Activity>)}
              </ul>
-             {isSimulatingRef.current && <Button onClick={() => {
+             {isSimulatingRef.current !== SimulatingEnum.Not && <FinalizeButton onClick={() => {
                 if (!graphRef.current?.current) return;
                 if (isAccepting(graphRef.current.current) && traceRef.current) {
-                    isSimulatingRef.current = false;
+                    isSimulatingRef.current = SimulatingEnum.Not;
                     const eventLogCopy = {...eventLog, traces: [...eventLog.traces]};
                     eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
                     setSelectedTrace(null);
@@ -367,7 +407,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                 }
              }}>
                 Finalize trace
-             </Button>}
+             </FinalizeButton>}
             </TraceWindow>}
             <TopRightIcons>
                 <FullScreenIcon />
