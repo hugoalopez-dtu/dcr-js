@@ -141,14 +141,14 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
 
     const data = await modelerRef.current.saveXML({ format: true });
     const blob = new Blob([data.xml]);
-    saveAs(blob, "dcr-board.xml");
+    saveAs(blob, `${graphName}.xml`);
   }
 
   const saveAsSvg = async () => {
     if (!modelerRef.current) return;
     const data = await modelerRef.current.saveSVG();
     const blob = new Blob([data.svg]);
-    saveAs(blob, "dcr-board.svg");
+    saveAs(blob, `${graphName}.svg`);
   }
 
   const menuElements: Array<ModalMenuElement> = [

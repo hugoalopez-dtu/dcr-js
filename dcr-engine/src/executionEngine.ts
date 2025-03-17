@@ -12,6 +12,7 @@ init();
 
 // Mutates graph's marking
 export const execute = (event: Event, graph: DCRGraph) => {
+  graph.marking.executed.add(event);
   graph.marking.pending.delete(event);
   // Add sink of all response relations to pending
   for (const rEvent of graph.responseTo[event]) {
