@@ -276,7 +276,7 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
       element:
         <MenuElement>
           <DropDown
-            options={[{ title: "TATL2023", value: "TATL2023", tooltip: "https://orbit.dtu.dk/en/publications/an-open-source-modeling-editor-for-declarative-process-models" }, { title: "HM2011", value: "HM2011", tooltip: "https://arxiv.org/abs/1110.4161" }, { title: "DCR Solutions", value: "DCR Solutions", tooltip: "https://dcrsolutions.net/" }]}
+            options={[{ title: "TAL2023", value: "TAL2023", tooltip: "https://link.springer.com/chapter/10.1007/978-3-031-46846-9_12" }, { title: "HM2011", value: "HM2011", tooltip: "https://arxiv.org/abs/1110.4161" }, { title: "DCR Solutions", value: "DCR Solutions", tooltip: "https://dcrsolutions.net/" }]}
             onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
           />
           <Label>Relation Notation</Label>

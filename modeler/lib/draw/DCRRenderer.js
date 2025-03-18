@@ -185,7 +185,7 @@ export default function DCRRenderer(
     switch (settings.markerNotation) {
       case "DCR Solutions":
         return NewMarkers;
-      case "TATL2023":
+      case "TAL2023":
         return ProposedMarkers;
       case "HM2011":
         return DefaultMarkers;
