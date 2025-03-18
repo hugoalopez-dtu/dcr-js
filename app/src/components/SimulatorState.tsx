@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toastify";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiHome, BiLeftArrowCircle, BiSolidFolderOpen, BiX } from "react-icons/bi";
+import { BiCheck, BiHome, BiLeftArrowCircle, BiSolidFolderOpen, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
 import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
@@ -128,13 +128,13 @@ const ResultsElement = styled.li<{ $simulating: boolean, $selected: boolean; }>`
 `
 
 const ResultsHeader = styled.h1`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  font-size: 30px;
-  font-weight: normal;
-  padding: 0.5rem 1rem 0.5rem 1rem;
-  margin: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: 30px;
+    font-weight: normal;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    margin: 0;
 `
 
 const CloseTrace = styled(BiX)`
@@ -145,6 +145,7 @@ const CloseTrace = styled(BiX)`
   margin-left: 1rem;
   margin-right: 1rem;
   cursor: pointer;
+  color: black;
   &:hover {
     color: white;
   }
@@ -180,6 +181,35 @@ enum SimulatingEnum {
     Not
 }
 
+const GreenCheck = styled(BiCheck)`
+        display: block;
+        color: white;
+        border-radius: 50%;
+        margin: auto;
+        margin-right: 1rem;
+        margin-left: 1rem;
+        background-color: green;
+`
+
+const RedX = styled(BiX)`
+        display: block;
+        color: white;
+        border-radius: 50%;
+        margin: auto;
+        margin-right: 1rem;
+        margin-left: 1rem;
+        background-color: red;
+`
+
+const resultIcon = (val: boolean) => {
+    switch (val) {
+        case true:
+            return <GreenCheck />
+        case false:
+            return <RedX />
+    }
+}
+
 const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
@@ -193,6 +223,10 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
 
     const isSimulatingRef = useRef<SimulatingEnum>(SimulatingEnum.Not);
     const traceRef = useRef<{ traceId: number, trace: Array<string> } | null>(null);
+
+    const traceIsAccepting = useMemo<boolean>(() => {
+        return graphRef.current !== null && isAcceptingS(graphRef.current?.current, graphRef.current?.current)
+    }, [selectedTrace])
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
         if (data.includes("multi-instance=\"true\"")) {
@@ -375,6 +409,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
             {selectedTrace && <TraceWindow>
                 <ResultsHeader>
                     {selectedTrace.traceId}
+                    {resultIcon(traceIsAccepting)}
                     <CloseTrace onClick={() => {
                         if (isSimulatingRef.current !== SimulatingEnum.Not) {
                             setEventLog({ ...eventLog, traces: eventLog.traces.filter(entry => entry.traceId !== selectedTrace.traceId) });
