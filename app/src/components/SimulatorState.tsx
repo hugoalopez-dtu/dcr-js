@@ -62,7 +62,7 @@ const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
     left: 0;
     height: 100vh;
     width: 30rem;
-    box-shadow: ${ props => props.$traceSelected ? "none" : "0px 0px 5px 0px grey"};
+    box-shadow: ${props => props.$traceSelected ? "none" : "0px 0px 5px 0px grey"};
     display: flex;
     flex-direction: column;
     padding-top: 2rem;
@@ -111,10 +111,10 @@ const ResultsElement = styled.li<{ $simulating: boolean, $selected: boolean; }>`
   justify-content: space-between;
   width: 100%;
   padding: 0.5rem 1rem 0.5rem 1rem;
-  cursor: ${props => !props.$simulating ? "pointer" : "default" };
+  cursor: ${props => !props.$simulating ? "pointer" : "default"};
   box-sizing: border-box;
-  color: ${ props => props.$selected ? "white" : "black"};
-  background-color: ${ props => props.$selected ? "gainsboro" : "white"};
+  color: ${props => props.$selected ? "white" : "black"};
+  background-color: ${props => props.$selected ? "gainsboro" : "white"};
 
   ${props => !props.$simulating ? `&:hover {
       color: white;
@@ -185,14 +185,14 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
     const [menuOpen, setMenuOpen] = useState(false);
-    const [selectedTrace, setSelectedTrace] = useState<{traceId: string, trace: Trace} | null>(null);
+    const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, trace: Trace } | null>(null);
     const [eventLog, setEventLog] = useState<{
         name: string,
-        traces: Array<{traceId: string, trace: Trace}>,
-    }>({ name: "Unnamed Event Log", traces: [ ]});
+        traces: Array<{ traceId: string, trace: Trace }>,
+    }>({ name: "Unnamed Event Log", traces: [] });
 
     const isSimulatingRef = useRef<SimulatingEnum>(SimulatingEnum.Not);
-    const traceRef = useRef<{traceId: number, trace: Array<string>} | null>(null);
+    const traceRef = useRef<{ traceId: number, trace: Array<string> } | null>(null);
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
         if (data.includes("multi-instance=\"true\"")) {
@@ -204,7 +204,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                         const graph = moddleToDCR(modelerRef.current.getElementRegistry());
                         graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
                         modelerRef.current.updateRendering(graph);
-                        setEventLog({ name: "Unnamed Event Log", traces: [ ]});
+                        setEventLog({ name: "Unnamed Event Log", traces: [] });
                         isSimulatingRef.current = SimulatingEnum.Not;
                         traceRef.current = null;
                         setSelectedTrace(null);
@@ -212,7 +212,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                 }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
             }
         }
-    } 
+    }
 
     const findElementGroup = (event: Event, group: DCRGraphS | SubProcess): DCRGraphS | SubProcess | null => {
         if (group.events.has(event)) return group;
@@ -247,7 +247,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const executeEvent = (eventElement: any, graph: DCRGraphS): { msg: string, executedEvent: string } => {
         // Allow anything in Wild mode
         if (isSimulatingRef.current === SimulatingEnum.Wild) return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement) };
-        
+
         const event: Event = eventElement.id;
         let eventName: String = eventElement.businessObject?.description;
         if (eventName == null || eventName === "") {
@@ -268,13 +268,20 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     }
 
     const eventClick = (event: any) => {
-        if (isSimulatingRef.current === SimulatingEnum.Not || !traceRef.current || !modelerRef.current || !graphRef.current) return;
+        if (event.element.type !== "dcr:Event" ||
+            isSimulatingRef.current === SimulatingEnum.Not ||
+            !traceRef.current ||
+            !modelerRef.current ||
+            !graphRef.current
+        ) return;
 
         const response = executeEvent(event.element, graphRef.current.current);
-        console.log(response);
+
         if (response.executedEvent !== "") {
             traceRef.current.trace.push(response.executedEvent);
-            setSelectedTrace( { traceId: "Trace " + traceRef.current.traceId, trace: [...traceRef.current.trace] });
+            setSelectedTrace({ traceId: "Trace " + traceRef.current.traceId, trace: [...traceRef.current.trace] });
+        } else {
+            toast.warn(response.msg);
         }
         modelerRef.current.updateRendering(graphRef.current.current);
     }
@@ -298,17 +305,17 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
         const data = writeEventLog(logToExport);
         const blob = new Blob([data]);
         saveAs(blob, `${eventLog.name}.xes`);
-      }
+    }
 
-    const menuElements: Array<ModalMenuElement> = [    {
+    const menuElements: Array<ModalMenuElement> = [{
         element: (
-          <StyledFileUpload>
-            <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
-              <BiSolidFolderOpen />
-              <>Editor XML</>
-            </FileUpload>
-          </StyledFileUpload>),
-      },{
+            <StyledFileUpload>
+                <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+                    <BiSolidFolderOpen />
+                    <>Editor XML</>
+                </FileUpload>
+            </StyledFileUpload>),
+    }, {
         element: <SavedGraphs>Saved Graphs:</SavedGraphs>
     }, ...Object.keys(savedGraphs).map(name => {
         return ({
@@ -343,24 +350,24 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
             {isSimulatingRef.current === SimulatingEnum.Not ? <GreyOut /> : null}
             <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: eventClick, canvasClassName: "simulating" }} />
             <ResultsWindow $traceSelected={selectedTrace !== null}>
-                <EventLogInput value={eventLog.name} onChange={(e) => setEventLog({ ...eventLog, name: e.target.value })}/>
-                {eventLog.traces.map( ({trace, traceId }) => 
-                    <ResultsElement 
-                        $simulating={isSimulatingRef.current !== SimulatingEnum.Not} 
-                        $selected={selectedTrace !== null && selectedTrace.traceId === traceId} 
-                        key={traceId} 
+                <EventLogInput value={eventLog.name} onChange={(e) => setEventLog({ ...eventLog, name: e.target.value })} />
+                {eventLog.traces.map(({ trace, traceId }) =>
+                    <ResultsElement
+                        $simulating={isSimulatingRef.current !== SimulatingEnum.Not}
+                        $selected={selectedTrace !== null && selectedTrace.traceId === traceId}
+                        key={traceId}
                         onClick={() => {
-                            if (isSimulatingRef.current === SimulatingEnum.Not) setSelectedTrace({trace, traceId}) 
+                            if (isSimulatingRef.current === SimulatingEnum.Not) setSelectedTrace({ trace, traceId })
                         }}
                     >
                         {traceId}
                     </ResultsElement>)}
-                <FlexBox direction="row" $justify="space-around" style={{marginTop: "auto"}}>
+                <FlexBox direction="row" $justify="space-around" style={{ marginTop: "auto" }}>
                     <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={() => {
                         isSimulatingRef.current = SimulatingEnum.Default;
                         const traceId = eventLog.traces.length;
-                        setEventLog( {...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: []}]});
-                        setSelectedTrace({ traceId: "Trace " + traceId, trace: []});
+                        setEventLog({ ...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: [] }] });
+                        setSelectedTrace({ traceId: "Trace " + traceId, trace: [] });
                         traceRef.current = { traceId, trace: [] };
                     }}>
                         Add new trace
@@ -368,8 +375,8 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                     <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={() => {
                         isSimulatingRef.current = SimulatingEnum.Wild;
                         const traceId = eventLog.traces.length;
-                        setEventLog( {...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: []}]});
-                        setSelectedTrace({ traceId: "Trace " + traceId, trace: []});
+                        setEventLog({ ...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, trace: [] }] });
+                        setSelectedTrace({ traceId: "Trace " + traceId, trace: [] });
                         traceRef.current = { traceId, trace: [] };
                     }}>
                         Add non-conforming trace
@@ -380,34 +387,34 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                 </FlexBox>
             </ResultsWindow>
             {selectedTrace && <TraceWindow>
-             <ResultsHeader>
-              {selectedTrace.traceId}
-              <CloseTrace onClick={() => {
-                if (isSimulatingRef.current !== SimulatingEnum.Not) {
-                    setEventLog( {...eventLog, traces: eventLog.traces.filter( entry => entry.traceId !== selectedTrace.traceId)});
-                }
-                isSimulatingRef.current = SimulatingEnum.Not;
-                setSelectedTrace(null);
-                reset();
-              }}/>
-             </ResultsHeader>
-             <ul>
-              {selectedTrace.trace.map( (activity, idx) => <Activity key={activity + idx}>{activity}</Activity>)}
-             </ul>
-             {isSimulatingRef.current !== SimulatingEnum.Not && <FinalizeButton onClick={() => {
-                if (!graphRef.current?.current) return;
-                if (isAccepting(graphRef.current.current) && traceRef.current) {
-                    isSimulatingRef.current = SimulatingEnum.Not;
-                    const eventLogCopy = {...eventLog, traces: [...eventLog.traces]};
-                    eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
-                    setSelectedTrace(null);
-                    reset();
-                } else {
-                    toast.warn("Graphs is not accepting...");
-                }
-             }}>
-                Finalize trace
-             </FinalizeButton>}
+                <ResultsHeader>
+                    {selectedTrace.traceId}
+                    <CloseTrace onClick={() => {
+                        if (isSimulatingRef.current !== SimulatingEnum.Not) {
+                            setEventLog({ ...eventLog, traces: eventLog.traces.filter(entry => entry.traceId !== selectedTrace.traceId) });
+                        }
+                        isSimulatingRef.current = SimulatingEnum.Not;
+                        setSelectedTrace(null);
+                        reset();
+                    }} />
+                </ResultsHeader>
+                <ul>
+                    {selectedTrace.trace.map((activity, idx) => <Activity key={activity + idx}>{activity}</Activity>)}
+                </ul>
+                {isSimulatingRef.current !== SimulatingEnum.Not && <FinalizeButton onClick={() => {
+                    if (!graphRef.current?.current) return;
+                    if (isAccepting(graphRef.current.current) && traceRef.current) {
+                        isSimulatingRef.current = SimulatingEnum.Not;
+                        const eventLogCopy = { ...eventLog, traces: [...eventLog.traces] };
+                        eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
+                        setSelectedTrace(null);
+                        reset();
+                    } else {
+                        toast.warn("Graphs is not accepting...");
+                    }
+                }}>
+                    Finalize trace
+                </FinalizeButton>}
             </TraceWindow>}
             <TopRightIcons>
                 <FullScreenIcon />

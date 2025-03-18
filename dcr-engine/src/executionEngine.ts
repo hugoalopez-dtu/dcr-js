@@ -97,7 +97,7 @@ const formatEmpty = (label: string): string => {
 
 export const isEnabledS = (event: Event, graph: DCRGraph, group: SubProcess | DCRGraph): { enabled: boolean, msg: string } => {
   if (!graph.marking.included.has(event)) {
-    return { enabled: false, msg: `${graph.labelMap[event]} is not included...`};
+    return { enabled: false, msg: `${graph.labelMap[event]} is not included...` };
   }
   if (isSubProcess(group)) {
     const subProcessStatus = isEnabledS(group.id, graph, group.parent);
@@ -111,7 +111,7 @@ export const isEnabledS = (event: Event, graph: DCRGraph, group: SubProcess | DC
       graph.marking.included.has(cEvent) &&
       !graph.marking.executed.has(cEvent)
     ) {
-      return { enabled: false, msg: `At minimum, ${formatEmpty(graph.labelMap[cEvent])} is conditioning for ${formatEmpty(graph.labelMap[event])}...`};
+      return { enabled: false, msg: `At minimum, ${formatEmpty(graph.labelMap[cEvent])} is conditioning for ${formatEmpty(graph.labelMap[event])}...` };
     }
   }
   for (const mEvent of graph.milestonesFor[event]) {
@@ -120,8 +120,8 @@ export const isEnabledS = (event: Event, graph: DCRGraph, group: SubProcess | DC
       graph.marking.included.has(mEvent) &&
       graph.marking.pending.has(mEvent)
     ) {
-      return { enabled: false, msg: `At minimum, ${formatEmpty(graph.labelMap[mEvent])} is a milestone for ${formatEmpty(graph.labelMap[event])}...`};
+      return { enabled: false, msg: `At minimum, ${formatEmpty(graph.labelMap[mEvent])} is a milestone for ${formatEmpty(graph.labelMap[event])}...` };
     }
   }
-  return { enabled: true, msg: ""};
+  return { enabled: true, msg: "" };
 };
