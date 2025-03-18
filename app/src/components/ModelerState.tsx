@@ -155,6 +155,18 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
     saveAs(blob, `${graphName}.svg`);
   }
 
+  const savedGraphElements = () => {
+      return Object.keys(savedGraphs).length > 0 ?  [{
+          element: <SavedGraphs>Saved Graphs:</SavedGraphs>
+      }, ...Object.keys(savedGraphs).map(name => {
+          return ({
+              icon: <BiLeftArrowCircle />,
+              text: name,
+              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+          })
+      })] : [];
+  }
+
   const menuElements: Array<ModalMenuElement> = [
     {
       icon: <BiPlus />,
@@ -189,16 +201,8 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
       icon: <BiSolidDashboard />,
       text: "Examples",
       onClick: () => { setMenuOpen(false); setExamplesOpen(true) },
-    }, {
-      element: <SavedGraphs>Saved Graphs:</SavedGraphs>
-    },
-    ...Object.keys(savedGraphs).map(name => {
-      return ({
-        icon: <BiLeftArrowCircle />,
-        text: name,
-        onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
-      })
-    })
+    }, 
+    ...savedGraphElements()
   ]
 
   const bottomElements: Array<ModalMenuElement> = [

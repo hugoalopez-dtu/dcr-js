@@ -237,6 +237,18 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
     }
   }
 
+  const savedGraphElements = () => {
+      return Object.keys(savedGraphs).length > 0 ?  [{
+          element: <SavedGraphs>Saved Graphs:</SavedGraphs>
+      }, ...Object.keys(savedGraphs).map(name => {
+          return ({
+              icon: <BiLeftArrowCircle />,
+              text: name,
+              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+          })
+      })] : [];
+  }
+
   const menuElements: Array<ModalMenuElement> = [
     {
       element: (
@@ -254,15 +266,9 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
             <>Upload Log</>
           </FileUpload>
         </StyledFileUpload>),
-    }, {
-      element: <SavedGraphs>Saved Graphs:</SavedGraphs>
-    }, ...Object.keys(savedGraphs).map(name => {
-      return ({
-        icon: <BiLeftArrowCircle />,
-        text: name,
-        onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
-      })
-    })];
+    }, 
+    ...savedGraphElements()
+  ];
 
   const bottomElements: Array<ModalMenuElement> = [
     {
