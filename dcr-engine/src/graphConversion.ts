@@ -1,10 +1,12 @@
 import {
     EventMap,
     SubProcess,
-    DCRGraphS
+    DCRGraphS,
+    isSubProcess
 } from "./types";
 
 import init from './init';
+import { bubblePending, isAcceptingS } from "./executionEngine";
 
 export const moddleToDCR = (elementReg: any): DCRGraphS => {
     const graph = emptyGraph();
@@ -34,8 +36,8 @@ export const moddleToDCR = (elementReg: any): DCRGraphS => {
 
     // Add relations to the graph
     relationElements.forEach((element: any) => {
-        const source: string = element.businessObject.get('sourceRef' ).id;
-        const target: string = element.businessObject.get('targetRef' ).id;
+        const source: string = element.businessObject.get('sourceRef').id;
+        const target: string = element.businessObject.get('targetRef').id;
         switch (element.businessObject.get('type')) {
             case 'condition':
                 addRelation(graph.conditionsFor, nestingElements, target, source);
@@ -55,6 +57,14 @@ export const moddleToDCR = (elementReg: any): DCRGraphS => {
         }
     });
 
+    for (const id of Object.keys(graph.subProcesses)) {
+        const group = graph.subProcesses[id];
+        if (isAcceptingS(group, graph)) {
+            graph.marking.executed.add(id);
+        }
+        bubblePending(group, graph)
+    }
+
     return graph;
 }
 
@@ -64,7 +74,6 @@ const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, eleme
             id: element.id,
             parent: parent,
             events: new Set(),
-            subProcesses: new Set()
         }
 
         // Find events, subprocesses and nestings
@@ -83,7 +92,13 @@ const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, eleme
         addNestings(graph, subProcess, nestingElements);
 
         // Add subprocess to parent graph
-        parent.subProcesses.add(subProcess);
+        graph.subProcesses[element.id] = subProcess;
+
+        let label = element.businessObject.get('description');
+        if (!label) label = "";
+        graph.labelMap[element.id] = label;
+        if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
+        graph.labelMapInv[label].add(element.id);
     });
 }
 
@@ -108,6 +123,7 @@ const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: S
         graph.labelMap[element.id] = label;
         if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
         graph.labelMapInv[label].add(element.id);
+        if (isSubProcess(parent)) graph.subProcessMap[element.id] = parent;
 
         // Add marking for event in graph
         if (element.businessObject.get('pending')) {
@@ -119,7 +135,7 @@ const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: S
         if (element.businessObject.get('included')) {
             graph.marking.included.add(element.id);
         }
-    
+
         // Initialize relations for event in graph 
         graph.conditionsFor[element.id] = new Set();
         graph.milestonesFor[element.id] = new Set();
@@ -131,36 +147,36 @@ const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: S
 
 const addRelation =
     (relationSet: EventMap, nestings: Set<any>, source: string, target: string) => {
-    // Handle Nesting groupings by adding relations for all nested elements
-    if (source.includes('Nesting')) {
-        nestings.forEach((element: any) => {
-            if (element.id === source) {
-                element.children.forEach((nestedElement: any) => {
-                    if (nestedElement.type === 'dcr:SubProcess' || 
-                        nestedElement.type === 'dcr:Event' || 
-                        nestedElement.type === 'dcr:Nesting') {
-                        addRelation(relationSet, nestings, nestedElement.id, target);
-                    }
-                });
-            }
-        });
-    } else if (target.includes('Nesting')) {
-        nestings.forEach((element: any) => {
-            if (element.id === target) {
-                element.children.forEach((nestedElement: any) => {
-                    if (nestedElement.type === 'dcr:SubProcess' || 
-                        nestedElement.type === 'dcr:Event' || 
-                        nestedElement.type === 'dcr:Nesting') {
-                        addRelation(relationSet, nestings, source, nestedElement.id);
-                    }
-                });
-            }
-        });
-    } else {
-        // Add direct relation if neither source nor target is a Nesting group
-        relationSet[source].add(target);
+        // Handle Nesting groupings by adding relations for all nested elements
+        if (source.includes('Nesting')) {
+            nestings.forEach((element: any) => {
+                if (element.id === source) {
+                    element.children.forEach((nestedElement: any) => {
+                        if (nestedElement.type === 'dcr:SubProcess' ||
+                            nestedElement.type === 'dcr:Event' ||
+                            nestedElement.type === 'dcr:Nesting') {
+                            addRelation(relationSet, nestings, nestedElement.id, target);
+                        }
+                    });
+                }
+            });
+        } else if (target.includes('Nesting')) {
+            nestings.forEach((element: any) => {
+                if (element.id === target) {
+                    element.children.forEach((nestedElement: any) => {
+                        if (nestedElement.type === 'dcr:SubProcess' ||
+                            nestedElement.type === 'dcr:Event' ||
+                            nestedElement.type === 'dcr:Nesting') {
+                            addRelation(relationSet, nestings, source, nestedElement.id);
+                        }
+                    });
+                }
+            });
+        } else {
+            // Add direct relation if neither source nor target is a Nesting group
+            relationSet[source].add(target);
+        }
     }
-}
 
 
 const emptyGraph = (): DCRGraphS => {
@@ -169,7 +185,8 @@ const emptyGraph = (): DCRGraphS => {
         labels: new Set(),
         labelMap: {},
         labelMapInv: {},
-        subProcesses: new Set(),
+        subProcesses: {},
+        subProcessMap: {},
         conditionsFor: {},
         milestonesFor: {},
         responseTo: {},

@@ -60,7 +60,7 @@ const Modeler = ({ modelerRef, override }: ModelerProps) => {
                     initModeler.updateRendering(graph);
 
                     // Override clicks on events
-                    initModeler.on('element.click', (e) => { 
+                    initModeler.on('element.click', (e) => {
                         override.overrideOnclick(e); // Unselect everything, prevents selecting elements during simulation
                         const selection = initModeler.getSelection();
                         selection.select([]);

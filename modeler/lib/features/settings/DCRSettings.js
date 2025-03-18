@@ -13,7 +13,7 @@ import EventBus from "diagram-js/lib/core/EventBus";
 
 
 export const settings = {
-  markerNotation: "defaultMarkers",
+  markerNotation: "TATL2023",
   blackRelations: false,
 };
 

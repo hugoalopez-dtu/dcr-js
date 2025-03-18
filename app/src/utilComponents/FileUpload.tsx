@@ -45,8 +45,6 @@ const FileUpload = ({ fileCallback, accept, children }: FileUploadProps) => {
         }
     };
 
-    console.log(accept);
-
     return (<>
         <input
             type="file"

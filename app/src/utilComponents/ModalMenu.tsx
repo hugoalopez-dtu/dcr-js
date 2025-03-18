@@ -11,7 +11,7 @@ const MenuIcon = styled(BiMenu) <{ open: boolean; }>`
     height: 30px;
     width: 30px;
     color: ${props => props.open ? "White" : "Black"};
-    background-color: ${props => props.open ? "Black" : "White"};
+    background-color: ${props => props.open ? "Black !important" : "White"};
     cursor: pointer;
 `
 

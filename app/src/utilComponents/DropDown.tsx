@@ -3,7 +3,8 @@ import styled from "styled-components";
 interface DropDownProps {
     options: Array<{
         title: string | React.JSX.Element,
-        value: string
+        value: string,
+        tooltip?: string
     }>;
     onChange: (option: string) => void;
 }
@@ -24,7 +25,7 @@ const DropDown = ({ options, onChange }: DropDownProps) => {
     return (
         <form>
             <Select onChange={(e) => onChange(e.target.value)}>
-                {options.map(option => <option key={option.value} value={option.value}>{option.title}</option>)}
+                {options.map(option => <option key={option.value} title={option.tooltip} value={option.value}>{option.title}</option>)}
             </Select>
         </form>
     )

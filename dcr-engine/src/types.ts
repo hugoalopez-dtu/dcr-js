@@ -14,7 +14,6 @@ declare global {
 // --------------------- DCR Graph Types ---------------------
 // -----------------------------------------------------------
 
-export type Id = string;
 export type Event = string;
 export type Label = string;
 
@@ -48,7 +47,12 @@ export interface DCRGraphS {
   labels: Set<Label>;
   labelMap: { [event: Event]: Label };
   labelMapInv: { [label: Label]: Set<Event> };
-  subProcesses: Set<SubProcess>;
+  subProcesses: {
+    [id: string]: SubProcess;
+  };
+  subProcessMap: {
+    [event: Event]: SubProcess;
+  }
   conditionsFor: EventMap;
   milestonesFor: EventMap;
   responseTo: EventMap;
@@ -58,10 +62,9 @@ export interface DCRGraphS {
 }
 
 export interface SubProcess {
-  id: Id;
+  id: string;
   parent: SubProcess | DCRGraphS;
   events: Set<Event>;
-  subProcesses: Set<SubProcess>;
 }
 
 export const isSubProcess = (obj: unknown): obj is SubProcess => {

@@ -10,7 +10,7 @@ import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiDownload,  BiHome, BiPlus, BiSave, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
+import { BiDownload, BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toastify';
@@ -79,6 +79,10 @@ const GraphNameInput = styled.input`
   &:focus {
     outline: 2px dashed black;
   }
+`
+
+const SavedGraphs = styled.label`
+    padding: 1rem;
 `
 
 const initGraphName = "DCR-JS Graph"
@@ -185,7 +189,16 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
       icon: <BiSolidDashboard />,
       text: "Examples",
       onClick: () => { setMenuOpen(false); setExamplesOpen(true) },
-    }
+    }, {
+      element: <SavedGraphs>Saved Graphs:</SavedGraphs>
+    },
+    ...Object.keys(savedGraphs).map(name => {
+      return ({
+        icon: <BiLeftArrowCircle />,
+        text: name,
+        onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+      })
+    })
   ]
 
   const bottomElements: Array<ModalMenuElement> = [
@@ -200,7 +213,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
       element:
         <MenuElement>
           <DropDown
-            options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
+            options={[{ title: "TATL2023", value: "TATL2023", tooltip: "https://orbit.dtu.dk/en/publications/an-open-source-modeling-editor-for-declarative-process-models" }, { title: "HM2011", value: "HM2011", tooltip: "https://arxiv.org/abs/1110.4161" }, { title: "DCR Solutions", value: "DCR Solutions", tooltip: "https://dcrsolutions.net/" }]}
             onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
           />
           <Label>Relation Notation</Label>
