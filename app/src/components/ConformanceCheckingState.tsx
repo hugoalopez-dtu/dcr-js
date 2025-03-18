@@ -9,10 +9,12 @@ import styled from "styled-components";
 import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
 import { isSettingsVal } from "../types";
-import { copyMarking, DCRGraph, moddleToDCR, parseLog, replayTrace } from "dcr-engine";
+import { copyMarking, moddleToDCR, parseLog } from "dcr-engine";
 import { toast } from "react-toastify";
 import FileUpload from "../utilComponents/FileUpload";
 import { Trace } from "dcr-engine";
+import { replayTraceS } from "dcr-engine/src/conformance";
+import { DCRGraphS } from "dcr-engine/src/types";
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -56,7 +58,7 @@ const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
     left: 0;
     height: 100vh;
     width: 30rem;
-    box-shadow: ${ props => props.$traceSelected ? "none" : "0px 0px 5px 0px grey"};
+    box-shadow: ${props => props.$traceSelected ? "none" : "0px 0px 5px 0px grey"};
     display: flex;
     flex-direction: column;
     padding-top: 1rem;
@@ -92,8 +94,8 @@ const ResultsElement = styled.li<{ $selected: boolean; }>`
   padding: 0.5rem 1rem 0.5rem 1rem;
   cursor: pointer;
   box-sizing: border-box;
-  color: ${ props => props.$selected ? "white" : "black"};
-  background-color: ${ props => props.$selected ? "gainsboro" : "white"};
+  color: ${props => props.$selected ? "white" : "black"};
+  background-color: ${props => props.$selected ? "gainsboro" : "white"};
 
   &:hover {
       color: white;
@@ -168,157 +170,157 @@ const ResultCount = styled.div`
 `
 
 const resultIcon = (val: boolean | undefined) => {
-  switch(val) {
+  switch (val) {
     case undefined:
-      return <BiQuestionMark style={{backgroundColor: "orange"}}/>
+      return <BiQuestionMark style={{ backgroundColor: "orange" }} />
     case true:
-      return <BiCheck style={{backgroundColor: "green"}}/>
+      return <BiCheck style={{ backgroundColor: "green" }} />
     case false:
-      return <BiX style={{backgroundColor: "red"}}/>
+      return <BiX style={{ backgroundColor: "red" }} />
   }
 }
 
-const ConformanceCheckingState = ({savedGraphs, setState}: StateProps) => {
-    const [menuOpen, setMenuOpen] = useState(false);
-    
-    const modelerRef = useRef<DCRModeler | null>(null);
-    const graphRef = useRef<{ initial: DCRGraph, current: DCRGraph } | null>(null);
-    
-    const [logResults, setLogResults] = useState<LogResults>([]);
-    const [selectedTrace, setSelectedTrace] = useState<{traceId: string, trace: Trace} | null>(null);
+const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
+  const [menuOpen, setMenuOpen] = useState(false);
 
-    const { positiveCount, negativeCount } = useMemo<{positiveCount: number, negativeCount: number}>(() => {
-      let positiveCount = 0;
-      let negativeCount = 0;
-      for (const result of logResults) {
-        if (result.isPositive !== undefined && result.isPositive) {
-          positiveCount++;
-        } else {
-          negativeCount++;
-        }
-      }
-      return {positiveCount, negativeCount}
-    }, [logResults]);
+  const modelerRef = useRef<DCRModeler | null>(null);
+  const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
-    const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
-      if (data.includes("dcr:subProces")) {
-        toast.error("Subprocesses not supported...");
+  const [logResults, setLogResults] = useState<LogResults>([]);
+  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, trace: Trace } | null>(null);
+
+  const { positiveCount, negativeCount } = useMemo<{ positiveCount: number, negativeCount: number }>(() => {
+    let positiveCount = 0;
+    let negativeCount = 0;
+    for (const result of logResults) {
+      if (result.isPositive !== undefined && result.isPositive) {
+        positiveCount++;
       } else {
-        parse && parse(data).then((_) => {
-            if (modelerRef.current && graphRef.current) {
-                const graph = moddleToDCR(modelerRef.current.getElementRegistry());
-                graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
-                if (logResults) {
-                  const newResults = logResults.map( ({traceId, trace}) => ({ traceId, trace, isPositive: replayTrace(graph, trace)}));
-                  setLogResults(newResults);
-                } 
-            }
-        }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
+        negativeCount++;
       }
     }
+    return { positiveCount, negativeCount }
+  }, [logResults]);
 
-    const handleLogUpload = (data: string) => {
-      try {
-        const log = parseLog(data);
-        const results = Object.keys(log.traces).map(traceId => {
-          const trace = log.traces[traceId];
-          return {
-            traceId,
-            trace,
-            isPositive: graphRef.current ? replayTrace(graphRef.current.initial, trace) : undefined,
+  const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
+    if (data.includes("multi-instance=\"true\"")) {
+      toast.error("Multi-instance subprocesses not supported...");
+    } else {
+      parse && parse(data).then((_) => {
+        if (modelerRef.current && graphRef.current) {
+          const graph = moddleToDCR(modelerRef.current.getElementRegistry());
+          graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
+          if (logResults) {
+            const newResults = logResults.map(({ traceId, trace }) => ({ traceId, trace, isPositive: replayTraceS(graph, trace) }));
+            setLogResults(newResults);
           }
-        });
-        setLogResults(results);
-      } catch (e) {
-        console.log(e);
-        toast.error("Cannot parse log...");
-      }
+        }
+      }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
     }
+  }
 
-    const menuElements: Array<ModalMenuElement> = [
+  const handleLogUpload = (data: string) => {
+    try {
+      const log = parseLog(data);
+      const results = Object.keys(log.traces).map(traceId => {
+        const trace = log.traces[traceId];
+        return {
+          traceId,
+          trace,
+          isPositive: graphRef.current ? replayTraceS(graphRef.current.initial, trace) : undefined,
+        }
+      });
+      setLogResults(results);
+    } catch (e) {
+      console.log(e);
+      toast.error("Cannot parse log...");
+    }
+  }
+
+  const menuElements: Array<ModalMenuElement> = [
     {
-        element: (
-          <StyledFileUpload>
-            <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
-              <BiSolidFolderOpen />
-              <>Editor XML</>
-            </FileUpload>
-          </StyledFileUpload>),
-    },{
-        element: (
-          <StyledFileUpload>
-            <FileUpload accept=".xes" fileCallback={(contents) => { handleLogUpload(contents); setMenuOpen(false); }}>
-              <BiUpload />
-              <>Upload Log</>
-            </FileUpload>
-          </StyledFileUpload>),
-    },{
-        element: <SavedGraphs>Saved Graphs:</SavedGraphs>
+      element: (
+        <StyledFileUpload>
+          <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+            <BiSolidFolderOpen />
+            <>Editor XML</>
+          </FileUpload>
+        </StyledFileUpload>),
+    }, {
+      element: (
+        <StyledFileUpload>
+          <FileUpload accept=".xes" fileCallback={(contents) => { handleLogUpload(contents); setMenuOpen(false); }}>
+            <BiUpload />
+            <>Upload Log</>
+          </FileUpload>
+        </StyledFileUpload>),
+    }, {
+      element: <SavedGraphs>Saved Graphs:</SavedGraphs>
     }, ...Object.keys(savedGraphs).map(name => {
-        return ({
-            icon: <BiLeftArrowCircle />,
-            text: name,
-            onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
-        })
+      return ({
+        icon: <BiLeftArrowCircle />,
+        text: name,
+        onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+      })
     })];
 
-    const bottomElements: Array<ModalMenuElement> = [
-        {
-            element:
-                <MenuElement>
-                    <Toggle initChecked={true} onChange={(e) => modelerRef.current?.setSetting("blackRelations", !e.target.checked)} />
-                    <Label>Coloured Relations</Label>
-                </MenuElement>
-        },
-        {
-            element:
-                <MenuElement>
-                    <DropDown
-                        options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
-                        onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
-                    />
-                    <Label>Relation Notation</Label>
-                </MenuElement>
-        }
-    ];
+  const bottomElements: Array<ModalMenuElement> = [
+    {
+      element:
+        <MenuElement>
+          <Toggle initChecked={true} onChange={(e) => modelerRef.current?.setSetting("blackRelations", !e.target.checked)} />
+          <Label>Coloured Relations</Label>
+        </MenuElement>
+    },
+    {
+      element:
+        <MenuElement>
+          <DropDown
+            options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
+            onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
+          />
+          <Label>Relation Notation</Label>
+        </MenuElement>
+    }
+  ];
 
-    return (
-        <>
-            <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
-            {logResults.length > 0 && <ResultsWindow $traceSelected={selectedTrace !== null}>
-              <ResultsHeader>
-                Traces:
-                <ResultCount>
-                    {positiveCount}
-                    {resultIcon(true)}
-                    {negativeCount}
-                    {resultIcon(false)}
-                </ResultCount> 
-                <CloseResults onClick={() => setLogResults([])} />
-              </ResultsHeader>
-              <ul>
-                {logResults.map( ({traceId, trace, isPositive }) => <ResultsElement $selected={selectedTrace !== null && selectedTrace.traceId === traceId} key={traceId} onClick={() => setSelectedTrace({trace, traceId})}>
-                  <Label>{traceId}</Label>
-                  {resultIcon(isPositive)}
-                </ResultsElement>)}
-              </ul>
-            </ResultsWindow>}
-            {selectedTrace && <TraceWindow>
-             <ResultsHeader>
-              {selectedTrace.traceId}
-              <CloseTrace onClick={() => setSelectedTrace(null)}/>
-             </ResultsHeader>
-             <ul>
-              {selectedTrace.trace.map( (activity, idx )=> <Activity key={activity + idx }>{activity}</Activity>)}
-             </ul>
-            </TraceWindow>}
-            <TopRightIcons>
-                <FullScreenIcon />
-                <BiHome onClick={() => setState(StateEnum.Home)} />
-                <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
-            </TopRightIcons>
-        </>
-    )
+  return (
+    <>
+      <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
+      {logResults.length > 0 && <ResultsWindow $traceSelected={selectedTrace !== null}>
+        <ResultsHeader>
+          Traces:
+          <ResultCount>
+            {positiveCount}
+            {resultIcon(true)}
+            {negativeCount}
+            {resultIcon(false)}
+          </ResultCount>
+          <CloseResults onClick={() => setLogResults([])} />
+        </ResultsHeader>
+        <ul>
+          {logResults.map(({ traceId, trace, isPositive }) => <ResultsElement $selected={selectedTrace !== null && selectedTrace.traceId === traceId} key={traceId} onClick={() => setSelectedTrace({ trace, traceId })}>
+            <Label>{traceId}</Label>
+            {resultIcon(isPositive)}
+          </ResultsElement>)}
+        </ul>
+      </ResultsWindow>}
+      {selectedTrace && <TraceWindow>
+        <ResultsHeader>
+          {selectedTrace.traceId}
+          <CloseTrace onClick={() => setSelectedTrace(null)} />
+        </ResultsHeader>
+        <ul>
+          {selectedTrace.trace.map((activity, idx) => <Activity key={activity + idx}>{activity}</Activity>)}
+        </ul>
+      </TraceWindow>}
+      <TopRightIcons>
+        <FullScreenIcon />
+        <BiHome onClick={() => setState(StateEnum.Home)} />
+        <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
+      </TopRightIcons>
+    </>
+  )
 }
 
 export default ConformanceCheckingState

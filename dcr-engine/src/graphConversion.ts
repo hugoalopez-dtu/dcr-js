@@ -93,6 +93,12 @@ const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, eleme
 
         // Add subprocess to parent graph
         graph.subProcesses[element.id] = subProcess;
+
+        let label = element.businessObject.get('description');
+        if (!label) label = "";
+        graph.labelMap[element.id] = label;
+        if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
+        graph.labelMapInv[label].add(element.id);
     });
 }
 

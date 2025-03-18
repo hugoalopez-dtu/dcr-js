@@ -5,7 +5,7 @@ import TopRightIcons from "../utilComponents/TopRightIcons";
 import { BiHome, BiLeftArrowCircle, BiSolidFolderOpen, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
-import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAccepting } from "dcr-engine";
+import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";
@@ -389,14 +389,14 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                 </ul>
                 {isSimulatingRef.current !== SimulatingEnum.Not && <FinalizeButton onClick={() => {
                     if (!graphRef.current?.current) return;
-                    if (isAccepting(graphRef.current.current) && traceRef.current) {
+                    if ((isSimulatingRef.current === SimulatingEnum.Wild || isAcceptingS(graphRef.current.current, graphRef.current.current)) && traceRef.current) {
                         isSimulatingRef.current = SimulatingEnum.Not;
                         const eventLogCopy = { ...eventLog, traces: [...eventLog.traces] };
                         eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
                         setSelectedTrace(null);
                         reset();
                     } else {
-                        toast.warn("Graphs is not accepting...");
+                        toast.warn("Graph is not accepting...");
                     }
                 }}>
                     Finalize trace
