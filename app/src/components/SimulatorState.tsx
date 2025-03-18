@@ -214,19 +214,6 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
         }
     }
 
-    const findElementGroup = (event: Event, group: DCRGraphS | SubProcess): DCRGraphS | SubProcess | null => {
-        if (group.events.has(event)) return group;
-
-        let childGroup: DCRGraphS | SubProcess | null = null;
-
-        group.subProcesses.forEach((subProcess: SubProcess) => {
-            let ret = findElementGroup(event, subProcess);
-            if (ret) childGroup = ret;
-        });
-
-        return childGroup;
-    }
-
     function logExcecutionString(event: any): string {
         var eventName: String = event.businessObject.description;
         if (eventName == null || eventName === "") {
@@ -254,20 +241,19 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
             eventName = "Unnamed event";
         }
 
-        let group: DCRGraphS | SubProcess | null = findElementGroup(event, graph);
-        if (!group) {
-            return { msg: "Event not found in graph", executedEvent: "" };
-        }
+        let group: SubProcess | DCRGraphS = graph.subProcessMap[event];
+        if (!group) group = graph;
 
         const enabledResponse = isEnabledS(event, graph, group);
         if (!enabledResponse.enabled) {
             return { msg: enabledResponse.msg, executedEvent: "" };
         }
-        executeS(event, graph, group);
+        executeS(event, graph);
         return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement) };
     }
 
     const eventClick = (event: any) => {
+        console.log(event.element);
         if (event.element.type !== "dcr:Event" ||
             isSimulatingRef.current === SimulatingEnum.Not ||
             !traceRef.current ||

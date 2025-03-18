@@ -546,18 +546,23 @@ BaseViewer.prototype.destroy = function () {
 };
 
 // Update the visual representation of the graph with the states/markings of graph
-const update = (graph, modeling, elementReg, group) => {
-  group.events.forEach((event) => {
-    let element = elementReg.get(event);
-    modeling.updateProperties(element, { executed: graph.marking.executed.has(event) });
-    modeling.updateProperties(element, { included: graph.marking.included.has(event) });
-    modeling.updateProperties(element, { pending: graph.marking.pending.has(event) });
-    if (event.includes('Event')) {
-      modeling.updateProperties(element, { enabled: isEnabledS(event, graph, group).enabled });
-    }
-  });
-  group.subProcesses.forEach((subProcess) => {
-    update(graph, modeling, elementReg, subProcess);
+const update = (graph, modeling, elementReg) => {
+
+  const updateGroup = (group) => {
+    group.events.forEach((event) => {
+      let element = elementReg.get(event);
+      modeling.updateProperties(element, { executed: graph.marking.executed.has(event) });
+      modeling.updateProperties(element, { included: graph.marking.included.has(event) });
+      modeling.updateProperties(element, { pending: graph.marking.pending.has(event) });
+      if (event.includes('Event')) {
+        modeling.updateProperties(element, { enabled: isEnabledS(event, graph, group).enabled });
+      }
+    });
+  }
+
+  updateGroup(graph);
+  Object.keys(graph.subProcesses).forEach((subProcessId) => {
+    updateGroup(graph.subProcesses[subProcessId]);
   });
 }
 

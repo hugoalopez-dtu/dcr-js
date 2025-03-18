@@ -1,6 +1,7 @@
 import init from "./init";
 import {
   DCRGraph,
+  DCRGraphS,
   Event,
   isSubProcess,
   SubProcess
@@ -62,8 +63,19 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
   return true;
 };
 
+export const bubblePending = (group: SubProcess, graph: DCRGraphS) => {
+  if (!isAcceptingS(group, graph)) {
+    graph.marking.pending.add(group.id);
+    if (isSubProcess(group.parent)) {
+      bubblePending(group.parent, graph);
+    }
+  }
+}
+
 // Mutates graph's marking
-export const executeS = (event: Event, graph: DCRGraph, group: DCRGraph | SubProcess) => {
+export const executeS = (event: Event, graph: DCRGraphS) => {
+  const preNonAcceptingSubProcesses = new Set(Object.keys(graph.subProcesses).filter(id => !isAcceptingS(graph.subProcesses[id], graph)));
+
   graph.marking.executed.add(event);
   graph.marking.pending.delete(event);
   // Add sink of all response relations to pending
@@ -78,8 +90,15 @@ export const executeS = (event: Event, graph: DCRGraph, group: DCRGraph | SubPro
   for (const iEvent of graph.includesTo[event]) {
     graph.marking.included.add(iEvent);
   }
-  if (isSubProcess(group) && isAcceptingS(group, graph)) {
-    executeS(group.id, graph, group.parent);
+
+  const flippedSubProcesses = preNonAcceptingSubProcesses.intersect(new Set(Object.keys(graph.subProcesses).filter(id => isAcceptingS(graph.subProcesses[id], graph))));
+
+  for (const id of Object.keys(graph.subProcesses)) {
+    const group = graph.subProcesses[id];
+    if (flippedSubProcesses.has(group.id)) {
+      executeS(group.id, graph);
+    }
+    bubblePending(group, graph);
   }
 };
 
