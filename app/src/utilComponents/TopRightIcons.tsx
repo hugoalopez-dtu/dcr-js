@@ -14,8 +14,8 @@ const Container = styled.div`
     z-index: 15;
     & > svg {
         background-color: white;
+        z-index: 15;
         margin: 0.5rem;
-        z-index: 0;
         border: 2px solid black;
         border-radius: 50%;
         padding: 5px;
@@ -30,8 +30,6 @@ const Container = styled.div`
 `
 
 const TopRightIcons = ({ children }: TopRightIconProps) => {
-
-
     return (
         <Container>
             {children}
