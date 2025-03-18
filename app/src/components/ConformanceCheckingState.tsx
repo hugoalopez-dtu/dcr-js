@@ -174,9 +174,9 @@ const resultIcon = (val: boolean | undefined) => {
     case undefined:
       return <BiQuestionMark style={{ backgroundColor: "orange" }} />
     case true:
-      return <BiCheck style={{ backgroundColor: "green" }} />
+      return <BiCheck title="accepting" style={{ backgroundColor: "green" }} />
     case false:
-      return <BiX style={{ backgroundColor: "red" }} />
+      return <BiX title="not accepting" style={{ backgroundColor: "red" }} />
   }
 }
 

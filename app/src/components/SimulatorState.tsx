@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toastify";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiCheck, BiHome, BiLeftArrowCircle, BiSolidFolderOpen, BiX } from "react-icons/bi";
+import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiSolidFolderOpen, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
 import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
@@ -201,12 +201,24 @@ const RedX = styled(BiX)`
         background-color: red;
 `
 
-const resultIcon = (val: boolean) => {
+const OrangeQuestion = styled(BiQuestionMark)`
+        display: block;
+        color: white;
+        border-radius: 50%;
+        margin: auto;
+        margin-right: 1rem;
+        margin-left: 1rem;
+        background-color: orange;
+`
+
+const resultIcon = (val: boolean | undefined) => {
     switch (val) {
+        case undefined:
+            return <OrangeQuestion title="free trace" />
         case true:
-            return <GreenCheck />
+            return <GreenCheck title="accepting" />
         case false:
-            return <RedX />
+            return <RedX title="not accepting" />
     }
 }
 
@@ -224,7 +236,8 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const isSimulatingRef = useRef<SimulatingEnum>(SimulatingEnum.Not);
     const traceRef = useRef<{ traceId: number, trace: Array<string> } | null>(null);
 
-    const traceIsAccepting = useMemo<boolean>(() => {
+    const traceIsAccepting = useMemo<boolean | undefined>(() => {
+        if (isSimulatingRef.current === SimulatingEnum.Wild) return undefined;
         return graphRef.current !== null && isAcceptingS(graphRef.current?.current, graphRef.current?.current)
     }, [selectedTrace])
 
