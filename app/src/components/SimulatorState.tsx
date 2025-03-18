@@ -370,7 +370,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
             element:
                 <MenuElement>
                     <DropDown
-                        options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
+                        options={[{ title: "TATL2023", value: "TATL2023", tooltip: "https://orbit.dtu.dk/en/publications/an-open-source-modeling-editor-for-declarative-process-models" }, { title: "HM2011", value: "HM2011", tooltip: "https://arxiv.org/abs/1110.4161" }, { title: "DCR Solutions", value: "DCR Solutions", tooltip: "https://dcrsolutions.net/" }]}
                         onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
                     />
                     <Label>Relation Notation</Label>

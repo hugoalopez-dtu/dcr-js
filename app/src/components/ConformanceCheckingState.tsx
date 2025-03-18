@@ -276,7 +276,7 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
       element:
         <MenuElement>
           <DropDown
-            options={[{ title: "Default", value: "default" }, { title: "Proposed", value: "proposedMarkers" }, { title: "New", value: "newMarkers" }]}
+            options={[{ title: "TATL2023", value: "TATL2023" }, { title: "HM2011", value: "HM2011" }, { title: "DCR Solutions", value: "DCR Solutions" }]}
             onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
           />
           <Label>Relation Notation</Label>
