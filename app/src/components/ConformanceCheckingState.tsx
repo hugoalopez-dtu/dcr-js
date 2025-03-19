@@ -253,7 +253,7 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
     {
       element: (
         <StyledFileUpload>
-          <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+          <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
             <BiSolidFolderOpen />
             <>Editor XML</>
           </FileUpload>
@@ -261,7 +261,7 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
     }, {
       element: (
         <StyledFileUpload>
-          <FileUpload accept=".xes" fileCallback={(contents) => { handleLogUpload(contents); setMenuOpen(false); }}>
+          <FileUpload accept=".xes" fileCallback={(_, contents) => { handleLogUpload(contents); setMenuOpen(false); }}>
             <BiUpload />
             <>Upload Log</>
           </FileUpload>

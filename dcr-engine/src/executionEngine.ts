@@ -63,7 +63,7 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
   return true;
 };
 
-export const bubblePending = (group: SubProcess, graph: DCRGraphS) => {
+const bubblePending = (group: SubProcess, graph: DCRGraphS) => {
   let pending = copySet(graph.marking.pending).intersect(graph.marking.included);
   if (pending.intersect(group.events).size > 0) {
     graph.marking.pending.add(group.id);
@@ -92,14 +92,8 @@ export const executeS = (event: Event, graph: DCRGraphS) => {
   }
 
   const group = graph.subProcessMap[event];
-  console.log(graph.labelMap[group?.id]);
   if (group && isAcceptingS(group, graph)) {
     executeS(group.id, graph);
-  }
-
-  for (const id in graph.subProcessMap) {
-    const group = graph.subProcessMap[id];
-    group && bubblePending(group, graph);
   }
 };
 

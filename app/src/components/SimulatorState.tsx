@@ -355,7 +355,7 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     const menuElements: Array<ModalMenuElement> = [{
         element: (
             <StyledFileUpload>
-                <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+                <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
                     <BiSolidFolderOpen />
                     <>Editor XML</>
                 </FileUpload>

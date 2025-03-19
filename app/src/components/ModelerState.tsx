@@ -136,8 +136,9 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
       })
   }, []);
 
-  const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
-    parse && parse(data).then(_ => { setGraphName(initGraphName); setGraphId("") }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
+  const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined, importFn?: string) => {
+    const importName = importFn?.slice(0, -4);
+    parse && parse(data).then(_ => { setGraphName(importName ? importName : initGraphName); setGraphId(importName ? importName : "") }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
   }
 
   const saveAsXML = async () => {
@@ -162,7 +163,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
           return ({
               icon: <BiLeftArrowCircle />,
               text: name,
-              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML, name + ".xml"); setMenuOpen(false) },
           })
       })] : [];
   }
@@ -181,7 +182,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
     {
       element: (
         <StyledFileUpload>
-          <FileUpload accept="text/xml" fileCallback={(contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+          <FileUpload accept="text/xml" fileCallback={(name, contents) => { open(contents, modelerRef.current?.importXML, name); setMenuOpen(false); }}>
             <BiSolidFolderOpen />
             <>Editor XML</>
           </FileUpload>

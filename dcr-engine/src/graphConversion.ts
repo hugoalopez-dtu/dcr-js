@@ -6,7 +6,6 @@ import {
 } from "./types";
 
 import init from './init';
-import { bubblePending } from "./executionEngine";
 
 export const moddleToDCR = (elementReg: any): DCRGraphS => {
     const graph = emptyGraph();
@@ -56,11 +55,6 @@ export const moddleToDCR = (elementReg: any): DCRGraphS => {
                 break;
         }
     });
-
-    for (const id of Object.keys(graph.subProcesses)) {
-        const group = graph.subProcesses[id];
-        bubblePending(group, graph)
-    }
 
     return graph;
 }
