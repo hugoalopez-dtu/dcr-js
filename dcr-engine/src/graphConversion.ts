@@ -6,7 +6,7 @@ import {
 } from "./types";
 
 import init from './init';
-import { bubblePending, isAcceptingS } from "./executionEngine";
+import { bubblePending } from "./executionEngine";
 
 export const moddleToDCR = (elementReg: any): DCRGraphS => {
     const graph = emptyGraph();
