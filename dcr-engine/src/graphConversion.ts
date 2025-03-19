@@ -59,9 +59,6 @@ export const moddleToDCR = (elementReg: any): DCRGraphS => {
 
     for (const id of Object.keys(graph.subProcesses)) {
         const group = graph.subProcesses[id];
-        if (isAcceptingS(group, graph)) {
-            graph.marking.executed.add(id);
-        }
         bubblePending(group, graph)
     }
 

@@ -64,7 +64,8 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
 };
 
 export const bubblePending = (group: SubProcess, graph: DCRGraphS) => {
-  if (!isAcceptingS(group, graph)) {
+  let pending = copySet(graph.marking.pending).intersect(graph.marking.included);
+  if (pending.intersect(group.events).size > 0) {
     graph.marking.pending.add(group.id);
     if (isSubProcess(group.parent)) {
       bubblePending(group.parent, graph);
@@ -72,16 +73,11 @@ export const bubblePending = (group: SubProcess, graph: DCRGraphS) => {
   }
 }
 
+
 // Mutates graph's marking
 export const executeS = (event: Event, graph: DCRGraphS) => {
-  const preNonAcceptingSubProcesses = new Set(Object.keys(graph.subProcesses).filter(id => !isAcceptingS(graph.subProcesses[id], graph)));
-
   graph.marking.executed.add(event);
   graph.marking.pending.delete(event);
-  // Add sink of all response relations to pending
-  for (const rEvent of graph.responseTo[event]) {
-    graph.marking.pending.add(rEvent);
-  }
   // Remove sink of all response relations from included
   for (const eEvent of graph.excludesTo[event]) {
     graph.marking.included.delete(eEvent);
@@ -90,15 +86,20 @@ export const executeS = (event: Event, graph: DCRGraphS) => {
   for (const iEvent of graph.includesTo[event]) {
     graph.marking.included.add(iEvent);
   }
+  // Add sink of all response relations to pending
+  for (const rEvent of graph.responseTo[event]) {
+    graph.marking.pending.add(rEvent);
+  }
 
-  const flippedSubProcesses = preNonAcceptingSubProcesses.intersect(new Set(Object.keys(graph.subProcesses).filter(id => isAcceptingS(graph.subProcesses[id], graph))));
+  const group = graph.subProcessMap[event];
+  console.log(graph.labelMap[group?.id]);
+  if (group && isAcceptingS(group, graph)) {
+    executeS(group.id, graph);
+  }
 
-  for (const id of Object.keys(graph.subProcesses)) {
-    const group = graph.subProcesses[id];
-    if (flippedSubProcesses.has(group.id)) {
-      executeS(group.id, graph);
-    }
-    bubblePending(group, graph);
+  for (const id in graph.subProcessMap) {
+    const group = graph.subProcessMap[id];
+    group && bubblePending(group, graph);
   }
 };
 
