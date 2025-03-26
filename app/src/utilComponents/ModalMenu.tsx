@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
-import { BiMenu } from "react-icons/bi";
-import React from "react";
+import { BiDownArrow, BiLeftArrow, BiMenu, BiSolidDownArrow, BiSolidLeftArrow } from "react-icons/bi";
+import React, { useState } from "react";
 
 
 const MenuIcon = styled(BiMenu) <{ open: boolean; }>`
@@ -33,19 +33,27 @@ const Menu = styled.div`
     overflow: scroll;
 `
 
-const MenuItem = styled.li`
+const MenuItem = styled.li <{ isOpen?: boolean }>`
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     padding: 1rem;
     cursor: pointer;
-    &:hover {
-        color: white;
-        background-color: Gainsboro;
-    }
     & > svg {
         font-size: 25px;
     }
+    ${props => props.isOpen ? `
+        background-color: #e6e6e6;
+        &:hover {
+            color: white;
+            background-color: Gainsboro;
+        }    
+    ` : `
+        &:hover {
+            color: white;
+            background-color: Gainsboro;
+        }    
+    `}
 `
 
 const CustomMenuItem = styled.li`
@@ -58,6 +66,14 @@ const CustomMenuItem = styled.li`
     }
 `
 
+const Divider = styled.div`
+    margin: 5px;
+    margin-left: auto;
+    margin-right: auto;
+    border-bottom: 1px solid grey;
+    width: 50%;
+`
+
 type RegularModalMenuElement = {
     icon: React.JSX.Element,
     text: string,
@@ -68,7 +84,12 @@ type CustomModelMenuElement = {
     element: React.JSX.Element,
 }
 
-export type ModalMenuElement = RegularModalMenuElement | CustomModelMenuElement;
+type ExpandingModalMenuElement = {
+    text: string,
+    elements: Array<ModalMenuElement>
+}
+
+export type ModalMenuElement = RegularModalMenuElement | CustomModelMenuElement | ExpandingModalMenuElement;
 
 interface ModalMenuProps {
     elements: Array<ModalMenuElement>,
@@ -81,24 +102,60 @@ const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
     return ((obj as RegularModalMenuElement).icon) !== undefined;
 }
 
+const isExpandingElement = (obj: unknown): obj is ExpandingModalMenuElement => {
+    return ((obj as ExpandingModalMenuElement).elements !== undefined)
+}
+
 // Renders a modal menu that toggles in the top right corner.
 // Elements can either be objects with an icon, a description, and an onClick handler, or they can be a concrete element.
 // If the Element is custom, styling is your own job!!!
-const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) => {
+let id = 0;
 
+const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) => {
+    const [openElements, setOpenElements] = useState<Set<string>>(new Set());
+
+
+    const clickExpanding = (elementId: string) => {
+        if (openElements.has(elementId)) {
+            const copy = new Set(openElements);
+            copy.delete(elementId);
+            setOpenElements(copy);
+        } else {
+            const copy = new Set(openElements);
+            copy.add(elementId);
+            setOpenElements(copy)
+        }
+    }
 
     const renderElement = (element: ModalMenuElement, idx: number) => {
         if (isRegularElement(element)) {
             const { icon, text, onClick } = element;
             return (
-                <MenuItem key={idx} onClick={onClick}>
+                <MenuItem key={id++} onClick={onClick}>
                     <>{icon}</>
                     <>{text}</>
                 </MenuItem>
             )
+        } else if (isExpandingElement(element)) {
+            const { text, elements } = element;
+            const isOpen = openElements.has(text);
+            return (
+                <>
+                    <MenuItem isOpen={isOpen} key={id++} onClick={() => clickExpanding(text)}>
+                        {isOpen ? <BiSolidDownArrow /> : <BiSolidLeftArrow />}
+                        <>{text}</>
+                    </MenuItem>
+                    {isOpen ? <>
+                        <ul>
+                            {elements.map((element, idx) => renderElement(element, idx))}
+                        </ul>
+                        <Divider />
+                    </> : null}
+                </>
+            )
         } else {
             return (
-                <CustomMenuItem key={idx} >
+                <CustomMenuItem key={id++} >
                     {element.element}
                 </CustomMenuItem>
             )

@@ -91,7 +91,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(true);
 
   const [loading, setLoading] = useState(false);
 
@@ -149,6 +149,14 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
     saveAs(blob, `${graphName}.xml`);
   }
 
+  const saveAsDCRXML = async () => {
+    if (!modelerRef.current) return;
+
+    const data = await modelerRef.current.saveDCRXML();
+    const blob = new Blob([data.xml]);
+    saveAs(blob, `${graphName}.xml`);
+  }
+
   const saveAsSvg = async () => {
     if (!modelerRef.current) return;
     const data = await modelerRef.current.saveSVG();
@@ -157,15 +165,16 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
   }
 
   const savedGraphElements = () => {
-      return Object.keys(savedGraphs).length > 0 ?  [{
-          element: <SavedGraphs>Saved Graphs:</SavedGraphs>
-      }, ...Object.keys(savedGraphs).map(name => {
-          return ({
-              icon: <BiLeftArrowCircle />,
-              text: name,
-              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML, name + ".xml"); setMenuOpen(false) },
-          })
-      })] : [];
+    return Object.keys(savedGraphs).length > 0 ? [{
+      text: "Saved Graphs:",
+      elements: Object.keys(savedGraphs).map(name => {
+        return ({
+          icon: <BiLeftArrowCircle />,
+          text: name,
+          onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML, name + ".xml"); setMenuOpen(false) },
+        })
+      })
+    }] : [];
   }
 
   const menuElements: Array<ModalMenuElement> = [
@@ -180,29 +189,52 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
       onClick: () => { saveGraph(); setMenuOpen(false) },
     },
     {
-      element: (
-        <StyledFileUpload>
-          <FileUpload accept="text/xml" fileCallback={(name, contents) => { open(contents, modelerRef.current?.importXML, name); setMenuOpen(false); }}>
-            <BiSolidFolderOpen />
-            <>Editor XML</>
-          </FileUpload>
-        </StyledFileUpload>),
+      text: "Open",
+      elements: [
+        {
+          element: (
+            <StyledFileUpload>
+              <FileUpload accept="text/xml" fileCallback={(name, contents) => { open(contents, modelerRef.current?.importXML, name); setMenuOpen(false); }}>
+                <div />
+                <>Open Editor XML</>
+              </FileUpload>
+            </StyledFileUpload>),
+        },
+        {
+          element: (
+            <StyledFileUpload>
+              <FileUpload accept="text/xml" fileCallback={(name, contents) => { open(contents, modelerRef.current?.importDCRPortalXML, name); setMenuOpen(false); }}>
+                <div />
+                <>Open DCR Solution XML</>
+              </FileUpload>
+            </StyledFileUpload>),
+        },
+      ]
     },
     {
-      icon: <BiDownload />,
-      text: "Download Editor XML",
-      onClick: () => { saveAsXML(); setMenuOpen(false) },
-    },
-    {
-      icon: <BiSolidCamera />,
-      text: "Download SVG",
-      onClick: () => { saveAsSvg(); setMenuOpen(false) },
+      text: "Download",
+      elements: [{
+        icon: <div />,
+        text: "Download Editor XML",
+        onClick: () => { saveAsXML(); setMenuOpen(false) },
+      },
+      {
+        icon: <div />,
+        text: "Download DCR Solutions XML",
+        onClick: () => { saveAsDCRXML(); setMenuOpen(false) },
+      },
+      {
+        icon: <div />,
+        text: "Download SVG",
+        onClick: () => { saveAsSvg(); setMenuOpen(false) },
+      }
+      ],
     },
     {
       icon: <BiSolidDashboard />,
       text: "Examples",
       onClick: () => { setMenuOpen(false); setExamplesOpen(true) },
-    }, 
+    },
     ...savedGraphElements()
   ]
 
