@@ -1,6 +1,6 @@
 import styled from "styled-components";
 
-import { BiDownArrow, BiLeftArrow, BiMenu, BiSolidDownArrow, BiSolidLeftArrow } from "react-icons/bi";
+import { BiMenu, BiSolidDownArrow, BiSolidRightArrow } from "react-icons/bi";
 import React, { useState } from "react";
 
 
@@ -142,7 +142,7 @@ const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) 
             return (
                 <>
                     <MenuItem isOpen={isOpen} key={id++} onClick={() => clickExpanding(text)}>
-                        {isOpen ? <BiSolidDownArrow /> : <BiSolidLeftArrow />}
+                        {isOpen ? <BiSolidDownArrow /> : <BiSolidRightArrow />}
                         <>{text}</>
                     </MenuItem>
                     {isOpen ? <>

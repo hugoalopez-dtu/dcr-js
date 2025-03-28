@@ -5,7 +5,7 @@ import TopRightIcons from "../utilComponents/TopRightIcons";
 import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiSolidFolderOpen, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
-import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
+import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS, replayTrace } from "dcr-engine";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";
@@ -19,6 +19,7 @@ import FlexBox from "../utilComponents/FlexBox";
 
 import { saveAs } from 'file-saver';
 import { writeEventLog } from "dcr-engine/src/eventLogs";
+import { replayTraceS } from "dcr-engine/src/conformance";
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -222,7 +223,7 @@ const resultIcon = (val: boolean | undefined) => {
     }
 }
 
-const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
+const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
@@ -238,8 +239,16 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
 
     const traceIsAccepting = useMemo<boolean | undefined>(() => {
         if (isSimulatingRef.current === SimulatingEnum.Wild) return undefined;
-        return graphRef.current !== null && isAcceptingS(graphRef.current?.current, graphRef.current?.current)
+        return graphRef.current !== null && selectedTrace !== null && replayTraceS(graphRef.current?.initial, selectedTrace?.trace);;
     }, [selectedTrace])
+
+    const saveLog = () => {
+        if (!graphRef.current?.current) return;
+        const newSavedLogs = { ...savedLogs };
+        newSavedLogs[eventLog.name] = {traces: eventLog.traces.reduce( (acc, {traceId, trace}) => ({...acc, [traceId]: trace }), {}), events: graphRef.current?.current.events };
+        setSavedLogs(newSavedLogs);
+        toast.success("Log saved!");
+    }
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
         if (data.includes("multi-instance=\"true\"")) {
@@ -341,26 +350,41 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
     }
 
     const savedGraphElements = () => {
-        return Object.keys(savedGraphs).length > 0 ?  [{
-            element: <SavedGraphs>Saved Graphs:</SavedGraphs>
-        }, ...Object.keys(savedGraphs).map(name => {
+        return Object.keys(savedGraphs).length > 0 ? [{
+          text: "Saved Graphs:",
+          elements: Object.keys(savedGraphs).map(name => {
             return ({
-                icon: <BiLeftArrowCircle />,
-                text: name,
-                onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+              icon: <BiLeftArrowCircle />,
+              text: name,
+              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
             })
-        })] : [];
-    }
+          })
+        }] : [];
+      }
 
     const menuElements: Array<ModalMenuElement> = [{
-        element: (
-            <StyledFileUpload>
-                <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
-                    <BiSolidFolderOpen />
-                    <>Editor XML</>
-                </FileUpload>
-            </StyledFileUpload>),
-    }, ...savedGraphElements()];
+          text: "Open",
+          elements: [
+            {
+              element: (
+                <StyledFileUpload>
+                  <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+                    <div />
+                    <>Open Editor XML</>
+                  </FileUpload>
+                </StyledFileUpload>),
+            },
+            {
+              element: (
+                <StyledFileUpload>
+                  <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importDCRPortalXML); setMenuOpen(false); }}>
+                    <div />
+                    <>Open DCR Solution XML</>
+                  </FileUpload>
+                </StyledFileUpload>),
+            },
+          ]
+        }, ...savedGraphElements()];
 
     const bottomElements: Array<ModalMenuElement> = [
         {
@@ -382,10 +406,13 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
         }
     ]
 
+    const lastGraph = Object.keys(savedGraphs).pop();
+    const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
+
     return (
         <>
             {isSimulatingRef.current === SimulatingEnum.Not ? <GreyOut /> : null}
-            <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: eventClick, canvasClassName: "simulating" }} />
+            <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, overrideOnclick: eventClick, canvasClassName: "simulating" }} />
             <ResultsWindow $traceSelected={selectedTrace !== null}>
                 <EventLogInput value={eventLog.name} onChange={(e) => setEventLog({ ...eventLog, name: e.target.value })} />
                 {eventLog.traces.map(({ trace, traceId }) =>
@@ -417,6 +444,9 @@ const SimulatorState = ({ setState, savedGraphs }: StateProps) => {
                         traceRef.current = { traceId, trace: [] };
                     }}>
                         Add non-conforming trace
+                    </Button>
+                    <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={saveLog}>
+                        Save log
                     </Button>
                     <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={saveEventLog}>
                         Export log

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import Modeler from "./Modeler";
 import TopRightIcons from "../utilComponents/TopRightIcons";
@@ -180,13 +180,14 @@ const resultIcon = (val: boolean | undefined) => {
   }
 }
 
-const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
+const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState }: StateProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const modelerRef = useRef<DCRModeler | null>(null);
   const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
   const [logResults, setLogResults] = useState<LogResults>([]);
+  const [logName, setLogName] = useState<string>("");
   const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, trace: Trace } | null>(null);
 
   const { positiveCount, negativeCount } = useMemo<{ positiveCount: number, negativeCount: number }>(() => {
@@ -219,7 +220,7 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
     }
   }
 
-  const handleLogUpload = (data: string) => {
+  const handleLogUpload = (name: string, data: string) => {
     try {
       const log = parseLog(data);
       const results = Object.keys(log.traces).map(traceId => {
@@ -230,6 +231,7 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
           isPositive: graphRef.current ? replayTraceS(graphRef.current.initial, trace) : undefined,
         }
       });
+      setLogName(name);
       setLogResults(results);
     } catch (e) {
       console.log(e);
@@ -238,36 +240,77 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
   }
 
   const savedGraphElements = () => {
-      return Object.keys(savedGraphs).length > 0 ?  [{
-          element: <SavedGraphs>Saved Graphs:</SavedGraphs>
-      }, ...Object.keys(savedGraphs).map(name => {
-          return ({
-              icon: <BiLeftArrowCircle />,
-              text: name,
-              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
-          })
-      })] : [];
+    return Object.keys(savedGraphs).length > 0 ? [{
+      text: "Saved Graphs:",
+      elements: Object.keys(savedGraphs).map(name => {
+        return ({
+          icon: <BiLeftArrowCircle />,
+          text: name,
+          onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+        })
+      })
+    }] : [];
+  }
+
+  const savedLogElements = () => {
+    return Object.keys(savedLogs).length > 0 ? [{
+      text: "Saved Logs:",
+      elements: Object.keys(savedLogs).map(name => {
+        return ({
+          icon: <BiLeftArrowCircle />,
+          text: name,
+          onClick: () => { 
+            const log = savedLogs[name];
+            const results = Object.keys(log.traces).map(traceId => {
+              const trace = log.traces[traceId];
+              return {
+                traceId,
+                trace,
+                isPositive: graphRef.current ? replayTraceS(graphRef.current.initial, trace) : undefined,
+              }
+            });
+            setLogName(name);
+            setLogResults(results); 
+            setMenuOpen(false); },
+        })
+      })
+    }] : [];
   }
 
   const menuElements: Array<ModalMenuElement> = [
     {
-      element: (
-        <StyledFileUpload>
-          <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
-            <BiSolidFolderOpen />
-            <>Editor XML</>
-          </FileUpload>
-        </StyledFileUpload>),
+      text: "Open Model",
+      elements: [
+        {
+          element: (
+            <StyledFileUpload>
+              <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+                <div />
+                <>Open Editor XML</>
+              </FileUpload>
+            </StyledFileUpload>),
+        },
+        {
+          element: (
+            <StyledFileUpload>
+              <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importDCRPortalXML); setMenuOpen(false); }}>
+                <div />
+                <>Open DCR Solution XML</>
+              </FileUpload>
+            </StyledFileUpload>),
+        },
+      ]
     }, {
       element: (
         <StyledFileUpload>
-          <FileUpload accept=".xes" fileCallback={(_, contents) => { handleLogUpload(contents); setMenuOpen(false); }}>
+          <FileUpload accept=".xes" fileCallback={(name, contents) => { handleLogUpload(name, contents); setMenuOpen(false); }}>
             <BiUpload />
             <>Upload Log</>
           </FileUpload>
         </StyledFileUpload>),
     }, 
-    ...savedGraphElements()
+    ...savedGraphElements(),
+    ...savedLogElements(),
   ];
 
   const bottomElements: Array<ModalMenuElement> = [
@@ -290,12 +333,30 @@ const ConformanceCheckingState = ({ savedGraphs, setState }: StateProps) => {
     }
   ];
 
+  const lastGraph = Object.keys(savedGraphs).pop();
+  const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
+
+  const lastLog = Object.keys(savedLogs).pop();
+  const initLog = lastLog ? savedLogs[lastLog] : undefined;
+  const onLoadCallback = initLog ? (graph: DCRGraphS) => {
+    const results = Object.keys(initLog.traces).map(traceId => {
+      const trace = initLog.traces[traceId];
+      return {
+        traceId,
+        trace,
+        isPositive: replayTraceS(graph, trace),
+      }
+    });
+    lastLog && setLogName(lastLog);
+    setLogResults(results); 
+  } : undefined;
+
   return (
     <>
-      <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
+      <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
       {logResults.length > 0 && <ResultsWindow $traceSelected={selectedTrace !== null}>
         <ResultsHeader>
-          Traces:
+          {logName}
           <ResultCount>
             {positiveCount}
             {resultIcon(true)}

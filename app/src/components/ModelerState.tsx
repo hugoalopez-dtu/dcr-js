@@ -10,7 +10,7 @@ import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiDownload, BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidCamera, BiSolidDashboard, BiSolidFolderOpen } from 'react-icons/bi';
+import { BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidDashboard } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toastify';
@@ -81,17 +81,13 @@ const GraphNameInput = styled.input`
   }
 `
 
-const SavedGraphs = styled.label`
-    padding: 1rem;
-`
-
 const initGraphName = "DCR-JS Graph"
 
 const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
 
-  const [menuOpen, setMenuOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -258,6 +254,9 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
     }
   ]
 
+  const lastGraph = Object.keys(savedGraphs).pop();
+  const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
+
   return (
     <>
       <GraphNameInput
@@ -265,7 +264,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
         onChange={e => setGraphName(e.target.value)}
       />
       {loading && <Loading />}
-      <Modeler modelerRef={modelerRef} />
+      <Modeler initXml={initXml} modelerRef={modelerRef} />
       <TopRightIcons>
         <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />

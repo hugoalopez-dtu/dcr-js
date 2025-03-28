@@ -6,14 +6,16 @@ import { DCRGraphS } from "dcr-engine/src/types";
 
 interface ModelerProps {
     modelerRef: React.RefObject<DCRModeler | null>,
+    initXml?: string,
     override?: {
         graphRef: React.RefObject<{ initial: DCRGraph, current: DCRGraph } | { initial: DCRGraphS, current: DCRGraphS } | null>,
         overrideOnclick: (e: any) => void;
         canvasClassName?: string;
+        onLoadCallback?: (graph: DCRGraphS) => void,
     }
 }
 
-const Modeler = ({ modelerRef, override }: ModelerProps) => {
+const Modeler = ({ modelerRef, override, initXml }: ModelerProps) => {
 
     useEffect(() => {
         let initModeler: DCRModeler;
@@ -47,7 +49,7 @@ const Modeler = ({ modelerRef, override }: ModelerProps) => {
 
             //const logger = new EventBusLogger(initModeler.get("eventBus"));
 
-            initModeler.importXML(emptyBoardXML).then(() => {
+            initModeler.importXML(initXml ? initXml : emptyBoardXML).then(() => {
                 modelerRef.current = initModeler;
                 if (override) {
                     const graph = moddleToDCR(modelerRef.current.getElementRegistry());
@@ -65,6 +67,7 @@ const Modeler = ({ modelerRef, override }: ModelerProps) => {
                         const selection = initModeler.getSelection();
                         selection.select([]);
                     });
+                    override.onLoadCallback && override.onLoadCallback(graph);
                 }
             }).catch((e: any) => console.log(id, `
                 This error happens in development because the component is mounted twice due to Strict Mode. 
