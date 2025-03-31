@@ -83,7 +83,7 @@ const GraphNameInput = styled.input`
 
 const initGraphName = "DCR-JS Graph"
 
-const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => {
+const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }: StateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
 
@@ -93,7 +93,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
 
   const modelerRef = useRef<DCRModeler | null>(null);
 
-  const lastGraph = Object.keys(savedGraphs).pop();
+  const lastGraph = lastSavedGraph.current;
 
   const [graphName, setGraphName] = useState<string>(lastGraph ? lastGraph : initGraphName);
   const [graphId, setGraphId] = useState<string>("");
@@ -110,6 +110,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs }: StateProps) => 
         setGraphId(graphName);
         setSavedGraphs(newSavedGraphs);
         setLoading(false);
+        lastSavedGraph.current = graphName;
         toast.success("Graph saved!");
       });
     }

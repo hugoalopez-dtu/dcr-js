@@ -180,7 +180,7 @@ const resultIcon = (val: boolean | undefined) => {
   }
 }
 
-const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState }: StateProps) => {
+const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedGraph, lastSavedLog }: StateProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const modelerRef = useRef<DCRModeler | null>(null);
@@ -333,10 +333,10 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState }: StatePro
     }
   ];
 
-  const lastGraph = Object.keys(savedGraphs).pop();
+  const lastGraph = lastSavedGraph.current;
   const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
-  const lastLog = Object.keys(savedLogs).pop();
+  const lastLog = lastSavedLog.current;
   const initLog = lastLog ? savedLogs[lastLog] : undefined;
   const onLoadCallback = initLog ? (graph: DCRGraphS) => {
     const results = Object.keys(initLog.traces).map(traceId => {

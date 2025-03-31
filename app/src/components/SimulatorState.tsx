@@ -223,7 +223,7 @@ const resultIcon = (val: boolean | undefined) => {
     }
 }
 
-const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs }: StateProps) => {
+const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSavedGraph, lastSavedLog }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
@@ -247,6 +247,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs }: Stat
         const newSavedLogs = { ...savedLogs };
         newSavedLogs[eventLog.name] = {traces: eventLog.traces.reduce( (acc, {traceId, trace}) => ({...acc, [traceId]: trace }), {}), events: graphRef.current?.current.events };
         setSavedLogs(newSavedLogs);
+        lastSavedLog.current = eventLog.name;
         toast.success("Log saved!");
     }
 
@@ -406,7 +407,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs }: Stat
         }
     ]
 
-    const lastGraph = Object.keys(savedGraphs).pop();
+    const lastGraph = lastSavedGraph.current;
     const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
     return (
