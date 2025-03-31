@@ -366,7 +366,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs }: Stat
           text: "Open",
           elements: [
             {
-              element: (
+              customElement: (
                 <StyledFileUpload>
                   <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
                     <div />
@@ -375,7 +375,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs }: Stat
                 </StyledFileUpload>),
             },
             {
-              element: (
+              customElement: (
                 <StyledFileUpload>
                   <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importDCRPortalXML); setMenuOpen(false); }}>
                     <div />
@@ -388,14 +388,14 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs }: Stat
 
     const bottomElements: Array<ModalMenuElement> = [
         {
-            element:
+            customElement:
                 <MenuElement>
                     <Toggle initChecked={true} onChange={(e) => modelerRef.current?.setSetting("blackRelations", !e.target.checked)} />
                     <Label>Coloured Relations</Label>
                 </MenuElement>
         },
         {
-            element:
+            customElement:
                 <MenuElement>
                     <DropDown
                         options={[{ title: "TAL2023", value: "TAL2023", tooltip: "https://link.springer.com/chapter/10.1007/978-3-031-46846-9_12" }, { title: "HM2011", value: "HM2011", tooltip: "https://arxiv.org/abs/1110.4161" }, { title: "DCR Solutions", value: "DCR Solutions", tooltip: "https://dcrsolutions.net/" }]}
