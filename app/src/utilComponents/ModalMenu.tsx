@@ -130,7 +130,7 @@ const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) 
         }
     }
 
-    const renderElement = (element: ModalMenuElement, idx: number) => {
+    const renderElement = (element: ModalMenuElement) => {
         if (isRegularElement(element)) {
             const { icon, text, onClick } = element;
             return (
@@ -150,7 +150,7 @@ const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) 
                     </MenuItem>
                     {isOpen ? <li key={"Modal" + id++}>
                         <ul>
-                            {elements.map((element, idx) => renderElement(element, idx))}
+                            {elements.map((element) => renderElement(element))}
                         </ul>
                         <Divider key={"Modal" + id++}/>
                     </li> : null}
@@ -170,10 +170,10 @@ const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) 
             {open ?
                 <Menu>
                     <ul>
-                        {elements.map((element, idx) => renderElement(element, idx))}
+                        {elements.map((element) => renderElement(element))}
                     </ul>
                     {bottomElements && <ul>
-                        {bottomElements.map((element, idx) => renderElement(element, idx + elements.length))}
+                        {bottomElements.map((element) => renderElement(element))}
                     </ul>}
                 </Menu> : null}
             <MenuIcon onClick={() => setOpen(!open)} open={open} />

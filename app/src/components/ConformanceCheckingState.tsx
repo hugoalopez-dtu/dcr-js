@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import Modeler from "./Modeler";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
-import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiSolidFolderOpen, BiUpload, BiX } from "react-icons/bi";
+import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiUpload, BiX } from "react-icons/bi";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import styled from "styled-components";
 import Toggle from "../utilComponents/Toggle";
@@ -46,10 +46,6 @@ const MenuElement = styled.div`
 const Label = styled.label`
   margin-top: auto;
   margin-bottom: auto;
-`
-
-const SavedGraphs = styled.label`
-    padding: 1rem;
 `
 
 const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
