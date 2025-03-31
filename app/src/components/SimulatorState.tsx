@@ -287,8 +287,9 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     const saveLog = () => {
         if (!graphRef.current?.current) return;
         const newSavedLogs = { ...savedLogs };
-        newSavedLogs[eventLog.name] = {traces: eventLog.traces.reduce( (acc, {traceId, trace}) => ({...acc, [traceId]: trace }), {}), events: graphRef.current?.current.events };
+        newSavedLogs[eventLog.name] = {traces: eventLog.traces.reduce( (acc, {traceName, trace}) => ({...acc, [traceName]: trace }), {}), events: graphRef.current?.current.events };
         setSavedLogs(newSavedLogs);
+        console.log(newSavedLogs);
         lastSavedLog.current = eventLog.name;
         toast.success("Log saved!");
     }
@@ -383,8 +384,9 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
             traces: {}
         }
         for (const entry of eventLog.traces) {
-            logToExport.traces[entry.traceId] = entry.trace;
+            logToExport.traces[entry.traceName] = entry.trace;
         }
+        console.log()
         const data = writeEventLog(logToExport);
         const blob = new Blob([data]);
         saveAs(blob, `${eventLog.name}.xes`);

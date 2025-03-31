@@ -227,7 +227,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           isPositive: graphRef.current ? replayTraceS(graphRef.current.initial, trace) : undefined,
         }
       });
-      setLogName(name);
+      setLogName(name.slice(0, -4));
       setLogResults(results);
     } catch (e) {
       console.log(e);
@@ -257,8 +257,10 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           text: name,
           onClick: () => { 
             const log = savedLogs[name];
+            console.log(log);
             const results = Object.keys(log.traces).map(traceId => {
               const trace = log.traces[traceId];
+              console.log(trace, "hehe");
               return {
                 traceId,
                 trace,
@@ -359,7 +361,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             {negativeCount}
             {resultIcon(false)}
           </ResultCount>
-          <CloseResults onClick={() => setLogResults([])} />
+          <CloseResults onClick={() => { setLogResults([]); setSelectedTrace(null) }} />
         </ResultsHeader>
         <ul>
           {logResults.map(({ traceId, trace, isPositive }) => <ResultsElement $selected={selectedTrace !== null && selectedTrace.traceId === traceId} key={traceId} onClick={() => setSelectedTrace({ trace, traceId })}>
