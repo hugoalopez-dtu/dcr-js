@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toastify";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiReset, BiX } from "react-icons/bi";
+import { BiCheck, BiHome, BiLeftArrowCircle, BiMeteor, BiQuestionMark, BiReset, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
 import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
@@ -194,6 +194,21 @@ const GreyOut = styled.div`
     z-index: 3;
 `
 
+const WildButton = styled(BiMeteor)<{ $clicked: boolean, $disabled?: boolean }>`
+    ${props => props.$clicked ? `
+        background-color: black !important;
+        color: white;
+    ` : ``}
+    ${props => props.$disabled ? `
+        color : grey;
+        border-color: grey !important;
+        cursor: default !important;
+        &:hover {
+            box-shadow: none !important;
+        }    
+    ` : ""}
+`
+
 const FinalizeButton = styled(Button)`
     margin: auto;
     margin-bottom: 0;
@@ -259,14 +274,15 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     }>({ name: "Unnamed Event Log", traces: [{ traceId: "Trace 0", traceName: "", trace: [] }] });
 
     const [traceName, setTraceName] = useState("Trace 0");
+    const [wildMode, setWildMode] = useState(false);
 
     const isSimulatingRef = useRef<SimulatingEnum>(SimulatingEnum.Default);
     const traceRef = useRef<{ traceId: number, trace: Array<string> } | null>({ traceId: 0, trace: [] });
 
     const traceIsAccepting = useMemo<boolean | undefined>(() => {
-        if (isSimulatingRef.current === SimulatingEnum.Wild || graphRef.current === null || selectedTrace === null) return undefined;
+        if (graphRef.current === null || selectedTrace === null) return undefined;
         return replayTraceS(graphRef.current?.initial, selectedTrace?.trace);
-    }, [selectedTrace, graphRef])
+    }, [selectedTrace])
 
     const saveLog = () => {
         if (!graphRef.current?.current) return;
@@ -316,9 +332,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     }
 
     const executeEvent = (eventElement: any, graph: DCRGraphS): { msg: string, executedEvent: string } => {
-        // Allow anything in Wild mode
-        if (isSimulatingRef.current === SimulatingEnum.Wild) return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement) };
-
         const event: Event = eventElement.id;
         let eventName: String = eventElement.businessObject?.description;
         if (eventName == null || eventName === "") {
@@ -329,9 +342,10 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         if (!group) group = graph;
 
         const enabledResponse = isEnabledS(event, graph, group);
-        if (!enabledResponse.enabled) {
+        if (isSimulatingRef.current !== SimulatingEnum.Wild && !enabledResponse.enabled) {
             return { msg: enabledResponse.msg, executedEvent: "" };
         }
+        console.log("executing: ", event);
         executeS(event, graph);
         return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement) };
     }
@@ -468,16 +482,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                     }}>
                         Add new trace
                     </Button>
-                    <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={() => {
-                        isSimulatingRef.current = SimulatingEnum.Wild;
-                        const traceId = eventLog.traces.length;
-                        setEventLog({ ...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, traceName: "Trace " + traceId, trace: [] }] });
-                        setSelectedTrace({ traceId: "Trace " + traceId, traceName: "Trace " + traceId, trace: [] });
-                        traceRef.current = { traceId, trace: [] };
-                        setTraceName("Trace " + traceId);
-                    }}>
-                        Add non-conforming trace
-                    </Button>
                     <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={saveLog}>
                         Save log
                     </Button>
@@ -508,6 +512,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                             eventLogCopy.traces[traceRef.current.traceId].traceName = traceName;
                             setEventLog(eventLogCopy);
                         }
+                        setWildMode(false);
                         isSimulatingRef.current = SimulatingEnum.Not;
                         setSelectedTrace(null);
                         reset();
@@ -524,6 +529,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                         eventLogCopy.traces[traceRef.current.traceId].traceName = traceName;
                         eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
                         setEventLog(eventLogCopy);
+                        setWildMode(false);
                         setSelectedTrace(null);
                         reset();
                     } else {
@@ -534,6 +540,16 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                 </FinalizeButton>}
             </TraceWindow>}
             <TopRightIcons>
+                <WildButton $disabled={isSimulatingRef.current === SimulatingEnum.Not} title={wildMode ? "Disable non-conformant behaviour" : "Enable non-conformant behaviour"} $clicked={wildMode} onClick={() => {
+                    if (isSimulatingRef.current === SimulatingEnum.Not) return;
+                    if (wildMode) {
+                        setWildMode(false);
+                        isSimulatingRef.current = SimulatingEnum.Default;
+                    } else {
+                        setWildMode(true);
+                        isSimulatingRef.current = SimulatingEnum.Wild;
+                    }
+                }}/>
                 <FullScreenIcon />
                 <BiHome onClick={() => setState(StateEnum.Home)} />
                 <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
