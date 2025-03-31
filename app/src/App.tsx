@@ -31,7 +31,7 @@ export type EventLogRepository = {
 }
 
 const App = () => {
-  const [state, setState] = useState(StateEnum.Simulator);
+  const [state, setState] = useState(StateEnum.Home);
   const [savedGraphs, setSavedGraphs] = useState<DCRGraphRepository>({});
   const [savedLogs, setSavedLogs] = useState<EventLogRepository>({});
 
