@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toastify";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiCheck, BiHome, BiLeftArrowCircle, BiMeteor, BiQuestionMark, BiReset, BiX } from "react-icons/bi";
+import { BiCheck, BiHome, BiLeftArrowCircle, BiMeteor, BiQuestionMark, BiReset, BiUpload, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
 import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
@@ -18,7 +18,7 @@ import Button from "../utilComponents/Button";
 import FlexBox from "../utilComponents/FlexBox";
 
 import { saveAs } from 'file-saver';
-import { writeEventLog } from "dcr-engine/src/eventLogs";
+import { parseLog, writeEventLog } from "dcr-engine/src/eventLogs";
 import { replayTraceS } from "dcr-engine/src/conformance";
 
 const StyledFileUpload = styled.div`
@@ -271,7 +271,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     const [eventLog, setEventLog] = useState<{
         name: string,
         traces: Array<{ traceId: string, traceName: string, trace: Trace }>,
-    }>({ name: "Unnamed Event Log", traces: [{ traceId: "Trace 0", traceName: "", trace: [] }] });
+    }>({ name: "Unnamed Event Log", traces: [] });
 
     const [traceName, setTraceName] = useState("Trace 0");
     const [wildMode, setWildMode] = useState(false);
@@ -284,6 +284,16 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         return replayTraceS(graphRef.current?.initial, selectedTrace?.trace);
     }, [selectedTrace])
 
+    useEffect(() => {
+        const lastLog = lastSavedLog.current;
+        const initLog = lastLog ? savedLogs[lastLog] : undefined;
+        if (initLog && lastLog) {
+            openLog(lastLog, initLog)
+        } else {
+            setEventLog({ name: "Unnamed Event Log", traces: [{ traceId: "Trace 0", traceName: "", trace: [] }] });
+        }
+    }, []);
+
     const saveLog = () => {
         if (!graphRef.current?.current) return;
         const newSavedLogs = { ...savedLogs };
@@ -292,6 +302,17 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         console.log(newSavedLogs);
         lastSavedLog.current = eventLog.name;
         toast.success("Log saved!");
+    }
+
+    const openLog = (name: string, log: EventLog) => {
+        if (eventLog.traces.length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
+            setEventLog({ name, traces: Object.keys(log.traces).map( traceName => ({traceName, traceId: traceName, trace: log.traces[traceName]})) });
+            isSimulatingRef.current = SimulatingEnum.Not;
+            traceRef.current = { traceId: 0, trace: [] };
+            setSelectedTrace(null);
+            setTraceName("");
+            reset();
+        }
     }
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
@@ -386,7 +407,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         for (const entry of eventLog.traces) {
             logToExport.traces[entry.traceName] = entry.trace;
         }
-        console.log()
         const data = writeEventLog(logToExport);
         const blob = new Blob([data]);
         saveAs(blob, `${eventLog.name}.xes`);
@@ -400,6 +420,22 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
               icon: <BiLeftArrowCircle />,
               text: name,
               onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+            })
+          })
+        }] : [];
+      }
+
+      const savedLogElements = () => {
+        return Object.keys(savedLogs).length > 0 ? [{
+          text: "Saved Logs:",
+          elements: Object.keys(savedLogs).map(name => {
+            return ({
+              icon: <BiLeftArrowCircle />,
+              text: name,
+              onClick: () => { 
+                const log = savedLogs[name];
+                openLog(name, log);
+                setMenuOpen(false); },
             })
           })
         }] : [];
@@ -427,7 +463,27 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                 </StyledFileUpload>),
             },
           ]
-        }, ...savedGraphElements()];
+        },
+        {
+            customElement: (
+              <StyledFileUpload>
+                <FileUpload accept=".xes" fileCallback={(name, contents) => { 
+                    try {
+                        const log = parseLog(contents);
+                        openLog(name.slice(0, -4), log);
+                    } catch (e) {
+                        toast.error("Unable to parse log...")
+                    }
+                    setMenuOpen(false); 
+                }}>
+                  <BiUpload />
+                  <>Upload Log</>
+                </FileUpload>
+              </StyledFileUpload>),
+          }, 
+        ...savedGraphElements(),
+        ...savedLogElements()
+    ];
 
     const bottomElements: Array<ModalMenuElement> = [
         {
