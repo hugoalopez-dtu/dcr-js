@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toastify";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiCheck, BiHome, BiLeftArrowCircle, BiMeteor, BiQuestionMark, BiReset, BiUpload, BiX } from "react-icons/bi";
+import { BiCheck, BiHome, BiLeftArrowCircle, BiMeteor, BiQuestionMark, BiReset, BiTrash, BiUpload, BiX } from "react-icons/bi";
 import Modeler from "./Modeler";
 
 import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
@@ -251,6 +251,20 @@ const OrangeQuestion = styled(BiQuestionMark)`
         background-color: orange;
 `
 
+const DeleteTrace = styled(BiTrash)`
+    display: block;
+    height: 20px;
+    width: 20px;
+    margin: auto;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+    color: black !important;
+    &:hover {
+      color: white !important;
+    }
+`
+
 const resultIcon = (val: boolean | undefined) => {
     switch (val) {
         case undefined:
@@ -262,6 +276,8 @@ const resultIcon = (val: boolean | undefined) => {
     }
 }
 
+let id = 0;
+
 const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSavedGraph, lastSavedLog }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
@@ -270,14 +286,16 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: Trace } | null>({ traceId: "Trace 0", traceName: "Trace 0", trace: [] });
     const [eventLog, setEventLog] = useState<{
         name: string,
-        traces: Array<{ traceId: string, traceName: string, trace: Trace }>,
-    }>({ name: "Unnamed Event Log", traces: [] });
+        traces: {
+            [traceId: string]: { traceId: string, traceName: string, trace: Trace }
+        },
+    }>({ name: "Unnamed Event Log", traces: {} });
 
     const [traceName, setTraceName] = useState("Trace 0");
     const [wildMode, setWildMode] = useState(false);
 
     const isSimulatingRef = useRef<SimulatingEnum>(SimulatingEnum.Default);
-    const traceRef = useRef<{ traceId: number, trace: Array<string> } | null>({ traceId: 0, trace: [] });
+    const traceRef = useRef<{ traceId: string, trace: Array<string> } | null>({ traceId: "Trace 0", trace: [] });
 
     const traceIsAccepting = useMemo<boolean | undefined>(() => {
         if (graphRef.current === null || selectedTrace === null) return undefined;
@@ -290,14 +308,14 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         if (initLog && lastLog) {
             openLog(lastLog, initLog)
         } else {
-            setEventLog({ name: "Unnamed Event Log", traces: [{ traceId: "Trace 0", traceName: "", trace: [] }] });
+            setEventLog({ name: "Unnamed Event Log", traces:  { "Trace 0": { traceId: "Trace 0", traceName: "", trace: [] }} });
         }
     }, []);
 
     const saveLog = () => {
         if (!graphRef.current?.current) return;
         const newSavedLogs = { ...savedLogs };
-        newSavedLogs[eventLog.name] = {traces: eventLog.traces.reduce( (acc, {traceName, trace}) => ({...acc, [traceName]: trace }), {}), events: graphRef.current?.current.events };
+        newSavedLogs[eventLog.name] = {traces: Object.values(eventLog.traces).reduce( (acc, {traceName, trace}) => ({...acc, [traceName]: trace }), {}), events: graphRef.current?.current.events };
         setSavedLogs(newSavedLogs);
         console.log(newSavedLogs);
         lastSavedLog.current = eventLog.name;
@@ -305,10 +323,12 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     }
 
     const openLog = (name: string, log: EventLog) => {
-        if (eventLog.traces.length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
-            setEventLog({ name, traces: Object.keys(log.traces).map( traceName => ({traceName, traceId: traceName, trace: log.traces[traceName]})) });
+        if (Object.keys(eventLog.traces).length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
+            const el = { name, traces: Object.keys(log.traces).map( traceName => ({traceName, traceId: traceName, trace: log.traces[traceName]})).reduce( (acc, cum) => ({...acc, [cum.traceId]: cum}), {}) };
+            setEventLog(el);
+            console.log(el, log);
             isSimulatingRef.current = SimulatingEnum.Not;
-            traceRef.current = { traceId: 0, trace: [] };
+            traceRef.current = { traceId: "Trace 0", trace: [] };
             setSelectedTrace(null);
             setTraceName("");
             reset();
@@ -319,15 +339,15 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         if (data.includes("multi-instance=\"true\"")) {
             toast.error("Multi-instance subprocesses not supported...");
         } else {
-            if (eventLog.traces.length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
+            if (Object.keys(eventLog.traces).length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
                 parse && parse(data).then((_) => {
                     if (modelerRef.current && graphRef.current) {
                         const graph = moddleToDCR(modelerRef.current.getElementRegistry());
                         graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
                         modelerRef.current.updateRendering(graph);
-                        setEventLog({ name: "Unnamed Event Log", traces: [{ traceId: "Trace 0", traceName: "", trace: [] }] });
+                        setEventLog({ name: "Unnamed Event Log", traces: { "Trace 0": { traceId: "Trace 0", traceName: "", trace: [] }} });
                         isSimulatingRef.current = SimulatingEnum.Default;
-                        traceRef.current = { traceId: 0, trace: [] };
+                        traceRef.current = { traceId: "Trace 0", trace: [] };
                         setSelectedTrace({ traceId: "Trace 0", traceName: "Trace 0", trace: [] });
                         setTraceName("Trace 0");
                     }
@@ -404,7 +424,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
             events: graphRef.current?.initial.events,
             traces: {}
         }
-        for (const entry of eventLog.traces) {
+        for (const entry of Object.values(eventLog.traces)) {
             logToExport.traces[entry.traceName] = entry.trace;
         }
         const data = writeEventLog(logToExport);
@@ -514,29 +534,42 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
             <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, overrideOnclick: eventClick, canvasClassName: "simulating" }} />
             {isSimulatingRef.current === SimulatingEnum.Not && <ResultsWindow $traceSelected={selectedTrace !== null}>
                 <EventLogInput value={eventLog.name} onChange={(e) => setEventLog({ ...eventLog, name: e.target.value })} />
-                {eventLog.traces.map(({ trace, traceName, traceId }, idx) =>
+                {Object.values(eventLog.traces).map(({ trace, traceName, traceId }) =>
                     <ResultsElement
                         $simulating={isSimulatingRef.current !== SimulatingEnum.Not}
                         $selected={selectedTrace !== null && selectedTrace.traceId === traceId}
                         key={traceId}
                         onClick={() => {
                             if (isSimulatingRef.current === SimulatingEnum.Not) {
-                                traceRef.current = { trace, traceId: idx };
+                                traceRef.current = { trace, traceId};
                                 setTraceName(traceName);
                                 setSelectedTrace({ trace, traceName, traceId })
                             }
                         }}
                     >
                         {traceName}
+                        <DeleteTrace onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`This will delete the trace '${traceName}'. Are you sure?`)) {
+                                const newTraces = {...eventLog.traces};
+                                delete newTraces[traceId];
+                                const newEL = {...eventLog, traces: newTraces};
+                                if (traceId === selectedTrace?.traceId) {
+                                    setSelectedTrace(null);
+                                }
+                                setEventLog(newEL);
+                            }
+                        }}/>
                     </ResultsElement>)}
                 <FlexBox direction="row" $justify="space-around" style={{ marginTop: "auto" }}>
                     <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={() => {
                         isSimulatingRef.current = SimulatingEnum.Default;
-                        const traceId = eventLog.traces.length;
-                        setEventLog({ ...eventLog, traces: [...eventLog.traces, { traceId: "Trace " + traceId, traceName: "Trace " + traceId, trace: [] }] });
-                        setSelectedTrace({ traceId: "Trace " + traceId, traceName: "Trace " + traceId, trace: [] });
+                        const traceId = "Trace " + id++;
+                        console.log(id);
+                        setEventLog({ ...eventLog, traces: {...eventLog.traces, [traceId]: { traceId: traceId, traceName: traceId, trace: [] }} });
+                        setSelectedTrace({ traceId: traceId, traceName: traceId, trace: [] });
                         traceRef.current = { traceId, trace: [] };
-                        setTraceName("Trace " + traceId);
+                        setTraceName(traceId);
                     }}>
                         Add new trace
                     </Button>
@@ -562,11 +595,11 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                     }} />}
                     <CloseTrace onClick={() => {
                         if (isSimulatingRef.current !== SimulatingEnum.Not) {
-                            const eventLogCopy = { ...eventLog, traces: eventLog.traces.filter(entry => entry.traceId !== selectedTrace.traceId) };
+                            const eventLogCopy = { ...eventLog, traces: {...eventLog.traces}};
+                            delete eventLogCopy.traces[selectedTrace.traceId];
                             setEventLog(eventLogCopy);
                         } else if (traceRef.current) {
-                            const eventLogCopy = { ...eventLog, traces: [...eventLog.traces] };
-                            console.log(eventLogCopy, traceRef.current.traceId);
+                            const eventLogCopy = { ...eventLog, traces: {...eventLog.traces}};
                             eventLogCopy.traces[traceRef.current.traceId].traceName = traceName;
                             setEventLog(eventLogCopy);
                         }
@@ -583,7 +616,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                     if (!graphRef.current?.current) return;
                     if ((isSimulatingRef.current === SimulatingEnum.Wild || isAcceptingS(graphRef.current.current, graphRef.current.current)) && traceRef.current) {
                         isSimulatingRef.current = SimulatingEnum.Not;
-                        const eventLogCopy = { ...eventLog, traces: [...eventLog.traces] };
+                        const eventLogCopy = { ...eventLog, traces: {...eventLog.traces }};
                         eventLogCopy.traces[traceRef.current.traceId].traceName = traceName;
                         eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
                         setEventLog(eventLogCopy);
