@@ -19,19 +19,29 @@
 # This sample shows how to prevent push of commits where the log message starts
 # with "WIP" (work in progress).
 
-remote="https://github.com/Axel0087/dcr-js/main"
-url="https://github.com/Axel0087/dcr-js/main"
+remote="https://github.com/Axel0087/dcr-js"
+url="https://github.com/Axel0087/dcr-js"
 
 z40=0000000000000000000000000000000000000000
+
+current_branch=$(git symbolic-ref --short head)
+
+
+
 
 IFS=' '
 while read local_ref local_sha remote_ref remote_sha
 do
+    echo "Running this here hook!"
 	if [ "$local_sha" = $z40 ]
 	then
 		# Handle delete
 	else
-        yarn workspace app deploy
+        echo "Checking for main!"
+        if [[ $current_branch = "YOURBRANCH" ]]; then
+            echo "Deploying!"
+            yarn workspace app deploy
+        fi
 	fi
 done
 
