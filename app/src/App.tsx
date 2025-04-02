@@ -38,45 +38,47 @@ const App = () => {
   const lastSavedGraph = useRef<string>(undefined);
   const lastSavedLog = useRef<string>(undefined);
 
+  console.log("I have deployed!");
+
   switch (state) {
     case StateEnum.Modeler:
-      return <ModelerState 
-        savedLogs={savedLogs} 
-        setSavedLogs={setSavedLogs} 
-        savedGraphs={savedGraphs} 
-        setSavedGraphs={setSavedGraphs} 
-        setState={setState} 
-        lastSavedGraph={lastSavedGraph} 
-        lastSavedLog={lastSavedLog} 
+      return <ModelerState
+        savedLogs={savedLogs}
+        setSavedLogs={setSavedLogs}
+        savedGraphs={savedGraphs}
+        setSavedGraphs={setSavedGraphs}
+        setState={setState}
+        lastSavedGraph={lastSavedGraph}
+        lastSavedLog={lastSavedLog}
       />;
     case StateEnum.Home:
-      return <HomeState         savedLogs={savedLogs} 
-        setSavedLogs={setSavedLogs} 
-        savedGraphs={savedGraphs} 
-        setSavedGraphs={setSavedGraphs} 
-        setState={setState} 
-        lastSavedGraph={lastSavedGraph} 
-        lastSavedLog={lastSavedLog} 
+      return <HomeState savedLogs={savedLogs}
+        setSavedLogs={setSavedLogs}
+        savedGraphs={savedGraphs}
+        setSavedGraphs={setSavedGraphs}
+        setState={setState}
+        lastSavedGraph={lastSavedGraph}
+        lastSavedLog={lastSavedLog}
       />;
     case StateEnum.Simulator:
-      return <SimulatorState         
-        savedLogs={savedLogs} 
-        setSavedLogs={setSavedLogs} 
-        savedGraphs={savedGraphs} 
-        setSavedGraphs={setSavedGraphs} 
-        setState={setState} 
-        lastSavedGraph={lastSavedGraph} 
-        lastSavedLog={lastSavedLog} 
+      return <SimulatorState
+        savedLogs={savedLogs}
+        setSavedLogs={setSavedLogs}
+        savedGraphs={savedGraphs}
+        setSavedGraphs={setSavedGraphs}
+        setState={setState}
+        lastSavedGraph={lastSavedGraph}
+        lastSavedLog={lastSavedLog}
       />;
     case StateEnum.Conformance:
-      return <ConformanceCheckingState         
-        savedLogs={savedLogs} 
-        setSavedLogs={setSavedLogs} 
-        savedGraphs={savedGraphs} 
-        setSavedGraphs={setSavedGraphs} 
-        setState={setState} 
-        lastSavedGraph={lastSavedGraph} 
-        lastSavedLog={lastSavedLog} 
+      return <ConformanceCheckingState
+        savedLogs={savedLogs}
+        setSavedLogs={setSavedLogs}
+        savedGraphs={savedGraphs}
+        setSavedGraphs={setSavedGraphs}
+        setState={setState}
+        lastSavedGraph={lastSavedGraph}
+        lastSavedLog={lastSavedLog}
       />;
   }
 }
