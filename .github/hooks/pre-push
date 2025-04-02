@@ -24,6 +24,8 @@ url="https://github.com/Axel0087/dcr-js"
 
 z40=0000000000000000000000000000000000000000
 
+exit 1
+
 current_branch=$(git symbolic-ref --short head)
 
 
