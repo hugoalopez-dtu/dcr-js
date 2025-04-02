@@ -38,7 +38,7 @@ const App = () => {
   const lastSavedGraph = useRef<string>(undefined);
   const lastSavedLog = useRef<string>(undefined);
 
-  console.log("I have deployed!");
+  console.log("I have deployed!!");
 
   switch (state) {
     case StateEnum.Modeler:
