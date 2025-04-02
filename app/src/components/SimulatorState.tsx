@@ -74,7 +74,7 @@ const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
 const TraceWindow = styled.div<{ $hugLeft: boolean; }>`
     position: fixed;
     top: 0;
-    left: ${ props => props.$hugLeft ? "0rem" : "30rem"};
+    left: ${props => props.$hugLeft ? "0rem" : "30rem"};
     height: 100vh;
     box-shadow: 0px 0 5px 0px grey;
     display: flex;
@@ -194,7 +194,7 @@ const GreyOut = styled.div`
     z-index: 3;
 `
 
-const WildButton = styled(BiMeteor)<{ $clicked: boolean, $disabled?: boolean }>`
+const WildButton = styled(BiMeteor) <{ $clicked: boolean, $disabled?: boolean }>`
     ${props => props.$clicked ? `
         background-color: black !important;
         color: white;
@@ -276,7 +276,7 @@ const resultIcon = (val: boolean | undefined) => {
     }
 }
 
-let id = 0;
+let id = 1;
 
 const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSavedGraph, lastSavedLog }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
@@ -308,14 +308,14 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         if (initLog && lastLog) {
             openLog(lastLog, initLog)
         } else {
-            setEventLog({ name: "Unnamed Event Log", traces:  { "Trace 0": { traceId: "Trace 0", traceName: "", trace: [] }} });
+            setEventLog({ name: "Unnamed Event Log", traces: { "Trace 0": { traceId: "Trace 0", traceName: "", trace: [] } } });
         }
     }, []);
 
     const saveLog = () => {
         if (!graphRef.current?.current) return;
         const newSavedLogs = { ...savedLogs };
-        newSavedLogs[eventLog.name] = {traces: Object.values(eventLog.traces).reduce( (acc, {traceName, trace}) => ({...acc, [traceName]: trace }), {}), events: graphRef.current?.current.events };
+        newSavedLogs[eventLog.name] = { traces: Object.values(eventLog.traces).reduce((acc, { traceName, trace }) => ({ ...acc, [traceName]: trace }), {}), events: graphRef.current?.current.events };
         setSavedLogs(newSavedLogs);
         console.log(newSavedLogs);
         lastSavedLog.current = eventLog.name;
@@ -324,7 +324,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
 
     const openLog = (name: string, log: EventLog) => {
         if (Object.keys(eventLog.traces).length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
-            const el = { name, traces: Object.keys(log.traces).map( traceName => ({traceName, traceId: traceName, trace: log.traces[traceName]})).reduce( (acc, cum) => ({...acc, [cum.traceId]: cum}), {}) };
+            const el = { name, traces: Object.keys(log.traces).map(traceName => ({ traceName, traceId: traceName, trace: log.traces[traceName] })).reduce((acc, cum) => ({ ...acc, [cum.traceId]: cum }), {}) };
             setEventLog(el);
             console.log(el, log);
             isSimulatingRef.current = SimulatingEnum.Not;
@@ -345,7 +345,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                         const graph = moddleToDCR(modelerRef.current.getElementRegistry());
                         graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
                         modelerRef.current.updateRendering(graph);
-                        setEventLog({ name: "Unnamed Event Log", traces: { "Trace 0": { traceId: "Trace 0", traceName: "", trace: [] }} });
+                        setEventLog({ name: "Unnamed Event Log", traces: { "Trace 0": { traceId: "Trace 0", traceName: "", trace: [] } } });
                         isSimulatingRef.current = SimulatingEnum.Default;
                         traceRef.current = { traceId: "Trace 0", trace: [] };
                         setSelectedTrace({ traceId: "Trace 0", traceName: "Trace 0", trace: [] });
@@ -434,75 +434,76 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
 
     const savedGraphElements = () => {
         return Object.keys(savedGraphs).length > 0 ? [{
-          text: "Saved Graphs:",
-          elements: Object.keys(savedGraphs).map(name => {
-            return ({
-              icon: <BiLeftArrowCircle />,
-              text: name,
-              onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+            text: "Saved Graphs:",
+            elements: Object.keys(savedGraphs).map(name => {
+                return ({
+                    icon: <BiLeftArrowCircle />,
+                    text: name,
+                    onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
+                })
             })
-          })
         }] : [];
-      }
+    }
 
-      const savedLogElements = () => {
+    const savedLogElements = () => {
         return Object.keys(savedLogs).length > 0 ? [{
-          text: "Saved Logs:",
-          elements: Object.keys(savedLogs).map(name => {
-            return ({
-              icon: <BiLeftArrowCircle />,
-              text: name,
-              onClick: () => { 
-                const log = savedLogs[name];
-                openLog(name, log);
-                setMenuOpen(false); },
+            text: "Saved Logs:",
+            elements: Object.keys(savedLogs).map(name => {
+                return ({
+                    icon: <BiLeftArrowCircle />,
+                    text: name,
+                    onClick: () => {
+                        const log = savedLogs[name];
+                        openLog(name, log);
+                        setMenuOpen(false);
+                    },
+                })
             })
-          })
         }] : [];
-      }
+    }
 
     const menuElements: Array<ModalMenuElement> = [{
-          text: "Open",
-          elements: [
+        text: "Open",
+        elements: [
             {
-              customElement: (
-                <StyledFileUpload>
-                  <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
-                    <div />
-                    <>Open Editor XML</>
-                  </FileUpload>
-                </StyledFileUpload>),
+                customElement: (
+                    <StyledFileUpload>
+                        <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+                            <div />
+                            <>Open Editor XML</>
+                        </FileUpload>
+                    </StyledFileUpload>),
             },
             {
-              customElement: (
-                <StyledFileUpload>
-                  <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importDCRPortalXML); setMenuOpen(false); }}>
-                    <div />
-                    <>Open DCR Solution XML</>
-                  </FileUpload>
-                </StyledFileUpload>),
+                customElement: (
+                    <StyledFileUpload>
+                        <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importDCRPortalXML); setMenuOpen(false); }}>
+                            <div />
+                            <>Open DCR Solution XML</>
+                        </FileUpload>
+                    </StyledFileUpload>),
             },
-          ]
-        },
-        {
-            customElement: (
-              <StyledFileUpload>
-                <FileUpload accept=".xes" fileCallback={(name, contents) => { 
+        ]
+    },
+    {
+        customElement: (
+            <StyledFileUpload>
+                <FileUpload accept=".xes" fileCallback={(name, contents) => {
                     try {
                         const log = parseLog(contents);
                         openLog(name.slice(0, -4), log);
                     } catch (e) {
                         toast.error("Unable to parse log...")
                     }
-                    setMenuOpen(false); 
+                    setMenuOpen(false);
                 }}>
-                  <BiUpload />
-                  <>Upload Log</>
+                    <BiUpload />
+                    <>Upload Log</>
                 </FileUpload>
-              </StyledFileUpload>),
-          }, 
-        ...savedGraphElements(),
-        ...savedLogElements()
+            </StyledFileUpload>),
+    },
+    ...savedGraphElements(),
+    ...savedLogElements()
     ];
 
     const bottomElements: Array<ModalMenuElement> = [
@@ -541,7 +542,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                         key={traceId}
                         onClick={() => {
                             if (isSimulatingRef.current === SimulatingEnum.Not) {
-                                traceRef.current = { trace, traceId};
+                                traceRef.current = { trace, traceId };
                                 setTraceName(traceName);
                                 setSelectedTrace({ trace, traceName, traceId })
                             }
@@ -551,22 +552,22 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                         <DeleteTrace onClick={(e) => {
                             e.stopPropagation();
                             if (confirm(`This will delete the trace '${traceName}'. Are you sure?`)) {
-                                const newTraces = {...eventLog.traces};
+                                const newTraces = { ...eventLog.traces };
                                 delete newTraces[traceId];
-                                const newEL = {...eventLog, traces: newTraces};
+                                const newEL = { ...eventLog, traces: newTraces };
                                 if (traceId === selectedTrace?.traceId) {
                                     setSelectedTrace(null);
                                 }
                                 setEventLog(newEL);
                             }
-                        }}/>
+                        }} />
                     </ResultsElement>)}
                 <FlexBox direction="row" $justify="space-around" style={{ marginTop: "auto" }}>
                     <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={() => {
                         isSimulatingRef.current = SimulatingEnum.Default;
                         const traceId = "Trace " + id++;
                         console.log(id);
-                        setEventLog({ ...eventLog, traces: {...eventLog.traces, [traceId]: { traceId: traceId, traceName: traceId, trace: [] }} });
+                        setEventLog({ ...eventLog, traces: { ...eventLog.traces, [traceId]: { traceId: traceId, traceName: traceId, trace: [] } } });
                         setSelectedTrace({ traceId: traceId, traceName: traceId, trace: [] });
                         traceRef.current = { traceId, trace: [] };
                         setTraceName(traceId);
@@ -585,9 +586,9 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                 <ResultsHeader>
                     <TraceNameInput value={traceName} onChange={(e) => setTraceName(e.target.value)} />
                     {resultIcon(traceIsAccepting)}
-                    {isSimulatingRef.current !== SimulatingEnum.Not &&  <ResetTrace onClick={() => {
+                    {isSimulatingRef.current !== SimulatingEnum.Not && <ResetTrace onClick={() => {
                         if (!traceRef.current) return;
-                        
+
                         const traceId = traceRef.current.traceId;
                         setSelectedTrace({ traceId: "Trace " + traceId, traceName, trace: [] });
                         traceRef.current = { traceId, trace: [] };
@@ -595,11 +596,11 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                     }} />}
                     <CloseTrace onClick={() => {
                         if (isSimulatingRef.current !== SimulatingEnum.Not) {
-                            const eventLogCopy = { ...eventLog, traces: {...eventLog.traces}};
+                            const eventLogCopy = { ...eventLog, traces: { ...eventLog.traces } };
                             delete eventLogCopy.traces[selectedTrace.traceId];
                             setEventLog(eventLogCopy);
                         } else if (traceRef.current) {
-                            const eventLogCopy = { ...eventLog, traces: {...eventLog.traces}};
+                            const eventLogCopy = { ...eventLog, traces: { ...eventLog.traces } };
                             eventLogCopy.traces[traceRef.current.traceId].traceName = traceName;
                             setEventLog(eventLogCopy);
                         }
@@ -616,7 +617,8 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                     if (!graphRef.current?.current) return;
                     if ((isSimulatingRef.current === SimulatingEnum.Wild || isAcceptingS(graphRef.current.current, graphRef.current.current)) && traceRef.current) {
                         isSimulatingRef.current = SimulatingEnum.Not;
-                        const eventLogCopy = { ...eventLog, traces: {...eventLog.traces }};
+                        const eventLogCopy = { ...eventLog, traces: { ...eventLog.traces } };
+
                         eventLogCopy.traces[traceRef.current.traceId].traceName = traceName;
                         eventLogCopy.traces[traceRef.current.traceId].trace = traceRef.current.trace;
                         setEventLog(eventLogCopy);
@@ -640,7 +642,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                         setWildMode(true);
                         isSimulatingRef.current = SimulatingEnum.Wild;
                     }
-                }}/>
+                }} />
                 <FullScreenIcon />
                 <BiHome onClick={() => setState(StateEnum.Home)} />
                 <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
