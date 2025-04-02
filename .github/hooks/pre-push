@@ -27,7 +27,7 @@ z40=0000000000000000000000000000000000000000
 current_branch=$(git symbolic-ref --short head)
 
 
-echo "running hook";
+echo "running hook"
 
 IFS=' '
 while read local_ref local_sha remote_ref remote_sha
