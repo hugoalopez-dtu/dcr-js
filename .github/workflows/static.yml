@@ -32,5 +32,7 @@ jobs:
     steps:
       - name: yarn install
         run: "yarn"
+      - name: predeploy
+        run: "tsc -b && vite build"
       - name: "publish"
-        run: "yarn deploy"
+        run: "gh-pages -d dist"
