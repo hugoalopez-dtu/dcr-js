@@ -36,6 +36,8 @@ jobs:
         uses: actions/configure-pages@v5
       - name: install dependencies
         run: "yarn install"
+      - name: goto app
+        run: "cd app"
       - name: npm dist
         run: "tsc -b && vite build"
       - name: Upload artifact
