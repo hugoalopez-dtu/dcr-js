@@ -2,7 +2,7 @@
   "name": "dcr-js",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://axel0087.github.io/dcr-js/",
+  "homepage": "https://hugoalopez-dtu.github.io/dcr-js/",
   "scripts": {
     "start": "yarn workspace app start",
     "test": "yarn workspace app test",
