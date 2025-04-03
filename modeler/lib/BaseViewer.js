@@ -27,15 +27,11 @@ import {
 import saveDCRXML from './DCRXML';
 import XMLConverter from './XMLConverter';
 import DCRPortalConverter from './DCRPortalConverter';
+import { setSetting } from './features/settings/DCRSettings';
 
-import {
-  startSimulator as simulatorStart,
-  executeEvent as simulatorExecute,
-  updateRootGraph as simulatorUpdate,
-  restoreMarkings as simulatorRestoreMarkings
-} from './simulator/simulator';
+import { setSimulating } from './features/keyboard/DCRKeyboardBindings';
 
-
+import { isEnabled, isEnabledS } from "dcr-engine";
 
 /**
  * A base viewer for dcr graph diagrams.
@@ -66,6 +62,11 @@ export default function BaseViewer(options) {
   /* </project-logo> */
 
   this._init(this._container, this._moddle, options);
+
+  this.importCustomXML = this.importCustomXML.bind(this);
+  this.importXML = this.importXML.bind(this);
+  this.importDCRPortalXML = this.importCustomXML.bind(this);
+  this.getSelection = this.getSelection.bind(this);
 }
 
 inherits(BaseViewer, Diagram);
@@ -111,7 +112,6 @@ inherits(BaseViewer, Diagram);
  * @returns {Promise<ImportXMLResult, ImportXMLError>}
  */
 BaseViewer.prototype.importXML = function (xml, rootBoard) {
-
   var self = this;
 
   return new Promise(function (resolve, reject) {
@@ -500,22 +500,6 @@ BaseViewer.prototype.getModules = function () {
   return this._modules;
 };
 
-BaseViewer.prototype.startSimulation = function () {
-  simulatorStart(this.get('elementRegistry'));
-  simulatorUpdate(this);
-}
-
-BaseViewer.prototype.simulatorExecute = function (element) {
-  let ret = simulatorExecute(element);
-  simulatorUpdate(this);
-  return ret;
-}
-
-BaseViewer.prototype.simulatorRestoreStates = function () {
-  simulatorRestoreMarkings();
-  simulatorUpdate(this);
-}
-
 /**
  * Remove all drawn elements from the viewer.
  *
@@ -561,6 +545,44 @@ BaseViewer.prototype.destroy = function () {
   domRemove(this._container);
 };
 
+// Update the visual representation of the graph with the states/markings of graph
+const update = (graph, modeling, elementReg) => {
+
+  const updateGroup = (group) => {
+    group.events.forEach((event) => {
+      let element = elementReg.get(event);
+      modeling.updateProperties(element, { executed: graph.marking.executed.has(event) });
+      modeling.updateProperties(element, { included: graph.marking.included.has(event) });
+      modeling.updateProperties(element, { pending: graph.marking.pending.has(event) });
+      if (event.includes('Event')) {
+        modeling.updateProperties(element, { enabled: isEnabledS(event, graph, group).enabled });
+      }
+    });
+  }
+
+  updateGroup(graph);
+  Object.keys(graph.subProcesses).forEach((subProcessId) => {
+    updateGroup(graph.subProcesses[subProcessId]);
+  });
+}
+
+BaseViewer.prototype.setSimulating = function (val) {
+  setSimulating(val);
+}
+
+BaseViewer.prototype.getSelection = function () {
+  return this.get('selection');
+}
+
+BaseViewer.prototype.getElementRegistry = function () {
+  return this.get('elementRegistry');
+}
+
+BaseViewer.prototype.updateRendering = function (graph) {
+  const modeling = this.get('modeling');
+  update(graph, modeling, this.get('elementRegistry'), graph);
+}
+
 /**
  * Register an event listener
  *
@@ -584,6 +606,10 @@ BaseViewer.prototype.on = function (event, priority, callback, target) {
 BaseViewer.prototype.off = function (event, callback) {
   this.get('eventBus').off(event, callback);
 };
+
+BaseViewer.prototype.setSetting = function (key, value) {
+  setSetting(key, value);
+}
 
 BaseViewer.prototype.attachTo = function (parentNode) {
 
@@ -747,48 +773,3 @@ function findRootBoard(definitions, boardId) {
     return element.id === boardId;
   }) || null;
 }
-
-
-/* <project-logo> */
-
-// import {
-//   open as openPoweredBy,
-//   BPMNIO_IMG
-// } from './util/PoweredByUtil';
-
-// import {
-//   event as domEvent
-// } from 'min-dom';
-
-// /**
-//  * Adds the project logo to the diagram container as
-//  * required by the bpmn.io license.
-//  *
-//  * @see http://bpmn.io/license
-//  *
-//  * @param {Element} container
-//  */
-// function addProjectLogo(container) {
-//   var img = BPMNIO_IMG;
-
-//   var linkMarkup =
-//     '<a href="http://bpmn.io" ' +
-//     'target="_blank" ' +
-//     'class="bjs-powered-by" ' +
-//     'title="Powered by bpmn.io" ' +
-//     'style="position: absolute; bottom: 15px; right: 15px; z-index: 100">' +
-//     img +
-//     '</a>';
-
-//   var linkElement = domify(linkMarkup);
-
-//   container.appendChild(linkElement);
-
-//   domEvent.bind(linkElement, 'click', function (event) {
-//     openPoweredBy();
-
-//     event.preventDefault();
-//   });
-// }
-
-/* </project-logo> */

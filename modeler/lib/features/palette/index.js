@@ -18,6 +18,6 @@ export default {
     GlobalConnectModule,
     translate
   ],
-  __init__: [ 'paletteProvider' ],
-  paletteProvider: [ 'type', PaletteProvider ]
+  __init__: ['paletteProvider'],
+  paletteProvider: ['type', PaletteProvider]
 };

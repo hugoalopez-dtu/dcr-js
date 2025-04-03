@@ -27,6 +27,7 @@ import * as DefaultMarkers from './DefaultMarkers';
 import * as ProposedMarkers from './ProposedMarkers';
 import * as NewMarkers from './newMarkers';
 import Ids from 'ids';
+import { settings } from '../features/settings/DCRSettings.js';
 
 var RENDERER_IDS = new Ids();
 
@@ -181,12 +182,12 @@ export default function DCRRenderer(
   }
 
   function getMarkers() {
-    switch (dcrSettings.get('markerNotation')) {
-      case "newMarkers":
+    switch (settings.markerNotation) {
+      case "DCR Solutions":
         return NewMarkers;
-      case "proposedMarkers":
+      case "TAL2023":
         return ProposedMarkers;
-      default:
+      case "HM2011":
         return DefaultMarkers;
     }
   }
@@ -451,27 +452,27 @@ export default function DCRRenderer(
 
       if (type === 'condition') {
         markers.conditionMarker(marker, path,
-          dcrSettings.get('blackRelations') ? colorBlack : colorCondition, //yellow
+          settings.blackRelations ? colorBlack : colorCondition, //yellow
           fill, startDirection, endDirection);
       } else if (type === 'response') {
-        markers.responseMarker(marker, path, 
-          dcrSettings.get('blackRelations') ? colorBlack : colorResponse, //blue
+        markers.responseMarker(marker, path,
+          settings.blackRelations ? colorBlack : colorResponse, //blue
           fill, startDirection, endDirection);
       } else if (type === 'include') {
-        markers.includeMarker(marker, path, 
-          dcrSettings.get('blackRelations') ? colorBlack : colorInclude, //green
+        markers.includeMarker(marker, path,
+          settings.blackRelations ? colorBlack : colorInclude, //green
           fill, startDirection, endDirection);
       } else if (type === 'exclude') {
-        markers.excludeMarker(marker, path, 
-          dcrSettings.get('blackRelations') ? colorBlack : colorExclude, //red
+        markers.excludeMarker(marker, path,
+          settings.blackRelations ? colorBlack : colorExclude, //red
           fill, startDirection, endDirection);
       } else if (type === 'milestone') {
-        markers.milestoneMarker(marker, path, 
-          dcrSettings.get('blackRelations') ? colorBlack : colorMilestone, //purple
+        markers.milestoneMarker(marker, path,
+          settings.blackRelations ? colorBlack : colorMilestone, //purple
           fill, startDirection, endDirection);
       } else if (type === 'spawn') {
-        markers.spawnMarker(marker, path, 
-          dcrSettings.get('blackRelations') ? colorBlack : "#4D6180", //green
+        markers.spawnMarker(marker, path,
+          settings.blackRelations ? colorBlack : "#4D6180", //green
           fill, startDirection, endDirection);
       }
 

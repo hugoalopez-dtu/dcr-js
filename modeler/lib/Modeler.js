@@ -74,7 +74,7 @@ Modeler.NavigatedViewer = NavigatedViewer;
  * @returns {Promise<CreateDiagramResult, CreateDiagramError>}
  *
  */
-Modeler.prototype.createDiagram = function() {
+Modeler.prototype.createDiagram = function () {
   return this.importXML(initialDiagram);
 };
 
@@ -89,7 +89,6 @@ Modeler.prototype._interactionModules = [
 ];
 
 Modeler.prototype._modelingModules = [
-
   // modeling components
   AutoplaceModule,
   AlignElementsModule,
@@ -113,7 +112,7 @@ Modeler.prototype._modelingModules = [
   SnappingModule,
   PopupMenuModule,
   SettingsModule
-]; 
+];
 
 
 // modules the modeler is composed of

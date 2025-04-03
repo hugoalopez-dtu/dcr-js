@@ -3,8 +3,9 @@ name: Deploy static content to Pages
 
 on:
   # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
+  ## Disabled to properly control deployment
+  #push:
+  #  branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -29,23 +30,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Run directoryreader.bash
-        run: bash modeler/starter/src/resources/directoryreader.bash
-      - name: npm install outer
-        run: "cd modeler && npm install"
-      - name: npm install starter
-        run: "cd modeler/starter && npm install"
-      - name: npm dist
-        run: "cd modeler/starter && npm run build"
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3 
-        with:
-          # Upload entire repository
-          path: 'modeler/starter/src/dist'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: yarn install
+        run: "yarn"
+      - name: predeploy
+        run: "tsc -b && vite build"
+      - name: "publish"
+        run: "gh-pages -d dist"
