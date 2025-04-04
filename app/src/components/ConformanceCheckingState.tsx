@@ -15,6 +15,7 @@ import FileUpload from "../utilComponents/FileUpload";
 import { Trace } from "dcr-engine";
 import { replayTraceS } from "dcr-engine/src/conformance";
 import { DCRGraphS } from "dcr-engine/src/types";
+import TraceView from "../utilComponents/TraceView";
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -65,23 +66,6 @@ const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
     overflow: scroll;
     z-index: 5;
 `
-
-const TraceWindow = styled.div`
-    position: fixed;
-    top: 0;
-    left: 30rem;
-    height: 100vh;
-    box-shadow: 0px 0 5px 0px grey;
-    display: flex;
-    flex-direction: column;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    font-size: 20px;
-    background-color: gainsboro;
-    box-sizing: border-box;
-    overflow: scroll;
-`
-
 const ResultsElement = styled.li<{ $selected: boolean; }>`
   display: flex;
   flex-direction: row;
@@ -126,25 +110,6 @@ const CloseResults = styled(BiX)`
   }
 `
 
-const CloseTrace = styled(BiX)`
-  display: block;
-  height: 30px;
-  width: 30px;
-  margin: auto;
-  margin-left: 1rem;
-  margin-right: 1rem;
-  cursor: pointer;
-  &:hover {
-    color: white;
-  }
-`
-
-const Activity = styled.li`
-  width: 100%;
-  padding: 0.5rem 1rem 0.5rem 1rem;
-  box-sizing: border-box;
-`
-
 type LogResults = Array<{
   traceId: string,
   isPositive?: boolean,
@@ -184,7 +149,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   const [logResults, setLogResults] = useState<LogResults>([]);
   const [logName, setLogName] = useState<string>("");
-  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, trace: Trace } | null>(null);
+  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: Trace } | null>(null);
 
   const { positiveCount, negativeCount } = useMemo<{ positiveCount: number, negativeCount: number }>(() => {
     let positiveCount = 0;
@@ -364,21 +329,18 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           <CloseResults onClick={() => { setLogResults([]); setSelectedTrace(null) }} />
         </ResultsHeader>
         <ul>
-          {logResults.map(({ traceId, trace, isPositive }) => <ResultsElement $selected={selectedTrace !== null && selectedTrace.traceId === traceId} key={traceId} onClick={() => setSelectedTrace({ trace, traceId })}>
-            <Label>{traceId}</Label>
-            {resultIcon(isPositive)}
-          </ResultsElement>)}
+          {logResults.map(({ traceId, trace, isPositive }) => (
+            <ResultsElement 
+              $selected={selectedTrace !== null && selectedTrace.traceId === traceId} 
+              key={traceId} 
+              onClick={() => setSelectedTrace({ trace, traceName: traceId, traceId })}
+            >
+              <Label>{traceId}</Label>
+              {resultIcon(isPositive)}
+            </ResultsElement>))}
         </ul>
       </ResultsWindow>}
-      {selectedTrace && <TraceWindow>
-        <ResultsHeader>
-          {selectedTrace.traceId}
-          <CloseTrace onClick={() => setSelectedTrace(null)} />
-        </ResultsHeader>
-        <ul>
-          {selectedTrace.trace.map((activity, idx) => <Activity key={activity + idx}>{activity}</Activity>)}
-        </ul>
-      </TraceWindow>}
+      {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} />}
       <TopRightIcons>
         <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />
