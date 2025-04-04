@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Install dependencies
-        uses: npm install
+        run: npm install
 
       - name: Build project
         run: cd app && npm run predeploy
