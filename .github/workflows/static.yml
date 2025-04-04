@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3 
         with:
           # Upload entire repository
-          path: './dist'
+          path: './app/dist'
 
   deploy:
     name: Deploy
