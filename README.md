@@ -9,7 +9,7 @@ For a formal definition of DCR graphs, please [read this paper](https://arxiv.or
 The editor is based on the popular [Diagram-js](https://github.com/bpmn-io/diagram-js) web editor.
 
 # Installing it and running it locally
-Please visit [here](https://github.com/hugoalopez-dtu/dcr-js/tree/main/modeler) for all the instructions
+Please visit [here](https://github.com/hugoalopez-dtu/dcr-js/app) for all the instructions
 
 # License
 This package is published using an MIT license

@@ -4,10 +4,7 @@
   "private": true,
   "homepage": "https://hugoalopez-dtu.github.io/dcr-js/",
   "scripts": {
-    "start": "yarn workspace app start",
-    "test": "yarn workspace app test",
-    "eject": "yarn workspace app eject",
-    "deploy": "yarn workspace app deploy"
+    "start": "yarn workspace app start"
   },
   "eslintConfig": {
     "extends": [

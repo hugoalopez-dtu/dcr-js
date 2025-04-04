@@ -4,11 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "vite",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "predeploy": "tsc -b && vite build",
-    "deploy": "gh-pages -d dist"
+    "start": "vite"
   },
   "dependencies": {
     "diagram-js": "^15.2.4",
