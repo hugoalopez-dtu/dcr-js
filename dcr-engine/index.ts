@@ -1,12 +1,13 @@
-import type { DCRGraph, Marking, SubProcess, isSubProcess, EventMap, Event, Trace, EventLog } from "./src/types"
+import type { DCRGraph, Marking, SubProcess, isSubProcess, EventMap, Event, Trace, EventLog, DCRGraphS } from "./src/types"
 import { execute, isEnabled, isAccepting, executeS, isEnabledS, isAcceptingS } from "./src/executionEngine"
 import { moddleToDCR } from "./src/graphConversion"
 import { copyMarking } from "./src/utility"
-import { parseLog } from "./src/eventLogs";
-import { replayTrace } from "./src/conformance";
+import { parseLog, writeEventLog } from "./src/eventLogs";
+import { replayTraceS } from "./src/conformance";
 
 export {
     DCRGraph,
+    DCRGraphS,
     EventLog,
     EventMap,
     Marking,
@@ -23,5 +24,6 @@ export {
     isAcceptingS,
     executeS,
     isEnabledS,
-    replayTrace
+    replayTraceS,
+    writeEventLog
 }

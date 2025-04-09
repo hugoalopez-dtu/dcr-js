@@ -16,6 +16,7 @@ declare global {
 
 export type Event = string;
 export type Label = string;
+export type Role = string;
 
 export interface Marking {
   executed: Set<Event>;
@@ -52,7 +53,9 @@ export interface DCRGraphS {
   };
   subProcessMap: {
     [event: Event]: SubProcess;
-  }
+  };
+  roles: Set<Role>;
+  roleMap: { [event: Event]: Role };
   conditionsFor: EventMap;
   milestonesFor: EventMap;
   responseTo: EventMap;
@@ -73,7 +76,9 @@ export const isSubProcess = (obj: unknown): obj is SubProcess => {
 
 export type Trace = Array<Event>;
 
-export type Traces = { [traceId: string]: Trace };
+export type RoleTrace = Array<{ activity: Label, role: Role }>
+
+export type Traces = { [traceId: string]: RoleTrace };
 
 export interface EventLog {
   events: Set<Event>;
@@ -81,10 +86,14 @@ export interface EventLog {
 }
 
 export interface XMLEvent {
-  string: {
+  string: [{
     "@key": "concept:name";
     "@value": string;
-  };
+  }, {
+    "@key": "role";
+    "@value": string;
+  }];
+
 }
 
 export interface XMLTrace {
@@ -106,10 +115,13 @@ export interface XMLLog {
     "@openxes.version": "1.0RC7";
     global: {
       "@scope": "event";
-      string: {
+      string: [{
         "@key": "concept:name";
         "@value": "__INVALID__";
-      };
+      }, {
+        "@key": "role";
+        "@value": "__INVALID__";
+      }];
     };
     classifier: {
       "@name": "Event Name";

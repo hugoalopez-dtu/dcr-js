@@ -13,13 +13,14 @@ import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
 import { isSettingsVal } from "../types";
 import FileUpload from "../utilComponents/FileUpload";
-import { DCRGraphS, EventLog, Trace } from "dcr-engine/src/types";
+import { DCRGraphS, EventLog, Trace } from "dcr-engine";
 import Button from "../utilComponents/Button";
 
 import { saveAs } from 'file-saver';
-import { parseLog, writeEventLog } from "dcr-engine/src/eventLogs";
-import ResultsView from "../utilComponents/ResultsView";
+import { parseLog, writeEventLog } from "dcr-engine";
+import EventLogView from "./EventLogView";
 import TraceView from "../utilComponents/TraceView";
+import { RoleTrace } from "dcr-engine/src/types";
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -99,11 +100,11 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
     const [menuOpen, setMenuOpen] = useState(false);
-    const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: Trace } | null>({ traceId: "Trace 0", traceName: "Trace 0", trace: [] });
+    const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace } | null>({ traceId: "Trace 0", traceName: "Trace 0", trace: [] });
     const [eventLog, setEventLog] = useState<{
         name: string,
         traces: {
-            [traceId: string]: { traceId: string, traceName: string, trace: Trace }
+            [traceId: string]: { traceId: string, traceName: string, trace: RoleTrace }
         },
     }>({ name: "Unnamed Event Log", traces: {} });
 
@@ -111,7 +112,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     const [wildMode, setWildMode] = useState(false);
 
     const isSimulatingRef = useRef<SimulatingEnum>(SimulatingEnum.Default);
-    const traceRef = useRef<{ traceId: string, trace: Array<string> } | null>({ traceId: "Trace 0", trace: [] });
+    const traceRef = useRef<{ traceId: string, trace: RoleTrace } | null>({ traceId: "Trace 0", trace: [] });
 
     useEffect(() => {
         const lastLog = lastSavedLog.current;
@@ -168,7 +169,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     }
 
     function logExcecutionString(event: any): string {
-        var eventName: String = event.businessObject.description;
+        var eventName: string = event.businessObject.description;
         if (eventName == null || eventName === "") {
             return ("Executed Unnamed event");
         } else {
@@ -177,15 +178,24 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     }
 
     function traceString(event: any): string {
-        var eventName: String = event.businessObject.description;
+        var eventName: string = event.businessObject.description;
         if (eventName == null || eventName === "") {
             eventName = "Unnamed event";
         }
         return (eventName.toString());
     }
 
-    const executeEvent = (eventElement: any, graph: DCRGraphS): { msg: string, executedEvent: string } => {
+    function roleString(event: any): string {
+        var eventRole: string = event.businessObject.role;
+        if (eventRole == null || eventRole === "") {
+            eventRole = "";
+        }
+        return (eventRole.toString());
+    }
+
+    const executeEvent = (eventElement: any, graph: DCRGraphS): { msg: string, executedEvent: string, role: string } => {
         const event: Event = eventElement.id;
+        console.log(eventElement);
         let eventName: String = eventElement.businessObject?.description;
         if (eventName == null || eventName === "") {
             eventName = "Unnamed event";
@@ -196,11 +206,11 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
 
         const enabledResponse = isEnabledS(event, graph, group);
         if (isSimulatingRef.current !== SimulatingEnum.Wild && !enabledResponse.enabled) {
-            return { msg: enabledResponse.msg, executedEvent: "" };
+            return { msg: enabledResponse.msg, executedEvent: "", role: "" };
         }
         console.log("executing: ", event);
         executeS(event, graph);
-        return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement) };
+        return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement), role: roleString(eventElement) };
     }
 
     const eventClick = (event: any) => {
@@ -214,7 +224,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         const response = executeEvent(event.element, graphRef.current.current);
 
         if (response.executedEvent !== "") {
-            traceRef.current.trace.push(response.executedEvent);
+            traceRef.current.trace.push({ activity: response.executedEvent, role: response.role });
             setSelectedTrace({ traceId: traceRef.current.traceId, traceName, trace: [...traceRef.current.trace] });
         } else {
             toast.warn(response.msg);
@@ -359,9 +369,9 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         <>
             {isSimulatingRef.current === SimulatingEnum.Not ? <GreyOut /> : null}
             <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, overrideOnclick: eventClick, canvasClassName: "simulating" }} />
-            {isSimulatingRef.current === SimulatingEnum.Not && <ResultsView 
-                eventLog={eventLog} 
-                selectedTrace={selectedTrace} 
+            {isSimulatingRef.current === SimulatingEnum.Not && <EventLogView
+                eventLog={eventLog}
+                selectedTrace={selectedTrace}
                 setSelectedTrace={setSelectedTrace}
                 traceRef={traceRef}
                 editProps={{
@@ -385,13 +395,13 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                 <Button disabled={isSimulatingRef.current !== SimulatingEnum.Not} onClick={saveEventLog}>
                     Export log
                 </Button>
-            </ResultsView>}
-            {selectedTrace && <TraceView 
-                hugLeft={isSimulatingRef.current !== SimulatingEnum.Not} 
-                graphRef={graphRef} 
-                onCloseCallback={closeTraceCallback} 
-                selectedTrace={selectedTrace} 
-                setSelectedTrace={setSelectedTrace} 
+            </EventLogView>}
+            {selectedTrace && <TraceView
+                hugLeft={isSimulatingRef.current !== SimulatingEnum.Not}
+                graphRef={graphRef}
+                onCloseCallback={closeTraceCallback}
+                selectedTrace={selectedTrace}
+                setSelectedTrace={setSelectedTrace}
                 editProps={{
                     traceName,
                     setTraceName,

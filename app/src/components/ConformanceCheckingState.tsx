@@ -13,9 +13,10 @@ import { copyMarking, moddleToDCR, parseLog } from "dcr-engine";
 import { toast } from "react-toastify";
 import FileUpload from "../utilComponents/FileUpload";
 import { Trace } from "dcr-engine";
-import { replayTraceS } from "dcr-engine/src/conformance";
-import { DCRGraphS } from "dcr-engine/src/types";
+import { replayTraceS } from "dcr-engine";
+import { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
+import { RoleTrace } from "dcr-engine/src/types";
 
 const StyledFileUpload = styled.div`
   width: 100%;
@@ -113,7 +114,7 @@ const CloseResults = styled(BiX)`
 type LogResults = Array<{
   traceId: string,
   isPositive?: boolean,
-  trace: Trace
+  trace: RoleTrace
 }>
 
 const ResultCount = styled.div`
@@ -149,7 +150,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   const [logResults, setLogResults] = useState<LogResults>([]);
   const [logName, setLogName] = useState<string>("");
-  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: Trace } | null>(null);
+  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace } | null>(null);
 
   const { positiveCount, negativeCount } = useMemo<{ positiveCount: number, negativeCount: number }>(() => {
     let positiveCount = 0;
@@ -220,7 +221,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         return ({
           icon: <BiLeftArrowCircle />,
           text: name,
-          onClick: () => { 
+          onClick: () => {
             const log = savedLogs[name];
             console.log(log);
             const results = Object.keys(log.traces).map(traceId => {
@@ -233,8 +234,9 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
               }
             });
             setLogName(name);
-            setLogResults(results); 
-            setMenuOpen(false); },
+            setLogResults(results);
+            setMenuOpen(false);
+          },
         })
       })
     }] : [];
@@ -271,7 +273,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             <>Upload Log</>
           </FileUpload>
         </StyledFileUpload>),
-    }, 
+    },
     ...savedGraphElements(),
     ...savedLogElements(),
   ];
@@ -311,7 +313,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       }
     });
     lastLog && setLogName(lastLog);
-    setLogResults(results); 
+    setLogResults(results);
   } : undefined;
 
   return (
@@ -330,9 +332,9 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         </ResultsHeader>
         <ul>
           {logResults.map(({ traceId, trace, isPositive }) => (
-            <ResultsElement 
-              $selected={selectedTrace !== null && selectedTrace.traceId === traceId} 
-              key={traceId} 
+            <ResultsElement
+              $selected={selectedTrace !== null && selectedTrace.traceId === traceId}
+              key={traceId}
               onClick={() => setSelectedTrace({ trace, traceName: traceId, traceId })}
             >
               <Label>{traceId}</Label>

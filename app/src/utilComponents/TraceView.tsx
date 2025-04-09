@@ -1,10 +1,11 @@
 import { Trace } from "dcr-engine";
-import { replayTraceS } from "dcr-engine/src/conformance";
-import { DCRGraphS } from "dcr-engine/src/types";
+import { replayTraceS } from "dcr-engine";
+import { DCRGraphS } from "dcr-engine";
 import { useMemo } from "react";
 import { BiCheck, BiQuestionMark, BiReset, BiX } from "react-icons/bi";
 import styled from "styled-components";
 import { Children } from "../types";
+import { RoleTrace } from "dcr-engine/src/types";
 
 const TraceWindow = styled.div<{ $hugLeft: boolean; }>`
     position: fixed;
@@ -127,19 +128,19 @@ interface TraceViewProps {
     editProps?: {
         traceName: string;
         setTraceName: (val: string) => void,
-        traceRef: React.RefObject<{trace: Trace, traceId: string} | null>;
+        traceRef: React.RefObject<{ trace: RoleTrace, traceId: string } | null>;
         reset?: () => void,
     };
-    selectedTrace: { traceId: string, traceName: string, trace: Trace };
-    setSelectedTrace: (arg: { trace: Trace, traceName: string, traceId: string } | null) => void,
+    selectedTrace: { traceId: string, traceName: string, trace: RoleTrace };
+    setSelectedTrace: (arg: { trace: RoleTrace, traceName: string, traceId: string } | null) => void,
     graphRef: React.RefObject<{ initial: DCRGraphS, current: DCRGraphS } | null>;
-    
+
     onCloseCallback?: () => void;
     children?: Children;
 }
 
-const TraceView = ({children, hugLeft, editProps, selectedTrace, setSelectedTrace, graphRef, onCloseCallback}: TraceViewProps) => {
-    
+const TraceView = ({ children, hugLeft, editProps, selectedTrace, setSelectedTrace, graphRef, onCloseCallback }: TraceViewProps) => {
+
     const traceIsAccepting = useMemo<boolean | undefined>(() => {
         if (graphRef.current === null || selectedTrace === null) return undefined;
         return replayTraceS(graphRef.current?.initial, selectedTrace?.trace);
@@ -147,27 +148,27 @@ const TraceView = ({children, hugLeft, editProps, selectedTrace, setSelectedTrac
 
     return (
         <TraceWindow $hugLeft={!!hugLeft}>
-                <ResultsHeader>
-                    {editProps ? <TraceNameInput value={editProps.traceName} onChange={(e) => editProps.setTraceName(e.target.value)} /> : selectedTrace.traceName}
-                    {resultIcon(traceIsAccepting)}
-                    {editProps?.reset && <ResetTrace onClick={() => {
-                        if (!editProps.traceRef.current) return;
+            <ResultsHeader>
+                {editProps ? <TraceNameInput value={editProps.traceName} onChange={(e) => editProps.setTraceName(e.target.value)} /> : selectedTrace.traceName}
+                {resultIcon(traceIsAccepting)}
+                {editProps?.reset && <ResetTrace onClick={() => {
+                    if (!editProps.traceRef.current) return;
 
-                        const traceId = editProps.traceRef.current.traceId;
-                        setSelectedTrace({ traceId: "Trace " + traceId, traceName: editProps.traceName, trace: [] });
-                        editProps.traceRef.current = { traceId, trace: [] };
-                        editProps.reset && editProps.reset();
-                    }} />}
-                    <CloseTrace onClick={() => {
-                        onCloseCallback && onCloseCallback();
-                        setSelectedTrace(null);
-                    }} />
-                </ResultsHeader>
-                <ul>
-                    {selectedTrace.trace.map((activity, idx) => <Activity key={activity + idx}>{activity}</Activity>)}
-                </ul>
-                {children}
-            </TraceWindow>
+                    const traceId = editProps.traceRef.current.traceId;
+                    setSelectedTrace({ traceId: "Trace " + traceId, traceName: editProps.traceName, trace: [] });
+                    editProps.traceRef.current = { traceId, trace: [] };
+                    editProps.reset && editProps.reset();
+                }} />}
+                <CloseTrace onClick={() => {
+                    onCloseCallback && onCloseCallback();
+                    setSelectedTrace(null);
+                }} />
+            </ResultsHeader>
+            <ul>
+                {selectedTrace.trace.map((event, idx) => <Activity key={event.activity + event.role + idx}>{event.role !== "" ? event.role + ": " + event.activity : event.activity}</Activity>)}
+            </ul>
+            {children}
+        </TraceWindow>
     )
 }
 

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import DCRModeler from "modeler";
 import emptyBoardXML from "../resources/emptyBoard";
 import { copyMarking, DCRGraph, moddleToDCR } from "dcr-engine";
-import { DCRGraphS } from "dcr-engine/src/types";
+import { DCRGraphS } from "dcr-engine";
 
 interface ModelerProps {
     modelerRef: React.RefObject<DCRModeler | null>,

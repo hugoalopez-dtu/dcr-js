@@ -63,17 +63,6 @@ export const isEnabled = (event: Event, graph: DCRGraph): boolean => {
   return true;
 };
 
-const bubblePending = (group: SubProcess, graph: DCRGraphS) => {
-  let pending = copySet(graph.marking.pending).intersect(graph.marking.included);
-  if (pending.intersect(group.events).size > 0) {
-    graph.marking.pending.add(group.id);
-    if (isSubProcess(group.parent)) {
-      bubblePending(group.parent, graph);
-    }
-  }
-}
-
-
 // Mutates graph's marking
 export const executeS = (event: Event, graph: DCRGraphS) => {
   graph.marking.executed.add(event);

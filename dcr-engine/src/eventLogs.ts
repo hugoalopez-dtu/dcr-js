@@ -1,5 +1,5 @@
 import parser, { j2xParser } from "fast-xml-parser";
-import { EventLog, Event, Trace, XMLLog, XMLEvent } from "./types";
+import { EventLog, Event, Trace, XMLLog, XMLEvent, RoleTrace } from "./types";
 
 export const parserOptions = {
   attributeNamePrefix: "",
@@ -27,82 +27,6 @@ const writingOptions = {
   arrayMode: false,
   indentBy: "  ",
   supressEmptyNode: true,
-};
-
-export const parseLogPDC2023 = (
-  data: string,
-  classifierName: string = "Event Name",
-): EventLog => {
-  const logJson = parser.parse(data.toString(), parserOptions);
-  const log: EventLog = {
-    events: new Set<Event>(),
-    traces: {},
-  };
-
-  let keys = "";
-  for (const i in logJson.log[0].classifier) {
-    if (logJson.log[0].classifier[i].attr.name === classifierName) {
-      keys = logJson.log[0].classifier[i].attr.keys;
-    }
-  }
-  if (keys === "") keys = "concept:name";
-  // Extract classifiers to array according to https://xes-standard.org/_media/xes/xesstandarddefinition-2.0.pdf
-  // Example: "x y 'z w' hello" => ["hello", "x", "y", "z w"]
-  const classifiers = (keys + " ") // Fix for case where
-    .split("'") // Split based on ' to discern which classifiers have spaces
-    .map((newKeys) => {
-      // Only the classifiers surrounded by ' will have no spaces on either side, split the rest on space
-      if (newKeys.startsWith(" ") || newKeys.endsWith(" ")) {
-        return newKeys.split(" ");
-      } else return newKeys;
-    })
-    .flat() // Flatten to 1d array
-    .filter((key) => key !== "") // Remove empty strings
-    .sort(); // Sort to ensure arbitrary but deterministic order
-
-  for (const i in logJson.log[0].trace) {
-    const trace: Trace = [];
-    let traceId: string = "";
-    const xmlTrace = logJson.log[0].trace[i];
-    for (const elem of xmlTrace.string) {
-      if (elem.attr.key === "concept:name") {
-        traceId = elem.attr.value;
-      }
-    }
-    if (traceId === "") {
-      throw new Error("No trace id found!");
-    }
-
-    let isPos;
-    if (xmlTrace.boolean) for (const elem of xmlTrace.boolean) {
-      if (elem.attr.key === "pdc:isPos") {
-        isPos = elem.attr.value;
-      }
-    }
-    if (isPos === "false" || isPos === false) continue;
-
-    const events = xmlTrace.event ? xmlTrace.event : [];
-    for (const elem of events) {
-      let nameArr = [];
-      for (const clas of classifiers) {
-        try {
-          const event = elem.string.find(
-            (newElem: any) => newElem.attr.key === clas,
-          );
-          nameArr.push(event.attr.value);
-        } catch {
-          throw new Error(
-            "Couldn't discern Events with classifiers: " + classifiers,
-          );
-        }
-      }
-      const name = nameArr.join(":");
-      trace.push(name);
-      log.events.add(name);
-    }
-    log.traces[traceId] = trace;
-  }
-  return log;
 };
 
 // Parse .xes file to an EventLog
@@ -139,7 +63,7 @@ export const parseLog = (
 
   let id = 0;
   for (const i in logJson.log[0].trace) {
-    const trace: Trace = [];
+    const trace: RoleTrace = [];
     let traceId: string = "";
     const xmlTrace = logJson.log[0].trace[i];
     try {
@@ -157,6 +81,12 @@ export const parseLog = (
     const events = xmlTrace.event ? xmlTrace.event : [];
     for (const elem of events) {
       let nameArr = [];
+      let role: string = "";
+      for (const attr of elem.string) {
+        if (attr.attr.key === "role") {
+          role = attr.attr.value;
+        }
+      }
       for (const clas of classifiers) {
         try {
           const event = elem.string.find(
@@ -170,7 +100,7 @@ export const parseLog = (
         }
       }
       const name = nameArr.join(":");
-      trace.push(name);
+      trace.push({ activity: name, role });
       log.events.add(name);
     }
     log.traces[traceId] = trace;
@@ -187,10 +117,13 @@ export const writeEventLog = (log: EventLog): string => {
       "@openxes.version": "1.0RC7",
       global: {
         "@scope": "event",
-        string: {
+        string: [{
           "@key": "concept:name",
           "@value": "__INVALID__",
-        },
+        }, {
+          "@key": "role",
+          "@value": "__INVALID__",
+        }],
       },
       classifier: {
         "@name": "Event Name",
@@ -211,10 +144,13 @@ export const writeEventLog = (log: EventLog): string => {
     };
     for (const event of trace) {
       const eventElem: XMLEvent = {
-        string: {
+        string: [{
           "@key": "concept:name",
-          "@value": event,
-        },
+          "@value": event.activity,
+        }, {
+          "@key": "role",
+          "@value": event.role,
+        }],
       };
       traceElem.event.push(eventElem);
     }

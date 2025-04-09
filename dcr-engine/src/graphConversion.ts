@@ -109,10 +109,14 @@ const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: S
     elements.forEach((element: any) => {
         // Add event to subprocess
         const label = element.businessObject.get('description');
+        let role = element.businessObject.get('role');
+        if (!role) role = "";
         parent.events.add(element.id);
         graph.labels.add(label);
         graph.labelMap[element.id] = label;
         if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
+        graph.roles.add(role);
+        graph.roleMap[element.id] = role;
         graph.labelMapInv[label].add(element.id);
         if (isSubProcess(parent)) graph.subProcessMap[element.id] = parent;
 
@@ -176,6 +180,8 @@ const emptyGraph = (): DCRGraphS => {
         labels: new Set(),
         labelMap: {},
         labelMapInv: {},
+        roles: new Set(),
+        roleMap: {},
         subProcesses: {},
         subProcessMap: {},
         conditionsFor: {},
