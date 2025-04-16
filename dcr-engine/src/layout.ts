@@ -36,39 +36,39 @@ const createXML = (laidOutGraph: any, nodesAndEdges: AbstractGraph) => {
 
     var id = 0
     nodesAndEdges.edges.forEach((edge) => {
-        xmlContent += ` <dcr:relation id="relation_${id++}" type="${edge.type}" sourceRef="${edge.source}" targetRef="${edge.target}"/>\n`;
+        xmlContent += ` <dcr:relation id="Relation_${id++}" type="${edge.type}" sourceRef="${edge.source}" targetRef="${edge.target}"/>\n`;
     })
 
     xmlContent += ' </dcr:dcrGraph>\n';
     xmlContent += ' <dcrDi:dcrRootBoard id="RootBoard">\n';
     xmlContent += ' <dcrDi:dcrPlane id="Plane" boardElement="Graph">\n';
 
+    laidOutGraph.children.forEach((node: any) => {
+        xmlContent += `<dcrDi:dcrShape id="${node.id}_di" boardElement="${node.id}">\n`;
+        xmlContent += ` <dc:Bounds x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}"/>\n`;
+        xmlContent += ' </dcrDi:dcrShape>\n';
+    })
+
     id = 0;
     laidOutGraph.edges.forEach((edge: any) => {
         if (edge.sections) {
-            xmlContent += `<dcrDi:relation id="Relation_${id}_di" boardElement="Relation_${id}">\n`;
-            xmlContent += ` < dcrDi:waypoint x = "${edge.sections[0].startPoint.x}" y = "${edge.sections[0].startPoint.y}" />\n`;
+            xmlContent += `<dcrDi:relation id="Relation_${id++}_di" boardElement="Relation_${id}">\n`;
+            xmlContent += ` <dcrDi:waypoint x="${edge.sections[0].startPoint.x}" y="${edge.sections[0].startPoint.y}" />\n`;
 
             edge.sections[0].bendPoints?.forEach((bendPoint: any) => {
-                xmlContent += ` < dcrDi:waypoint x = "${bendPoint.x}" y = "${bendPoint.y}" />\n`;
+                xmlContent += ` <dcrDi:waypoint x="${bendPoint.x}" y="${bendPoint.y}" />\n`;
             })
 
-            xmlContent += ` < dcrDi:waypoint x = "${edge.sections[0].endPoint.x}" y = "${edge.sections[0].endPoint.y}" />\n`;
+            xmlContent += ` <dcrDi:waypoint x="${edge.sections[0].endPoint.x}" y="${edge.sections[0].endPoint.y}" />\n`;
             xmlContent += ' </dcrDi:relation>\n';
         }
 
         //for self referencing nodes when using layouts without bendpoints
         else {
-            xmlContent += `<dcrDi:relation id="Relation_${id}_di" boardElement="Relation_${id}">\n`;
-            xmlContent += ` < dcrDi:waypoint x = "${NaN}" y = "${NaN}" />\n`;
+            xmlContent += `<dcrDi:relation id="Relation_${id++}_di" boardElement="Relation_${id}">\n`;
+            xmlContent += ` <dcrDi:waypoint x="${NaN}" y="${NaN}" />\n`;
             xmlContent += ' </dcrDi:relation>\n';
         }
-    })
-
-    laidOutGraph.children.forEach((node: any) => {
-        xmlContent += `< dcrDi:dcrShape id = "${node.id}_di" boardElement = "${node.id}"/>\n`;
-        xmlContent += ` <dc:Bounds x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}"/>\n`;
-        xmlContent += ' </dcrDi:dcrShape>\n';
     })
 
     xmlContent += ' </dcrDi:dcrPlane>\n';

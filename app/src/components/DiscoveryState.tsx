@@ -27,10 +27,17 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
         try {
             if (!modelerRef) return;
             const log = parseLog(data);
-            const logAbs = abstractLog(log);
+            const noRoleLog = {
+                events: log.events,
+                traces: Object.keys(log.traces).map(traceId => ({ traceId, trace: log.traces[traceId].map(elem => elem.activity) })).reduce((acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }), {})
+            }
+            const logAbs = abstractLog(noRoleLog);
             const graph = mineFromAbstraction(logAbs);
             layoutGraph(graph).then(xml => {
-                modelerRef.current?.importXML(xml);
+                modelerRef.current?.importXML(xml).catch(e => {
+                    console.log(e);
+                    toast.error("Invalid xml...")
+                });
             }).catch(e => {
                 console.log(e);
                 toast.error("Unable to layout graph...")

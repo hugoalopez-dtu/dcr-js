@@ -316,7 +316,6 @@ const mineFromAbstraction = (
                 initiallyPending.intersect(localInitiallyPending);
             }
 
-            //console.log(initiallyPending);
             graph.marking.pending = initiallyPending;
         }
 

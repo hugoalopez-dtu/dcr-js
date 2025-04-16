@@ -99,7 +99,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         const newSavedLogs = { ...savedLogs };
         newSavedLogs[eventLog.name] = { traces: Object.values(eventLog.traces).reduce((acc, { traceName, trace }) => ({ ...acc, [traceName]: trace }), {}), events: graphRef.current?.current.events };
         setSavedLogs(newSavedLogs);
-        console.log(newSavedLogs);
         lastSavedLog.current = eventLog.name;
         toast.success("Log saved!");
     }
@@ -108,7 +107,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         if (Object.keys(eventLog.traces).length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
             const el = { name, traces: Object.keys(log.traces).map(traceName => ({ traceName, traceId: traceName, trace: log.traces[traceName] })).reduce((acc, cum) => ({ ...acc, [cum.traceId]: cum }), {}) };
             setEventLog(el);
-            console.log(el, log);
             isSimulatingRef.current = SimulatingEnum.Not;
             traceRef.current = { traceId: "Trace 0", trace: [] };
             setSelectedTrace(null);
@@ -165,7 +163,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
 
     const executeEvent = (eventElement: any, graph: DCRGraphS): { msg: string, executedEvent: string, role: string } => {
         const event: Event = eventElement.id;
-        console.log(eventElement);
         let eventName: String = eventElement.businessObject?.description;
         if (eventName == null || eventName === "") {
             eventName = "Unnamed event";
@@ -178,7 +175,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         if (isSimulatingRef.current !== SimulatingEnum.Wild && !enabledResponse.enabled) {
             return { msg: enabledResponse.msg, executedEvent: "", role: "" };
         }
-        console.log("executing: ", event);
         executeS(event, graph);
         return { msg: logExcecutionString(eventElement), executedEvent: traceString(eventElement), role: roleString(eventElement) };
     }
@@ -227,7 +223,6 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         if (!selectedTrace) return;
         if (isSimulatingRef.current !== SimulatingEnum.Not) {
             const eventLogCopy = { ...eventLog, traces: { ...eventLog.traces } };
-            console.log(eventLog, selectedTrace);
             delete eventLogCopy.traces[selectedTrace.traceId];
             setEventLog(eventLogCopy);
         } else if (traceRef.current) {

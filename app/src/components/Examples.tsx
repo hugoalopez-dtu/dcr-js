@@ -44,7 +44,6 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML, se
 
     const exampleClick = (exampleStr: string) => {
         if (confirm("Are you sure? This will override your current diagram!")) {
-            console.log(document.body.style.cursor);
             setLoading(true);
 
             fetch('examples/diagrams/' + exampleStr + '.xml')

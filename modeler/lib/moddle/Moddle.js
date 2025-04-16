@@ -78,7 +78,6 @@ DCRModdle.prototype.fromXML = function (xmlStr, typeName, options) {
  */
 DCRModdle.prototype.toXML = function (element, options) {
 
-  console.log(element);
   var writer = new Writer(options);
 
   return new Promise(function (resolve, reject) {

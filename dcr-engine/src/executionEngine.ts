@@ -106,7 +106,7 @@ const formatEmpty = (label: string, title: string): string => {
   return label === "" ? `Unnamed ${title}` : label;
 }
 
-export const isEnabledS = (event: Event, graph: DCRGraph, group: SubProcess | DCRGraph): { enabled: boolean, msg: string } => {
+export const isEnabledS = (event: Event, graph: DCRGraphS, group: SubProcess | DCRGraph): { enabled: boolean, msg: string } => {
   if (!graph.marking.included.has(event)) {
     return { enabled: false, msg: `${formatEmpty(graph.labelMap[event], "Subprocess")} is not included...` };
   }

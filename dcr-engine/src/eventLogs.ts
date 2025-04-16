@@ -33,9 +33,9 @@ const writingOptions = {
 export const parseLog = (
   data: string,
   classifierName: string = "Event Name",
-): EventLog => {
+): EventLog<RoleTrace> => {
   const logJson = parser.parse(data.toString(), parserOptions);
-  const log: EventLog = {
+  const log: EventLog<RoleTrace> = {
     events: new Set<Event>(),
     traces: {},
   };
@@ -108,7 +108,7 @@ export const parseLog = (
   return log;
 };
 
-export const writeEventLog = (log: EventLog): string => {
+export const writeEventLog = (log: EventLog<RoleTrace>): string => {
   // Setting log metadata
   const xmlLog: XMLLog = {
     log: {
