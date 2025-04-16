@@ -5,7 +5,7 @@ import TopRightIcons from "../utilComponents/TopRightIcons";
 import { BiHome, BiLeftArrowCircle, BiMeteor, BiUpload } from "react-icons/bi";
 import Modeler from "./Modeler";
 
-import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS } from "dcr-engine";
+import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS, Trace, RoleTrace } from "dcr-engine";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";
@@ -13,46 +13,16 @@ import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
 import { isSettingsVal } from "../types";
 import FileUpload from "../utilComponents/FileUpload";
-import { DCRGraphS, EventLog, Trace } from "dcr-engine";
+import { DCRGraphS, EventLog } from "dcr-engine";
 import Button from "../utilComponents/Button";
 
 import { saveAs } from 'file-saver';
 import { parseLog, writeEventLog } from "dcr-engine";
 import EventLogView from "./EventLogView";
 import TraceView from "../utilComponents/TraceView";
-import { RoleTrace } from "dcr-engine/src/types";
-
-const StyledFileUpload = styled.div`
-  width: 100%;
-  & > label > svg {
-    font-size: 25px;
-  }
-  & > label {
-    padding: 1rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    cursor: pointer;
-  }
-  &:hover {
-      color: white;
-      background-color: Gainsboro;
-  } 
-`
-
-const MenuElement = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  padding: 1rem;
-  cursor: default;
-`
-
-const Label = styled.label`
-  margin-top: auto;
-  margin-bottom: auto;
-`
+import StyledFileUpload from "../utilComponents/StyledFileUpload";
+import MenuElement from "../utilComponents/MenuElement";
+import Label from "../utilComponents/Label";
 
 const GreyOut = styled.div`
     position: fixed;
@@ -134,7 +104,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
         toast.success("Log saved!");
     }
 
-    const openLog = (name: string, log: EventLog) => {
+    const openLog = (name: string, log: EventLog<RoleTrace>) => {
         if (Object.keys(eventLog.traces).length === 0 || confirm("This will override your current event log! Do you wish to continue?")) {
             const el = { name, traces: Object.keys(log.traces).map(traceName => ({ traceName, traceId: traceName, trace: log.traces[traceName] })).reduce((acc, cum) => ({ ...acc, [cum.traceId]: cum }), {}) };
             setEventLog(el);
@@ -241,7 +211,7 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
 
     const saveEventLog = () => {
         if (!modelerRef.current || !graphRef.current) return;
-        const logToExport: EventLog = {
+        const logToExport: EventLog<RoleTrace> = {
             events: graphRef.current?.initial.events,
             traces: {}
         }

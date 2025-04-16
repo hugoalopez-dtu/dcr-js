@@ -12,43 +12,13 @@ import { isSettingsVal } from "../types";
 import { copyMarking, moddleToDCR, parseLog } from "dcr-engine";
 import { toast } from "react-toastify";
 import FileUpload from "../utilComponents/FileUpload";
-import { Trace } from "dcr-engine";
 import { replayTraceS } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
 import { RoleTrace } from "dcr-engine/src/types";
-
-const StyledFileUpload = styled.div`
-  width: 100%;
-  & > label > svg {
-    font-size: 25px;
-  }
-  & > label {
-    padding: 1rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    cursor: pointer;
-  }
-  &:hover {
-      color: white;
-      background-color: Gainsboro;
-  } 
-`
-
-const MenuElement = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  padding: 1rem;
-  cursor: default;
-`
-
-const Label = styled.label`
-  margin-top: auto;
-  margin-bottom: auto;
-`
+import StyledFileUpload from "../utilComponents/StyledFileUpload";
+import MenuElement from "../utilComponents/MenuElement";
+import Label from "../utilComponents/Label";
 
 const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
     position: fixed;

@@ -18,6 +18,8 @@ export type Event = string;
 export type Label = string;
 export type Role = string;
 
+export type RelationType = "condition" | "response" | "include" | "exclude" | "milestone";
+
 export interface Marking {
   executed: Set<Event>;
   included: Set<Event>;
@@ -32,9 +34,6 @@ export interface EventMap {
 
 export interface DCRGraph {
   events: Set<Event>;
-  labels: Set<Label>;
-  labelMap: { [event: Event]: Label };
-  labelMapInv: { [label: Label]: Set<Event> };
   conditionsFor: EventMap;
   milestonesFor: EventMap;
   responseTo: EventMap;
@@ -75,14 +74,13 @@ export const isSubProcess = (obj: unknown): obj is SubProcess => {
 }
 
 export type Trace = Array<Event>;
-
 export type RoleTrace = Array<{ activity: Label, role: Role }>
 
-export type Traces = { [traceId: string]: RoleTrace };
-
-export interface EventLog {
+export interface EventLog<T extends RoleTrace | Trace> {
   events: Set<Event>;
-  traces: Traces;
+  traces: {
+    [traceId: string]: T;
+  }
 }
 
 export interface XMLEvent {

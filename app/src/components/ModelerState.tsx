@@ -20,38 +20,9 @@ import DropDown from '../utilComponents/DropDown';
 import { isSettingsVal } from '../types';
 import { useHotkeys } from 'react-hotkeys-hook';
 import FullScreenIcon from '../utilComponents/FullScreenIcon';
-
-const StyledFileUpload = styled.div`
-  width: 100%;
-  & > label > svg {
-    font-size: 25px;
-  }
-  & > label {
-    padding: 1rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    cursor: pointer;
-  }
-  &:hover {
-      color: white;
-      background-color: Gainsboro;
-  } 
-`
-
-const MenuElement = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  padding: 1rem;
-  cursor: default;
-`
-
-const Label = styled.label`
-  margin-top: auto;
-  margin-bottom: auto;
-`
+import StyledFileUpload from '../utilComponents/StyledFileUpload';
+import MenuElement from '../utilComponents/MenuElement';
+import Label from '../utilComponents/Label';
 
 const Loading = styled.div`
     z-index: 1000;

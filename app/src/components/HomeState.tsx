@@ -41,16 +41,20 @@ const HomeState = ({ setState }: StateProps) => {
             <Header>DCR-JS</Header>
             <FlexBox direction="row" $justify="space-around">
                 <ImgContainer onClick={() => setState(StateEnum.Modeler)}>
-                    <ImgLabel><br/>Modeling</ImgLabel>
-                    <Img src="icons/modeling.svg" />
+                    <ImgLabel><br />Modeling</ImgLabel>
+                    <Img src="/dcr-js/icons/modeling.svg" />
                 </ImgContainer>
                 <ImgContainer onClick={() => setState(StateEnum.Simulator)}>
-                    <ImgLabel><br/>Simulation</ImgLabel>
-                    <Img src="icons/simulation.svg" />
+                    <ImgLabel><br />Simulation</ImgLabel>
+                    <Img src="/dcr-js/icons/simulation.svg" />
                 </ImgContainer>
                 <ImgContainer onClick={() => setState(StateEnum.Conformance)}>
-                    <ImgLabel>Conformance <br/> Checking</ImgLabel>
-                    <Img src="icons/conformance.svg" />
+                    <ImgLabel><br />Conformance</ImgLabel>
+                    <Img src="/dcr-js/icons/conformance.svg" />
+                </ImgContainer>
+                <ImgContainer onClick={() => setState(StateEnum.Discovery)}>
+                    <ImgLabel><br />Discovery</ImgLabel>
+                    <Img src="/dcr-js/icons/discovery.svg" />
                 </ImgContainer>
             </FlexBox>
         </>
