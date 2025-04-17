@@ -61,3 +61,26 @@ export const fullRelation = (events: Set<Event>): EventMap => {
   }
   return retrel
 }
+
+export const flipEventMap = (em: EventMap): EventMap => {
+  const retval: EventMap = {};
+  for (const event of Object.keys(em)) {
+    retval[event] = new Set();
+  }
+  for (const e1 in em) {
+    for (const e2 of em[e1]) {
+      if (!retval[e2]) retval[e2] = new Set();
+      retval[e2].add(e1);
+    }
+  }
+  return retval;
+}
+
+export const intersect = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
+  const retset = new Set<T>();
+  const { smallestSet, otherSet } = s1.size > s2.size ? { smallestSet: s2, otherSet: s1 } : { smallestSet: s1, otherSet: s2 };
+  for (const elem of smallestSet) {
+    if (otherSet.has(elem)) retset.add(elem);
+  }
+  return retset;
+}

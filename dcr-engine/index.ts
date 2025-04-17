@@ -5,6 +5,7 @@ import { copyMarking } from "./src/utility"
 import { parseLog, writeEventLog } from "./src/eventLogs";
 import { replayTraceS } from "./src/conformance";
 import layoutGraph from "./src/layout";
+import { nestDCR } from "./src/nesting";
 
 import mineFromAbstraction, { abstractLog } from "./src/discovery";
 
@@ -32,5 +33,6 @@ export {
     writeEventLog,
     layoutGraph,
     mineFromAbstraction,
-    abstractLog
+    abstractLog,
+    nestDCR
 }

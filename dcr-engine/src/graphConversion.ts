@@ -7,7 +7,10 @@ import {
 
 import init from './init';
 
-export const moddleToDCR = (elementReg: any): DCRGraphS => {
+let useDescriptionsGlobal = false;
+
+export const moddleToDCR = (elementReg: any, useDescriptions?: boolean): DCRGraphS => {
+    useDescriptionsGlobal = !!useDescriptions;
     const graph = emptyGraph();
 
     // Ensure that set operations have been initialized
@@ -35,8 +38,8 @@ export const moddleToDCR = (elementReg: any): DCRGraphS => {
 
     // Add relations to the graph
     relationElements.forEach((element: any) => {
-        const source: string = element.businessObject.get('sourceRef').id;
-        const target: string = element.businessObject.get('targetRef').id;
+        const source: string = useDescriptionsGlobal ? element.businessObject.get('sourceRef').description : element.businessObject.get('sourceRef').id;
+        const target: string = useDescriptionsGlobal ? element.businessObject.get('targetRef').description : element.businessObject.get('targetRef').id;
         switch (element.businessObject.get('type')) {
             case 'condition':
                 addRelation(graph.conditionsFor, nestingElements, target, source);
@@ -61,8 +64,9 @@ export const moddleToDCR = (elementReg: any): DCRGraphS => {
 
 const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Set<any>) => {
     elements.forEach((element: any) => {
+        const elementId = useDescriptionsGlobal ? element.description : element.id;
         const subProcess: SubProcess = {
-            id: element.id,
+            id: elementId,
             parent: parent,
             events: new Set(),
         }
@@ -83,13 +87,13 @@ const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, eleme
         addNestings(graph, subProcess, nestingElements);
 
         // Add subprocess to parent graph
-        graph.subProcesses[element.id] = subProcess;
+        graph.subProcesses[elementId] = subProcess;
 
         let label = element.businessObject.get('description');
         if (!label) label = "";
-        graph.labelMap[element.id] = label;
+        graph.labelMap[elementId] = label;
         if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
-        graph.labelMapInv[label].add(element.id);
+        graph.labelMapInv[label].add(elementId);
     });
 }
 
@@ -109,43 +113,46 @@ const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: S
     elements.forEach((element: any) => {
         // Add event to subprocess
         const label = element.businessObject.get('description');
+        const eventId = useDescriptionsGlobal ? label : element.id;
         let role = element.businessObject.get('role');
         if (!role) role = "";
-        parent.events.add(element.id);
+        parent.events.add(eventId);
         graph.labels.add(label);
-        graph.labelMap[element.id] = label;
+        graph.labelMap[eventId] = label;
         if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
         graph.roles.add(role);
-        graph.roleMap[element.id] = role;
-        graph.labelMapInv[label].add(element.id);
-        if (isSubProcess(parent)) graph.subProcessMap[element.id] = parent;
+        graph.roleMap[eventId] = role;
+        graph.labelMapInv[label].add(eventId);
+        if (isSubProcess(parent)) graph.subProcessMap[eventId] = parent;
 
         // Add marking for event in graph
         if (element.businessObject.get('pending')) {
-            graph.marking.pending.add(element.id);
+            graph.marking.pending.add(eventId);
         }
         if (element.businessObject.get('executed')) {
-            graph.marking.executed.add(element.id);
+            graph.marking.executed.add(eventId);
         }
         if (element.businessObject.get('included')) {
-            graph.marking.included.add(element.id);
+            graph.marking.included.add(eventId);
         }
 
         // Initialize relations for event in graph 
-        graph.conditionsFor[element.id] = new Set();
-        graph.milestonesFor[element.id] = new Set();
-        graph.responseTo[element.id] = new Set();
-        graph.includesTo[element.id] = new Set();
-        graph.excludesTo[element.id] = new Set();
+        graph.conditionsFor[eventId] = new Set();
+        graph.milestonesFor[eventId] = new Set();
+        graph.responseTo[eventId] = new Set();
+        graph.includesTo[eventId] = new Set();
+        graph.excludesTo[eventId] = new Set();
     });
 }
 
 const addRelation =
     (relationSet: EventMap, nestings: Set<any>, source: string, target: string) => {
         // Handle Nesting groupings by adding relations for all nested elements
+        console.log(source, target);
         if (source.includes('Nesting')) {
             nestings.forEach((element: any) => {
-                if (element.id === source) {
+                const elementId = useDescriptionsGlobal ? element.description : element.id;
+                if (elementId === source) {
                     element.children.forEach((nestedElement: any) => {
                         if (nestedElement.type === 'dcr:SubProcess' ||
                             nestedElement.type === 'dcr:Event' ||
@@ -157,12 +164,14 @@ const addRelation =
             });
         } else if (target.includes('Nesting')) {
             nestings.forEach((element: any) => {
-                if (element.id === target) {
+                const elementId = useDescriptionsGlobal ? element.description : element.id;
+                if (elementId === target) {
                     element.children.forEach((nestedElement: any) => {
+                        const nestedElementId = useDescriptionsGlobal ? nestedElement.description : nestedElement.id;
                         if (nestedElement.type === 'dcr:SubProcess' ||
                             nestedElement.type === 'dcr:Event' ||
                             nestedElement.type === 'dcr:Nesting') {
-                            addRelation(relationSet, nestings, source, nestedElement.id);
+                            addRelation(relationSet, nestings, source, nestedElementId);
                         }
                     });
                 }

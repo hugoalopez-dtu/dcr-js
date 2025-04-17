@@ -3,7 +3,7 @@ import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import { StateEnum, StateProps } from "../App";
-import { abstractLog, DCRGraphS, layoutGraph, mineFromAbstraction, parseLog } from "dcr-engine";
+import { abstractLog, DCRGraphS, layoutGraph, mineFromAbstraction, moddleToDCR, nestDCR, parseLog } from "dcr-engine";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import FileUpload from "../utilComponents/FileUpload";
 import MenuElement from "../utilComponents/MenuElement";
@@ -23,7 +23,7 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
-    const handleLogUpload = async (name: string, data: string) => {
+    const handleLogUpload = async (_: string, data: string) => {
         try {
             if (!modelerRef) return;
             const log = parseLog(data);
@@ -33,7 +33,9 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
             }
             const logAbs = abstractLog(noRoleLog);
             const graph = mineFromAbstraction(logAbs);
-            layoutGraph(graph).then(xml => {
+            const nestings = nestDCR(graph);
+            layoutGraph(nestings.nestedGraph, nestings).then(xml => {
+                console.log(xml);
                 modelerRef.current?.importXML(xml).catch(e => {
                     console.log(e);
                     toast.error("Invalid xml...")
@@ -41,6 +43,33 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
             }).catch(e => {
                 console.log(e);
                 toast.error("Unable to layout graph...")
+            });
+
+        } catch (e) {
+            console.log(e);
+            toast.error("Cannot parse log...");
+        }
+    }
+
+    const handleGraphUpload = async (_: string, data: string) => {
+        try {
+            if (!modelerRef) return;
+            modelerRef.current?.importXML(data).catch(e => {
+                console.log(e);
+                toast.error("Invalid xml...")
+            }).then(() => {
+                const graph = moddleToDCR(modelerRef.current?.getElementRegistry(), true);
+                console.log(graph);
+                const nestings = nestDCR(graph);
+                layoutGraph(nestings.nestedGraph, nestings).then(xml => {
+                    modelerRef.current?.importXML(xml).catch(e => {
+                        console.log(e);
+                        toast.error("Invalid xml...")
+                    });
+                }).catch(e => {
+                    console.log(e);
+                    toast.error("Unable to layout graph...")
+                });
             });
 
         } catch (e) {
@@ -70,6 +99,15 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
                 <FileUpload accept=".xes" fileCallback={(name, contents) => { handleLogUpload(name, contents); setMenuOpen(false); }}>
                     <BiUpload />
                     <>Upload Log</>
+                </FileUpload>
+            </StyledFileUpload>),
+    },
+    {
+        customElement: (
+            <StyledFileUpload>
+                <FileUpload accept=".xml" fileCallback={(name, contents) => { handleGraphUpload(name, contents); setMenuOpen(false); }}>
+                    <BiUpload />
+                    <>Upload Graph</>
                 </FileUpload>
             </StyledFileUpload>),
     },
