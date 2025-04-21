@@ -58,10 +58,10 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
                 console.log(e);
                 toast.error("Invalid xml...")
             }).then(() => {
-                const graph = moddleToDCR(modelerRef.current?.getElementRegistry(), false);
-                console.log(graph);
+                const graph = moddleToDCR(modelerRef.current?.getElementRegistry(), true);
                 const nestings = nestDCR(graph);
                 layoutGraph(nestings.nestedGraph, nestings).then(xml => {
+                    //layoutGraph(graph).then(xml => {
                     modelerRef.current?.importXML(xml).catch(e => {
                         console.log(e);
                         toast.error("Invalid xml...")
@@ -76,21 +76,6 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
             console.log(e);
             toast.error("Cannot parse log...");
         }
-    }
-
-    const savedLogElements = () => {
-        return Object.keys(savedLogs).length > 0 ? [{
-            text: "Saved Logs:",
-            elements: Object.keys(savedLogs).map(name => {
-                return ({
-                    icon: <BiLeftArrowCircle />,
-                    text: name,
-                    onClick: () => {
-                        setMenuOpen(false);
-                    },
-                })
-            })
-        }] : [];
     }
 
     const menuElements: Array<ModalMenuElement> = [{
@@ -111,7 +96,6 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
                 </FileUpload>
             </StyledFileUpload>),
     },
-    ...savedLogElements(),
     ];
 
     const bottomElements: Array<ModalMenuElement> = [

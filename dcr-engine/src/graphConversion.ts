@@ -153,14 +153,12 @@ const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: A
 const addRelation =
     (relationSet: EventMap, nestings: Array<any>, source: string, target: string) => {
         // Handle Nesting groupings by adding relations for all nested elements
-        console.log(source, target);
-        console.log(nestings);
-        if (nestings.find((element) => useDescriptionsGlobal ? element.description : element.id === source)) {
+        if (nestings.find((element) => (useDescriptionsGlobal ? element.businessObject.description : element.businessObject.id) === source)) {
             nestings.forEach((element: any) => {
-                const elementId = useDescriptionsGlobal ? element.description : element.id;
+                const elementId = useDescriptionsGlobal ? element.businessObject.description : element.businessObject.id;
                 if (elementId === source) {
                     element.children.forEach((nestedElement: any) => {
-                        const nestedElementId = useDescriptionsGlobal ? nestedElement.description : nestedElement.id;
+                        const nestedElementId = useDescriptionsGlobal ? nestedElement.businessObject.description : nestedElement.businessObject.id;
                         if (nestedElement.type === 'dcr:SubProcess' ||
                             nestedElement.type === 'dcr:Event' ||
                             nestedElement.type === 'dcr:Nesting') {
@@ -169,12 +167,12 @@ const addRelation =
                     });
                 }
             });
-        } else if (nestings.find((element) => useDescriptionsGlobal ? element.description : element.id === target)) {
+        } else if (nestings.find((element) => (useDescriptionsGlobal ? element.businessObject.description : element.businessObject.id) === target)) {
             nestings.forEach((element: any) => {
-                const elementId = useDescriptionsGlobal ? element.description : element.id;
+                const elementId = useDescriptionsGlobal ? element.businessObject.description : element.businessObject.id;
                 if (elementId === target) {
                     element.children.forEach((nestedElement: any) => {
-                        const nestedElementId = useDescriptionsGlobal ? nestedElement.description : nestedElement.id;
+                        const nestedElementId = useDescriptionsGlobal ? nestedElement.businessObject.description : nestedElement.businessObject.id;
                         if (nestedElement.type === 'dcr:SubProcess' ||
                             nestedElement.type === 'dcr:Event' ||
                             nestedElement.type === 'dcr:Nesting') {
@@ -185,7 +183,6 @@ const addRelation =
             });
         } else {
             // Add direct relation if neither source nor target is a Nesting group
-            console.log(source, target, relationSet)
             relationSet[source].add(target);
         }
     }
