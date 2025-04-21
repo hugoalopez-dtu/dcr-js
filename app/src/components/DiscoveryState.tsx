@@ -58,7 +58,7 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
                 console.log(e);
                 toast.error("Invalid xml...")
             }).then(() => {
-                const graph = moddleToDCR(modelerRef.current?.getElementRegistry(), true);
+                const graph = moddleToDCR(modelerRef.current?.getElementRegistry(), false);
                 console.log(graph);
                 const nestings = nestDCR(graph);
                 layoutGraph(nestings.nestedGraph, nestings).then(xml => {

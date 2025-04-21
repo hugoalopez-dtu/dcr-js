@@ -18,10 +18,15 @@ export const moddleToDCR = (elementReg: any, useDescriptions?: boolean): DCRGrap
 
     const relationElements = elementReg.filter((element: any) => element.type === 'dcr:Relation');
 
+    const recFilter = (element: any, filterFun: (element: any) => boolean): Array<any> => {
+        const retval = []
+        if (filterFun(element)) retval.push(element);
+        return element.children ? retval.concat(element.children.flatMap((element: any) => recFilter(element, filterFun))) : retval;
+    }
     const root = elementReg.get('dcrGraph');
-    const eventElements = root.children.filter((element: any) => element.type === 'dcr:Event');
-    const nestingElements = root.children.filter((element: any) => element.type === 'dcr:Nesting');
-    const subProcessElements = root.children.filter((element: any) => element.type === 'dcr:SubProcess');
+    const eventElements = recFilter(root, (element: any) => element.type === 'dcr:Event');
+    const nestingElements = recFilter(root, (element: any) => element.type === 'dcr:Nesting');
+    const subProcessElements = recFilter(root, (element: any) => element.type === 'dcr:SubProcess');
 
     // Add events to the graph
     addEvents(graph, graph, eventElements);
@@ -62,7 +67,7 @@ export const moddleToDCR = (elementReg: any, useDescriptions?: boolean): DCRGrap
     return graph;
 }
 
-const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Set<any>) => {
+const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Array<any>) => {
     elements.forEach((element: any) => {
         const elementId = useDescriptionsGlobal ? element.description : element.id;
         const subProcess: SubProcess = {
@@ -97,7 +102,7 @@ const addSubProcesses = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, eleme
     });
 }
 
-const addNestings = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Set<any>) => {
+const addNestings = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Array<any>) => {
     elements.forEach((element: any) => {
         const eventElements = element.children.filter((element: any) => element.type === 'dcr:Event');
         const nestingElements = element.children.filter((element: any) => element.type === 'dcr:Nesting');
@@ -109,7 +114,7 @@ const addNestings = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements:
     });
 }
 
-const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Set<any>) => {
+const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: Array<any>) => {
     elements.forEach((element: any) => {
         // Add event to subprocess
         const label = element.businessObject.get('description');
@@ -146,23 +151,25 @@ const addEvents = (graph: DCRGraphS, parent: DCRGraphS | SubProcess, elements: S
 }
 
 const addRelation =
-    (relationSet: EventMap, nestings: Set<any>, source: string, target: string) => {
+    (relationSet: EventMap, nestings: Array<any>, source: string, target: string) => {
         // Handle Nesting groupings by adding relations for all nested elements
         console.log(source, target);
-        if (source.includes('Nesting')) {
+        console.log(nestings);
+        if (nestings.find((element) => useDescriptionsGlobal ? element.description : element.id === source)) {
             nestings.forEach((element: any) => {
                 const elementId = useDescriptionsGlobal ? element.description : element.id;
                 if (elementId === source) {
                     element.children.forEach((nestedElement: any) => {
+                        const nestedElementId = useDescriptionsGlobal ? nestedElement.description : nestedElement.id;
                         if (nestedElement.type === 'dcr:SubProcess' ||
                             nestedElement.type === 'dcr:Event' ||
                             nestedElement.type === 'dcr:Nesting') {
-                            addRelation(relationSet, nestings, nestedElement.id, target);
+                            addRelation(relationSet, nestings, nestedElementId, target);
                         }
                     });
                 }
             });
-        } else if (target.includes('Nesting')) {
+        } else if (nestings.find((element) => useDescriptionsGlobal ? element.description : element.id === target)) {
             nestings.forEach((element: any) => {
                 const elementId = useDescriptionsGlobal ? element.description : element.id;
                 if (elementId === target) {
@@ -178,6 +185,7 @@ const addRelation =
             });
         } else {
             // Add direct relation if neither source nor target is a Nesting group
+            console.log(source, target, relationSet)
             relationSet[source].add(target);
         }
     }
