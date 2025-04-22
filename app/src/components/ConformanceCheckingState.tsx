@@ -288,7 +288,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   return (
     <>
-      <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
+      <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
       {logResults.length > 0 && <ResultsWindow $traceSelected={selectedTrace !== null}>
         <ResultsHeader>
           {logName}
