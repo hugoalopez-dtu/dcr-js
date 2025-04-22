@@ -5,7 +5,7 @@ import TopRightIcons from "../utilComponents/TopRightIcons";
 import { BiHome, BiLeftArrowCircle, BiMeteor, BiUpload } from "react-icons/bi";
 import Modeler from "./Modeler";
 
-import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS, Trace, RoleTrace } from "dcr-engine";
+import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS, RoleTrace } from "dcr-engine";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";

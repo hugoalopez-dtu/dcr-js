@@ -29,7 +29,6 @@ type LayoutType = Omit<ElkNode, "children"> & {
 };
 
 
-
 const createNodeArrayXML = (nodes: Array<AbstractNode>, nestings: Nestings): string => {
     let retval = "";
     nodes.forEach((node) => {
@@ -44,21 +43,10 @@ const createNodeArrayXML = (nodes: Array<AbstractNode>, nestings: Nestings): str
     return retval;
 }
 
-const createElkNodeArrayXML = (nodes: Array<ElkNode>): string => {
-    let retval = "";
-    nodes.forEach((node) => {
-        retval += `<dcrDi:dcrShape id="${node.id}_di" boardElement="${node.id}">\n`;
-        retval += ` <dc:Bounds x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}"/>\n`;
-        retval += ' </dcrDi:dcrShape>\n';
-        if (node.children) retval += createElkNodeArrayXML(node.children);
-    })
-    return retval;
-}
-
 const createXML = (laidOutGraph: LayoutType, nodesAndEdges: AbstractGraph, nestings?: Nestings) => {
     var xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xmlContent += '<dcr:definitions xmlns:dcr="http://tk/schema/dcr" xmlns:dcrDi="http://tk/schema/dcrDi" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC">\n';
-    xmlContent += ' <dcr:dcrGraph id="Graph">\n';
+    xmlContent += ' <dcr:dcrGraph id="dcrGraph">\n';
 
     if (nestings) {
         xmlContent += createNodeArrayXML(nodesAndEdges.nodes, nestings);
@@ -70,32 +58,63 @@ const createXML = (laidOutGraph: LayoutType, nodesAndEdges: AbstractGraph, nesti
 
     var id = 0
     nodesAndEdges.edges.forEach((edge) => {
-        xmlContent += ` <dcr:relation id="Relation_${id++}" type="${edge.type}" sourceRef="${edge.source}" targetRef="${edge.target}"/>\n`;
+        xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${edge.source}" targetRef="${edge.target}"/>\n`;
     })
 
     xmlContent += ' </dcr:dcrGraph>\n';
     xmlContent += ' <dcrDi:dcrRootBoard id="RootBoard">\n';
-    xmlContent += ' <dcrDi:dcrPlane id="Plane" boardElement="Graph">\n';
+    xmlContent += ' <dcrDi:dcrPlane id="Plane" boardElement="dcrGraph">\n';
 
-    if (laidOutGraph.children) xmlContent += createElkNodeArrayXML(laidOutGraph.children);
+    const parentCoordinates: { [nodeId: string]: { parent: string, parentX: number, parentY: number } } = {};
+
+    const createElkNodeArrayXML = (nodes: Array<ElkNode>, x: number, y: number, parent: string): string => {
+        let retval = "";
+        nodes.forEach((node) => {
+            if (!node.x || !node.y) throw new Error("Coordinates missing...");
+            parentCoordinates[node.id] = { parent, parentX: x, parentY: y };
+            const newX = x + node.x;
+            const newY = y + node.y;
+            retval += `<dcrDi:dcrShape id="${node.id}_di" boardElement="${node.id}">\n`;
+            retval += ` <dc:Bounds x="${newX}" y="${newY}" width="${node.width}" height="${node.height}"/>\n`;
+            retval += ' </dcrDi:dcrShape>\n';
+            if (node.children) retval += createElkNodeArrayXML(node.children, newX, newY, node.id);
+        })
+        return retval;
+    }
+
+    if (laidOutGraph.children) xmlContent += createElkNodeArrayXML(laidOutGraph.children, 0, 0, laidOutGraph.id);
+
+    const getBaselineChords = (aId: string, a: { parentX: number, parentY: number, parent: string }, bId: string, b: { parentX: number, parentY: number, parent: string }): { baseX: number, baseY: number } => {
+        if (a.parent === b.parent) return { baseX: a.parentX, baseY: a.parentY }
+        else if (a.parent === bId) return { baseX: a.parentX, baseY: a.parentY }
+        else if (b.parent === aId) return { baseX: b.parentX, baseY: b.parentY }
+        else return { baseX: 0, baseY: 0 };
+    }
 
     id = 0;
     laidOutGraph.edges?.forEach((edge) => {
+        const { baseX, baseY } = getBaselineChords(edge.sources[0], parentCoordinates[edge.sources[0]], edge.targets[0], parentCoordinates[edge.targets[0]]);
+
+        if (edge.id === "t62-Nesting5-exclude") {
+            console.log(parentCoordinates[edge.sources[0]], parentCoordinates[edge.targets[0]])
+            console.log(baseX, baseY);
+        }
+
         if (edge.sections) {
-            xmlContent += `<dcrDi:relation id="Relation_${id++}_di" boardElement="Relation_${id}">\n`;
-            xmlContent += ` <dcrDi:waypoint x="${edge.sections[0].startPoint.x}" y="${edge.sections[0].startPoint.y}" />\n`;
+            xmlContent += `<dcrDi:relation id="Relation_${++id}_di" boardElement="Relation_${id}">\n`;
+            xmlContent += ` <dcrDi:waypoint x="${baseX + edge.sections[0].startPoint.x}" y="${baseY + edge.sections[0].startPoint.y}" />\n`;
 
             edge.sections[0].bendPoints?.forEach((bendPoint) => {
-                xmlContent += ` <dcrDi:waypoint x="${bendPoint.x}" y="${bendPoint.y}" />\n`;
+                xmlContent += ` <dcrDi:waypoint x="${baseX + bendPoint.x}" y="${baseY + bendPoint.y}" />\n`;
             })
 
-            xmlContent += ` <dcrDi:waypoint x="${edge.sections[0].endPoint.x}" y="${edge.sections[0].endPoint.y}" />\n`;
+            xmlContent += ` <dcrDi:waypoint x="${baseX + edge.sections[0].endPoint.x}" y="${baseY + edge.sections[0].endPoint.y}" />\n`;
             xmlContent += ' </dcrDi:relation>\n';
         }
 
         //for self referencing nodes when using layouts without bendpoints
         else {
-            xmlContent += `<dcrDi:relation id="Relation_${id++}_di" boardElement="Relation_${id}">\n`;
+            xmlContent += `<dcrDi:relation id="Relation_${++id}_di" boardElement="Relation_${id}">\n`;
             xmlContent += ` <dcrDi:waypoint x="${NaN}" y="${NaN}" />\n`;
             xmlContent += ' </dcrDi:relation>\n';
         }

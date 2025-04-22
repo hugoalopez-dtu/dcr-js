@@ -1,4 +1,4 @@
-import { BiHome } from "react-icons/bi";
+import { BiHome, BiSave } from "react-icons/bi";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
@@ -16,6 +16,8 @@ import React, { useRef, useState } from "react";
 import Form from "../utilComponents/Form";
 import styled from "styled-components";
 import Loading from "../utilComponents/Loading";
+import { saveAs } from 'file-saver';
+import { useHotkeys } from "react-hotkeys-hook";
 
 const FileInput = styled.div`
     border: 1px dashed black;
@@ -36,8 +38,8 @@ const Input = styled.input`
     font-size: 20px; 
 `
 
-const DiscoveryState = ({ setState }: StateProps) => {
-    const [menuOpen, setMenuOpen] = useState(false);
+const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }: StateProps) => {
+    const [menuOpen, setMenuOpen] = useState(true);
     const [formToShow, setFormToShow] = useState("DisCoveR");
 
     const [loading, setLoading] = useState(false);
@@ -128,9 +130,71 @@ const DiscoveryState = ({ setState }: StateProps) => {
         }
     }
 
+    const saveGraph = () => {
+        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
+        modelerRef.current?.saveXML({ format: false }).then(data => {
+            const newSavedGraphs = { ...savedGraphs };
+            newSavedGraphs[graphName] = data.xml;
+            lastSavedGraph.current = graphName;
+            setSavedGraphs(newSavedGraphs);
+            toast.success("Graph saved!");
+        });
+    }
+
+    useHotkeys("ctrl+s", saveGraph, { preventDefault: true });
+
+    const saveAsXML = async () => {
+        if (!modelerRef.current) return;
+
+        const data = await modelerRef.current.saveXML({ format: true });
+        const blob = new Blob([data.xml]);
+        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
+        saveAs(blob, `${graphName}.xml`);
+    }
+
+    const saveAsDCRXML = async () => {
+        if (!modelerRef.current) return;
+
+        const data = await modelerRef.current.saveDCRXML();
+        const blob = new Blob([data.xml]);
+        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
+        saveAs(blob, `${graphName}.xml`);
+    }
+
+    const saveAsSvg = async () => {
+        if (!modelerRef.current) return;
+        const data = await modelerRef.current.saveSVG();
+        const blob = new Blob([data.svg]);
+        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
+        saveAs(blob, `${graphName}.svg`);
+    }
 
 
     const menuElements: Array<ModalMenuElement> = [
+        {
+            icon: <BiSave />,
+            text: "Save Graph",
+            onClick: () => { saveGraph(); setMenuOpen(false) },
+        },
+        {
+            text: "Download",
+            elements: [{
+                icon: <div />,
+                text: "Download Editor XML",
+                onClick: () => { saveAsXML() },
+            },
+            {
+                icon: <div />,
+                text: "Download DCR Solutions XML",
+                onClick: () => { saveAsDCRXML() },
+            },
+            {
+                icon: <div />,
+                text: "Download SVG",
+                onClick: () => { saveAsSvg() },
+            }
+            ],
+        },
         {
             customElement: (
                 <MenuElement>

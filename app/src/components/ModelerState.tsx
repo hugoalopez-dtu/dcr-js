@@ -10,7 +10,7 @@ import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidDashboard } from 'react-icons/bi';
+import { BiAnalyse, BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidDashboard } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toastify';
@@ -24,6 +24,7 @@ import StyledFileUpload from '../utilComponents/StyledFileUpload';
 import MenuElement from '../utilComponents/MenuElement';
 import Label from '../utilComponents/Label';
 import Loading from '../utilComponents/Loading';
+import { DCRGraph, layoutGraph, moddleToDCR, nestDCR, Nestings } from 'dcr-engine';
 
 
 
@@ -223,6 +224,40 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
 
   const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
+  const layout = () => {
+    if (!modelerRef) return;
+    const elementRegistry = modelerRef.current?.getElementRegistry();
+    console.log(elementRegistry);
+    if (Object.keys(elementRegistry._elements).find((element) => element.includes("SubProcess") || elementRegistry._elements[element].element.businessObject.role)) {
+      toast.warning("Graph layout not supported for subprocesses and roles...");
+      return;
+    }
+    if (confirm("This will overwrite your current layout, do you wish to continue?")) {
+      try {
+        const nest = confirm("Do you wish to nest?");
+        const graph = moddleToDCR(elementRegistry, true);
+        console.log(graph);
+        const nestings = nestDCR(graph);
+        const params: [DCRGraph, Nestings | undefined] = nest ? [nestings.nestedGraph, nestings] : [graph, undefined];
+        layoutGraph(...params).then(xml => {
+          console.log(xml);
+          modelerRef.current?.importXML(xml).catch(e => {
+            console.log(e);
+            toast.error("Invalid xml...")
+          }).finally(() => {
+            setLoading(false);
+          });
+        }).catch(e => {
+          console.log(e);
+          setLoading(false);
+          toast.error("Unable to layout graph...")
+        });
+      } catch (e) {
+        toast.error("Something went wrong...");
+      }
+    }
+  }
+
   return (
     <>
       <GraphNameInput
@@ -232,6 +267,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
       {loading && <Loading />}
       <Modeler initXml={initXml} modelerRef={modelerRef} />
       <TopRightIcons>
+        <BiAnalyse title="Layout Graph" onClick={layout} />
         <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />
         <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen} />
