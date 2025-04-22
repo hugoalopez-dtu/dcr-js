@@ -28,37 +28,44 @@ type LayoutType = Omit<ElkNode, "children"> & {
     children?: ElkNode[] | undefined;
 };
 
-
-const createNodeArrayXML = (nodes: Array<AbstractNode>, nestings: Nestings): string => {
-    let retval = "";
-    nodes.forEach((node) => {
-        if (nestings.nestingIds.has(node.id)) {
-            retval += `<dcr:nesting id="${node.id}" description="${node.id}">\n`;
-            if (node.children) retval += createNodeArrayXML(node.children, nestings);
-            retval += "</dcr:nesting>\n";
-        } else {
-            retval += ` <dcr:event id="${node.id}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
-        }
-    })
-    return retval;
-}
-
 const createXML = (laidOutGraph: LayoutType, nodesAndEdges: AbstractGraph, nestings?: Nestings) => {
     var xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xmlContent += '<dcr:definitions xmlns:dcr="http://tk/schema/dcr" xmlns:dcrDi="http://tk/schema/dcrDi" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC">\n';
     xmlContent += ' <dcr:dcrGraph id="dcrGraph">\n';
 
+    let nodeId = 0;
+    const descToIdMap: { [desc: string]: number } = {}
+
+    const descToId = (desc: string): string => {
+        if (!descToIdMap[desc]) descToIdMap[desc] = ++nodeId;
+        return "Event_" + descToIdMap[desc];
+    }
+
+    const createNodeArrayXML = (nodes: Array<AbstractNode>, nestings: Nestings): string => {
+        let retval = "";
+        nodes.forEach((node) => {
+            if (nestings.nestingIds.has(node.id)) {
+                retval += `<dcr:nesting id="${descToId(node.id)}" description="${node.id}">\n`;
+                if (node.children) retval += createNodeArrayXML(node.children, nestings);
+                retval += "</dcr:nesting>\n";
+            } else {
+                retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
+            }
+        })
+        return retval;
+    }
+
     if (nestings) {
         xmlContent += createNodeArrayXML(nodesAndEdges.nodes, nestings);
     } else {
         nodesAndEdges.nodes.forEach((node) => {
-            xmlContent += ` <dcr:event id="${node.id}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
+            xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
         })
     }
 
-    var id = 0
+    let id = 0
     nodesAndEdges.edges.forEach((edge) => {
-        xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${edge.source}" targetRef="${edge.target}"/>\n`;
+        xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${descToId(edge.source)}" targetRef="${descToId(edge.target)}"/>\n`;
     })
 
     xmlContent += ' </dcr:dcrGraph>\n';
@@ -74,7 +81,7 @@ const createXML = (laidOutGraph: LayoutType, nodesAndEdges: AbstractGraph, nesti
             parentCoordinates[node.id] = { parent, parentX: x, parentY: y };
             const newX = x + node.x;
             const newY = y + node.y;
-            retval += `<dcrDi:dcrShape id="${node.id}_di" boardElement="${node.id}">\n`;
+            retval += `<dcrDi:dcrShape id="${descToId(node.id)}_di" boardElement="${descToId(node.id)}">\n`;
             retval += ` <dc:Bounds x="${newX}" y="${newY}" width="${node.width}" height="${node.height}"/>\n`;
             retval += ' </dcrDi:dcrShape>\n';
             if (node.children) retval += createElkNodeArrayXML(node.children, newX, newY, node.id);
@@ -94,12 +101,6 @@ const createXML = (laidOutGraph: LayoutType, nodesAndEdges: AbstractGraph, nesti
     id = 0;
     laidOutGraph.edges?.forEach((edge) => {
         const { baseX, baseY } = getBaselineChords(edge.sources[0], parentCoordinates[edge.sources[0]], edge.targets[0], parentCoordinates[edge.targets[0]]);
-
-        if (edge.id === "t62-Nesting5-exclude") {
-            console.log(parentCoordinates[edge.sources[0]], parentCoordinates[edge.targets[0]])
-            console.log(baseX, baseY);
-        }
-
         if (edge.sections) {
             xmlContent += `<dcrDi:relation id="Relation_${++id}_di" boardElement="Relation_${id}">\n`;
             xmlContent += ` <dcrDi:waypoint x="${baseX + edge.sections[0].startPoint.x}" y="${baseY + edge.sections[0].startPoint.y}" />\n`;

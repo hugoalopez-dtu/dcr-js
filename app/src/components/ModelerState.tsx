@@ -85,7 +85,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
 
   useEffect(() => {
     // Fetch examples
-    fetch('examples/generated_examples.txt')
+    fetch('/dcr-js/examples/generated_examples.txt')
       .then(response => {
         if (!response.ok) {
           throw new Error('Failed to fetch examples status code: ' + response.status);
