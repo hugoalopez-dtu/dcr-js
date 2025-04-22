@@ -140,9 +140,6 @@ const listToTree = (list: Array<{ id: string, parent: string }>) => {
         map[newList[i].id] = i; // initialize the map
     }
 
-    console.log(map);
-    console.log(list);
-
     for (let i = 0; i < newList.length; i += 1) {
         const node = newList[i];
         if (node.parent) {
@@ -248,8 +245,7 @@ const layoutGraph = async (graph: DCRGraph, nestings?: Nestings) => {
     }
     const elk = new ELK();
     const result = await elk.layout(layout);
-    console.log(graph);
-    console.log(layout);
+
     const xmlContent = createXML(result, abstractGraph, nestings);
 
     return xmlContent;

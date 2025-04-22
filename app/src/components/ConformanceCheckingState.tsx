@@ -193,10 +193,8 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           text: name,
           onClick: () => {
             const log = savedLogs[name];
-            console.log(log);
             const results = Object.keys(log.traces).map(traceId => {
               const trace = log.traces[traceId];
-              console.log(trace, "hehe");
               return {
                 traceId,
                 trace,

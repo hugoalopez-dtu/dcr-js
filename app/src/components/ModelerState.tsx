@@ -241,11 +241,9 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
       try {
         const nest = confirm("Do you wish to nest?");
         const graph = moddleToDCR(elementRegistry, true);
-        console.log(graph);
         const nestings = nestDCR(graph);
         const params: [DCRGraph, Nestings | undefined] = nest ? [nestings.nestedGraph, nestings] : [graph, undefined];
         layoutGraph(...params).then(xml => {
-          console.log(xml);
           modelerRef.current?.importXML(xml).catch(e => {
             console.log(e);
             toast.error("Invalid xml...")
