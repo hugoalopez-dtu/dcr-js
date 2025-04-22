@@ -227,7 +227,12 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
   const layout = () => {
     if (!modelerRef) return;
     const elementRegistry = modelerRef.current?.getElementRegistry();
-    console.log(elementRegistry);
+    const events = Object.values(elementRegistry._elements).filter((element: any) => element.element.id.includes("Event"));
+    const uniqueActivities = new Set(events.map((element: any) => element.element.businessObject.description));
+    if (events.length !== uniqueActivities.size || uniqueActivities.has("")) {
+      toast.warning("Graph layout not supported for empty or duplicate activity names...");
+      return;
+    }
     if (Object.keys(elementRegistry._elements).find((element) => element.includes("SubProcess") || elementRegistry._elements[element].element.businessObject.role)) {
       toast.warning("Graph layout not supported for subprocesses and roles...");
       return;
