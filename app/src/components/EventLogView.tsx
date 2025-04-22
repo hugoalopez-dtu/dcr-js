@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import { Children } from "../types";
 import FlexBox from "../utilComponents/FlexBox";
-import { Trace } from "dcr-engine";
 import React from "react";
 import { BiTrash } from "react-icons/bi";
 import { RoleTrace } from "dcr-engine/src/types";

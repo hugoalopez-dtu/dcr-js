@@ -3,7 +3,7 @@ import ModelerState from "./components/ModelerState";
 import HomeState from "./components/HomeState";
 import SimulatorState from "./components/SimulatorState";
 import ConformanceCheckingState from "./components/ConformanceCheckingState";
-import { EventLog } from "dcr-engine";
+import { EventLog, RoleTrace } from "dcr-engine";
 import DiscoveryState from "./components/DiscoveryState";
 
 export enum StateEnum {
@@ -29,7 +29,7 @@ export type DCRGraphRepository = {
 }
 
 export type EventLogRepository = {
-  [name: string]: EventLog;
+  [name: string]: EventLog<RoleTrace>;
 }
 
 const App = () => {

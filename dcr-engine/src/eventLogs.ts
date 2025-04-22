@@ -1,5 +1,5 @@
 import parser, { j2xParser } from "fast-xml-parser";
-import { EventLog, Event, Trace, XMLLog, XMLEvent, RoleTrace } from "./types";
+import { EventLog, Event, XMLLog, XMLEvent, RoleTrace } from "./types";
 
 export const parserOptions = {
   attributeNamePrefix: "",

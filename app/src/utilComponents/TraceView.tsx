@@ -1,4 +1,3 @@
-import { Trace } from "dcr-engine";
 import { replayTraceS } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine";
 import { useMemo } from "react";
