@@ -46,7 +46,7 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML, se
         if (confirm("Are you sure? This will override your current diagram!")) {
             setLoading(true);
 
-            fetch('dcr-js/examples/diagrams/' + exampleStr + '.xml')
+            fetch('/dcr-js/examples/diagrams/' + exampleStr + '.xml')
                 .then(response => {
                     if (!response.ok) {
                         toast.error("Failed to fetch example...");
