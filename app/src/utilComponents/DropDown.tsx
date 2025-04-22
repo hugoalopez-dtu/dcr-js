@@ -7,6 +7,7 @@ interface DropDownProps {
         tooltip?: string
     }>;
     onChange: (option: string) => void;
+    value?: string;
 }
 
 const Select = styled.select`
@@ -21,10 +22,10 @@ const Select = styled.select`
     }
 `
 
-const DropDown = ({ options, onChange }: DropDownProps) => {
+const DropDown = ({ options, onChange, value }: DropDownProps) => {
     return (
         <form>
-            <Select onChange={(e) => onChange(e.target.value)}>
+            <Select value={value} onChange={(e) => onChange(e.target.value)}>
                 {options.map(option => <option key={option.value} title={option.tooltip} value={option.value}>{option.title}</option>)}
             </Select>
         </form>

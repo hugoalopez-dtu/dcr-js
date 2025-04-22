@@ -23,16 +23,9 @@ import FullScreenIcon from '../utilComponents/FullScreenIcon';
 import StyledFileUpload from '../utilComponents/StyledFileUpload';
 import MenuElement from '../utilComponents/MenuElement';
 import Label from '../utilComponents/Label';
+import Loading from '../utilComponents/Loading';
 
-const Loading = styled.div`
-    z-index: 1000;
-    position: fixed;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    left: 0;
-    cursor: wait;
-`
+
 
 const GraphNameInput = styled.input`
   position: fixed;

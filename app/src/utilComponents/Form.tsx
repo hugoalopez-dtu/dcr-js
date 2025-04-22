@@ -1,16 +1,28 @@
+import styled from "styled-components";
+import Button from "./Button";
+
 interface FormProps {
     inputFields: Array<React.JSX.Element>;
     submit: (formData: FormData) => void;
     submitText?: string;
 }
 
+const StyledForm = styled.form`
+    box-sizing: border-box;    
+    width: 100%;
+    text-align: center;
+    & > button {
+        font-size: 20px;
+        margin-top: 1rem;
+    }
+`
 
 const Form = ({ inputFields, submit, submitText }: FormProps) => {
     return (
-        <form action={submit}>
+        <StyledForm action={submit}>
             {...inputFields}
-            <button type="submit">{submitText ? submitText : "Submit"}</button>
-        </form>
+            <Button type="submit">{submitText ? submitText : "Submit"}</Button>
+        </StyledForm>
     );
 }
 

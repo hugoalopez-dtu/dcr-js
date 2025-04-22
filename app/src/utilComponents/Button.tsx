@@ -6,9 +6,10 @@ const Button = styled.button`
     border: 1px solid black;
     border-radius: 5px;
     background-color: white;
-    box-shadow: 0px 1px 1px 0 grey;
 
     &:hover {
+        color: white;
+        border: 1px solid white;
         background-color: gainsboro;
     }
 `

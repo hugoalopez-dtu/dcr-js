@@ -1,10 +1,9 @@
-import { BiHome, BiLeftArrowCircle, BiUpload } from "react-icons/bi";
+import { BiHome } from "react-icons/bi";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import { StateEnum, StateProps } from "../App";
-import { abstractLog, DCRGraphS, layoutGraph, mineFromAbstraction, moddleToDCR, nestDCR, parseLog } from "dcr-engine";
-import StyledFileUpload from "../utilComponents/StyledFileUpload";
+import { abstractLog, DCRGraph, DCRGraphS, filter, layoutGraph, mineFromAbstraction, nestDCR, Nestings, parseLog } from "dcr-engine";
 import FileUpload from "../utilComponents/FileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Toggle from "../utilComponents/Toggle";
@@ -13,89 +12,138 @@ import Label from "../utilComponents/Label";
 import { isSettingsVal } from "../types";
 import Modeler from "./Modeler";
 import { toast } from "react-toastify";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+import Form from "../utilComponents/Form";
+import styled from "styled-components";
+import Loading from "../utilComponents/Loading";
 
+const FileInput = styled.div`
+    border: 1px dashed black;
+    padding: 0.75rem;
+    cursor: pointer;
+    & > label {
+        cursor: pointer
+    }
+    &:hover {
+        color: white;
+        background-color: Gainsboro;
+        border: 1px dashed white;
+    }    
+`
 
+const Input = styled.input`
+    width: 7rem; 
+    font-size: 20px; 
+`
 
-const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
+const DiscoveryState = ({ setState }: StateProps) => {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [formToShow, setFormToShow] = useState("DisCoveR");
+
+    const [loading, setLoading] = useState(false);
+
+    // State to put anything needed to render in the form inputs;
+    const [customFormState, setCustomFormState] = useState<any>();
 
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
-    const handleLogUpload = async (_: string, data: string) => {
-        try {
-            if (!modelerRef) return;
-            const log = parseLog(data);
-            const noRoleLog = {
-                events: log.events,
-                traces: Object.keys(log.traces).map(traceId => ({ traceId, trace: log.traces[traceId].map(elem => elem.activity) })).reduce((acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }), {})
-            }
-            const logAbs = abstractLog(noRoleLog);
-            const graph = mineFromAbstraction(logAbs);
-            const nestings = nestDCR(graph);
-            layoutGraph(nestings.nestedGraph, nestings).then(xml => {
-                console.log(xml);
-                modelerRef.current?.importXML(xml).catch(e => {
-                    console.log(e);
-                    toast.error("Invalid xml...")
-                });
-            }).catch(e => {
-                console.log(e);
-                toast.error("Unable to layout graph...")
-            });
-
-        } catch (e) {
-            console.log(e);
-            toast.error("Cannot parse log...");
+    const algorithms: {
+        [key: string]: {
+            inputs: Array<React.JSX.Element>,
+            onSubmit: (formData: FormData) => void;
         }
-    }
+    } = {
+        "DisCoveR": {
+            inputs: [
+                <MenuElement>
+                    <Label>Event Log:</Label>
+                    <FileInput>
+                        <FileUpload accept=".xes" fileCallback={(name, contents) => setCustomFormState({ ...customFormState, name, contents })} name="log">{customFormState?.name ? customFormState?.name : "Select event log"}</FileUpload>
+                    </FileInput>
+                </MenuElement>,
+                <MenuElement>
+                    <Label>Noise Threshold:</Label>
+                    <Input
+                        type="number"
+                        required
+                        name="noise"
+                        min="0"
+                        max="1"
+                        defaultValue={customFormState?.threshold ? customFormState.threshold : "0.20"}
+                        step="0.01" />
+                </MenuElement>,
+                <MenuElement>
+                    <Label>Nest Graph</Label>
+                    <Input name="nest" type="checkbox" defaultChecked={customFormState?.nest ? customFormState.nest : false} />
+                </MenuElement>,
+            ],
+            onSubmit: (formData: FormData) => {
+                setLoading(true);
+                const rawThreshold = formData.get("noise");
+                const threshold = rawThreshold && parseFloat(rawThreshold.toString());
+                const nest = !!formData.get("nest");
+                console.log(nest);
+                setCustomFormState({ ...customFormState, threshold, nest });
+                if (threshold === "" || threshold === null) {
+                    toast.error("Can't parse input parameters...");
+                    setLoading(false);
+                    return;
+                }
+                try {
+                    if (!modelerRef) return;
 
-    const handleGraphUpload = async (_: string, data: string) => {
-        try {
-            if (!modelerRef) return;
-            modelerRef.current?.importXML(data).catch(e => {
-                console.log(e);
-                toast.error("Invalid xml...")
-            }).then(() => {
-                const graph = moddleToDCR(modelerRef.current?.getElementRegistry(), true);
-                const nestings = nestDCR(graph);
-                layoutGraph(nestings.nestedGraph, nestings).then(xml => {
-                    //layoutGraph(graph).then(xml => {
-                    modelerRef.current?.importXML(xml).catch(e => {
+                    const data = customFormState.contents;
+                    const log = parseLog(data);
+                    const noRoleLog = {
+                        events: log.events,
+                        traces: Object.keys(log.traces).map(traceId => ({ traceId, trace: log.traces[traceId].map(elem => elem.activity) })).reduce((acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }), {})
+                    }
+
+                    const filteredLog = filter(noRoleLog, threshold);
+                    const logAbs = abstractLog(filteredLog);
+                    const graph = mineFromAbstraction(logAbs);
+                    const nestings = nestDCR(graph);
+                    const params: [DCRGraph, Nestings | undefined] = nest ? [nestings.nestedGraph, nestings] : [graph, undefined];
+                    layoutGraph(...params).then(xml => {
+                        modelerRef.current?.importXML(xml).catch(e => {
+                            console.log(e);
+                            toast.error("Invalid xml...")
+                        }).finally(() => {
+                            setLoading(false);
+                        });
+                    }).catch(e => {
                         console.log(e);
-                        toast.error("Invalid xml...")
+                        setLoading(false);
+                        toast.error("Unable to layout graph...")
                     });
-                }).catch(e => {
-                    console.log(e);
-                    toast.error("Unable to layout graph...")
-                });
-            });
 
-        } catch (e) {
-            console.log(e);
-            toast.error("Cannot parse log...");
+                } catch (e) {
+                    console.log(e);
+                    setLoading(false);
+                    toast.error("Cannot parse log...");
+                }
+
+            }
         }
     }
 
-    const menuElements: Array<ModalMenuElement> = [{
-        customElement: (
-            <StyledFileUpload>
-                <FileUpload accept=".xes" fileCallback={(name, contents) => { handleLogUpload(name, contents); setMenuOpen(false); }}>
-                    <BiUpload />
-                    <>Upload Log</>
-                </FileUpload>
-            </StyledFileUpload>),
-    },
-    {
-        customElement: (
-            <StyledFileUpload>
-                <FileUpload accept=".xml" fileCallback={(name, contents) => { handleGraphUpload(name, contents); setMenuOpen(false); }}>
-                    <BiUpload />
-                    <>Upload Graph</>
-                </FileUpload>
-            </StyledFileUpload>),
-    },
+
+
+    const menuElements: Array<ModalMenuElement> = [
+        {
+            customElement: (
+                <MenuElement>
+                    <Label>Discovery Algorithm:</Label>
+                    <DropDown value={formToShow} options={Object.keys(algorithms).map((key) => ({ title: key, value: key }))} onChange={(val) => setFormToShow(val)} />
+                </MenuElement>
+            )
+        },
+        {
+            customElement: (
+                <Form submitText="Discover!" inputFields={algorithms[formToShow].inputs} submit={algorithms[formToShow].onSubmit} />
+            )
+        }
     ];
 
     const bottomElements: Array<ModalMenuElement> = [
@@ -121,6 +169,7 @@ const DiscoveryState = ({ savedLogs, setState }: StateProps) => {
     return (
         <>
             <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
+            {loading && <Loading />}
             <TopRightIcons>
                 <FullScreenIcon />
                 <BiHome onClick={() => setState(StateEnum.Home)} />

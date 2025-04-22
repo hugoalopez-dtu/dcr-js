@@ -61,6 +61,7 @@ const CustomMenuItem = styled.li`
     flex-direction: row;
     justify-content: space-between;
     cursor: pointer;
+    box-sizing: border-box;
     & > svg {
         font-size: 25px;
     }
@@ -152,7 +153,7 @@ const ModalMenu = ({ elements, bottomElements, open, setOpen }: ModalMenuProps) 
                         <ul>
                             {elements.map((element) => renderElement(element))}
                         </ul>
-                        <Divider key={"Modal" + id++}/>
+                        <Divider key={"Modal" + id++} />
                     </li> : null}
                 </>
             )

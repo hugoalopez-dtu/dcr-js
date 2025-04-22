@@ -26,10 +26,18 @@ export interface Marking {
   pending: Set<Event>;
 }
 
+export type Nestings = { nestingIds: Set<string>, nestingRelations: { [event: Event]: string } };
+
 // Map from event to a set of events
 // Used to denote different relations between events
 export interface EventMap {
   [startEventId: string]: Set<Event>;
+}
+
+export interface FuzzyRelation {
+  [startEvent: string]: {
+    [endEvent: string]: number;
+  };
 }
 
 export interface DCRGraph {

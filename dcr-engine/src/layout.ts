@@ -1,4 +1,4 @@
-import { EventMap, RelationType, Event, DCRGraph } from "./types";
+import { EventMap, RelationType, Event, DCRGraph, Nestings } from "./types";
 
 import ELK, { ElkExtendedEdge, ElkNode } from "elkjs";
 
@@ -28,7 +28,7 @@ type LayoutType = Omit<ElkNode, "children"> & {
     children?: ElkNode[] | undefined;
 };
 
-type Nestings = { nestingIds: Set<string>, nestingRelations: { [event: Event]: string } };
+
 
 const createNodeArrayXML = (nodes: Array<AbstractNode>, nestings: Nestings): string => {
     let retval = "";

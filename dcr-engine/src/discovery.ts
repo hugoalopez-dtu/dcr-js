@@ -1,4 +1,4 @@
-import { EventLog, LogAbstraction, Trace, Event, EventMap, DCRGraph } from "./types";
+import { EventLog, LogAbstraction, Trace, Event, EventMap, DCRGraph, FuzzyRelation } from "./types";
 import { copyEventMap, copySet, fullRelation } from "./utility";
 
 // Create abstraction of an EventLog in order to make fewer passes when mining constraints
@@ -325,5 +325,119 @@ const mineFromAbstraction = (
     }
     return graph;
 };
+
+export const filter = (log: EventLog<Trace>, DT: number): EventLog<Trace> => {
+    const alpha = 0.5;
+    const GNF = 0.02;
+    const C1 = 4;
+    const C2 = 4;
+
+    const DFDs: FuzzyRelation = {};
+    const preSets: EventMap = {};
+    const sucSets: EventMap = {};
+
+    for (const event of log.events) {
+        DFDs[event] = {};
+        for (const otherEvent of log.events) {
+            DFDs[event][otherEvent] = 0;
+        }
+        preSets[event] = new Set();
+        sucSets[event] = new Set();
+    }
+
+    for (const traceId in log.traces) {
+        let lastEvent: string | null = null;
+        for (const event of log.traces[traceId]) {
+            if (lastEvent) {
+                sucSets[lastEvent].add(event);
+                preSets[event].add(lastEvent);
+                DFDs[lastEvent][event] += 1;
+            }
+            lastEvent = event;
+        }
+    }
+
+    const dPre: { [event: string]: number } = {};
+    const dSuc: { [event: string]: number } = {};
+
+    for (const event of log.events) {
+        let nPre = 0;
+        for (const preEvent of preSets[event]) {
+            nPre += DFDs[preEvent][event];
+        }
+        if (preSets[event].size !== 0)
+            dPre[event] = nPre / preSets[event].size;
+        let nSuc = 0;
+        for (const sucEvent of sucSets[event]) {
+            nSuc += DFDs[event][sucEvent];
+        }
+        if (sucSets[event].size !== 0)
+            dSuc[event] = nSuc / sucSets[event].size;
+    }
+
+    let dfdSum = 0;
+    for (const event in DFDs) {
+        for (const otherEvent in DFDs[event]) {
+            dfdSum += DFDs[event][otherEvent];
+        }
+    }
+    let theta = 0;
+    for (const event in DFDs) {
+        for (const otherEvent in DFDs[event]) {
+            const potDFD = DFDs[event][otherEvent];
+            if (potDFD > theta && potDFD / dfdSum < GNF) {
+                theta = potDFD;
+            }
+        }
+    }
+
+    const mdMatrix: FuzzyRelation = {};
+    for (const ei in DFDs) {
+        mdMatrix[ei] = {};
+        for (const ej in DFDs[ei]) {
+            if (DFDs[ei][ej] === 0) {
+                mdMatrix[ei][ej] = 0;
+            } else {
+                // local dependency
+                const sucExp = (DFDs[ei][ej] - dSuc[ei]) * (C1 / dSuc[ei]);
+                const preExp = (DFDs[ei][ej] - dPre[ej]) * (C2 / dPre[ej]);
+                const dLocal = 1 - (1 / ((1 + Math.exp(sucExp)) * 2)) - (1 / ((1 + Math.exp(preExp)) * 2))
+                // global dependency
+                const dGlobal = 1 / (1 + Math.exp(1 - DFDs[ei][ej] / theta))
+                // mixed dependency
+                mdMatrix[ei][ej] = alpha * dLocal + (1 - alpha) * dGlobal
+            }
+        }
+    }
+
+    const filteredLog: EventLog<Trace> = {
+        events: copySet(log.events),
+        traces: {}
+    };
+
+    for (const traceId in log.traces) {
+        let ei = null;
+        let addTrace = true;
+        const filteredTrace = [];
+        for (const ej of log.traces[traceId]) {
+            if (ei === null) {
+                ei = ej;
+                filteredTrace.push(ej);
+            } else {
+                if (mdMatrix[ei][ej] >= DT) {
+                    filteredTrace.push(ej);
+                    ei = ej;
+                } else {
+                    addTrace = false;
+                    break;
+                }
+            }
+        }
+
+        if (addTrace) filteredLog.traces[traceId] = filteredTrace;
+    }
+
+    return filteredLog;
+}
 
 export default mineFromAbstraction;
