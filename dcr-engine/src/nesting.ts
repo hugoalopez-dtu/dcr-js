@@ -1,10 +1,10 @@
-import { DCRGraph, Event, EventMap, RelationType } from "./types";
-import { copySet, flipEventMap, intersect } from "./utility";
+import { DCRGraph, Event, EventMap, Marking, RelationType } from "./types";
+import { copyMarking, copySet, flipEventMap, intersect } from "./utility";
 
 type RelationsDict = { [event: Event]: Set<string> };
 type ReturnNesting<T> = { nestedGraph: T, nestingIds: Set<string>, nestingRelations: { [event: Event]: string } };
 
-const relationsDictToDCR = (relationsDict: RelationsDict): DCRGraph => {
+const relationsDictToDCR = (relationsDict: RelationsDict, marking?: Marking): DCRGraph => {
     const events = new Set(Object.keys(relationsDict));
     const graph: DCRGraph = {
         events,
@@ -15,7 +15,7 @@ const relationsDictToDCR = (relationsDict: RelationsDict): DCRGraph => {
         excludesTo: {},
         milestonesFor: {},
 
-        marking: {
+        marking: marking ? copyMarking(marking) : {
             included: events,
             executed: new Set(),
             pending: new Set(),
@@ -226,5 +226,5 @@ export const nestDCR = (graph: DCRGraph, minSharedRels: number = 1, events = cop
         repeat = eventsFound.size !== 0;
     }
 
-    return { nestedGraph: { ...relationsDictToDCR(relationDict), events: copySet(graph.events).union(nestingIds) }, nestingIds, nestingRelations };
+    return { nestedGraph: { ...relationsDictToDCR(relationDict, graph.marking), events: copySet(graph.events).union(nestingIds) }, nestingIds, nestingRelations };
 }

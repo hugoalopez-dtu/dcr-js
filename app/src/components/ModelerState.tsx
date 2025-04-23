@@ -1,6 +1,5 @@
 import Modeler from './Modeler';
 import DCRModeler from "modeler";
-import styled from "styled-components";
 
 import emptyBoardXML from '../resources/emptyBoard';
 import { useEffect, useRef, useState } from 'react';
