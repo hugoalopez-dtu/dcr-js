@@ -91,16 +91,24 @@ const createXML = (laidOutGraph: LayoutType, nodesAndEdges: AbstractGraph, nesti
 
     if (laidOutGraph.children) xmlContent += createElkNodeArrayXML(laidOutGraph.children, 0, 0, laidOutGraph.id);
 
-    const getBaselineChords = (aId: string, a: { parentX: number, parentY: number, parent: string }, bId: string, b: { parentX: number, parentY: number, parent: string }): { baseX: number, baseY: number } => {
+    const getBaselineChords = (aId: string, bId: string, container?: string): { baseX: number, baseY: number } => {
+        const a = parentCoordinates[aId];
+        const b = parentCoordinates[bId];
         if (a.parent === b.parent) return { baseX: a.parentX, baseY: a.parentY }
-        else if (a.parent === bId) return { baseX: a.parentX, baseY: a.parentY }
-        else if (b.parent === aId) return { baseX: b.parentX, baseY: b.parentY }
+        else if (a.parent === bId || (container && a.parent === container)) return { baseX: a.parentX, baseY: a.parentY }
+        else if (b.parent === aId || (container && b.parent === container)) return { baseX: b.parentX, baseY: b.parentY }
         else return { baseX: 0, baseY: 0 };
     }
 
     id = 0;
     laidOutGraph.edges?.forEach((edge) => {
-        const { baseX, baseY } = getBaselineChords(edge.sources[0], parentCoordinates[edge.sources[0]], edge.targets[0], parentCoordinates[edge.targets[0]]);
+        const { baseX, baseY } = getBaselineChords(edge.sources[0], edge.targets[0], edge.container);
+        if (edge.id === "Admission IC-Admission NC-response") {
+            console.log(baseX, baseY)
+            console.log(edge, "lele");
+            console.log(parentCoordinates[edge.sources[0]])
+            console.log(parentCoordinates[edge.targets[0]])
+        }
         if (edge.sections) {
             xmlContent += `<dcrDi:relation id="Relation_${++id}_di" boardElement="Relation_${id}">\n`;
             xmlContent += ` <dcrDi:waypoint x="${baseX + edge.sections[0].startPoint.x}" y="${baseY + edge.sections[0].startPoint.y}" />\n`;
@@ -238,7 +246,7 @@ const layoutGraph = async (graph: DCRGraph, nestings?: Nestings) => {
             "org.eclipse.elk.hierarchyHandling": "INCLUDE_CHILDREN",
             "elk.layered.spacing.nodeNodeBetweenLayers": "50",
             "elk.spacing.nodeNode": "50",
-            "elk.spacing.edgeNode": "5",
+            "elk.spacing.edgeNode": "25",
         },
         children: abstractGraph.nodes,
         edges: abstractGraph.edges
@@ -252,14 +260,3 @@ const layoutGraph = async (graph: DCRGraph, nestings?: Nestings) => {
 }
 
 export default layoutGraph;
-
-/*{
-            'elk.algorithm': 'org.eclipse.elk.layered',
-            "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-            "elk.nodeSizeOptions": "COMPUTE_PADDING",
-            "spacing.nodeNodeBetweenLayers": '50',
-            "elk.layered.spacing.nodeNodeBetweenLayers": "50",
-            "elk.spacing.nodeNode": "500",
-            "elk.spacing.edgeNode": "50",
-            "elk.spacing.edgeEdge": "5",
-        },*/

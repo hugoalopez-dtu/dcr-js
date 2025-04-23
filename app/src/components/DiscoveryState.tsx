@@ -3,7 +3,7 @@ import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import { StateEnum, StateProps } from "../App";
-import { abstractLog, DCRGraph, DCRGraphS, EventLog, filter, layoutGraph, mineFromAbstraction, nestDCR, Nestings, parseLog, RoleTrace, Trace } from "dcr-engine";
+import { abstractLog, DCRGraph, DCRGraphS, EventLog, filter, layoutGraph, mineFromAbstraction, nestDCR, Nestings, parseLog, RoleTrace } from "dcr-engine";
 import FileUpload from "../utilComponents/FileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Toggle from "../utilComponents/Toggle";
@@ -198,7 +198,7 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
         {
             icon: <BiSave />,
             text: "Save Graph",
-            onClick: () => { saveGraph(); setMenuOpen(false) },
+            onClick: () => { saveGraph() },
         },
         {
             text: "Download",
