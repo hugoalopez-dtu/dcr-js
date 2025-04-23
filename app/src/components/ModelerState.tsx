@@ -25,26 +25,7 @@ import MenuElement from '../utilComponents/MenuElement';
 import Label from '../utilComponents/Label';
 import Loading from '../utilComponents/Loading';
 import { DCRGraph, layoutGraph, moddleToDCR, nestDCR, Nestings } from 'dcr-engine';
-
-
-
-const GraphNameInput = styled.input`
-  position: fixed;
-  top: 0;
-  left: 50%;
-  text-align: center;
-  z-index: 5;
-  margin-top: 0.5rem;
-  transform: translateX(-50%);
-  font-size: 30px;
-  width: fit-content;
-  background: transparent;
-  appearance: none;
-  border: none;
-  &:focus {
-    outline: 2px dashed black;
-  }
-`
+import GraphNameInput from '../utilComponents/GraphNameInput';
 
 const initGraphName = "DCR-JS Graph"
 

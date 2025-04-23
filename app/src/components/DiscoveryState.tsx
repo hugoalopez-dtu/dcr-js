@@ -18,6 +18,7 @@ import styled from "styled-components";
 import Loading from "../utilComponents/Loading";
 import { saveAs } from 'file-saver';
 import { useHotkeys } from "react-hotkeys-hook";
+import GraphNameInput from "../utilComponents/GraphNameInput";
 
 const FileInput = styled.div`
     border: 1px dashed black;
@@ -38,6 +39,8 @@ const Input = styled.input`
     font-size: 20px; 
 `
 
+const initGraphName = "";
+
 const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph, savedLogs, setSavedLogs, lastSavedLog }: StateProps) => {
     const [menuOpen, setMenuOpen] = useState(true);
     const [formToShow, setFormToShow] = useState("DisCoveR");
@@ -49,6 +52,8 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
 
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
+
+    const [graphName, setGraphName] = useState<string>(initGraphName);
 
     const saveLog = (eventLog: EventLog<RoleTrace>, name: string) => {
         if (!graphRef.current?.current) return;
@@ -90,7 +95,7 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
                 </MenuElement>,
                 <MenuElement>
                     <Label title="Saves the uploaded event log for later use in conformance checking, simulation, etc.">Save Log</Label>
-                    <Input name="save" type="checkbox" defaultChecked={customFormState?.nest ? customFormState.nest : false} />
+                    <Input name="save" type="checkbox" defaultChecked={customFormState?.save ? customFormState.save : false} />
                 </MenuElement>,
             ],
             onSubmit: (formData: FormData) => {
@@ -99,7 +104,7 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
                 const threshold = rawThreshold && parseFloat(rawThreshold.toString());
                 const nest = !!formData.get("nest");
                 const save = !!formData.get("save");
-                setCustomFormState({ ...customFormState, threshold, nest });
+                setCustomFormState({ ...customFormState, threshold, nest, save });
                 if (threshold === "" || threshold === null) {
                     toast.error("Can't parse input parameters...");
                     setLoading(false);
@@ -135,6 +140,7 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
                             console.log(e);
                             toast.error("Invalid xml...")
                         }).finally(() => {
+                            setGraphName(customFormState.name.slice(0, -4));
                             if (save) saveLog(log, customFormState.name);
                             setLoading(false);
                         });
@@ -155,41 +161,58 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
     }
 
     const saveGraph = () => {
-        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
-        modelerRef.current?.saveXML({ format: false }).then(data => {
-            const newSavedGraphs = { ...savedGraphs };
-            newSavedGraphs[graphName] = data.xml;
-            lastSavedGraph.current = graphName;
-            setSavedGraphs(newSavedGraphs);
-            toast.success("Graph saved!");
-        });
+        if (graphName === "") {
+            toast.warning("Discover a graph before saving!");
+            return;
+        }
+        if (!savedGraphs[graphName] || confirm(`This will overwrite the previously saved graph '${graphName}'. Are you sure you wish to continue?`)) {
+            modelerRef.current?.saveXML({ format: false }).then(data => {
+                const newSavedGraphs = { ...savedGraphs };
+                newSavedGraphs[graphName] = data.xml;
+                lastSavedGraph.current = graphName;
+                setSavedGraphs(newSavedGraphs);
+                toast.success("Graph saved!");
+            });
+        }
     }
 
     useHotkeys("ctrl+s", saveGraph, { preventDefault: true });
 
     const saveAsXML = async () => {
         if (!modelerRef.current) return;
+        if (graphName === "") {
+            toast.warning("Discover a graph before saving!");
+            return;
+        }
 
         const data = await modelerRef.current.saveXML({ format: true });
         const blob = new Blob([data.xml]);
-        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
+
         saveAs(blob, `${graphName}.xml`);
     }
 
     const saveAsDCRXML = async () => {
         if (!modelerRef.current) return;
+        if (graphName === "") {
+            toast.warning("Discover a graph before saving!");
+            return;
+        }
 
         const data = await modelerRef.current.saveDCRXML();
         const blob = new Blob([data.xml]);
-        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
+
         saveAs(blob, `${graphName}.xml`);
     }
 
     const saveAsSvg = async () => {
         if (!modelerRef.current) return;
+        if (graphName === "") {
+            toast.warning("Discover a graph before saving!");
+            return;
+        }
         const data = await modelerRef.current.saveSVG();
         const blob = new Blob([data.svg]);
-        const graphName = customFormState.name ? customFormState.name.slice(0, -4) : "discovered_model";
+
         saveAs(blob, `${graphName}.svg`);
     }
 
@@ -256,8 +279,12 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
 
     return (
         <>
-            <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
+            <GraphNameInput
+                value={graphName}
+                onChange={e => setGraphName(e.target.value)}
+            />
             {loading && <Loading />}
+            <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
             <TopRightIcons>
                 <FullScreenIcon />
                 <BiHome onClick={() => setState(StateEnum.Home)} />
