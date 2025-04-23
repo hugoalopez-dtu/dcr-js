@@ -3,7 +3,7 @@ import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import { StateEnum, StateProps } from "../App";
-import { abstractLog, DCRGraph, DCRGraphS, filter, layoutGraph, mineFromAbstraction, nestDCR, Nestings, parseLog } from "dcr-engine";
+import { abstractLog, DCRGraph, DCRGraphS, EventLog, filter, layoutGraph, mineFromAbstraction, nestDCR, Nestings, parseLog, RoleTrace, Trace } from "dcr-engine";
 import FileUpload from "../utilComponents/FileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Toggle from "../utilComponents/Toggle";
@@ -38,7 +38,7 @@ const Input = styled.input`
     font-size: 20px; 
 `
 
-const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }: StateProps) => {
+const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph, savedLogs, setSavedLogs, lastSavedLog }: StateProps) => {
     const [menuOpen, setMenuOpen] = useState(true);
     const [formToShow, setFormToShow] = useState("DisCoveR");
 
@@ -49,6 +49,15 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph 
 
     const modelerRef = useRef<DCRModeler | null>(null);
     const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
+
+    const saveLog = (eventLog: EventLog<RoleTrace>, name: string) => {
+        if (!graphRef.current?.current) return;
+        const newSavedLogs = { ...savedLogs };
+        newSavedLogs[name] = eventLog;
+        setSavedLogs(newSavedLogs);
+        lastSavedLog.current = name;
+        toast.success("Log saved!");
+    }
 
     const algorithms: {
         [key: string]: {
@@ -65,7 +74,7 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph 
                     </FileInput>
                 </MenuElement>,
                 <MenuElement>
-                    <Label>Noise Threshold:</Label>
+                    <Label title="The amount of noise filtering employed, with 0 being no filtering and 1 being max.">Noise Threshold:</Label>
                     <Input
                         type="number"
                         required
@@ -76,8 +85,12 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph 
                         step="0.01" />
                 </MenuElement>,
                 <MenuElement>
-                    <Label>Nest Graph</Label>
+                    <Label >Nest Graph</Label>
                     <Input name="nest" type="checkbox" defaultChecked={customFormState?.nest ? customFormState.nest : false} />
+                </MenuElement>,
+                <MenuElement>
+                    <Label title="Saves the uploaded event log for later use in conformance checking, simulation, etc.">Save Log</Label>
+                    <Input name="save" type="checkbox" defaultChecked={customFormState?.nest ? customFormState.nest : false} />
                 </MenuElement>,
             ],
             onSubmit: (formData: FormData) => {
@@ -85,6 +98,7 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph 
                 const rawThreshold = formData.get("noise");
                 const threshold = rawThreshold && parseFloat(rawThreshold.toString());
                 const nest = !!formData.get("nest");
+                const save = !!formData.get("save");
                 setCustomFormState({ ...customFormState, threshold, nest });
                 if (threshold === "" || threshold === null) {
                     toast.error("Can't parse input parameters...");
@@ -103,20 +117,25 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph 
                         traces: Object.keys(log.traces).map(traceId => ({ traceId, trace: log.traces[traceId].map(elem => elem.activity) })).reduce((acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }), {})
                     }
 
-                    const filteredLog = filter(noRoleLog, threshold);
+                    console.log("Filtering...");
+                    const filteredLog = threshold === 0 ? noRoleLog : filter(noRoleLog, threshold);
                     console.log("Filtering done!");
+                    console.log("Discovering...");
                     const logAbs = abstractLog(filteredLog);
                     const graph = mineFromAbstraction(logAbs);
                     console.log("Discovery done!");
+                    console.log("Nesting...");
                     const nestings = nestDCR(graph);
                     console.log("Nesting done!");
                     const params: [DCRGraph, Nestings | undefined] = nest ? [nestings.nestedGraph, nestings] : [graph, undefined];
+                    console.log("Computing layout...");
                     layoutGraph(...params).then(xml => {
                         console.log("Layout done!");
                         modelerRef.current?.importXML(xml).catch(e => {
                             console.log(e);
                             toast.error("Invalid xml...")
                         }).finally(() => {
+                            if (save) saveLog(log, customFormState.name);
                             setLoading(false);
                         });
                     }).catch(e => {
