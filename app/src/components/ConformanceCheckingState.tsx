@@ -193,10 +193,8 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           text: name,
           onClick: () => {
             const log = savedLogs[name];
-            console.log(log);
             const results = Object.keys(log.traces).map(traceId => {
               const trace = log.traces[traceId];
-              console.log(trace, "hehe");
               return {
                 traceId,
                 trace,
@@ -288,7 +286,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   return (
     <>
-      <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
+      <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
       {logResults.length > 0 && <ResultsWindow $traceSelected={selectedTrace !== null}>
         <ResultsHeader>
           {logName}

@@ -85,7 +85,6 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph 
                 const rawThreshold = formData.get("noise");
                 const threshold = rawThreshold && parseFloat(rawThreshold.toString());
                 const nest = !!formData.get("nest");
-                console.log(nest);
                 setCustomFormState({ ...customFormState, threshold, nest });
                 if (threshold === "" || threshold === null) {
                     toast.error("Can't parse input parameters...");
@@ -96,18 +95,24 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph 
                     if (!modelerRef) return;
 
                     const data = customFormState.contents;
+                    console.log("Trying to parse log...");
                     const log = parseLog(data);
+                    console.log("Parsed log!");
                     const noRoleLog = {
                         events: log.events,
                         traces: Object.keys(log.traces).map(traceId => ({ traceId, trace: log.traces[traceId].map(elem => elem.activity) })).reduce((acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }), {})
                     }
 
                     const filteredLog = filter(noRoleLog, threshold);
+                    console.log("Filtering done!");
                     const logAbs = abstractLog(filteredLog);
                     const graph = mineFromAbstraction(logAbs);
+                    console.log("Discovery done!");
                     const nestings = nestDCR(graph);
+                    console.log("Nesting done!");
                     const params: [DCRGraph, Nestings | undefined] = nest ? [nestings.nestedGraph, nestings] : [graph, undefined];
                     layoutGraph(...params).then(xml => {
+                        console.log("Layout done!");
                         modelerRef.current?.importXML(xml).catch(e => {
                             console.log(e);
                             toast.error("Invalid xml...")

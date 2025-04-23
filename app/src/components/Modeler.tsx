@@ -12,6 +12,7 @@ interface ModelerProps {
         overrideOnclick: (e: any) => void;
         canvasClassName?: string;
         onLoadCallback?: (graph: DCRGraphS) => void,
+        noRendering?: boolean
     }
 }
 
@@ -59,7 +60,7 @@ const Modeler = ({ modelerRef, override, initXml }: ModelerProps) => {
                     selection.select([]);
 
                     initModeler.setSimulating(true);
-                    initModeler.updateRendering(graph);
+                    !override.noRendering && initModeler.updateRendering(graph);
 
                     // Override clicks on events
                     initModeler.on('element.click', (e) => {
