@@ -2,6 +2,12 @@ import styled from "styled-components";
 import { StateEnum, StateProps } from "../App";
 import FlexBox from "../utilComponents/FlexBox";
 
+const Container = styled.div`
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll;
+`
+
 const Header = styled.h1`
     font-size: 100px;
     text-align: center;
@@ -37,7 +43,7 @@ const ImgLabel = styled.label`
 // Logos from https://www.svgrepo.com/collection/education-sephia-filled-icons/
 const HomeState = ({ setState }: StateProps) => {
     return (
-        <>
+        <Container>
             <Header>DCR-JS</Header>
             <FlexBox direction="row" $justify="space-around">
                 <ImgContainer onClick={() => setState(StateEnum.Modeler)}>
@@ -57,7 +63,7 @@ const HomeState = ({ setState }: StateProps) => {
                     <Img src="/dcr-js/icons/discovery.svg" />
                 </ImgContainer>
             </FlexBox>
-        </>
+        </Container>
     )
 }
 
