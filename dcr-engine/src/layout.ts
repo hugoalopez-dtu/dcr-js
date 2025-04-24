@@ -72,43 +72,29 @@ const createXML = (laidOutGraph: LayoutType, nodesAndEdges: AbstractGraph, nesti
     xmlContent += ' <dcrDi:dcrRootBoard id="RootBoard">\n';
     xmlContent += ' <dcrDi:dcrPlane id="Plane" boardElement="dcrGraph">\n';
 
-    const parentCoordinates: { [nodeId: string]: { parent: string, parentX: number, parentY: number } } = {};
+    const nodeCoordinates: { [nodeId: string]: { x: number, y: number } } = {};
 
-    const createElkNodeArrayXML = (nodes: Array<ElkNode>, x: number, y: number, parent: string): string => {
+    const createElkNodeArrayXML = (nodes: Array<ElkNode>, parentX: number, parentY: number): string => {
         let retval = "";
         nodes.forEach((node) => {
             if (!node.x || !node.y) throw new Error("Coordinates missing...");
-            parentCoordinates[node.id] = { parent, parentX: x, parentY: y };
-            const newX = x + node.x;
-            const newY = y + node.y;
+            const x = parentX + node.x;
+            const y = parentY + node.y;
+            nodeCoordinates[node.id] = { x, y };
             retval += `<dcrDi:dcrShape id="${descToId(node.id)}_di" boardElement="${descToId(node.id)}">\n`;
-            retval += ` <dc:Bounds x="${newX}" y="${newY}" width="${node.width}" height="${node.height}"/>\n`;
+            retval += ` <dc:Bounds x="${x}" y="${y}" width="${node.width}" height="${node.height}"/>\n`;
             retval += ' </dcrDi:dcrShape>\n';
-            if (node.children) retval += createElkNodeArrayXML(node.children, newX, newY, node.id);
+            if (node.children) retval += createElkNodeArrayXML(node.children, x, y);
         })
         return retval;
     }
 
-    if (laidOutGraph.children) xmlContent += createElkNodeArrayXML(laidOutGraph.children, 0, 0, laidOutGraph.id);
-
-    const getBaselineChords = (aId: string, bId: string, container?: string): { baseX: number, baseY: number } => {
-        const a = parentCoordinates[aId];
-        const b = parentCoordinates[bId];
-        if (a.parent === b.parent) return { baseX: a.parentX, baseY: a.parentY }
-        else if (a.parent === bId || (container && a.parent === container)) return { baseX: a.parentX, baseY: a.parentY }
-        else if (b.parent === aId || (container && b.parent === container)) return { baseX: b.parentX, baseY: b.parentY }
-        else return { baseX: 0, baseY: 0 };
-    }
+    nodeCoordinates[laidOutGraph.id] = { x: 0, y: 0 };
+    if (laidOutGraph.children) xmlContent += createElkNodeArrayXML(laidOutGraph.children, 0, 0);
 
     id = 0;
     laidOutGraph.edges?.forEach((edge) => {
-        const { baseX, baseY } = getBaselineChords(edge.sources[0], edge.targets[0], edge.container);
-        if (edge.id === "Admission IC-Admission NC-response") {
-            console.log(baseX, baseY)
-            console.log(edge, "lele");
-            console.log(parentCoordinates[edge.sources[0]])
-            console.log(parentCoordinates[edge.targets[0]])
-        }
+        const { x: baseX, y: baseY } = edge.container ? nodeCoordinates[edge.container] : { x: 0, y: 0 };
         if (edge.sections) {
             xmlContent += `<dcrDi:relation id="Relation_${++id}_di" boardElement="Relation_${id}">\n`;
             xmlContent += ` <dcrDi:waypoint x="${baseX + edge.sections[0].startPoint.x}" y="${baseY + edge.sections[0].startPoint.y}" />\n`;
