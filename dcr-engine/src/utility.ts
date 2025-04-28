@@ -88,14 +88,14 @@ export const intersect = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
 }
 
 // Allows sets to be serialized by converting them to arrays
-function set2JSON(key: any, value: any) {
+function set2JSON(_: any, value: any) {
   if (typeof value === "object" && value instanceof Set) {
     return [...value];
   }
   return value;
 }
 // Parses arrays back to sets
-function JSON2Set(key: any, value: any) {
+function JSON2Set(_: any, value: any) {
   if (typeof value === "object" && value instanceof Array) {
     return new Set(value);
   }
