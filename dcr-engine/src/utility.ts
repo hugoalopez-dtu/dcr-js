@@ -1,5 +1,7 @@
 import type { DCRGraph, EventMap, Marking, Event } from "./types";
 
+import fs from "fs";
+
 export const avg = (arr: Array<number>): number => arr.reduce((partialSum, a) => partialSum + a, 0) / arr.length;
 
 // Makes deep copy of a eventMap
@@ -84,3 +86,28 @@ export const intersect = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
   }
   return retset;
 }
+
+// Allows sets to be serialized by converting them to arrays
+function set2JSON(key: any, value: any) {
+  if (typeof value === "object" && value instanceof Set) {
+    return [...value];
+  }
+  return value;
+}
+// Parses arrays back to sets
+function JSON2Set(key: any, value: any) {
+  if (typeof value === "object" && value instanceof Array) {
+    return new Set(value);
+  }
+  return value;
+}
+
+export const writeSerializedGraph = <T>(model: T, path: string) => {
+  fs.writeFileSync(path, JSON.stringify(model, set2JSON, 4));
+};
+
+export const parseSerializedGraph = <T>(path: string): T => {
+  const data = fs.readFileSync(path).toString();
+  const obj = JSON.parse(data, JSON2Set);
+  return obj;
+};
