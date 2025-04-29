@@ -413,6 +413,7 @@ export default function DCRRenderer(
     },
     'dcr:Relation': function (parentGfx, element) {
       let type = element.businessObject.get('type');
+      let violationColour = element.businessObject.get('violationColour');
 
       var pathData = createPathFromConnection(element);
 
@@ -452,11 +453,11 @@ export default function DCRRenderer(
 
       if (type === 'condition') {
         markers.conditionMarker(marker, path,
-          settings.blackRelations ? colorBlack : colorCondition, //yellow
+          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorCondition, //yellow
           fill, startDirection, endDirection);
       } else if (type === 'response') {
         markers.responseMarker(marker, path,
-          settings.blackRelations ? colorBlack : colorResponse, //blue
+          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorResponse, //blue
           fill, startDirection, endDirection);
       } else if (type === 'include') {
         markers.includeMarker(marker, path,
@@ -464,11 +465,11 @@ export default function DCRRenderer(
           fill, startDirection, endDirection);
       } else if (type === 'exclude') {
         markers.excludeMarker(marker, path,
-          settings.blackRelations ? colorBlack : colorExclude, //red
+          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorExclude, //red
           fill, startDirection, endDirection);
       } else if (type === 'milestone') {
         markers.milestoneMarker(marker, path,
-          settings.blackRelations ? colorBlack : colorMilestone, //purple
+          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorMilestone, //purple
           fill, startDirection, endDirection);
       } else if (type === 'spawn') {
         markers.spawnMarker(marker, path,

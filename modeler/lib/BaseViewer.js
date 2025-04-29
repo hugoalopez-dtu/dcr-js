@@ -566,6 +566,81 @@ const update = (graph, modeling, elementReg) => {
   });
 }
 
+function hslToHex(h, s, l) {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// https://stackoverflow.com/questions/65361477/how-to-generate-color-from-colormap-in-javascript
+const updateViolations = (violations, modeling, elementReg) => {
+
+  const allViolations = violations && Object.values(violations).flatMap(elem => Object.values(elem).flatMap(elem2 => Object.values(elem2)));
+
+  const scale = violations && {
+    min: { value: Math.min(...allViolations), hue: 1 },
+    max: { value: Math.max(...allViolations), hue: 100 }
+  }
+
+  function valueToColor(temp) {
+    if (scale.max.value === 0) {
+      return hslToHex(scale.max.hue, 100, 50);
+    }
+    temp = Math.min(scale.max.value, Math.max(scale.min.value, temp));
+    const range = scale.max.value - scale.min.value;
+    const hueRange = scale.max.hue - scale.min.hue;
+    const value = (temp - scale.min.value) / range;
+    const hue = scale.max.hue - hueRange * value;
+
+    return hslToHex(hue, 100, 50)
+  }
+
+
+  for (const { element } of Object.values(elementReg._elements)) {
+    if (element.type === "dcr:Relation") {
+      const busObject = element.businessObject;
+      const type = busObject.type;
+      switch (type) {
+        case "condition": {
+          const source = busObject.targetRef.id;
+          const target = busObject.sourceRef.id;
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.conditionsFor[source][target]) : null });
+          break;
+        }
+        case "milestone": {
+          const source = busObject.targetRef.id;
+          const target = busObject.sourceRef.id;
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.milestonesFor[source][target]) : null });
+          break;
+        }
+        case "response": {
+          const source = busObject.sourceRef.id;
+          const target = busObject.targetRef.id;
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.responseTo[source][target]) : null });
+          break;
+        }
+        case "exclude": {
+          const source = busObject.sourceRef.id;
+          const target = busObject.targetRef.id;
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.excludesTo[source][target]) : null });
+          break;
+        }
+        case "include": {
+          continue;
+        }
+        default: {
+          throw new Error("Holup...");
+        }
+      }
+    }
+  }
+}
+
 BaseViewer.prototype.setSimulating = function (val) {
   setSimulating(val);
 }
@@ -580,7 +655,12 @@ BaseViewer.prototype.getElementRegistry = function () {
 
 BaseViewer.prototype.updateRendering = function (graph) {
   const modeling = this.get('modeling');
-  update(graph, modeling, this.get('elementRegistry'), graph);
+  update(graph, modeling, this.get('elementRegistry'));
+}
+
+BaseViewer.prototype.updateViolations = function (violations) {
+  const modeling = this.get('modeling');
+  updateViolations(violations, modeling, this.get('elementRegistry'));
 }
 
 /**

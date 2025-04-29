@@ -22,6 +22,7 @@ class DCRModeler {
     getSelection(): any;
 
     updateRendering(graph: DCRGraph): void;
+    updateViolations(violations: RelationViolations | null): void;
     setSimulating(val: boolean): void;
 }
 

@@ -3,142 +3,82 @@ import { StateEnum, StateProps } from "../App";
 import Modeler from "./Modeler";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
-import { BiCheck, BiHome, BiLeftArrowCircle, BiQuestionMark, BiUpload, BiX } from "react-icons/bi";
+import { BiHome, BiLeftArrowCircle, BiSolidFlame, BiUpload } from "react-icons/bi";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
-import styled from "styled-components";
 import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
-import { isSettingsVal } from "../types";
-import { copyMarking, moddleToDCR, parseLog } from "dcr-engine";
+import { isSettingsVal, ReplayLogResults, ViolationLogResults } from "../types";
+import { copyMarking, mergeViolations, moddleToDCR, parseLog, quantifyViolations } from "dcr-engine";
 import { toast } from "react-toastify";
 import FileUpload from "../utilComponents/FileUpload";
 import { replayTraceS } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
-import { RoleTrace } from "dcr-engine/src/types";
+import { RelationViolations, RoleTrace } from "dcr-engine/src/types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Label from "../utilComponents/Label";
+import ReplayResults from "./ReplayResults";
+import styled from "styled-components";
+import HeatmapResults from "./HeatmapResults";
 
-const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 30rem;
-    box-shadow: ${props => props.$traceSelected ? "none" : "0px 0px 5px 0px grey"};
-    display: flex;
-    flex-direction: column;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    font-size: 20px;
-    background-color: white;
-    box-sizing: border-box;
-    overflow: scroll;
-    z-index: 5;
+const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boolean }>`
+    ${props => props.$clicked ? `
+        background-color: black !important;
+        color: white;
+    ` : ``}
+    ${props => props.$disabled ? `
+        color : grey;
+        border-color: grey !important;
+        cursor: default !important;
+        &:hover {
+            box-shadow: none !important;
+        }    
+    ` : ""}
 `
-const ResultsElement = styled.li<{ $selected: boolean; }>`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.5rem 1rem 0.5rem 1rem;
-  cursor: pointer;
-  box-sizing: border-box;
-  color: ${props => props.$selected ? "white" : "black"};
-  background-color: ${props => props.$selected ? "gainsboro" : "white"};
-
-  &:hover {
-      color: white;
-      background-color: Gainsboro;
-  } 
-
-  & > svg {
-    color: white;
-    border-radius: 50%;
-  }
-`
-
-const ResultsHeader = styled.h1`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  font-size: 30px;
-  font-weight: normal;
-  margin: 1rem;
-`
-
-const CloseResults = styled(BiX)`
-  display: block;
-  height: 30px;
-  width: 30px;
-  margin: auto;
-  margin-left: 1rem;
-  margin-right: 0;
-  cursor: pointer;
-  &:hover {
-    color: gainsboro;
-  }
-`
-
-type LogResults = Array<{
-  traceId: string,
-  isPositive?: boolean,
-  trace: RoleTrace
-}>
-
-const ResultCount = styled.div`
-    display: flex;
-    flex-direction: row;
-
-    & > svg {
-    display: block;
-    color: white;
-    border-radius: 50%;
-    margin: auto;
-    margin-right: 1rem;
-    margin-left: 0.5rem;
-  }
-`
-
-const resultIcon = (val: boolean | undefined) => {
-  switch (val) {
-    case undefined:
-      return <BiQuestionMark style={{ backgroundColor: "orange" }} />
-    case true:
-      return <BiCheck title="accepting" style={{ backgroundColor: "green" }} />
-    case false:
-      return <BiX title="not accepting" style={{ backgroundColor: "red" }} />
-  }
-}
 
 const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedGraph, lastSavedLog }: StateProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heatmapMode, setHeatmapMode] = useState(true);
 
   const modelerRef = useRef<DCRModeler | null>(null);
   const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
-  const [logResults, setLogResults] = useState<LogResults>([]);
+  const [logResults, setLogResults] = useState<ReplayLogResults>([]);
+  const [violationLogResults, setViolationLogResults] = useState<ViolationLogResults>([]);
+
   const [logName, setLogName] = useState<string>("");
   const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace } | null>(null);
 
-  const { positiveCount, negativeCount } = useMemo<{ positiveCount: number, negativeCount: number }>(() => {
-    let positiveCount = 0;
-    let negativeCount = 0;
-    for (const result of logResults) {
-      if (result.isPositive !== undefined && result.isPositive) {
-        positiveCount++;
-      } else {
-        negativeCount++;
+  const nestingRef = useRef<boolean>(false);
+
+  const totalLogResults = useMemo<{
+    totalViolations: number,
+    violations: RelationViolations
+  }>(() => {
+    const retval = violationLogResults.reduce((acc, cum) => cum.results ? {
+      totalViolations: acc.totalViolations + cum.results.totalViolations,
+      violations: mergeViolations(acc.violations, cum.results.violations)
+    } : acc, {
+      totalViolations: 0,
+      violations: {
+        conditionsFor: {},
+        responseTo: {},
+        excludesTo: {},
+        milestonesFor: {}
       }
-    }
-    return { positiveCount, negativeCount }
-  }, [logResults]);
+    });
+    modelerRef.current?.updateViolations(retval.violations);
+    return retval
+  }, [violationLogResults]);
 
   const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
     if (data.includes("multi-instance=\"true\"")) {
       toast.error("Multi-instance subprocesses not supported...");
     } else {
+      if (data.includes("SubProcess") || data.includes("Nesting")) nestingRef.current = true;
+      else nestingRef.current = false;
+
       parse && parse(data).then((_) => {
         if (modelerRef.current && graphRef.current) {
           const graph = moddleToDCR(modelerRef.current.getElementRegistry());
@@ -146,6 +86,10 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           if (logResults) {
             const newResults = logResults.map(({ traceId, trace }) => ({ traceId, trace, isPositive: replayTraceS(graph, trace) }));
             setLogResults(newResults);
+          }
+          if (violationLogResults) {
+            const newResults = violationLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: quantifyViolations(graph, trace) }));
+            setViolationLogResults(newResults);
           }
         }
       }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
@@ -165,6 +109,15 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       });
       setLogName(name.slice(0, -4));
       setLogResults(results);
+      const violationResults = Object.keys(log.traces).map(traceId => {
+        const trace = log.traces[traceId];
+        return {
+          traceId,
+          trace,
+          results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
+        }
+      });
+      setViolationLogResults(violationResults);
     } catch (e) {
       console.log(e);
       toast.error("Cannot parse log...");
@@ -203,6 +156,15 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             });
             setLogName(name);
             setLogResults(results);
+            const violationResults = Object.keys(log.traces).map(traceId => {
+              const trace = log.traces[traceId];
+              return {
+                traceId,
+                trace,
+                results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
+              }
+            });
+            setViolationLogResults(violationResults);
             setMenuOpen(false);
           },
         })
@@ -271,6 +233,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   const lastLog = lastSavedLog.current;
   const initLog = lastLog ? savedLogs[lastLog] : undefined;
+
   const onLoadCallback = initLog ? (graph: DCRGraphS) => {
     const results = Object.keys(initLog.traces).map(traceId => {
       const trace = initLog.traces[traceId];
@@ -282,36 +245,41 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     });
     lastLog && setLogName(lastLog);
     setLogResults(results);
+    const violationResults = Object.keys(initLog.traces).map(traceId => {
+      const trace = initLog.traces[traceId];
+      return {
+        traceId,
+        trace,
+        results: quantifyViolations(graph, trace),
+      }
+    });
+    setViolationLogResults(violationResults);
   } : undefined;
 
   return (
     <>
       <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
-      {logResults.length > 0 && <ResultsWindow $traceSelected={selectedTrace !== null}>
-        <ResultsHeader>
-          {logName}
-          <ResultCount>
-            {positiveCount}
-            {resultIcon(true)}
-            {negativeCount}
-            {resultIcon(false)}
-          </ResultCount>
-          <CloseResults onClick={() => { setLogResults([]); setSelectedTrace(null) }} />
-        </ResultsHeader>
-        <ul>
-          {logResults.map(({ traceId, trace, isPositive }) => (
-            <ResultsElement
-              $selected={selectedTrace !== null && selectedTrace.traceId === traceId}
-              key={traceId}
-              onClick={() => setSelectedTrace({ trace, traceName: traceId, traceId })}
-            >
-              <Label>{traceId}</Label>
-              {resultIcon(isPositive)}
-            </ResultsElement>))}
-        </ul>
-      </ResultsWindow>}
-      {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} />}
+      {logResults.length > 0 && !heatmapMode && <ReplayResults logName={logName} logResults={logResults} selectedTrace={selectedTrace} setLogResults={setLogResults} setSelectedTrace={setSelectedTrace} />}
+      {violationLogResults.length > 0 && heatmapMode && <HeatmapResults totalLogResults={totalLogResults} logName={logName} violationLogResults={violationLogResults} selectedTrace={selectedTrace} setViolationLogResults={setViolationLogResults} setSelectedTrace={setSelectedTrace} modelerRef={modelerRef} />}
+      {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
+        if (heatmapMode) {
+          modelerRef.current?.updateViolations(totalLogResults.violations);
+        }
+      }} />}
       <TopRightIcons>
+        <HeatmapButton onClick={() => {
+          if (nestingRef.current) {
+            toast.error("Nestings and Subprocesses not supported for heatmap...");
+            return;
+          }
+          if (heatmapMode) {
+            modelerRef.current?.updateViolations(null);
+          } else {
+            const viols = selectedTrace ? violationLogResults.find(elem => elem.traceId === selectedTrace.traceId)?.results?.violations : totalLogResults.violations;
+            modelerRef.current?.updateViolations(viols);
+          }
+          setHeatmapMode(!heatmapMode)
+        }} $clicked={heatmapMode} title="Display results as contraint violation heatmap." />
         <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />
         <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />

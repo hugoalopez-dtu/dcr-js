@@ -1,6 +1,6 @@
 import { executeS, isAcceptingS, isEnabledS } from "./executionEngine";
-import { DCRGraph, DCRGraphS, Event, FuzzyRelation, RoleTrace, Trace } from "./types";
-import { copyMarking, copySet, reverseRelation } from "./utility";
+import { DCRGraph, DCRGraphS, Event, EventMap, FuzzyRelation, RelationViolations, RoleTrace, Trace } from "./types";
+import { copyEventMap, copyMarking, copySet, reverseRelation } from "./utility";
 
 export const replayTraceS = (graph: DCRGraphS, trace: RoleTrace): boolean => {
     let retval = false;
@@ -40,12 +40,10 @@ const mergeFuzRels = (viols1: FuzzyRelation, viols2: FuzzyRelation): FuzzyRelati
             retval[e1] = { ...viols2[e1] };
         }
     }
-    console.log(viols1, viols2);
-    console.log(retval);
     return retval;
 }
 
-const mergeViolations = (viols1: RelationViolations, viols2: RelationViolations): RelationViolations => {
+export const mergeViolations = (viols1: RelationViolations, viols2: RelationViolations): RelationViolations => {
     return {
         conditionsFor: mergeFuzRels(viols1.conditionsFor, viols2.conditionsFor),
         responseTo: mergeFuzRels(viols1.responseTo, viols2.responseTo),
@@ -65,28 +63,42 @@ const emptyFuzzyRel = (events: Set<Event>): FuzzyRelation => {
     return retval;
 }
 
-type RelationViolations = {
-    conditionsFor: FuzzyRelation;
-    responseTo: FuzzyRelation;
-    excludesTo: FuzzyRelation;
-    milestonesFor: FuzzyRelation;
+const emptyEventMap = (events: Set<Event>): EventMap => {
+    const retval: EventMap = {};
+    for (const event of events) {
+        retval[event] = new Set();
+    }
+    return retval;
 }
-
-/*
 
 export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalViolations: number, violations: RelationViolations } => {
     // Copies and flips excludesTo and responseTo to easily find all events that are the sources of the relations
     const excludesFor = reverseRelation(graph.excludesTo);
     const responseFor = reverseRelation(graph.responseTo);
 
-    const quantifyRec = (graph: DCRGraphS, trace: RoleTrace): { totalViolations: number, violations: RelationViolations } => {
+    const quantifyRec = (graph: DCRGraphS, trace: RoleTrace, exSinceIn: EventMap, exSinceEx: EventMap): { totalViolations: number, violations: RelationViolations } => {
         if (trace.length === 0) {
             // Response violations (each included pending event is a violation)
+            // For all pending events (that are included according to the initial graph), event, at the end of a trace, all relations
+            // s.t. otherEvent *-> event, where otherEvent has been executed
+            // after event was last executed covers the trace
+            const responseTo = emptyFuzzyRel(graph.events);
+            let totalViolations = 0;
+            for (const event of copySet(graph.marking.pending).intersect(
+                graph.marking.included
+            )) {
+                for (const otherEvent of copySet(responseFor[event]).intersect(
+                    exSinceEx[event]
+                )) {
+                    responseTo[otherEvent][event]++;
+                    totalViolations++;
+                }
+            }
             return {
-                totalViolations: graph.marking.pending.intersect(graph.marking.included).size,
+                totalViolations,
                 violations: {
                     conditionsFor: emptyFuzzyRel(graph.events),
-                    responseTo: emptyFuzzyRel(graph.events),
+                    responseTo,
                     excludesTo: emptyFuzzyRel(graph.events),
                     milestonesFor: emptyFuzzyRel(graph.events),
                 }
@@ -104,12 +116,16 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
         };
         const initMarking = copyMarking(graph.marking);
         for (const event of graph.labelMapInv[head.activity]) {
+            if (!(head.role === graph.roleMap[event])) continue;
+
+            const localExSinceIn = copyEventMap(exSinceIn);
+            const localExSinceEx = copyEventMap(exSinceEx);
             let localViolationCount = 0;
             const localViolations: RelationViolations = {
-                conditionsFor: {},
-                responseTo: {},
-                excludesTo: {},
-                milestonesFor: {}
+                conditionsFor: emptyFuzzyRel(graph.events),
+                responseTo: emptyFuzzyRel(graph.events),
+                excludesTo: emptyFuzzyRel(graph.events),
+                milestonesFor: emptyFuzzyRel(graph.events)
             };
 
             // Condition violations
@@ -135,11 +151,33 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
                 }
             }
             // Exclude violation
-            if (!graph.marking.included.has(event)) localViolationCount++;
-            // TODO compute exclusion violations
+            // If event is not included, then for all events, 'otherEvent' that has been executed since 'event'
+            // was last included, the relation otherEvent ->% event covers the trace
+            if (!graph.marking.included.has(event)) {
+                for (const otherEvent of copySet(localExSinceIn[event]).intersect(
+                    excludesFor[event]
+                )) {
+                    localViolations.excludesTo[otherEvent][event]++;
+                    localViolationCount++;
+                }
+            }
 
             executeS(event, graph);
-            const { totalViolations: recTotalViolations, violations: recViolations } = quantifyRec(graph, tail);
+
+            // For all events included by 'event' clear executed since included set
+            for (const otherEvent of graph.includesTo[event]) {
+                localExSinceIn[otherEvent] = new Set();
+            }
+
+            // Add to executed since included for all events
+            for (const otherEvent of graph.events) {
+                localExSinceEx[otherEvent].add(event);
+                localExSinceIn[otherEvent].add(event);
+            }
+            // Clear executed since set
+            localExSinceEx[event] = new Set([event]);
+
+            const { totalViolations: recTotalViolations, violations: recViolations } = quantifyRec(graph, tail, localExSinceIn, localExSinceEx);
             if (localViolationCount + recTotalViolations < leastViolations) {
                 leastViolations = localViolationCount + recTotalViolations;
                 bestRelationViolations = mergeViolations(localViolations, recViolations);
@@ -152,6 +190,7 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
         return { totalViolations: leastViolations, violations: bestRelationViolations };
     };
 
-    return quantifyRec(graph, trace);
+    const results = quantifyRec(graph, trace, emptyEventMap(graph.events), emptyEventMap(graph.events));
+
+    return results;
 }
-    */

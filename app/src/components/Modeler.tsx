@@ -46,10 +46,6 @@ const Modeler = ({ modelerRef, override, initXml }: ModelerProps) => {
                 },
             });
 
-            const id = Math.random();
-
-            //const logger = new EventBusLogger(initModeler.get("eventBus"));
-
             initModeler.importXML(initXml ? initXml : emptyBoardXML).then(() => {
                 modelerRef.current = initModeler;
                 if (override) {
@@ -68,9 +64,13 @@ const Modeler = ({ modelerRef, override, initXml }: ModelerProps) => {
                         const selection = initModeler.getSelection();
                         selection.select([]);
                     });
-                    override.onLoadCallback && override.onLoadCallback(graph);
+                    try {
+                        override.onLoadCallback && override.onLoadCallback(graph);
+                    } catch (e) {
+                        console.log(e);
+                    }
                 }
-            }).catch((e: any) => console.log(id, `
+            }).catch((e: any) => console.log(`
                 This error happens in development because the component is mounted twice due to Strict Mode. 
                 This means that the async importXML call of the first mount returns this error, 
                 since the corresponding modeler has since been destroyed by cleanup. 

@@ -40,6 +40,13 @@ export interface FuzzyRelation {
   };
 }
 
+export type RelationViolations = {
+  conditionsFor: FuzzyRelation;
+  responseTo: FuzzyRelation;
+  excludesTo: FuzzyRelation;
+  milestonesFor: FuzzyRelation;
+}
+
 export interface DCRGraph {
   events: Set<Event>;
   conditionsFor: EventMap;

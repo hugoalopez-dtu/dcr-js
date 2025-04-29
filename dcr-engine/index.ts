@@ -1,9 +1,9 @@
-import type { DCRGraph, Marking, SubProcess, isSubProcess, EventMap, Event, Trace, EventLog, DCRGraphS, RoleTrace, Nestings } from "./src/types"
+import type { DCRGraph, Marking, SubProcess, isSubProcess, EventMap, Event, Trace, EventLog, DCRGraphS, RoleTrace, Nestings, RelationViolations } from "./src/types"
 import { execute, isEnabled, isAccepting, executeS, isEnabledS, isAcceptingS } from "./src/executionEngine"
 import { moddleToDCR } from "./src/graphConversion"
 import { copyMarking } from "./src/utility"
 import { parseLog, writeEventLog } from "./src/eventLogs";
-import { replayTraceS } from "./src/conformance";
+import { replayTraceS, mergeViolations, quantifyViolations } from "./src/conformance";
 import layoutGraph from "./src/layout";
 import { nestDCR } from "./src/nesting";
 
@@ -20,6 +20,7 @@ export {
     Trace,
     RoleTrace,
     Nestings,
+    RelationViolations,
     isSubProcess,
     execute,
     isAccepting,
@@ -36,5 +37,7 @@ export {
     mineFromAbstraction,
     abstractLog,
     nestDCR,
-    filter
+    filter,
+    mergeViolations,
+    quantifyViolations
 }
