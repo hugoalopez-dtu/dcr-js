@@ -1,5 +1,5 @@
 import { executeS, isAcceptingS, isEnabledS } from "./executionEngine";
-import { DCRGraph, DCRGraphS, Event, EventMap, FuzzyRelation, RelationViolations, RoleTrace, Trace } from "./types";
+import { DCRGraphS, Event, EventMap, FuzzyRelation, RelationViolations, RoleTrace } from "./types";
 import { copyEventMap, copyMarking, copySet, reverseRelation } from "./utility";
 
 export const replayTraceS = (graph: DCRGraphS, trace: RoleTrace): boolean => {
