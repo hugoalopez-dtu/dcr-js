@@ -6,6 +6,7 @@ import { BiCheck, BiQuestionMark, BiX } from "react-icons/bi";
 import FlexBox from "../utilComponents/FlexBox";
 import { useMemo } from "react";
 import styled from "styled-components";
+import ResultContainer from "../utilComponents/ResultContainer";
 
 interface HeatmapResultsProps {
     modelerRef: React.RefObject<DCRModeler | null>,
@@ -19,18 +20,6 @@ interface HeatmapResultsProps {
         violations: RelationViolations
     };
 }
-
-const ResultContainer = styled.div`
-    display: flex;
-    & > svg {
-        display: block;
-        color: white;
-        border-radius: 50%;
-        margin: auto;
-        margin-right: 1rem;
-        margin-left: 0.5rem;
-    }
-`
 
 const resultIcon = (val: boolean | undefined) => {
     switch (val) {

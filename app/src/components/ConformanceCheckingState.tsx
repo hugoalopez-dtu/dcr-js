@@ -67,7 +67,6 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     violations: RelationViolations,
     activations: RelationViolations
   }>(() => {
-    console.log(violationLogResults);
     const retval = violationLogResults.reduce((acc, cum) => cum.results ? {
       totalViolations: acc.totalViolations + cum.results.totalViolations,
       violations: mergeViolations(acc.violations, cum.results.violations),

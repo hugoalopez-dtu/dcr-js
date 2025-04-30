@@ -5,6 +5,8 @@ import { ReplayLogResults } from "../types";
 import { RoleTrace } from "dcr-engine";
 import Label from "../utilComponents/Label";
 import { CloseResults, ResultsElement, ResultsHeader, ResultsWindow } from "../utilComponents/ConformanceUtil";
+import FlexBox from "../utilComponents/FlexBox";
+import ResultContainer from "../utilComponents/ResultContainer";
 
 
 
@@ -58,13 +60,19 @@ const ReplayResults = ({ logResults, selectedTrace, setSelectedTrace, logName, s
 
     return <ResultsWindow $traceSelected={selectedTrace !== null}>
         <ResultsHeader>
-            {logName}
-            <ResultCount>
-                {positiveCount}
-                {resultIcon(true)}
-                {negativeCount}
-                {resultIcon(false)}
-            </ResultCount>
+            <FlexBox direction="column" $justify="start">
+                <div>{logName}</div>
+                <FlexBox direction="row" $justify="space-between">
+                    <ResultContainer title="Accepting Traces">
+                        {positiveCount}
+                        {resultIcon(true)}
+                    </ResultContainer>
+                    <ResultContainer title="Non-accepting Traces">
+                        {negativeCount}
+                        {resultIcon(false)}
+                    </ResultContainer>
+                </FlexBox>
+            </FlexBox>
             <CloseResults onClick={() => { setLogResults([]); setSelectedTrace(null) }} />
         </ResultsHeader>
         <ul>
