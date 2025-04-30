@@ -56,6 +56,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
   const initLog = lastLog ? savedLogs[lastLog] : undefined;
 
   const nestings = initXml ? (initXml.includes("SubProcess") || initXml.includes("Nesting")) : false;
+  console.log(nestings);
   const nestingRef = useRef<boolean>(nestings);
   const [heatmapMode, setHeatmapMode] = useState(!nestings);
 
@@ -243,7 +244,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
 
   const onLoadCallback = initLog ? (graph: DCRGraphS) => {
-    if (nestingRef.current = true) {
+    if (nestingRef.current) {
       return;
     }
     const results = Object.keys(initLog.traces).map(traceId => {
