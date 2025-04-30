@@ -4,6 +4,21 @@ import fs from "fs";
 
 export const avg = (arr: Array<number>): number => arr.reduce((partialSum, a) => partialSum + a, 0) / arr.length;
 
+export const getRandomInt = (min: number, max: number): number => {
+  const minCeiled = Math.ceil(min);
+  const maxFloored = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
+}
+
+export const getRandomItem = <T>(set: Set<T>) => {
+  let items = Array.from(set);
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+export const randomChoice = () => {
+  return Math.random() < 0.5;
+}
+
 // Makes deep copy of a eventMap
 export const copyEventMap = (eventMap: EventMap): EventMap => {
   const copy: EventMap = {};

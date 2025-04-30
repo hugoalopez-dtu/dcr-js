@@ -5,13 +5,15 @@ import SimulatorState from "./components/SimulatorState";
 import ConformanceCheckingState from "./components/ConformanceCheckingState";
 import { EventLog, RoleTrace } from "dcr-engine";
 import DiscoveryState from "./components/DiscoveryState";
+import EventLogGenerationState from "./components/EventLogGenerationState";
 
 export enum StateEnum {
   Modeler,
   Home,
   Simulator,
   Conformance,
-  Discovery
+  Discovery,
+  EventLogGeneration
 }
 
 export interface StateProps {
@@ -82,6 +84,16 @@ const App = () => {
       />;
     case StateEnum.Discovery:
       return <DiscoveryState
+        savedLogs={savedLogs}
+        setSavedLogs={setSavedLogs}
+        savedGraphs={savedGraphs}
+        setSavedGraphs={setSavedGraphs}
+        setState={setState}
+        lastSavedGraph={lastSavedGraph}
+        lastSavedLog={lastSavedLog}
+      />;
+    case StateEnum.EventLogGeneration:
+      return <EventLogGenerationState
         savedLogs={savedLogs}
         setSavedLogs={setSavedLogs}
         savedGraphs={savedGraphs}

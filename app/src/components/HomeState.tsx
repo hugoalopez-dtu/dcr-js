@@ -62,6 +62,10 @@ const HomeState = ({ setState }: StateProps) => {
                     <ImgLabel><br />Discovery</ImgLabel>
                     <Img src="/dcr-js/icons/discovery.svg" />
                 </ImgContainer>
+                <ImgContainer onClick={() => setState(StateEnum.EventLogGeneration)}>
+                    <ImgLabel><br />Log Generation</ImgLabel>
+                    <Img src="/dcr-js/icons/logGeneration.svg" />
+                </ImgContainer>
             </FlexBox>
         </Container>
     )

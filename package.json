@@ -4,7 +4,8 @@
   "private": true,
   "homepage": "https://hugoalopez-dtu.github.io/dcr-js/",
   "scripts": {
-    "start": "yarn workspace app start"
+    "start": "yarn workspace app start",
+    "predeploy": "yarn workspace app predeploy"
   },
   "eslintConfig": {
     "extends": [
@@ -29,6 +30,5 @@
     "app",
     "dcr-engine"
   ],
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
