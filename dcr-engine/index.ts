@@ -6,6 +6,7 @@ import { parseLog, writeEventLog } from "./src/eventLogs";
 import { replayTraceS, mergeViolations, quantifyViolations } from "./src/conformance";
 import layoutGraph from "./src/layout";
 import { nestDCR } from "./src/nesting";
+import generateEventLog from "./src/generation";
 
 import mineFromAbstraction, { abstractLog, filter } from "./src/discovery";
 
@@ -39,5 +40,6 @@ export {
     nestDCR,
     filter,
     mergeViolations,
-    quantifyViolations
+    quantifyViolations,
+    generateEventLog
 }

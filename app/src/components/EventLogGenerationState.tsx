@@ -3,7 +3,7 @@ import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import { StateEnum, StateProps } from "../App";
-import { copyMarking, DCRGraphS, moddleToDCR } from "dcr-engine";
+import { copyMarking, DCRGraphS, EventLog, generateEventLog, moddleToDCR, RoleTrace, writeEventLog } from "dcr-engine";
 import MenuElement from "../utilComponents/MenuElement";
 import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
@@ -16,14 +16,14 @@ import styled from "styled-components";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import FileUpload from "../utilComponents/FileUpload";
 import { toast } from "react-toastify";
-
+import { saveAs } from 'file-saver';
 
 const Input = styled.input`
     width: 7rem; 
     font-size: 20px; 
 `
 
-const EventLogGenerationState = ({ setState, savedGraphs }: StateProps) => {
+const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedLogs, setSavedLogs, lastSavedLog }: StateProps) => {
     const [menuOpen, setMenuOpen] = useState(true);
     const [formToShow, setFormToShow] = useState("Simple");
 
@@ -43,21 +43,107 @@ const EventLogGenerationState = ({ setState, savedGraphs }: StateProps) => {
         "Simple": {
             inputs: [
                 <MenuElement>
-                    <Label title="The amount of noise filtering employed, with 0 being no filtering and 1 being max.">Noise Threshold:</Label>
+                    <Label title="Name to save the event log under">Event Log Name:</Label>
+                    <Input
+                        type="text"
+                        required
+                        name="noise"
+                        min="0"
+                        max="1"
+                        defaultValue={customFormState?.name ? customFormState.name : "Event Log"}
+                        step="0.01" />
+                </MenuElement>,
+                <MenuElement>
+                    <Label >No. Traces</Label>
+                    <Input
+                        type="number"
+                        required
+                        name="noTraces"
+                        min="0"
+                        max=""
+                        defaultValue={customFormState?.noTraces ? customFormState.noTraces : "100"}
+                        step="1" />
+                </MenuElement>,
+                <MenuElement>
+                    <Label >Min. Trace Length</Label>
+                    <Input
+                        type="number"
+                        required
+                        name="minTrace"
+                        min="0"
+                        max=""
+                        defaultValue={customFormState?.minTrace ? customFormState.minTrace : "5"}
+                        step="1" />
+                </MenuElement>,
+                <MenuElement>
+                    <Label >Max. Trace Length</Label>
+                    <Input
+                        type="number"
+                        required
+                        name="MaxTrace"
+                        min="0"
+                        max=""
+                        defaultValue={customFormState?.maxTrace ? customFormState.maxTrace : "20"}
+                        step="1" />
+                </MenuElement>,
+                <MenuElement>
+                    <Label title="The amount of noise to add, with 0 being no noise and 1 being max.">Noise percentage</Label>
                     <Input
                         type="number"
                         required
                         name="noise"
                         min="0"
                         max="1"
-                        defaultValue={customFormState?.threshold ? customFormState.threshold : "0.20"}
+                        defaultValue={customFormState?.noise ? customFormState.noise : "0.20"}
                         step="0.01" />
-                </MenuElement>,
+                </MenuElement>
             ],
             onSubmit: (formData: FormData) => {
-                console.log("hello");
+
+                const rawNoise = formData.get("noise");
+                const noise = rawNoise && parseFloat(rawNoise.toString());
+                const name = formData.get("nest")?.toString();
+                const rawNoTraces = formData.get("noTraces");
+                const noTraces = rawNoTraces && parseInt(rawNoTraces.toString());
+                const rawMinTrace = formData.get("minTrace");
+                const minTrace = rawMinTrace && parseInt(rawMinTrace.toString());
+                const rawMaxTrace = formData.get("maxTrace");
+                const maxTrace = rawMaxTrace && parseInt(rawMaxTrace.toString());
+                setCustomFormState({ ...customFormState, noise, name, noTraces, minTrace, maxTrace });
+
+                if (!noise || !noTraces || !minTrace || !maxTrace || !name) {
+                    toast.error("Can't parse input parameters...");
+                    return;
+                }
+
+                if (minTrace > maxTrace) {
+                    toast.error("Min trace length should be smaller or equal to max trace length!");
+                    return;
+                }
+
+                if (!graphRef.current) return;
+                console.log(noTraces, minTrace, maxTrace, noise);
+                const log = generateEventLog(graphRef.current.current, noTraces, minTrace, maxTrace, noise);
+                saveEventLog(name, log);
+                saveLog(name, log);
             }
         }
+    }
+
+    const saveLog = (name: string, eventLog: EventLog<RoleTrace>) => {
+        if (!graphRef.current?.current) return;
+        const newSavedLogs = { ...savedLogs };
+        newSavedLogs[name] = eventLog;
+        setSavedLogs(newSavedLogs);
+        lastSavedLog.current = name;
+        toast.success("Log saved!");
+    }
+
+    const saveEventLog = (name: string, eventLog: EventLog<RoleTrace>) => {
+        if (!modelerRef.current || !graphRef.current) return;
+        const data = writeEventLog(eventLog);
+        const blob = new Blob([data]);
+        saveAs(blob, `${name}.xes`);
     }
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
@@ -149,7 +235,7 @@ const EventLogGenerationState = ({ setState, savedGraphs }: StateProps) => {
 
     return (
         <>
-            <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
+            <Modeler modelerRef={modelerRef} initXml={lastSavedGraph.current && savedGraphs[lastSavedGraph.current]} override={{ graphRef: graphRef, overrideOnclick: () => null, noRendering: true, canvasClassName: "conformance" }} />
             <TopRightIcons>
                 <FullScreenIcon />
                 <BiHome onClick={() => setState(StateEnum.Home)} />

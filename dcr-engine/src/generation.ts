@@ -1,7 +1,7 @@
-import { DCRGraphS, Label, RoleTrace } from "./types";
-import { getRandomInt, getRandomItem } from "./utility";
+import { DCRGraphS, EventLog, RoleTrace } from "./types";
+import { copySet, getRandomInt, getRandomItem } from "./utility";
 
-export const noisify = (trace: RoleTrace, noisePercentage: number, graph: DCRGraphS): RoleTrace => {
+const noisify = (trace: RoleTrace, noisePercentage: number, graph: DCRGraphS): RoleTrace => {
     const retTrace: RoleTrace = [];
 
     for (let i = 0; i < trace.length; i++) {
@@ -35,6 +35,15 @@ export const noisify = (trace: RoleTrace, noisePercentage: number, graph: DCRGra
     return retTrace;
 }
 
-//export const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: number, maxTraceLen: number, noisePercentage: number) {
-//
-//}
+const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: number, maxTraceLen: number, noisePercentage: number): EventLog<RoleTrace> => {
+    const retval: EventLog<RoleTrace> = {
+        events: copySet(graph.events),
+        traces: {},
+    }
+
+    //TODO
+
+    return retval;
+}
+
+export default generateEventLog
