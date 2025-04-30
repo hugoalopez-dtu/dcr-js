@@ -19,7 +19,8 @@ export type ViolationLogResults = Array<{
     traceId: string,
     results?: {
         totalViolations: number,
-        violations: RelationViolations
+        violations: RelationViolations,
+        activations: RelationViolations,
     },
     trace: RoleTrace
 }>

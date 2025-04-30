@@ -1,6 +1,6 @@
 import inherits from 'inherits-browser';
 import { assign, isObject } from 'min-dash';
-import { colorBlack, colorCondition, colorResponse, colorInclude, colorExclude, colorMilestone, svgGroup, getTransform } from './markers.js';
+import { colorBlack, colorGrey, colorCondition, colorResponse, colorInclude, colorExclude, colorMilestone, svgGroup, getTransform } from './markers.js';
 
 import {
   append as svgAppend,
@@ -414,6 +414,7 @@ export default function DCRRenderer(
     'dcr:Relation': function (parentGfx, element) {
       let type = element.businessObject.get('type');
       let violationColour = element.businessObject.get('violationColour');
+      let inactive = element.businessObject.get('inactive');
 
       var pathData = createPathFromConnection(element);
 
@@ -453,23 +454,23 @@ export default function DCRRenderer(
 
       if (type === 'condition') {
         markers.conditionMarker(marker, path,
-          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorCondition, //yellow
+          inactive ? colorGrey : violationColour ? violationColour : settings.blackRelations ? colorBlack : colorCondition, //yellow
           fill, startDirection, endDirection);
       } else if (type === 'response') {
         markers.responseMarker(marker, path,
-          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorResponse, //blue
+          inactive ? colorGrey : violationColour ? violationColour : settings.blackRelations ? colorBlack : colorResponse, //blue
           fill, startDirection, endDirection);
       } else if (type === 'include') {
         markers.includeMarker(marker, path,
-          settings.blackRelations ? colorBlack : colorInclude, //green
+          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorInclude, //green
           fill, startDirection, endDirection);
       } else if (type === 'exclude') {
         markers.excludeMarker(marker, path,
-          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorExclude, //red
+          inactive ? colorGrey : violationColour ? violationColour : settings.blackRelations ? colorBlack : colorExclude, //red
           fill, startDirection, endDirection);
       } else if (type === 'milestone') {
         markers.milestoneMarker(marker, path,
-          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorMilestone, //purple
+          inactive ? colorGrey : violationColour ? violationColour : settings.blackRelations ? colorBlack : colorMilestone, //purple
           fill, startDirection, endDirection);
       } else if (type === 'spawn') {
         markers.spawnMarker(marker, path,

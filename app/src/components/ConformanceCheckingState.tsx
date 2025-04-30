@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import Modeler from "./Modeler";
 import TopRightIcons from "../utilComponents/TopRightIcons";
@@ -39,7 +39,7 @@ const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boo
 
 const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedGraph, lastSavedLog }: StateProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [heatmapMode, setHeatmapMode] = useState(true);
+  const [heatmapMode, setHeatmapMode] = useState(false);
 
   const modelerRef = useRef<DCRModeler | null>(null);
   const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
@@ -50,15 +50,28 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
   const [logName, setLogName] = useState<string>("");
   const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace } | null>(null);
 
-  const nestingRef = useRef<boolean>(false);
+  const nestingRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    const lastGraph = lastSavedGraph.current;
+    const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
+
+    const nestings = initXml ? (initXml.includes("SubProcess") || initXml.includes("Nesting")) : false;
+
+    nestingRef.current = nestings
+    setHeatmapMode(!nestings);
+  }, []);
 
   const totalLogResults = useMemo<{
     totalViolations: number,
-    violations: RelationViolations
+    violations: RelationViolations,
+    activations: RelationViolations
   }>(() => {
+    console.log(violationLogResults);
     const retval = violationLogResults.reduce((acc, cum) => cum.results ? {
       totalViolations: acc.totalViolations + cum.results.totalViolations,
-      violations: mergeViolations(acc.violations, cum.results.violations)
+      violations: mergeViolations(acc.violations, cum.results.violations),
+      activations: mergeViolations(acc.activations, cum.results.activations),
     } : acc, {
       totalViolations: 0,
       violations: {
@@ -66,9 +79,15 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         responseTo: {},
         excludesTo: {},
         milestonesFor: {}
+      },
+      activations: {
+        conditionsFor: {},
+        responseTo: {},
+        excludesTo: {},
+        milestonesFor: {}
       }
     });
-    modelerRef.current?.updateViolations(retval.violations);
+    modelerRef.current?.updateViolations(retval);
     return retval
   }, [violationLogResults]);
 
@@ -109,15 +128,17 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       });
       setLogName(name.slice(0, -4));
       setLogResults(results);
-      const violationResults = Object.keys(log.traces).map(traceId => {
-        const trace = log.traces[traceId];
-        return {
-          traceId,
-          trace,
-          results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
-        }
-      });
-      setViolationLogResults(violationResults);
+      if (!nestingRef.current) {
+        const violationResults = Object.keys(log.traces).map(traceId => {
+          const trace = log.traces[traceId];
+          return {
+            traceId,
+            trace,
+            results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
+          }
+        });
+        setViolationLogResults(violationResults);
+      }
     } catch (e) {
       console.log(e);
       toast.error("Cannot parse log...");
@@ -156,15 +177,17 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             });
             setLogName(name);
             setLogResults(results);
-            const violationResults = Object.keys(log.traces).map(traceId => {
-              const trace = log.traces[traceId];
-              return {
-                traceId,
-                trace,
-                results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
-              }
-            });
-            setViolationLogResults(violationResults);
+            if (!nestingRef.current) {
+              const violationResults = Object.keys(log.traces).map(traceId => {
+                const trace = log.traces[traceId];
+                return {
+                  traceId,
+                  trace,
+                  results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
+                }
+              });
+              setViolationLogResults(violationResults);
+            }
             setMenuOpen(false);
           },
         })
@@ -228,13 +251,13 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     }
   ];
 
-  const lastGraph = lastSavedGraph.current;
-  const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
+  const onLoadCallback = lastSavedLog.current && savedLogs[lastSavedLog.current] ? (graph: DCRGraphS) => {
+    if (nestingRef.current) {
+      return;
+    }
+    const initLog = lastSavedLog.current && savedLogs[lastSavedLog.current]
+    if (!initLog) return;
 
-  const lastLog = lastSavedLog.current;
-  const initLog = lastLog ? savedLogs[lastLog] : undefined;
-
-  const onLoadCallback = initLog ? (graph: DCRGraphS) => {
     const results = Object.keys(initLog.traces).map(traceId => {
       const trace = initLog.traces[traceId];
       return {
@@ -243,7 +266,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         isPositive: replayTraceS(graph, trace),
       }
     });
-    lastLog && setLogName(lastLog);
+    lastSavedLog.current && setLogName(lastSavedLog.current);
     setLogResults(results);
     const violationResults = Object.keys(initLog.traces).map(traceId => {
       const trace = initLog.traces[traceId];
@@ -258,25 +281,27 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   return (
     <>
-      <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
+      <Modeler modelerRef={modelerRef} initXml={lastSavedGraph.current && savedGraphs[lastSavedGraph.current]} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
       {logResults.length > 0 && !heatmapMode && <ReplayResults logName={logName} logResults={logResults} selectedTrace={selectedTrace} setLogResults={setLogResults} setSelectedTrace={setSelectedTrace} />}
       {violationLogResults.length > 0 && heatmapMode && <HeatmapResults totalLogResults={totalLogResults} logName={logName} violationLogResults={violationLogResults} selectedTrace={selectedTrace} setViolationLogResults={setViolationLogResults} setSelectedTrace={setSelectedTrace} modelerRef={modelerRef} />}
       {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
         if (heatmapMode) {
-          modelerRef.current?.updateViolations(totalLogResults.violations);
+          modelerRef.current?.updateViolations(totalLogResults);
         }
       }} />}
       <TopRightIcons>
         <HeatmapButton onClick={() => {
+          console.log(heatmapMode, nestingRef);
           if (nestingRef.current) {
-            toast.error("Nestings and Subprocesses not supported for heatmap...");
+            toast.warning("Nestings and Subprocesses not supported for heatmap...");
             return;
           }
           if (heatmapMode) {
             modelerRef.current?.updateViolations(null);
           } else {
-            const viols = selectedTrace ? violationLogResults.find(elem => elem.traceId === selectedTrace.traceId)?.results?.violations : totalLogResults.violations;
-            modelerRef.current?.updateViolations(viols);
+            const viols = selectedTrace ? violationLogResults.find(elem => elem.traceId === selectedTrace.traceId)?.results : totalLogResults;
+            console.log(viols);
+            viols && modelerRef.current?.updateViolations(viols);
           }
           setHeatmapMode(!heatmapMode)
         }} $clicked={heatmapMode} title="Display results as contraint violation heatmap." />
