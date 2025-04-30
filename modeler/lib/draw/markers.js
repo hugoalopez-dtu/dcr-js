@@ -7,6 +7,7 @@ export var colorInclude = "#2CA81A"
 export var colorExclude = "#FB1818"
 export var colorMilestone = "#A932D0"
 export var colorBlack = "#000000"
+export var colorGrey = "#cccccc"
 
 export function svgAppend(parent, child) {
     parent.appendChild(child);

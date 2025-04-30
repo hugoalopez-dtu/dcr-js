@@ -82,13 +82,15 @@ const HeatmapResults = ({ violationLogResults, selectedTrace, setSelectedTrace, 
                     $selected={selectedTrace !== null && selectedTrace.traceId === traceId}
                     key={traceId}
                     onClick={() => {
-                        console.log(results);
                         setSelectedTrace({ trace, traceName: traceId, traceId });
-                        results && modelerRef.current?.updateViolations(results.violations);
+                        results && modelerRef.current?.updateViolations(results);
                     }}
                 >
                     <Label>{traceId}</Label>
-                    {resultIcon(results?.totalViolations === 0)}
+                    <ResultContainer>
+                        {results?.totalViolations}
+                        {resultIcon(results?.totalViolations === 0)}
+                    </ResultContainer>
                 </ResultsElement>))}
         </ul>
     </ResultsWindow>

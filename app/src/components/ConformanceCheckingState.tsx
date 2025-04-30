@@ -14,7 +14,7 @@ import FileUpload from "../utilComponents/FileUpload";
 import { replayTraceS } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
-import { EventLog, RelationViolations, RoleTrace } from "dcr-engine/src/types";
+import { RelationViolations, RoleTrace } from "dcr-engine/src/types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Label from "../utilComponents/Label";
@@ -64,11 +64,14 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   const totalLogResults = useMemo<{
     totalViolations: number,
-    violations: RelationViolations
+    violations: RelationViolations,
+    activations: RelationViolations
   }>(() => {
+    console.log(violationLogResults);
     const retval = violationLogResults.reduce((acc, cum) => cum.results ? {
       totalViolations: acc.totalViolations + cum.results.totalViolations,
-      violations: mergeViolations(acc.violations, cum.results.violations)
+      violations: mergeViolations(acc.violations, cum.results.violations),
+      activations: mergeViolations(acc.activations, cum.results.activations),
     } : acc, {
       totalViolations: 0,
       violations: {
@@ -76,9 +79,15 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         responseTo: {},
         excludesTo: {},
         milestonesFor: {}
+      },
+      activations: {
+        conditionsFor: {},
+        responseTo: {},
+        excludesTo: {},
+        milestonesFor: {}
       }
     });
-    modelerRef.current?.updateViolations(retval.violations);
+    modelerRef.current?.updateViolations(retval);
     return retval
   }, [violationLogResults]);
 
@@ -277,7 +286,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       {violationLogResults.length > 0 && heatmapMode && <HeatmapResults totalLogResults={totalLogResults} logName={logName} violationLogResults={violationLogResults} selectedTrace={selectedTrace} setViolationLogResults={setViolationLogResults} setSelectedTrace={setSelectedTrace} modelerRef={modelerRef} />}
       {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
         if (heatmapMode) {
-          modelerRef.current?.updateViolations(totalLogResults.violations);
+          modelerRef.current?.updateViolations(totalLogResults);
         }
       }} />}
       <TopRightIcons>
@@ -290,7 +299,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           if (heatmapMode) {
             modelerRef.current?.updateViolations(null);
           } else {
-            const viols = selectedTrace ? violationLogResults.find(elem => elem.traceId === selectedTrace.traceId)?.results?.violations : totalLogResults.violations;
+            const viols = selectedTrace ? violationLogResults.find(elem => elem.traceId === selectedTrace.traceId)?.results : totalLogResults;
             console.log(viols);
             viols && modelerRef.current?.updateViolations(viols);
           }

@@ -578,7 +578,9 @@ function hslToHex(h, s, l) {
 }
 
 // https://stackoverflow.com/questions/65361477/how-to-generate-color-from-colormap-in-javascript
-const updateViolations = (violations, modeling, elementReg) => {
+const updateViolations = (arg, modeling, elementReg) => {
+
+  const { violations, activations } = arg ? arg : { violations: null, activations: null };
 
   const allViolations = violations && Object.values(violations).flatMap(elem => Object.values(elem).flatMap(elem2 => Object.values(elem2)));
 
@@ -609,29 +611,30 @@ const updateViolations = (violations, modeling, elementReg) => {
         case "condition": {
           const source = busObject.targetRef.id;
           const target = busObject.sourceRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.conditionsFor[source][target]) : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.conditionsFor[source][target]) : null, inactive: activations ? activations.conditionsFor[source][target] === 0 : null });
           break;
         }
         case "milestone": {
           const source = busObject.targetRef.id;
           const target = busObject.sourceRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.milestonesFor[source][target]) : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.milestonesFor[source][target]) : null, inactive: activations ? activations.milestonesFor[source][target] === 0 : null });
           break;
         }
         case "response": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.responseTo[source][target]) : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.responseTo[source][target]) : null, inactive: activations ? activations.responseTo[source][target] === 0 : null });
           break;
         }
         case "exclude": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.excludesTo[source][target]) : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.excludesTo[source][target]) : null, inactive: activations ? activations.excludesTo[source][target] === 0 : null });
           break;
         }
         case "include": {
-          continue;
+          modeling.updateProperties(element, { violationColour: violations ? "#000000" : null, inactive: false });
+          break;
         }
         default: {
           throw new Error("Holup...");
@@ -658,9 +661,9 @@ BaseViewer.prototype.updateRendering = function (graph) {
   update(graph, modeling, this.get('elementRegistry'));
 }
 
-BaseViewer.prototype.updateViolations = function (violations) {
+BaseViewer.prototype.updateViolations = function (arg) {
   const modeling = this.get('modeling');
-  updateViolations(violations, modeling, this.get('elementRegistry'));
+  updateViolations(arg, modeling, this.get('elementRegistry'));
 }
 
 /**
