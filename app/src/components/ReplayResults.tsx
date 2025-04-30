@@ -27,9 +27,9 @@ const resultIcon = (val: boolean | undefined) => {
         case undefined:
             return <BiQuestionMark style={{ backgroundColor: "orange" }} />
         case true:
-            return <BiCheck title="accepting" style={{ backgroundColor: "green" }} />
+            return <BiCheck title="Accepting" style={{ backgroundColor: "green" }} />
         case false:
-            return <BiX title="not accepting" style={{ backgroundColor: "red" }} />
+            return <BiX title="Non-accepting" style={{ backgroundColor: "red" }} />
     }
 }
 

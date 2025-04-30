@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import Modeler from "./Modeler";
 import TopRightIcons from "../utilComponents/TopRightIcons";
@@ -14,7 +14,7 @@ import FileUpload from "../utilComponents/FileUpload";
 import { replayTraceS } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
-import { RelationViolations, RoleTrace } from "dcr-engine/src/types";
+import { EventLog, RelationViolations, RoleTrace } from "dcr-engine/src/types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Label from "../utilComponents/Label";
@@ -39,6 +39,7 @@ const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boo
 
 const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedGraph, lastSavedLog }: StateProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heatmapMode, setHeatmapMode] = useState(false);
 
   const modelerRef = useRef<DCRModeler | null>(null);
   const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
@@ -49,17 +50,17 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
   const [logName, setLogName] = useState<string>("");
   const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace } | null>(null);
 
-  const lastGraph = lastSavedGraph.current;
-  const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
+  const nestingRef = useRef<boolean>(true);
 
-  const lastLog = lastSavedLog.current;
-  const initLog = lastLog ? savedLogs[lastLog] : undefined;
+  useEffect(() => {
+    const lastGraph = lastSavedGraph.current;
+    const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
-  const nestings = initXml ? (initXml.includes("SubProcess") || initXml.includes("Nesting")) : false;
-  console.log(nestings);
-  const nestingRef = useRef<boolean>(nestings);
-  const [heatmapMode, setHeatmapMode] = useState(!nestings);
+    const nestings = initXml ? (initXml.includes("SubProcess") || initXml.includes("Nesting")) : false;
 
+    nestingRef.current = nestings
+    setHeatmapMode(!nestings);
+  }, []);
 
   const totalLogResults = useMemo<{
     totalViolations: number,
@@ -241,12 +242,13 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     }
   ];
 
-
-
-  const onLoadCallback = initLog ? (graph: DCRGraphS) => {
+  const onLoadCallback = lastSavedLog.current && savedLogs[lastSavedLog.current] ? (graph: DCRGraphS) => {
     if (nestingRef.current) {
       return;
     }
+    const initLog = lastSavedLog.current && savedLogs[lastSavedLog.current]
+    if (!initLog) return;
+
     const results = Object.keys(initLog.traces).map(traceId => {
       const trace = initLog.traces[traceId];
       return {
@@ -255,7 +257,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         isPositive: replayTraceS(graph, trace),
       }
     });
-    lastLog && setLogName(lastLog);
+    lastSavedLog.current && setLogName(lastSavedLog.current);
     setLogResults(results);
     const violationResults = Object.keys(initLog.traces).map(traceId => {
       const trace = initLog.traces[traceId];
@@ -270,7 +272,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
 
   return (
     <>
-      <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
+      <Modeler modelerRef={modelerRef} initXml={lastSavedGraph.current && savedGraphs[lastSavedGraph.current]} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
       {logResults.length > 0 && !heatmapMode && <ReplayResults logName={logName} logResults={logResults} selectedTrace={selectedTrace} setLogResults={setLogResults} setSelectedTrace={setSelectedTrace} />}
       {violationLogResults.length > 0 && heatmapMode && <HeatmapResults totalLogResults={totalLogResults} logName={logName} violationLogResults={violationLogResults} selectedTrace={selectedTrace} setViolationLogResults={setViolationLogResults} setSelectedTrace={setSelectedTrace} modelerRef={modelerRef} />}
       {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
