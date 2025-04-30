@@ -39,7 +39,6 @@ const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boo
 
 const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedGraph, lastSavedLog }: StateProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [heatmapMode, setHeatmapMode] = useState(true);
 
   const modelerRef = useRef<DCRModeler | null>(null);
   const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
@@ -50,7 +49,16 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
   const [logName, setLogName] = useState<string>("");
   const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace } | null>(null);
 
-  const nestingRef = useRef<boolean>(false);
+  const lastGraph = lastSavedGraph.current;
+  const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
+
+  const lastLog = lastSavedLog.current;
+  const initLog = lastLog ? savedLogs[lastLog] : undefined;
+
+  const nestings = initXml ? (initXml.includes("SubProcess") || initXml.includes("Nesting")) : false;
+  const nestingRef = useRef<boolean>(nestings);
+  const [heatmapMode, setHeatmapMode] = useState(!nestings);
+
 
   const totalLogResults = useMemo<{
     totalViolations: number,
@@ -109,15 +117,17 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       });
       setLogName(name.slice(0, -4));
       setLogResults(results);
-      const violationResults = Object.keys(log.traces).map(traceId => {
-        const trace = log.traces[traceId];
-        return {
-          traceId,
-          trace,
-          results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
-        }
-      });
-      setViolationLogResults(violationResults);
+      if (!nestingRef.current) {
+        const violationResults = Object.keys(log.traces).map(traceId => {
+          const trace = log.traces[traceId];
+          return {
+            traceId,
+            trace,
+            results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
+          }
+        });
+        setViolationLogResults(violationResults);
+      }
     } catch (e) {
       console.log(e);
       toast.error("Cannot parse log...");
@@ -156,15 +166,17 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             });
             setLogName(name);
             setLogResults(results);
-            const violationResults = Object.keys(log.traces).map(traceId => {
-              const trace = log.traces[traceId];
-              return {
-                traceId,
-                trace,
-                results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
-              }
-            });
-            setViolationLogResults(violationResults);
+            if (!nestingRef.current) {
+              const violationResults = Object.keys(log.traces).map(traceId => {
+                const trace = log.traces[traceId];
+                return {
+                  traceId,
+                  trace,
+                  results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
+                }
+              });
+              setViolationLogResults(violationResults);
+            }
             setMenuOpen(false);
           },
         })
@@ -228,13 +240,12 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     }
   ];
 
-  const lastGraph = lastSavedGraph.current;
-  const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
-  const lastLog = lastSavedLog.current;
-  const initLog = lastLog ? savedLogs[lastLog] : undefined;
 
   const onLoadCallback = initLog ? (graph: DCRGraphS) => {
+    if (nestingRef.current = true) {
+      return;
+    }
     const results = Object.keys(initLog.traces).map(traceId => {
       const trace = initLog.traces[traceId];
       return {
@@ -268,15 +279,17 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       }} />}
       <TopRightIcons>
         <HeatmapButton onClick={() => {
+          console.log(heatmapMode, nestingRef);
           if (nestingRef.current) {
-            toast.error("Nestings and Subprocesses not supported for heatmap...");
+            toast.warning("Nestings and Subprocesses not supported for heatmap...");
             return;
           }
           if (heatmapMode) {
             modelerRef.current?.updateViolations(null);
           } else {
             const viols = selectedTrace ? violationLogResults.find(elem => elem.traceId === selectedTrace.traceId)?.results?.violations : totalLogResults.violations;
-            modelerRef.current?.updateViolations(viols);
+            console.log(viols);
+            viols && modelerRef.current?.updateViolations(viols);
           }
           setHeatmapMode(!heatmapMode)
         }} $clicked={heatmapMode} title="Display results as contraint violation heatmap." />
