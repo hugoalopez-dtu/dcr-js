@@ -5,7 +5,6 @@ import Label from "../utilComponents/Label";
 import { BiCheck, BiQuestionMark, BiX } from "react-icons/bi";
 import FlexBox from "../utilComponents/FlexBox";
 import { useMemo } from "react";
-import styled from "styled-components";
 import ResultContainer from "../utilComponents/ResultContainer";
 
 interface HeatmapResultsProps {

@@ -1,5 +1,5 @@
 import { executeS, isAcceptingS, isEnabledS } from "./executionEngine";
-import { DCRGraphS, EventLog, RoleTrace, SubProcess } from "./types";
+import { DCRGraphS, EventLog, RoleTrace } from "./types";
 import { copyMarking, copySet, getRandomInt, getRandomItem, randomChoice } from "./utility";
 
 const noisify = (trace: RoleTrace, noisePercentage: number, graph: DCRGraphS): RoleTrace => {

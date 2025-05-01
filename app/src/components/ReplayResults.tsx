@@ -1,28 +1,11 @@
 import { useMemo } from "react";
-import { BiCheck, BiQuestionMark, BiX } from "react-icons/bi"
-import styled from "styled-components"
+import { BiCheck, BiQuestionMark, BiX } from "react-icons/bi";
 import { ReplayLogResults } from "../types";
 import { RoleTrace } from "dcr-engine";
 import Label from "../utilComponents/Label";
 import { CloseResults, ResultsElement, ResultsHeader, ResultsWindow } from "../utilComponents/ConformanceUtil";
 import FlexBox from "../utilComponents/FlexBox";
 import ResultContainer from "../utilComponents/ResultContainer";
-
-
-
-const ResultCount = styled.div`
-    display: flex;
-    flex-direction: row;
-
-    & > svg {
-    display: block;
-    color: white;
-    border-radius: 50%;
-    margin: auto;
-    margin-right: 1rem;
-    margin-left: 0.5rem;
-  }
-`
 
 const resultIcon = (val: boolean | undefined) => {
     switch (val) {
