@@ -56,7 +56,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     const lastGraph = lastSavedGraph.current;
     const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
-    const nestings = initXml ? (initXml.includes("SubProcess") || initXml.includes("Nesting")) : false;
+    const nestings = initXml ? (initXml.includes("Nesting")) : false;
 
     nestingRef.current = nestings
     setHeatmapMode(!nestings);
@@ -96,7 +96,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       toast.error("Multi-instance subprocesses not supported...");
     } else {
       parse && parse(data).then((_) => {
-        if (data.includes("SubProcess") || data.includes("Nesting")) {
+        if (data.includes("Nesting")) {
           setHeatmapMode(false);
           nestingRef.current = true;
         }
