@@ -18,7 +18,7 @@ interface HeatmapResultsProps {
     totalLogResults: {
         totalViolations: number,
         violations: RelationViolations
-    };
+    } | undefined;
 }
 
 const resultIcon = (val: boolean | undefined) => {
@@ -60,7 +60,7 @@ const HeatmapResults = ({ violationLogResults, selectedTrace, setSelectedTrace, 
                         {negativeCount}
                         {resultIcon(false)}
                     </ResultContainer>
-                    <div title="Total Constraint Violations">{totalLogResults.totalViolations}</div>
+                    {totalLogResults && <div title="Total Constraint Violations">{totalLogResults.totalViolations}</div>}
                 </FlexBox>
             </FlexBox>
             <CloseResults onClick={() => { setViolationLogResults([]); setSelectedTrace(null) }} />

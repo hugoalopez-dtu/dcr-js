@@ -66,7 +66,8 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     totalViolations: number,
     violations: RelationViolations,
     activations: RelationViolations
-  }>(() => {
+  } | undefined>(() => {
+    if (violationLogResults.length === 0) return undefined;
     const retval = violationLogResults.reduce((acc, cum) => cum.results ? {
       totalViolations: acc.totalViolations + cum.results.totalViolations,
       violations: mergeViolations(acc.violations, cum.results.violations),
@@ -94,10 +95,12 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     if (data.includes("multi-instance=\"true\"")) {
       toast.error("Multi-instance subprocesses not supported...");
     } else {
-      if (data.includes("SubProcess") || data.includes("Nesting")) nestingRef.current = true;
-      else nestingRef.current = false;
-
       parse && parse(data).then((_) => {
+        if (data.includes("SubProcess") || data.includes("Nesting")) {
+          setHeatmapMode(false);
+          nestingRef.current = true;
+        }
+        else nestingRef.current = false;
         if (modelerRef.current && graphRef.current) {
           const graph = moddleToDCR(modelerRef.current.getElementRegistry());
           graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
@@ -105,7 +108,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             const newResults = logResults.map(({ traceId, trace }) => ({ traceId, trace, isPositive: replayTraceS(graph, trace) }));
             setLogResults(newResults);
           }
-          if (violationLogResults) {
+          if (violationLogResults && !nestingRef.current) {
             const newResults = violationLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: quantifyViolations(graph, trace) }));
             setViolationLogResults(newResults);
           }
@@ -284,7 +287,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       {logResults.length > 0 && !heatmapMode && <ReplayResults logName={logName} logResults={logResults} selectedTrace={selectedTrace} setLogResults={setLogResults} setSelectedTrace={setSelectedTrace} />}
       {violationLogResults.length > 0 && heatmapMode && <HeatmapResults totalLogResults={totalLogResults} logName={logName} violationLogResults={violationLogResults} selectedTrace={selectedTrace} setViolationLogResults={setViolationLogResults} setSelectedTrace={setSelectedTrace} modelerRef={modelerRef} />}
       {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
-        if (heatmapMode) {
+        if (heatmapMode && totalLogResults) {
           modelerRef.current?.updateViolations(totalLogResults);
         }
       }} />}

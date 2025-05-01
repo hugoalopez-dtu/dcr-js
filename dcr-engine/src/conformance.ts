@@ -52,7 +52,7 @@ export const mergeViolations = (viols1: RelationViolations, viols2: RelationViol
     }
 }
 
-const emptyFuzzyRel = (events: Set<Event>): FuzzyRelation => {
+export const emptyFuzzyRel = (events: Set<Event>): FuzzyRelation => {
     const retval: FuzzyRelation = {};
     for (const event of events) {
         retval[event] = {};

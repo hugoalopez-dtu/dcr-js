@@ -1,11 +1,13 @@
-import { DCRGraphS, EventLog, RoleTrace } from "./types";
-import { copySet, getRandomInt, getRandomItem } from "./utility";
+import { executeS, isAcceptingS, isEnabledS } from "./executionEngine";
+import { DCRGraphS, EventLog, RoleTrace, SubProcess } from "./types";
+import { copyMarking, copySet, getRandomInt, getRandomItem, randomChoice } from "./utility";
 
 const noisify = (trace: RoleTrace, noisePercentage: number, graph: DCRGraphS): RoleTrace => {
     const retTrace: RoleTrace = [];
 
     for (let i = 0; i < trace.length; i++) {
         if (Math.random() <= noisePercentage) {
+            console.log("Noising it up!");
             const choice = getRandomInt(0, 3);
             switch (choice) {
                 // Insert
@@ -35,13 +37,56 @@ const noisify = (trace: RoleTrace, noisePercentage: number, graph: DCRGraphS): R
     return retTrace;
 }
 
+
 const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: number, maxTraceLen: number, noisePercentage: number): EventLog<RoleTrace> => {
+    const allEvents = Object.values(graph.subProcesses).reduce(
+        (acc, cum) => acc.union(cum.events),
+        copySet(graph.events));
+
+    const allEnabled = () => {
+        const retval = new Set<string>();
+        for (const event of allEvents) {
+            const group = graph.subProcessMap[event] ? graph.subProcessMap[event] : graph;
+            //console.log(group);
+            if (isEnabledS(event, graph, group).enabled) {
+                console.log(event, " is enabled");
+                retval.add(event);
+            }
+        }
+        return retval;
+    }
+
     const retval: EventLog<RoleTrace> = {
-        events: copySet(graph.events),
+        events: allEvents,
         traces: {},
     }
 
-    //TODO
+    let goodTraces = 0;
+    let botchedTraces = 0;
+
+    const initMarking = copyMarking(graph.marking);
+    while (goodTraces < noTraces) {
+        let trace: RoleTrace = [];
+        while (trace.length <= maxTraceLen) {
+            if (trace.length >= minTraceLen && isAcceptingS(graph, graph) && randomChoice()) {
+                console.log("Good! ", trace.length);
+                const noisyTrace = noisify(trace, noisePercentage, graph);
+                retval.traces["Trace " + goodTraces++] = noisyTrace;
+                break;
+            }
+            const event = getRandomItem(allEnabled());
+            executeS(event, graph);
+            trace.push({ activity: graph.labelMap[event], role: graph.roleMap[event] })
+        }
+        if (trace.length > maxTraceLen) {
+            botchedTraces++;
+            if (botchedTraces > 2 * noTraces) {
+                throw new Error("Unable to generate log from parameters...");
+            }
+        }
+
+        graph.marking = copyMarking(initMarking);
+    }
 
     return retval;
 }

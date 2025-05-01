@@ -47,7 +47,7 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
                     <Input
                         type="text"
                         required
-                        name="noise"
+                        name="name"
                         min="0"
                         max="1"
                         defaultValue={customFormState?.name ? customFormState.name : "Event Log"}
@@ -65,7 +65,7 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
                         step="1" />
                 </MenuElement>,
                 <MenuElement>
-                    <Label >Min. Trace Length</Label>
+                    <Label title="Least acceptable trace length before noise is applied">Min. Trace Length</Label>
                     <Input
                         type="number"
                         required
@@ -76,11 +76,11 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
                         step="1" />
                 </MenuElement>,
                 <MenuElement>
-                    <Label >Max. Trace Length</Label>
+                    <Label title="Greatest acceptable trace length before noise is applied">Max. Trace Length</Label>
                     <Input
                         type="number"
                         required
-                        name="MaxTrace"
+                        name="maxTrace"
                         min="0"
                         max=""
                         defaultValue={customFormState?.maxTrace ? customFormState.maxTrace : "20"}
@@ -94,7 +94,7 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
                         name="noise"
                         min="0"
                         max="1"
-                        defaultValue={customFormState?.noise ? customFormState.noise : "0.20"}
+                        defaultValue={customFormState?.noise !== undefined ? customFormState.noise : "0.20"}
                         step="0.01" />
                 </MenuElement>
             ],
@@ -102,16 +102,16 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
 
                 const rawNoise = formData.get("noise");
                 const noise = rawNoise && parseFloat(rawNoise.toString());
-                const name = formData.get("nest")?.toString();
+                const name = formData.get("name")?.toString();
                 const rawNoTraces = formData.get("noTraces");
                 const noTraces = rawNoTraces && parseInt(rawNoTraces.toString());
                 const rawMinTrace = formData.get("minTrace");
                 const minTrace = rawMinTrace && parseInt(rawMinTrace.toString());
                 const rawMaxTrace = formData.get("maxTrace");
                 const maxTrace = rawMaxTrace && parseInt(rawMaxTrace.toString());
-                setCustomFormState({ ...customFormState, noise, name, noTraces, minTrace, maxTrace });
 
-                if (!noise || !noTraces || !minTrace || !maxTrace || !name) {
+                console.log(noise, name, noTraces, minTrace, maxTrace);
+                if (noise === "" || noise === null || noTraces === "" || noTraces === null || minTrace === "" || minTrace === null || maxTrace === "" || maxTrace === null || !name) {
                     toast.error("Can't parse input parameters...");
                     return;
                 }
@@ -122,7 +122,9 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
                 }
 
                 if (!graphRef.current) return;
-                console.log(noTraces, minTrace, maxTrace, noise);
+
+                setCustomFormState({ ...customFormState, noise, name, noTraces, minTrace, maxTrace });
+
                 const log = generateEventLog(graphRef.current.current, noTraces, minTrace, maxTrace, noise);
                 saveEventLog(name, log);
                 saveLog(name, log);
