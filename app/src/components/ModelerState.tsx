@@ -9,7 +9,7 @@ import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiAnalyse, BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidDashboard } from 'react-icons/bi';
+import { BiAnalyse, BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidDashboard, BiTestTube } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toastify';
@@ -25,12 +25,32 @@ import Label from '../utilComponents/Label';
 import Loading from '../utilComponents/Loading';
 import { DCRGraph, layoutGraph, moddleToDCR, nestDCR, Nestings } from 'dcr-engine';
 import GraphNameInput from '../utilComponents/GraphNameInput';
+import styled from 'styled-components';
+import TestDrivenModeling from './TestDrivenModeling';
+
+
+const HeatmapButton = styled(BiTestTube) <{ $clicked: boolean, $disabled?: boolean }>`
+    ${props => props.$clicked ? `
+        background-color: black !important;
+        color: white;
+    ` : ``}
+    ${props => props.$disabled ? `
+        color : grey;
+        border-color: grey !important;
+        cursor: default !important;
+        &:hover {
+            box-shadow: none !important;
+        }    
+    ` : ""}
+`
+
 
 const initGraphName = "DCR-JS Graph"
 
 const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }: StateProps) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [examplesData, setExamplesData] = useState<Array<string>>([]);
+  const [tdmOpen, setTdmOpen] = useState(false);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -250,11 +270,13 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
       {loading && <Loading />}
       <Modeler initXml={initXml} modelerRef={modelerRef} />
       <TopRightIcons>
+        <HeatmapButton onClick={() => { setTdmOpen(!tdmOpen) }} $clicked={tdmOpen} title="Open Test Driven Modeling Pane" />
         <BiAnalyse title="Layout Graph" onClick={layout} />
         <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />
         <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen} />
       </TopRightIcons>
+      {tdmOpen && <TestDrivenModeling modelerRef={modelerRef} />}
       {examplesOpen && <Examples
         examplesData={examplesData}
         openCustomXML={(xml) => open(xml, modelerRef.current?.importCustomXML)}
