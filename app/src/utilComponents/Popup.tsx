@@ -19,6 +19,7 @@ const Window = styled.div`
     transform: translate(-50%, -50%);
     background-color: white;
     opacity: 1;
+    box-sizing: border-box;
 `
 
 const CloseIcon = styled(BiX)`

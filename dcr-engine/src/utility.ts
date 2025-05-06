@@ -93,6 +93,7 @@ export const flipEventMap = (em: EventMap): EventMap => {
   return retval;
 }
 
+
 export const intersect = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
   const retset = new Set<T>();
   const { smallestSet, otherSet } = s1.size > s2.size ? { smallestSet: s2, otherSet: s1 } : { smallestSet: s1, otherSet: s2 };
@@ -110,19 +111,18 @@ function set2JSON(_: any, value: any) {
   return value;
 }
 // Parses arrays back to sets
-function JSON2Set(_: any, value: any) {
-  if (typeof value === "object" && value instanceof Array) {
+function JSON2Set(key: any, value: any) {
+  if (typeof value === "object" && value instanceof Array && key !== "trace") {
     return new Set(value);
   }
   return value;
 }
 
-export const writeSerializedGraph = <T>(model: T, path: string) => {
-  fs.writeFileSync(path, JSON.stringify(model, set2JSON, 4));
+export const writeSerialized = <T>(obj: T): string => {
+  return JSON.stringify(obj, set2JSON, 4);
 };
 
-export const parseSerializedGraph = <T>(path: string): T => {
-  const data = fs.readFileSync(path).toString();
+export const parseSerialized = <T>(data: string): T => {
   const obj = JSON.parse(data, JSON2Set);
   return obj;
 };

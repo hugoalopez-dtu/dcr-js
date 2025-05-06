@@ -4,24 +4,7 @@ import FlexBox from "../utilComponents/FlexBox";
 import React from "react";
 import { BiTrash } from "react-icons/bi";
 import { RoleTrace } from "dcr-engine/src/types";
-
-const ResultsWindow = styled.div<{ $traceSelected: boolean; }>`
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 30rem;
-    box-shadow: ${props => props.$traceSelected ? "none" : "0px 0px 5px 0px grey"};
-    display: flex;
-    flex-direction: column;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    font-size: 20px;
-    background-color: white;
-    box-sizing: border-box;
-    overflow: scroll;
-    z-index: 5;
-`
+import { ResultsWindow } from "../utilComponents/ConformanceUtil";
 
 const EventLogInput = styled.input`
     font-size: 30px;

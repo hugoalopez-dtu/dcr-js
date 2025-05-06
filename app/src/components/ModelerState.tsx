@@ -276,7 +276,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
         <BiHome onClick={() => setState(StateEnum.Home)} />
         <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen} />
       </TopRightIcons>
-      {tdmOpen && <TestDrivenModeling modelerRef={modelerRef} />}
+      <TestDrivenModeling modelerRef={modelerRef} show={tdmOpen} />
       {examplesOpen && <Examples
         examplesData={examplesData}
         openCustomXML={(xml) => open(xml, modelerRef.current?.importCustomXML)}

@@ -57,11 +57,35 @@ export interface DCRGraph {
   marking: Marking;
 }
 
-export interface DCRGraphS {
-  events: Set<Event>;
+export type AlignAction = "consume" | "model-skip" | "trace-skip";
+
+export type CostFun = (action: AlignAction, target: Event) => number;
+
+export type Alignment = { cost: number; trace: Trace };
+
+export type Test = {
+  polarity: "+" | "-",
+  trace: Trace,
+  context: Set<Event>
+}
+
+export interface Labelling {
   labels: Set<Label>;
   labelMap: { [event: Event]: Label };
   labelMapInv: { [label: Label]: Set<Event> };
+}
+
+export interface Optimizations {
+  conditions: Set<Event>;
+  includesFor: EventMap;
+  excludesFor: EventMap;
+}
+
+export type LabelDCR = DCRGraph & Labelling;
+
+export type LabelDCRPP = DCRGraph & Labelling & Optimizations;
+
+export type DCRGraphS = DCRGraph & Labelling & {
   subProcesses: {
     [id: string]: SubProcess;
   };
@@ -70,12 +94,6 @@ export interface DCRGraphS {
   };
   roles: Set<Role>;
   roleMap: { [event: Event]: Role };
-  conditionsFor: EventMap;
-  milestonesFor: EventMap;
-  responseTo: EventMap;
-  includesTo: EventMap;
-  excludesTo: EventMap;
-  marking: Marking;
 }
 
 export interface SubProcess {
