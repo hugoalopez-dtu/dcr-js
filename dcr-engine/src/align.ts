@@ -4,11 +4,9 @@ import { copyMarking, copySet, flipEventMap } from "./utility";
 // Mutates graph's marking
 const execute = (event: Event, graph: LabelDCRPP) => {
     if (graph.conditions.has(event)) graph.marking.executed.add(event);
-    //console.log("executing " + graph.labelMap[event]);
     graph.marking.pending.delete(event);
     // Add sink of all response relations to pending
     for (const rEvent of graph.responseTo[event]) {
-        //console.log("Making " + graph.labelMap[rEvent] + " pending!");
         graph.marking.pending.add(rEvent);
     }
     // Remove sink of all response relations from included
@@ -106,9 +104,6 @@ export const graphToGraphPP = <T extends DCRGraph>(graph: T): T & Optimizations 
     return { ...graph, conditions, includesFor: flipEventMap(graph.includesTo), excludesFor: flipEventMap(graph.excludesTo) };
 };
 
-// Local cache: ran in    251661.90651499992 ms
-// Global cache: ran in   254527.8253519996 ms
-// No cache: ran in       232021.8158749994 ms
 export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: CostFun, toDepth: number = Infinity, pruning: boolean = false): Alignment => {
     // Setup global variables
     const alignCost = costFun;
@@ -116,28 +111,16 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
         0: {}
     };
 
-    //const  = { };
-
     // Checks event reachability
     const canBeExecuted = (origEvent: Event, graph: LabelDCRPP, context: Set<Label>) => {
-        //const modelStr = stateToStr(graph.marking);
-        //
-        //const canBeExecutedMap = reachAbilityStates[modelStr] ?
-        //  reachAbilityStates[modelStr] : {};
-        //const canBeExecutedMap: { [event: Event]: boolean } = {};
-        //console.log("")
-        const log = graph.labelMap[origEvent] === "Cancel meeting";
-        //log && console.log("Checking now!");
 
         const canBeExcludedRecur = (event: Event, cycleSets: { excl: Set<Event>, exec: Set<Event>, incl: Set<Event> }): boolean => {
-            //  if (canBeExcludedMap[event] !== undefined) return canBeExcludedMap[event];
             for (const exclForEvent of graph.excludesFor[event]) {
                 const canBeExec = cycleSets.exec.has(exclForEvent) ? false : canBeExecutedRecur(exclForEvent, {
                     excl: cycleSets.excl,
                     incl: cycleSets.incl,
                     exec: new Set([...cycleSets.exec, exclForEvent])
                 });
-                //        canBeExecutedMap[exclForEvent] = canBeExec;
                 if (canBeExec) return true;
             }
             return false;
@@ -145,27 +128,22 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
 
 
         const canBeIncludedRecur = (event: Event, cycleSets: { excl: Set<Event>, exec: Set<Event>, incl: Set<Event> }): boolean => {
-            //  if (canBeIncludedMap[event] !== undefined) return canBeIncludedMap[event];
             for (const inclForEvent of graph.includesFor[event]) {
                 const canBeExec = cycleSets.exec.has(inclForEvent) ? false : canBeExecutedRecur(inclForEvent, {
                     excl: cycleSets.excl,
                     incl: cycleSets.incl,
                     exec: new Set([...cycleSets.exec, inclForEvent])
                 });
-                //        canBeExecutedMap[inclForEvent] = canBeExec;
                 if (canBeExec) return true;
             }
             return false;
         }
 
         const canBeExecutedRecur = (event: Event, cycleSets: { excl: Set<Event>, exec: Set<Event>, incl: Set<Event> }): boolean => {
-            //      if (canBeExecutedMap[event] !== undefined) return canBeExecutedMap[event];
-
             if (event !== origEvent && context.has(graph.labelMap[event])) return false;
             if (isEnabled(event, graph)) {
                 return true;
             }
-            // Check if all events conditioning can be executed or excluded
             for (const condForEvent of graph.conditionsFor[event]) {
                 if (!graph.marking.executed.has(condForEvent) && graph.marking.included.has(condForEvent)) {
                     const condCanBeExec = cycleSets.exec.has(condForEvent) ? false : canBeExecutedRecur(condForEvent, {
@@ -173,7 +151,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: new Set([...cycleSets.exec, condForEvent])
                     });
-                    //          canBeExecutedMap[condForEvent] = condCanBeExec;
                     if (condCanBeExec) continue;
 
                     const condCanBeExcl = cycleSets.excl.has(condForEvent) ? false : canBeExcludedRecur(condForEvent, {
@@ -181,7 +158,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: cycleSets.exec
                     });
-                    //canBeExcludedMap[condForEvent] = condCanBeExcl;
                     if (!condCanBeExec && !condCanBeExcl) {
                         return false
                     };
@@ -195,7 +171,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: new Set([...cycleSets.exec, mistForEvent])
                     });
-                    //          canBeExecutedMap[mistForEvent] = mistCanBeExec;
                     if (mistCanBeExec) continue;
 
                     const mistCanBeExcl = cycleSets.excl.has(mistForEvent) ? false : canBeExcludedRecur(mistForEvent, {
@@ -203,7 +178,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: cycleSets.exec
                     });
-                    //canBeExcludedMap[mistForEvent] = mistCanBeExcl;
                     if (!mistCanBeExec && !mistCanBeExcl) {
                         return false
                     };
@@ -216,33 +190,24 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                     excl: cycleSets.excl,
                     exec: cycleSets.exec
                 });
-                //canBeIncludedMap[event] = canBeIncluded;
                 return canBeIncluded;
             }
             return true;
         }
 
         const retval = canBeExecutedRecur(origEvent, { excl: new Set(), exec: new Set([origEvent]), incl: new Set() });
-        //reachAbilityStates[modelStr] = { canBeExcludedMap, canBeExecutedMap, canBeIncludedMap };
         return retval;
     }
 
     const canBeExecutedOrExcluded = (peEvent: Event, graph: LabelDCRPP, context: Set<Label>) => {
-        //const modelStr = stateToStr(graph.marking);
-        //
-        //const canBeExecutedMap = reachAbilityStates[modelStr] ?
-        //  reachAbilityStates[modelStr] : {};
-        //const canBeExecutedMap: { [event: Event]: boolean } = {};
 
         const canBeExcludedRecur = (event: Event, cycleSets: { excl: Set<Event>, exec: Set<Event>, incl: Set<Event> }): boolean => {
-            //  if (canBeExcludedMap[event] !== undefined) return canBeExcludedMap[event];
             for (const exclForEvent of graph.excludesFor[event]) {
                 const canBeExec = cycleSets.exec.has(exclForEvent) ? false : canBeExecutedRecur(exclForEvent, {
                     excl: cycleSets.excl,
                     incl: cycleSets.incl,
                     exec: new Set([...cycleSets.exec, exclForEvent])
                 });
-                //        canBeExecutedMap[exclForEvent] = canBeExec;
                 if (canBeExec) return true;
             }
             return false;
@@ -250,22 +215,18 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
 
 
         const canBeIncludedRecur = (event: Event, cycleSets: { excl: Set<Event>, exec: Set<Event>, incl: Set<Event> }): boolean => {
-            //  if (canBeIncludedMap[event] !== undefined) return canBeIncludedMap[event];
             for (const inclForEvent of graph.includesFor[event]) {
                 const canBeExec = cycleSets.exec.has(inclForEvent) ? false : canBeExecutedRecur(inclForEvent, {
                     excl: cycleSets.excl,
                     incl: cycleSets.incl,
                     exec: new Set([...cycleSets.exec, inclForEvent])
                 });
-                //        canBeExecutedMap[inclForEvent] = canBeExec;
                 if (canBeExec) return true;
             }
             return false;
         }
 
         const canBeExecutedRecur = (event: Event, cycleSets: { excl: Set<Event>, exec: Set<Event>, incl: Set<Event> }): boolean => {
-            //      if (canBeExecutedMap[event] !== undefined) return canBeExecutedMap[event];
-
 
             if (context.has(graph.labelMap[event])) {
                 return false;
@@ -281,7 +242,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: new Set([...cycleSets.exec, condForEvent])
                     });
-                    //          canBeExecutedMap[condForEvent] = condCanBeExec;
                     if (condCanBeExec) continue;
 
                     const condCanBeExcl = cycleSets.excl.has(condForEvent) ? false : canBeExcludedRecur(condForEvent, {
@@ -289,7 +249,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: cycleSets.exec
                     });
-                    //canBeExcludedMap[condForEvent] = condCanBeExcl;
                     if (!condCanBeExec && !condCanBeExcl) return false;
                 }
             }
@@ -301,7 +260,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: new Set([...cycleSets.exec, mistForEvent])
                     });
-                    //          canBeExecutedMap[mistForEvent] = mistCanBeExec;
                     if (mistCanBeExec) continue;
 
                     const mistCanBeExcl = cycleSets.excl.has(mistForEvent) ? false : canBeExcludedRecur(mistForEvent, {
@@ -309,7 +267,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                         incl: cycleSets.incl,
                         exec: cycleSets.exec
                     });
-                    //canBeExcludedMap[mistForEvent] = mistCanBeExcl;
                     if (!mistCanBeExec && !mistCanBeExcl) return false;
                 }
             }
@@ -320,7 +277,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                     excl: cycleSets.excl,
                     exec: cycleSets.exec
                 });
-                //canBeIncludedMap[event] = canBeIncluded;
                 return canBeIncluded;
             }
             return true;
@@ -328,7 +284,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
 
         const retval = canBeExecutedRecur(peEvent, { excl: new Set(), exec: new Set([peEvent]), incl: new Set() }) ||
             canBeExcludedRecur(peEvent, { excl: new Set([peEvent]), exec: new Set(), incl: new Set() });
-        //reachAbilityStates[modelStr] = { canBeExcludedMap, canBeExecutedMap, canBeIncludedMap };
         return retval;
     }
 
@@ -359,8 +314,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
 
         if (isAccept && traceLen == 0) return { cost: curCost, trace: [] };
 
-        //console.log(curCost, maxCost);
-
         // No alignment found and should continue search.
         // This gives 3 cases: consume, model-skip & log-skip
         // Ordering is IMPORTANT. Since this is depth-first, do consumes and trace-skips first when possible.
@@ -369,7 +322,7 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
 
         // Consume
         // Event is enabled, execute it and remove it from trace
-        if (traceLen > 0 /*&& Object.keys(graph.labelMapInv).includes(trace[0])*/) {
+        if (traceLen > 0) {
             try {
                 for (const event of graph.labelMapInv[trace[0]]) {
                     if (isEnabled(event, graph)) {
@@ -398,7 +351,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
         // Trace-skip
         // Skip event in trace
         if (traceLen > 0) {
-            //console.log("Log moving: ", trace[0], curDepth);
             const alignment = alignTraceLabel(
                 trace.slice(1),
                 graph,
@@ -414,15 +366,11 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
         // Check if the next event can ever be reached
         if (pruning && maxCost === Infinity) {
             if (traceLen > 0) {
-                const log = trace[0] === "Cancel meeting";
                 let isGood = false;
                 for (const event of graph.labelMapInv[trace[0]]) {
-                    //console.log("Checking statically");
                     isGood = isGood || canBeExecuted(event, graph, context);
-                    //console.log("isGood: " + isGood);
                 }
                 if (!isGood) {
-                    //console.log("Yay! I don't have to model move this!");
                     return { cost: Infinity, trace: [] }
                 }
                 // Check if graph can reach an accepting state
@@ -432,7 +380,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
                     isGood = isGood && canBeExecutedOrExcluded(pEvent, graph, context);
                 }
                 if (!isGood) {
-                    //console.log("Yay! I don't have to model move this!");
                     return { cost: Infinity, trace: [] }
                 }
             }
@@ -444,7 +391,6 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
         // Execute any enabled event without modifying trace. Highly exponential, therefore last
         const enabled = getEnabled(graph);
         for (const event of enabled) {
-            //graph.labelMap[event] === "Hold meeting" && console.log("Model moving: ", graph.labelMap[event], [...graph.marking.executed].map(e => graph.labelMap[e]), [...graph.marking.included].map(e => graph.labelMap[e]), [...graph.marking.pending].map(e => graph.labelMap[e]));
             const alignment = newGraphEnv(graph, () => {
                 execute(event, graph);
                 return alignTraceLabel(trace, graph, curCost + alignCost("model-skip", event), curDepth + 1);
@@ -459,9 +405,7 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
         return bestAlignment;
     };
 
-    //console.log(toDepth);
     maxCost = toDepth !== Infinity ? toDepth : trace.map(event => costFun("trace-skip", event)).reduce((acc, cur) => acc + cur, 0) + alignTraceLabel([], graph).cost;
-    //console.log(maxCost);
 
     for (let i = 0; i <= trace.length; i++) {
         alignState[i] = {};

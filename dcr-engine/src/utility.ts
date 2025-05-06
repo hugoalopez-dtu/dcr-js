@@ -1,7 +1,5 @@
 import type { DCRGraph, EventMap, Marking, Event } from "./types";
 
-import fs from "fs";
-
 export const avg = (arr: Array<number>): number => arr.reduce((partialSum, a) => partialSum + a, 0) / arr.length;
 
 export const getRandomInt = (min: number, max: number): number => {
