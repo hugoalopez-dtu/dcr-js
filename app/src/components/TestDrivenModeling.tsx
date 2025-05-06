@@ -262,7 +262,8 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
         try {
             for (const testId in newTests) {
                 const test = newTests[testId];
-                newTests[testId].result = runTest(test, graphPP, depth, true);
+                const maxDepth = depth <= 0 ? Infinity : depth;
+                newTests[testId].result = runTest(test, graphPP, maxDepth, true);
             }
             setTests(newTests);
         } catch (e) {
