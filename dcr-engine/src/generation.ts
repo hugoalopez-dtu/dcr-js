@@ -47,7 +47,6 @@ const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: numbe
         const retval = new Set<string>();
         for (const event of allEvents) {
             const group = graph.subProcessMap[event] ? graph.subProcessMap[event] : graph;
-            //console.log(group);
             if (isEnabledS(event, graph, group).enabled) {
                 console.log(event, " is enabled");
                 retval.add(event);
@@ -74,11 +73,13 @@ const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: numbe
                 retval.traces["Trace " + goodTraces++] = noisyTrace;
                 break;
             }
-            const event = getRandomItem(allEnabled());
+            const enabled = allEnabled();
+            if (enabled.size === 0) break;
+            const event = getRandomItem(enabled);
             executeS(event, graph);
             trace.push({ activity: graph.labelMap[event], role: graph.roleMap[event] })
         }
-        if (trace.length > maxTraceLen) {
+        if (trace.length > maxTraceLen || trace.length < minTraceLen) {
             botchedTraces++;
             if (botchedTraces > 2 * noTraces) {
                 throw new Error("Unable to generate log from parameters...");

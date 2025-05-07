@@ -110,7 +110,6 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
                 const rawMaxTrace = formData.get("maxTrace");
                 const maxTrace = rawMaxTrace && parseInt(rawMaxTrace.toString());
 
-                console.log(noise, name, noTraces, minTrace, maxTrace);
                 if (noise === "" || noise === null || noTraces === "" || noTraces === null || minTrace === "" || minTrace === null || maxTrace === "" || maxTrace === null || !name) {
                     toast.error("Can't parse input parameters...");
                     return;
@@ -124,10 +123,13 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
                 if (!graphRef.current) return;
 
                 setCustomFormState({ ...customFormState, noise, name, noTraces, minTrace, maxTrace });
-
-                const log = generateEventLog(graphRef.current.current, noTraces, minTrace, maxTrace, noise);
-                saveEventLog(name, log);
-                saveLog(name, log);
+                try {
+                    const log = generateEventLog(graphRef.current.current, noTraces, minTrace, maxTrace, noise);
+                    saveEventLog(name, log);
+                    saveLog(name, log);
+                } catch (e) {
+                    toast.error("Cannot generate log from parameters...");
+                }
             }
         }
     }
