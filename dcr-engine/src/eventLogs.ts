@@ -1,5 +1,5 @@
 import parser, { j2xParser } from "fast-xml-parser";
-import { EventLog, Event, XMLLog, XMLEvent, RoleTrace } from "./types";
+import { EventLog, Event, XMLLog, XMLEvent, RoleTrace, BinaryLog, ClassifiedTraces, Trace } from "./types";
 
 export const parserOptions = {
   attributeNamePrefix: "",
@@ -159,4 +159,58 @@ export const writeEventLog = (log: EventLog<RoleTrace>): string => {
   const parser = new j2xParser(writingOptions);
   const xml = parser.parse(xmlLog);
   return xml;
+};
+
+
+// Parse .xes data to a Binary EventLog
+export const parseBinaryLog = (
+  data: string,
+  positiveClasifier: string,
+): { trainingLog: BinaryLog; testLog: EventLog<Trace>; gtLog: ClassifiedTraces } => {
+  const logJson = parser.parse(data.toString(), parserOptions);
+  const trainingLog: BinaryLog = {
+    events: new Set<Event>(),
+    traces: {},
+    nTraces: {},
+  };
+
+  const testLog: EventLog<Trace> = {
+    events: new Set<Event>(),
+    traces: {},
+  };
+
+  const gtLog: ClassifiedTraces = {};
+
+  for (const i in logJson.log[0].trace) {
+    const trace: Trace = [];
+    let traceId: string = "";
+    let label: string = "";
+    const xmlTrace = logJson.log[0].trace[i];
+    for (const elem of xmlTrace.string) {
+      if (elem.attr.key === "concept:name") {
+        traceId = elem.attr.value;
+      }
+      if (elem.attr.key === "label") {
+        label = elem.attr.value;
+      }
+    }
+    if (traceId === "" || label === "") {
+      throw new Error("No trace id or label found!");
+    }
+    const events = xmlTrace.event ? xmlTrace.event : [];
+    for (const elem of events) {
+      for (const event of elem.string) {
+        if (event.attr.key === "concept:name") {
+          trace.push(event.attr.value.toString());
+          trainingLog.events.add(event.attr.value.toString());
+        }
+      }
+    }
+    (label === positiveClasifier ? trainingLog.traces : trainingLog.nTraces)[traceId] =
+      trace;
+    testLog.traces[traceId] = trace;
+    gtLog[traceId] = label === positiveClasifier;
+  }
+  testLog.events = trainingLog.events;
+  return { trainingLog, testLog, gtLog };
 };

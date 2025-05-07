@@ -10,6 +10,8 @@ import generateEventLog from "./src/generation";
 import runTest from "./src/tdm";
 import alignTrace from "./src/align";
 
+import rejectionMiner from "./src/binary";
+
 import mineFromAbstraction, { abstractLog, filter } from "./src/discovery";
 
 export {
@@ -45,5 +47,6 @@ export {
     quantifyViolations,
     generateEventLog,
     runTest,
-    alignTrace
+    alignTrace,
+    rejectionMiner
 }

@@ -177,3 +177,44 @@ export interface LogAbstraction {
   nonCoExisters?: EventMap;
   precedesButNeverSuceeds?: EventMap;
 }
+
+
+export interface TraceCoverRelation {
+  [startEventId: string]: {
+    [endEventId: string]: Set<TraceId>;
+  };
+}
+
+export interface TraceCoverGraph {
+  conditionsFor: TraceCoverRelation;
+  responseTo: TraceCoverRelation;
+  excludesTo: TraceCoverRelation;
+}
+
+// -----------------------------------------------------------
+// ------------------------ Log Types ------------------------
+// -----------------------------------------------------------
+
+type TraceId = string;
+
+
+export type Traces = {
+  [traceId: TraceId]: Trace;
+};
+
+export interface BinaryLog {
+  events: Set<Event>;
+  traces: Traces;
+  nTraces: Traces;
+}
+
+export interface ClassifiedLog {
+  [traceId: string]: {
+    isPositive: boolean;
+    trace: Trace;
+  };
+}
+
+export interface ClassifiedTraces {
+  [traceId: string]: boolean;
+}

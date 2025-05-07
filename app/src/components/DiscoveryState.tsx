@@ -3,7 +3,7 @@ import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import { StateEnum, StateProps } from "../App";
-import { abstractLog, DCRGraph, DCRGraphS, EventLog, filter, layoutGraph, mineFromAbstraction, nestDCR, Nestings, parseLog, RoleTrace } from "dcr-engine";
+import { abstractLog, DCRGraph, DCRGraphS, EventLog, filter, layoutGraph, mineFromAbstraction, nestDCR, Nestings, parseLog, rejectionMiner, RoleTrace } from "dcr-engine";
 import FileUpload from "../utilComponents/FileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Toggle from "../utilComponents/Toggle";
@@ -19,6 +19,7 @@ import Loading from "../utilComponents/Loading";
 import { saveAs } from 'file-saver';
 import { useHotkeys } from "react-hotkeys-hook";
 import GraphNameInput from "../utilComponents/GraphNameInput";
+import { parseBinaryLog } from "dcr-engine/src/eventLogs";
 
 const FileInput = styled.div`
     border: 1px dashed black;
@@ -156,6 +157,87 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
                     toast.error("Cannot parse log...");
                 }
 
+            }
+        },
+        "RejectionMiner": {
+            inputs: [
+                <MenuElement>
+                    <Label>Binary Event Log:</Label>
+                    <FileInput>
+                        <FileUpload accept=".xes" fileCallback={(name, contents) => setCustomFormState({ ...customFormState, name, contents })} name="log">{customFormState?.name ? customFormState?.name : "Select event log"}</FileUpload>
+                    </FileInput>
+                </MenuElement>,
+                <MenuElement>
+                    <Label title="The classifier in the event log that denotes that it is a positive trace.">Positive Trace Classifier</Label>
+                    <Input
+                        name="positiveClassifier"
+                        type="text"
+                        required
+                        defaultValue={customFormState?.positiveClassifier ? customFormState.positiveClassifier : "Required"} />
+                </MenuElement>,
+                <MenuElement>
+                    <Label title="Leverage the negative traces to find additional constraints that cover many negative traces and few positive ones.">Optimize Precision</Label>
+                    <Input name="optimizePrecision" type="checkbox" defaultChecked={customFormState?.optimizePrecision !== undefined ? customFormState.optimizePrecision : true} />
+                </MenuElement>,
+                <MenuElement>
+                    <Label title="Saves the uploaded event log for later use in conformance checking, simulation, etc.">Save Log</Label>
+                    <Input name="save" type="checkbox" defaultChecked={customFormState?.save ? customFormState.save : false} />
+                </MenuElement>,
+            ],
+            onSubmit: (formData: FormData) => {
+                setLoading(true);
+                const positiveClassifier = formData.get("positiveClassifier")?.toString();
+                const optimizePrecision = !!formData.get("optimizePrecision");
+                const save = !!formData.get("save");
+                setCustomFormState({ ...customFormState, positiveClassifier, optimizePrecision, save });
+                console.log(positiveClassifier);
+                if (!positiveClassifier) {
+                    toast.error("Can't parse input parameters...");
+                    setLoading(false);
+                    return;
+                }
+                try {
+                    if (!modelerRef) return;
+
+                    console.log(optimizePrecision, formData.get("optimizePrecision"))
+
+                    const data = customFormState.contents;
+                    console.log("Trying to parse log...");
+                    const { trainingLog, testLog } = parseBinaryLog(data, positiveClassifier);
+                    console.log("Parsed log!");
+
+                    console.log("Discovering...");
+                    const graph = rejectionMiner(trainingLog, optimizePrecision);
+                    console.log("Discovery done!");
+                    console.log("Computing layout...");
+                    layoutGraph(graph).then(xml => {
+                        console.log("Layout done!");
+                        modelerRef.current?.importXML(xml).catch(e => {
+                            console.log(e);
+                            toast.error("Invalid xml...")
+                        }).finally(() => {
+                            const roleLog: EventLog<RoleTrace> = {
+                                events: testLog.events,
+                                traces: {}
+                            }
+                            for (const traceId in testLog.traces) {
+                                roleLog.traces[traceId] = testLog.traces[traceId].map(activity => ({ activity, role: "" }))
+                            }
+                            setGraphName(customFormState.name.slice(0, -4));
+                            if (save) saveLog(roleLog, customFormState.name);
+                            setLoading(false);
+                        });
+                    }).catch(e => {
+                        console.log(e);
+                        setLoading(false);
+                        toast.error("Unable to layout graph...")
+                    });
+
+                } catch (e) {
+                    console.log(e);
+                    setLoading(false);
+                    toast.error("Cannot parse log...");
+                }
             }
         }
     }
