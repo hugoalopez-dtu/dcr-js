@@ -224,6 +224,11 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
     const [creatingTest, setCreatingTest] = useState<boolean>(false);
 
+    const [currentTest, setCurrentTest] = useState({
+        trace: "a\nb\nc\n...",
+        context: "a\nb\nc\n...",
+    })
+
     const [depth, setDepth] = useState<number>(50);
 
     const downloadTests = () => {
@@ -258,6 +263,8 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
         const graph = moddleToDCR(elementRegistry, true);
         const graphPP = graphToGraphPP(graph);
 
+        console.log(graph);
+
         const newTests = { ...tests };
         try {
             for (const testId in newTests) {
@@ -277,8 +284,8 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
             <CreateTest>
                 <Form inputFields={[
                     <>Name<Input name="testName" type="text" required defaultValue={"Test " + id} /></>,
-                    <>Trace<textarea title="The partial trace of the test. Input one activity per line." name="trace" required defaultValue={"a\nb\nc\n..."} /></>,
-                    <>Context<textarea title="The context of the test. Input one activity per line." name="context" required defaultValue={"a\nb\nc\n..."} /></>,
+                    <>Trace<textarea title="The partial trace of the test. Input one activity per line." name="trace" required defaultValue={currentTest.trace} /></>,
+                    <>Context<textarea title="The context of the test. Input one activity per line." name="context" required defaultValue={currentTest.context} /></>,
                     <>Polarity<Input title="The polarity of the test. Checked means a positive test case." name="polarity" type="checkbox" defaultChecked={true} /></>
                 ]}
                     submit={(formData: FormData) => {
@@ -299,9 +306,9 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
                         const trace = textInputToArray(rawTrace);
                         const context = textInputToArray(rawContext);
 
-                        const graphEvents = [...graph.events].map(event => event.toLowerCase());
                         for (const event of trace.concat(context)) {
-                            if (!graphEvents.includes(event.toLowerCase())) {
+                            if (!graph.events.has(event)) {
+                                setCurrentTest({ trace: rawTrace, context: rawContext });
                                 toast.error(`Activity ${event} not found in graph...`);
                                 return;
                             }
