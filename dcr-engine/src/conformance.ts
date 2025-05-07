@@ -1,5 +1,5 @@
 import { executeS, isAcceptingS, isEnabledS } from "./executionEngine";
-import { DCRGraphS, Event, EventMap, FuzzyRelation, RelationViolations, RoleTrace } from "./types";
+import { DCRGraphS, Event, EventMap, FuzzyRelation, RelationActivations, RelationViolations, RoleTrace } from "./types";
 import { copyEventMap, copyMarking, copySet, reverseRelation } from "./utility";
 
 export const replayTraceS = (graph: DCRGraphS, trace: RoleTrace): boolean => {
@@ -52,6 +52,16 @@ export const mergeViolations = (viols1: RelationViolations, viols2: RelationViol
     }
 }
 
+export const mergeActivations = (acts1: RelationActivations, acts2: RelationActivations): RelationActivations => {
+    return {
+        conditionsFor: mergeFuzRels(acts1.conditionsFor, acts2.conditionsFor),
+        responseTo: mergeFuzRels(acts1.responseTo, acts2.responseTo),
+        excludesTo: mergeFuzRels(acts1.excludesTo, acts2.excludesTo),
+        milestonesFor: mergeFuzRels(acts1.milestonesFor, acts2.milestonesFor),
+        includesTo: mergeFuzRels(acts1.includesTo, acts2.includesTo)
+    }
+}
+
 export const emptyFuzzyRel = (events: Set<Event>): FuzzyRelation => {
     const retval: FuzzyRelation = {};
     for (const event of events) {
@@ -89,7 +99,7 @@ const computeActivations = (executedEvent: Event, events: Set<Event>, rel: Event
     return retval;
 }
 
-export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalViolations: number, violations: RelationViolations, activations: RelationViolations } => {
+export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalViolations: number, violations: RelationViolations, activations: RelationActivations } => {
     // Copies and flips excludesTo and responseTo to easily find all events that are the sources of the relations
     const excludesFor = reverseRelation(graph.excludesTo);
     const responseFor = reverseRelation(graph.responseTo);
@@ -98,7 +108,7 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
         (acc, cum) => acc.union(cum.events),
         copySet(graph.events)).union(new Set(Object.keys(graph.subProcesses)));
 
-    const quantifyRec = (graph: DCRGraphS, trace: RoleTrace, exSinceIn: EventMap, exSinceEx: EventMap): { totalViolations: number, violations: RelationViolations, activations: RelationViolations } => {
+    const quantifyRec = (graph: DCRGraphS, trace: RoleTrace, exSinceIn: EventMap, exSinceEx: EventMap): { totalViolations: number, violations: RelationViolations, activations: RelationActivations } => {
         if (trace.length === 0) {
             // Response violations (each included pending event is a violation)
             // For all pending events (that are included according to the initial graph), event, at the end of a trace, all relations
@@ -129,6 +139,7 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
                     responseTo: emptyFuzzyRel(allEvents),
                     excludesTo: emptyFuzzyRel(allEvents),
                     milestonesFor: emptyFuzzyRel(allEvents),
+                    includesTo: emptyFuzzyRel(allEvents)
                 },
             }
         };
@@ -142,11 +153,12 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
             excludesTo: {},
             milestonesFor: {}
         };
-        let bestRelationActivations: RelationViolations = {
+        let bestRelationActivations: RelationActivations = {
             conditionsFor: {},
             responseTo: {},
             excludesTo: {},
-            milestonesFor: {}
+            milestonesFor: {},
+            includesTo: {}
         };
         const initMarking = copyMarking(graph.marking);
         for (const event of graph.labelMapInv[head.activity]) {
@@ -163,11 +175,12 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
             };
 
 
-            const localActivations: RelationViolations = {
+            const localActivations: RelationActivations = {
                 conditionsFor: computeActivations(event, allEvents, graph.conditionsFor),
                 responseTo: computeActivations(event, allEvents, graph.responseTo),
                 excludesTo: computeActivations(event, allEvents, graph.excludesTo),
-                milestonesFor: computeActivations(event, allEvents, graph.milestonesFor)
+                milestonesFor: computeActivations(event, allEvents, graph.milestonesFor),
+                includesTo: computeActivations(event, allEvents, graph.includesTo)
             };
 
             // Condition violations
@@ -223,7 +236,7 @@ export const quantifyViolations = (graph: DCRGraphS, trace: RoleTrace): { totalV
             if (localViolationCount + recTotalViolations < leastViolations) {
                 leastViolations = localViolationCount + recTotalViolations;
                 bestRelationViolations = mergeViolations(localViolations, recViolations);
-                bestRelationActivations = mergeViolations(localActivations, recActivations);
+                bestRelationActivations = mergeActivations(localActivations, recActivations);
             }
             graph.marking = copyMarking(initMarking);
         }

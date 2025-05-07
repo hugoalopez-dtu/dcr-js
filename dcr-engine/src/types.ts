@@ -47,6 +47,14 @@ export type RelationViolations = {
   milestonesFor: FuzzyRelation;
 }
 
+export type RelationActivations = {
+  conditionsFor: FuzzyRelation;
+  responseTo: FuzzyRelation;
+  excludesTo: FuzzyRelation;
+  milestonesFor: FuzzyRelation;
+  includesTo: FuzzyRelation;
+}
+
 export interface DCRGraph {
   events: Set<Event>;
   conditionsFor: EventMap;

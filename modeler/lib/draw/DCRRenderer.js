@@ -462,7 +462,7 @@ export default function DCRRenderer(
           fill, startDirection, endDirection);
       } else if (type === 'include') {
         markers.includeMarker(marker, path,
-          violationColour ? violationColour : settings.blackRelations ? colorBlack : colorInclude, //green
+          inactive ? colorGrey : violationColour ? violationColour : settings.blackRelations ? colorBlack : colorInclude, //green
           fill, startDirection, endDirection);
       } else if (type === 'exclude') {
         markers.excludeMarker(marker, path,

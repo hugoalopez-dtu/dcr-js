@@ -591,7 +591,7 @@ const updateViolations = (arg, modeling, elementReg) => {
 
   function valueToColor(temp) {
     if (scale.max.value === 0) {
-      return hslToHex(scale.max.hue, 100, 50);
+      return hslToHex(scale.max.hue, 100, 30);
     }
     temp = Math.min(scale.max.value, Math.max(scale.min.value, temp));
     const range = scale.max.value - scale.min.value;
@@ -599,9 +599,8 @@ const updateViolations = (arg, modeling, elementReg) => {
     const value = (temp - scale.min.value) / range;
     const hue = scale.max.hue - hueRange * value;
 
-    return hslToHex(hue, 100, 50)
+    return hslToHex(hue, 100, 30)
   }
-
 
   for (const { element } of Object.values(elementReg._elements)) {
     if (element.type === "dcr:Relation") {
@@ -633,7 +632,9 @@ const updateViolations = (arg, modeling, elementReg) => {
           break;
         }
         case "include": {
-          modeling.updateProperties(element, { violationColour: violations ? "#000000" : null, inactive: false });
+          const source = busObject.sourceRef.id;
+          const target = busObject.targetRef.id;
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(0) : null, inactive: activations ? activations.includesTo[source][target] === 0 : null });
           break;
         }
         default: {

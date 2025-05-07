@@ -14,7 +14,7 @@ import FileUpload from "../utilComponents/FileUpload";
 import { replayTraceS } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
-import { EventLog, LabelDCRPP, RelationViolations, RoleTrace, Trace } from "dcr-engine/src/types";
+import { EventLog, LabelDCRPP, RelationActivations, RelationViolations, RoleTrace, Trace } from "dcr-engine/src/types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Label from "../utilComponents/Label";
@@ -24,6 +24,7 @@ import HeatmapResults from "./HeatmapResults";
 import { graphToGraphPP } from "dcr-engine/src/align";
 import AlignmentResults from "./AlignmentResults";
 import AlignmentTraceView from "./AlignmentTraceView";
+import { mergeActivations } from "dcr-engine/src/conformance";
 
 const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boolean }>`
     ${props => props.$clicked ? `
@@ -92,13 +93,13 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
   const totalLogResults = useMemo<{
     totalViolations: number,
     violations: RelationViolations,
-    activations: RelationViolations
+    activations: RelationActivations
   } | undefined>(() => {
     if (violationLogResults.length === 0) return undefined;
     const retval = violationLogResults.reduce((acc, cum) => cum.results ? {
       totalViolations: acc.totalViolations + cum.results.totalViolations,
       violations: mergeViolations(acc.violations, cum.results.violations),
-      activations: mergeViolations(acc.activations, cum.results.activations),
+      activations: mergeActivations(acc.activations, cum.results.activations),
     } : acc, {
       totalViolations: 0,
       violations: {
@@ -111,7 +112,8 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         conditionsFor: {},
         responseTo: {},
         excludesTo: {},
-        milestonesFor: {}
+        milestonesFor: {},
+        includesTo: {}
       }
     });
     modelerRef.current?.updateViolations(retval);
