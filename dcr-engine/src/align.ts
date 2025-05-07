@@ -104,7 +104,18 @@ export const graphToGraphPP = <T extends DCRGraph>(graph: T): T & Optimizations 
     return { ...graph, conditions, includesFor: flipEventMap(graph.includesTo), excludesFor: flipEventMap(graph.excludesTo) };
 };
 
-export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: CostFun, toDepth: number = Infinity, pruning: boolean = false): Alignment => {
+let alignCost: CostFun = (action, _) => {
+    switch (action) {
+        case "consume":
+            return 0;
+        case "model-skip":
+            return 1;
+        case "trace-skip":
+            return 1;
+    }
+}
+
+const alignTrace = (trace: Trace, graph: LabelDCRPP, context?: Set<Label>, costFun: CostFun = alignCost, toDepth: number = Infinity, pruning: boolean = false): Alignment => {
     // Setup global variables
     const alignCost = costFun;
     const alignState: { [traceLen: number]: { [state: string]: number } } = {
@@ -364,7 +375,7 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
         }
 
         // Check if the next event can ever be reached
-        if (pruning && maxCost === Infinity) {
+        if (pruning && maxCost === Infinity && context) {
             if (traceLen > 0) {
                 let isGood = false;
                 for (const event of graph.labelMapInv[trace[0]]) {
@@ -413,3 +424,5 @@ export default (trace: Trace, graph: LabelDCRPP, context: Set<Label>, costFun: C
 
     return alignTraceLabel(trace, graph, 0);
 };
+
+export default alignTrace;

@@ -8,6 +8,7 @@ import layoutGraph from "./src/layout";
 import { nestDCR } from "./src/nesting";
 import generateEventLog from "./src/generation";
 import runTest from "./src/tdm";
+import alignTrace from "./src/align";
 
 import mineFromAbstraction, { abstractLog, filter } from "./src/discovery";
 
@@ -44,4 +45,5 @@ export {
     quantifyViolations,
     generateEventLog,
     runTest,
+    alignTrace
 }

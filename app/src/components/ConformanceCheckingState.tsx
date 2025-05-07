@@ -3,24 +3,27 @@ import { StateEnum, StateProps } from "../App";
 import Modeler from "./Modeler";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
-import { BiHome, BiLeftArrowCircle, BiSolidFlame, BiUpload } from "react-icons/bi";
+import { BiHome, BiLeftArrowCircle, BiSolidFlame, BiSolidRocket, BiUpload } from "react-icons/bi";
 import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
 import Toggle from "../utilComponents/Toggle";
 import DropDown from "../utilComponents/DropDown";
-import { isSettingsVal, ReplayLogResults, ViolationLogResults } from "../types";
-import { copyMarking, mergeViolations, moddleToDCR, parseLog, quantifyViolations } from "dcr-engine";
+import { AlignmentLogResults, isSettingsVal, ReplayLogResults, ViolationLogResults } from "../types";
+import { alignTrace, copyMarking, mergeViolations, moddleToDCR, parseLog, quantifyViolations } from "dcr-engine";
 import { toast } from "react-toastify";
 import FileUpload from "../utilComponents/FileUpload";
 import { replayTraceS } from "dcr-engine";
 import { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
-import { RelationViolations, RoleTrace } from "dcr-engine/src/types";
+import { EventLog, LabelDCRPP, RelationViolations, RoleTrace, Trace } from "dcr-engine/src/types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import MenuElement from "../utilComponents/MenuElement";
 import Label from "../utilComponents/Label";
 import ReplayResults from "./ReplayResults";
 import styled from "styled-components";
 import HeatmapResults from "./HeatmapResults";
+import { graphToGraphPP } from "dcr-engine/src/align";
+import AlignmentResults from "./AlignmentResults";
+import AlignmentTraceView from "./AlignmentTraceView";
 
 const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boolean }>`
     ${props => props.$clicked ? `
@@ -37,28 +40,52 @@ const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boo
     ` : ""}
 `
 
+const AlignButton = styled(BiSolidRocket) <{ $clicked: boolean, $disabled?: boolean }>`
+    ${props => props.$clicked ? `
+        background-color: black !important;
+        color: white;
+    ` : ``}
+    ${props => props.$disabled ? `
+        color : grey;
+        border-color: grey !important;
+        cursor: default !important;
+        &:hover {
+            box-shadow: none !important;
+        }    
+    ` : ""}
+`
+
+const alignShowDesc = (trace: Trace, graph: LabelDCRPP): { cost: number, trace: Trace } => {
+  const alignment = alignTrace(trace, graph);
+  return { cost: alignment.cost, trace: alignment.trace.map(event => graph.labelMap[event]) }
+}
+
 const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedGraph, lastSavedLog }: StateProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [heatmapMode, setHeatmapMode] = useState(false);
+  const [alignmentMode, setAlignmentMode] = useState(false);
 
   const modelerRef = useRef<DCRModeler | null>(null);
   const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
 
   const [logResults, setLogResults] = useState<ReplayLogResults>([]);
   const [violationLogResults, setViolationLogResults] = useState<ViolationLogResults>([]);
+  const [alignmentLogResults, setAlignmentLogResults] = useState<AlignmentLogResults>([]);
 
   const [logName, setLogName] = useState<string>("");
-  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace } | null>(null);
+  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace, results?: { cost: number, trace: Trace } } | null>(null);
 
   const nestingRef = useRef<boolean>(true);
+  const roleRef = useRef<boolean>(true);
 
   useEffect(() => {
     const lastGraph = lastSavedGraph.current;
     const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
     const nestings = initXml ? (initXml.includes("Nesting")) : false;
-
+    roleRef.current = initXml ? (initXml.includes("role")) : false;
     nestingRef.current = nestings
+
     setHeatmapMode(!nestings);
   }, []);
 
@@ -101,6 +128,11 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           nestingRef.current = true;
         }
         else nestingRef.current = false;
+        if (data.includes("role")) {
+          setAlignmentMode(false);
+          roleRef.current = true;
+        }
+        else nestingRef.current = false;
         if (modelerRef.current && graphRef.current) {
           const graph = moddleToDCR(modelerRef.current.getElementRegistry());
           graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
@@ -112,35 +144,56 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             const newResults = violationLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: quantifyViolations(graph, trace) }));
             setViolationLogResults(newResults);
           }
+          if (alignmentLogResults && !roleRef.current) {
+            const graphPP = graphToGraphPP(graph);
+            const newResults = alignmentLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: alignShowDesc(trace.map(event => event.activity), graphPP) }));
+            setAlignmentLogResults(newResults);
+          }
         }
       }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
+    }
+  }
+
+  const openLog = (name: string, log: EventLog<RoleTrace>, graph: DCRGraphS | undefined) => {
+    const results = Object.keys(log.traces).map(traceId => {
+      const trace = log.traces[traceId];
+      return {
+        traceId,
+        trace,
+        isPositive: graph ? replayTraceS(graph, trace) : undefined,
+      }
+    });
+    setLogName(name);
+    setLogResults(results);
+    if (!nestingRef.current) {
+      const violationResults = Object.keys(log.traces).map(traceId => {
+        const trace = log.traces[traceId];
+        return {
+          traceId,
+          trace,
+          results: graph ? quantifyViolations(graph, trace) : undefined,
+        }
+      });
+      setViolationLogResults(violationResults);
+    }
+    if (!roleRef.current) {
+      const graphPP = graph ? graphToGraphPP(graph) : undefined;
+      const alignmentResults = Object.keys(log.traces).map(traceId => {
+        const trace = log.traces[traceId];
+        return {
+          traceId,
+          trace,
+          results: graphPP ? alignShowDesc(trace.map(event => event.activity), graphPP) : undefined,
+        }
+      });
+      setAlignmentLogResults(alignmentResults);
     }
   }
 
   const handleLogUpload = (name: string, data: string) => {
     try {
       const log = parseLog(data);
-      const results = Object.keys(log.traces).map(traceId => {
-        const trace = log.traces[traceId];
-        return {
-          traceId,
-          trace,
-          isPositive: graphRef.current ? replayTraceS(graphRef.current.initial, trace) : undefined,
-        }
-      });
-      setLogName(name.slice(0, -4));
-      setLogResults(results);
-      if (!nestingRef.current) {
-        const violationResults = Object.keys(log.traces).map(traceId => {
-          const trace = log.traces[traceId];
-          return {
-            traceId,
-            trace,
-            results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
-          }
-        });
-        setViolationLogResults(violationResults);
-      }
+      openLog(name.slice(0, -4), log, graphRef.current?.current);
     } catch (e) {
       console.log(e);
       toast.error("Cannot parse log...");
@@ -169,28 +222,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           text: name,
           onClick: () => {
             const log = savedLogs[name];
-            const results = Object.keys(log.traces).map(traceId => {
-              const trace = log.traces[traceId];
-              return {
-                traceId,
-                trace,
-                isPositive: graphRef.current ? replayTraceS(graphRef.current.initial, trace) : undefined,
-              }
-            });
-            setLogName(name);
-            setLogResults(results);
-            if (!nestingRef.current) {
-              const violationResults = Object.keys(log.traces).map(traceId => {
-                const trace = log.traces[traceId];
-                return {
-                  traceId,
-                  trace,
-                  results: graphRef.current ? quantifyViolations(graphRef.current.initial, trace) : undefined,
-                }
-              });
-              setViolationLogResults(violationResults);
-            }
-            setMenuOpen(false);
+            openLog(name, log, graphRef.current?.current);
           },
         })
       })
@@ -260,40 +292,34 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
     const initLog = lastSavedLog.current && savedLogs[lastSavedLog.current]
     if (!initLog) return;
 
-    const results = Object.keys(initLog.traces).map(traceId => {
-      const trace = initLog.traces[traceId];
-      return {
-        traceId,
-        trace,
-        isPositive: replayTraceS(graph, trace),
-      }
-    });
-    lastSavedLog.current && setLogName(lastSavedLog.current);
-    setLogResults(results);
-    const violationResults = Object.keys(initLog.traces).map(traceId => {
-      const trace = initLog.traces[traceId];
-      return {
-        traceId,
-        trace,
-        results: quantifyViolations(graph, trace),
-      }
-    });
-    setViolationLogResults(violationResults);
+    lastSavedLog.current && openLog(lastSavedLog.current, initLog, graph);
   } : undefined;
 
   return (
     <>
       <Modeler modelerRef={modelerRef} initXml={lastSavedGraph.current && savedGraphs[lastSavedGraph.current]} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
-      {logResults.length > 0 && !heatmapMode && <ReplayResults logName={logName} logResults={logResults} selectedTrace={selectedTrace} setLogResults={setLogResults} setSelectedTrace={setSelectedTrace} />}
+      {logResults.length > 0 && !heatmapMode && !alignmentMode && <ReplayResults logName={logName} logResults={logResults} selectedTrace={selectedTrace} setLogResults={setLogResults} setSelectedTrace={setSelectedTrace} />}
       {violationLogResults.length > 0 && heatmapMode && <HeatmapResults totalLogResults={totalLogResults} logName={logName} violationLogResults={violationLogResults} selectedTrace={selectedTrace} setViolationLogResults={setViolationLogResults} setSelectedTrace={setSelectedTrace} modelerRef={modelerRef} />}
-      {selectedTrace && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
+      {alignmentLogResults.length > 0 && alignmentMode && <AlignmentResults alignmentLogResults={alignmentLogResults} logName={logName} selectedTrace={selectedTrace} setAlignmentLogResults={setAlignmentLogResults} setSelectedTrace={setSelectedTrace} />}
+      {selectedTrace && !alignmentMode && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
         if (heatmapMode && totalLogResults) {
           modelerRef.current?.updateViolations(totalLogResults);
         }
       }} />}
+      {selectedTrace && alignmentMode && <AlignmentTraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} />}
       <TopRightIcons>
+        <AlignButton onClick={() => {
+          if (roleRef.current) {
+            toast.warning("Roles and Subprocesses not supported for alignment...");
+            return;
+          }
+          if (heatmapMode) {
+            modelerRef.current?.updateViolations(null);
+          }
+          setAlignmentMode(!alignmentMode);
+          setHeatmapMode(false);
+        }} $clicked={alignmentMode} title="Display results as alignments." />
         <HeatmapButton onClick={() => {
-          console.log(heatmapMode, nestingRef);
           if (nestingRef.current) {
             toast.warning("Nestings and Subprocesses not supported for heatmap...");
             return;
@@ -305,7 +331,8 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             console.log(viols);
             viols && modelerRef.current?.updateViolations(viols);
           }
-          setHeatmapMode(!heatmapMode)
+          setHeatmapMode(!heatmapMode);
+          setAlignmentMode(false);
         }} $clicked={heatmapMode} title="Display results as contraint violation heatmap." />
         <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />

@@ -1,4 +1,4 @@
-import { RelationViolations, RoleTrace } from "dcr-engine";
+import { RelationViolations, RoleTrace, Trace } from "dcr-engine";
 
 export type Children = string | React.JSX.Element | React.JSX.Element[];
 
@@ -21,6 +21,15 @@ export type ViolationLogResults = Array<{
         totalViolations: number,
         violations: RelationViolations,
         activations: RelationViolations,
+    },
+    trace: RoleTrace
+}>
+
+export type AlignmentLogResults = Array<{
+    traceId: string,
+    results?: {
+        cost: number,
+        trace: Trace,
     },
     trace: RoleTrace
 }>
