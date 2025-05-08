@@ -26,7 +26,7 @@ Here, `modelerRef` is a reference which the component will assign the underlying
 
 * `graphRef` is a reference that the component will assign the DCRGraphS to. This graph can be used by algorithms in the DCR-engine.
 * `overrideOnclick` is the custom onClick handler that will be called on all clicks on the graph. (e) will contain a payload with information on what was clicked.
-* 
+* `canvasClassName` is an optional parameter if you want to give the modeling canvas a css className. This allows you to override the graph styling by styling the corresponding className in the [global css](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/index.css)
 *
 *  
 
