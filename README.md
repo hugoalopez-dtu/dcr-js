@@ -18,8 +18,6 @@ This tool supports a wide range of process mining activities for DCR graphs:
 
 * Automatic event log generation by sampling models.
 
-The editor is based on the popular [Diagram-js](https://github.com/bpmn-io/diagram-js) web editor.
-
 ## Development information
 
 This project is organized in three separate modules.
