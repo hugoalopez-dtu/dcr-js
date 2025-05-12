@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { StateEnum, StateProps } from "../App";
 import { toast } from "react-toastify";
 import TopRightIcons from "../utilComponents/TopRightIcons";
-import { BiHome, BiLeftArrowCircle, BiMeteor, BiUpload } from "react-icons/bi";
+import { BiHome, BiLeftArrowCircle, BiMeteor, BiPlus, BiUpload } from "react-icons/bi";
 import Modeler from "./Modeler";
 
 import { SubProcess, Event, isEnabledS, executeS, copyMarking, moddleToDCR, isAcceptingS, RoleTrace } from "dcr-engine";
@@ -264,6 +264,20 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
     }
 
     const menuElements: Array<ModalMenuElement> = [{
+        text: "New Simulation",
+        icon: <BiPlus />,
+        onClick: () => {
+            if (confirm("This will erase your current simulated Event Log. Are you sure you wish to continue?")) {
+                setEventLog({ name: "Unnamed Event Log", traces: {} });
+                isSimulatingRef.current = SimulatingEnum.Not;
+                traceRef.current = null;
+                setSelectedTrace(null);
+                setTraceName("");
+                reset();
+                setMenuOpen(false);
+            }
+        }
+    }, {
         text: "Open",
         elements: [
             {
@@ -367,12 +381,12 @@ const SimulatorState = ({ setState, savedGraphs, savedLogs, setSavedLogs, lastSa
                 onCloseCallback={closeTraceCallback}
                 selectedTrace={selectedTrace}
                 setSelectedTrace={setSelectedTrace}
-                editProps={{
+                editProps={isSimulatingRef.current !== SimulatingEnum.Not ? {
                     traceName,
                     setTraceName,
                     traceRef,
                     reset,
-                }}
+                } : undefined}
             >
                 {isSimulatingRef.current !== SimulatingEnum.Not ? <FinalizeButton onClick={() => {
                     if (!graphRef.current?.current) return;
