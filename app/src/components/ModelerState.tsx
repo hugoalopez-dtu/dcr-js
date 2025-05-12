@@ -270,7 +270,16 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
       {loading && <Loading />}
       <Modeler initXml={initXml} modelerRef={modelerRef} />
       <TopRightIcons>
-        <HeatmapButton onClick={() => { setTdmOpen(!tdmOpen) }} $clicked={tdmOpen} title="Open Test Driven Modeling Pane" />
+        <HeatmapButton onClick={() => {
+          if (!modelerRef.current) return;
+          const elementRegistry = modelerRef.current?.getElementRegistry();
+
+          if (!tdmOpen && Object.keys(elementRegistry._elements).find((element) => element.includes("SubProcess") || elementRegistry._elements[element].element.businessObject.role)) {
+            toast.warning("Test driven modeling not supported for subprocesses and roles...");
+            return;
+          }
+          setTdmOpen(!tdmOpen)
+        }} $clicked={tdmOpen} title="Open Test Driven Modeling Pane" />
         <BiAnalyse title="Layout Graph" onClick={layout} />
         <FullScreenIcon />
         <BiHome onClick={() => setState(StateEnum.Home)} />

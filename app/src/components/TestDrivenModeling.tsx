@@ -225,8 +225,8 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
     const [creatingTest, setCreatingTest] = useState<boolean>(false);
 
     const [currentTest, setCurrentTest] = useState({
-        trace: "a\nb\nc\n...",
-        context: "a\nb\nc\n...",
+        trace: "",
+        context: "",
     })
 
     const [depth, setDepth] = useState<number>(50);
@@ -252,11 +252,11 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
     }
 
     const runTests = () => {
-        if (!modelerRef) return;
-        const elementRegistry = modelerRef.current?.getElementRegistry();
+        if (!modelerRef.current) return;
+        const elementRegistry = modelerRef.current.getElementRegistry();
 
         if (Object.keys(elementRegistry._elements).find((element) => element.includes("SubProcess") || elementRegistry._elements[element].element.businessObject.role)) {
-            toast.warning("Graph layout not supported for subprocesses and roles...");
+            toast.warning("Test driven modeling not supported for subprocesses and roles...");
             return;
         }
 
@@ -364,7 +364,21 @@ const TestDrivenModeling = ({ modelerRef, show }: TestDrivenModelingProps) => {
                     <Input type="number" value={depth} min={0} step={1} onChange={(e) => e.target.value === "-" ? setDepth(-1) : setDepth(parseInt(e.target.value))}></Input>
                 </FlexBox>
                 <FlexBox direction="row" $justify="space-around" style={{ marginTop: "1rem" }}>
-                    <Button onClick={() => setCreatingTest(true)}>New Test</Button>
+                    <Button onClick={() => {
+                        if (!modelerRef.current) return;
+                        const elementRegistry = modelerRef.current?.getElementRegistry();
+
+                        if (Object.keys(elementRegistry._elements).find((element) => element.includes("SubProcess") || elementRegistry._elements[element].element.businessObject.role)) {
+                            toast.warning("Test driven modeling not supported for subprocesses and roles...");
+                            return;
+                        }
+                        const graph = moddleToDCR(modelerRef.current.getElementRegistry());
+                        const exampleEvents = [...graph.events].slice(0, 3).map(event => graph.labelMap[event]);
+                        const exampleString = exampleEvents.join("\n") + "\n...";
+                        setCurrentTest({ trace: exampleString, context: exampleString });
+
+                        setCreatingTest(true);
+                    }}>New Test</Button>
                     <Button onClick={() => downloadTests()}>Download Tests</Button>
                     <FakeButton><FileUpload accept=".json" fileCallback={(name, contents) => {
                         loadTests(name, contents);
