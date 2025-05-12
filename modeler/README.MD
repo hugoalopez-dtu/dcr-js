@@ -6,7 +6,7 @@ This module contains the original DCR modeler, which has now been encapsulated i
 
 This module exports a DCRModeler class, which implements the methods described in the [type declaration](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/@types/modeler.d.ts).
 
-This class is furthermore wrapped in a React component ['Modeler'](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/Modeler.tsx) which can be imported and used as \<Modeler /\> with the following properties in order to embed a function modeling tool in the given page.
+This class is furthermore wrapped in a React component ([Modeler](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/Modeler.tsx)) which can be imported and used as \<Modeler /\> with the following properties in order to embed a function modeling tool in the given page.
 
 ```
     modelerRef: React.RefObject<DCRModeler | null>,

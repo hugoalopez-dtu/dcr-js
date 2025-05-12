@@ -26,7 +26,7 @@ Which should serve the application to http://localhost:5173/dcr-js. Note that so
 
 ### New States
 
-The core application (['App.tsx'](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/App.tsx)) is built as a State Machine that maintains the current state to render as well as the saved event logs and graphs. The homepage (['HomeState.tsx'](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/HomeState.tsx)) is the main entrypoint for the program where there exists button to access every other state.
+The core application ([App.tsx](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/App.tsx)) is built as a State Machine that maintains the current state to render as well as the saved event logs and graphs. The homepage ([HomeState.tsx](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/HomeState.tsx)) is the main entrypoint for the program where there exists button to access every other state.
 
 When adding new functionality that is distinct from the other functionality of the application, this can be done entirely separated from everything by simply adding a new state.
 
@@ -46,7 +46,7 @@ These properties allows you to access the saved logs and graphs, change State wi
 
 ### New Algorithms 
 
-['Discovery'](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/DiscoveryState.tsx) and ['Event Log Generation'](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/EventLogGenerationState.tsx) employs the same abstraction that allows for easy extension with new algorithms. Both components define a map of algorithms of the type:
+[Discovery](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/DiscoveryState.tsx) and [Event Log Generation](https://github.com/hugoalopez-dtu/dcr-js/tree/main/app/src/components/EventLogGenerationState.tsx) employs the same abstraction that allows for easy extension with new algorithms. Both components define a map of algorithms of the type:
 ```
     [key: string]: {
         inputs: Array<React.JSX.Element>,
