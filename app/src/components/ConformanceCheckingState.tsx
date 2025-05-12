@@ -318,6 +318,11 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           if (heatmapMode) {
             modelerRef.current?.updateViolations(null);
           }
+          if (!alignmentMode && selectedTrace && graphRef.current) {
+            const newSelectedTrace = { ...selectedTrace };
+            newSelectedTrace.results = alignShowDesc(newSelectedTrace.trace.map(event => event.activity), graphToGraphPP(graphRef.current?.current));
+            setSelectedTrace(newSelectedTrace);
+          }
           setAlignmentMode(!alignmentMode);
           setHeatmapMode(false);
         }} $clicked={alignmentMode} title="Display results as alignments." />
