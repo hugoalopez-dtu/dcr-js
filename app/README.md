@@ -54,3 +54,5 @@ These properties allows you to access the saved logs and graphs, change State wi
     }
 ```
 Adding a new entry in this map will extend the dropdown with a new option of `key`, which when selected will render a form with the inputs specified in `inputs` and then function `onSubmit` being run when clicked to do so. This allows you to simply specify which inputs you need for the algorithm, and how a DCR graph or event log is generated based on these inputs, without worrying about UI or anything of the sort.
+
+For concrete examples, take a look at the Discovery and Event Log Generation states linked above.
