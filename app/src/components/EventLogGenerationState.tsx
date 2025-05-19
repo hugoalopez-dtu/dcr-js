@@ -151,8 +151,8 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
     }
 
     const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
-        if (data.includes("multi-instance=\"true\"")) {
-            toast.error("Multi-instance subprocesses not supported...");
+        if (data.includes("subProcess")) {
+            toast.warning("Subprocesses not supported...");
         } else {
             parse && parse(data).then((_) => {
                 if (modelerRef.current && graphRef.current) {
@@ -237,9 +237,11 @@ const EventLogGenerationState = ({ setState, savedGraphs, lastSavedGraph, savedL
         }
     ];
 
+    const initXml = lastSavedGraph.current && !savedGraphs[lastSavedGraph.current].includes("subProcess") ? savedGraphs[lastSavedGraph.current] : undefined;
+
     return (
         <>
-            <Modeler modelerRef={modelerRef} initXml={lastSavedGraph.current && savedGraphs[lastSavedGraph.current]} override={{ graphRef: graphRef, overrideOnclick: () => null, noRendering: true, canvasClassName: "conformance" }} />
+            <Modeler modelerRef={modelerRef} initXml={initXml} override={{ graphRef: graphRef, overrideOnclick: () => null, noRendering: true, canvasClassName: "conformance" }} />
             <TopRightIcons>
                 <FullScreenIcon />
                 <BiHome onClick={() => setState(StateEnum.Home)} />
