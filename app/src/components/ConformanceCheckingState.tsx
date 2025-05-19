@@ -77,14 +77,14 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
   const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace, results?: { cost: number, trace: Trace } } | null>(null);
 
   const nestingRef = useRef<boolean>(true);
-  const roleRef = useRef<boolean>(true);
+  const roleSPRef = useRef<boolean>(true);
 
   useEffect(() => {
     const lastGraph = lastSavedGraph.current;
     const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
 
     const nestings = initXml ? (initXml.includes("Nesting")) : false;
-    roleRef.current = initXml ? (initXml.includes("role")) : false;
+    roleSPRef.current = initXml ? (initXml.includes("role") || initXml.includes("subProcess")) : false;
     nestingRef.current = nestings
 
     setHeatmapMode(!nestings);
@@ -130,9 +130,9 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
           nestingRef.current = true;
         }
         else nestingRef.current = false;
-        if (data.includes("role")) {
+        if (data.includes("role") || data.includes("subProcess")) {
           setAlignmentMode(false);
-          roleRef.current = true;
+          roleSPRef.current = true;
         }
         else nestingRef.current = false;
         if (modelerRef.current && graphRef.current) {
@@ -146,7 +146,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
             const newResults = violationLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: quantifyViolations(graph, trace) }));
             setViolationLogResults(newResults);
           }
-          if (alignmentLogResults && !roleRef.current) {
+          if (alignmentLogResults && !roleSPRef.current) {
             const graphPP = graphToGraphPP(graph);
             const newResults = alignmentLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: alignShowDesc(trace.map(event => event.activity), graphPP) }));
             setAlignmentLogResults(newResults);
@@ -178,7 +178,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       });
       setViolationLogResults(violationResults);
     }
-    if (!roleRef.current) {
+    if (!roleSPRef.current) {
       const graphPP = graph ? graphToGraphPP(graph) : undefined;
       const alignmentResults = Object.keys(log.traces).map(traceId => {
         const trace = log.traces[traceId];
@@ -311,8 +311,8 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
       {selectedTrace && alignmentMode && <AlignmentTraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} />}
       <TopRightIcons>
         <AlignButton onClick={() => {
-          if (roleRef.current) {
-            toast.warning("Roles and Subprocesses not supported for alignment...");
+          if (roleSPRef.current) {
+            toast.warning("Roles and subprocesses not supported for alignment...");
             return;
           }
           if (heatmapMode) {
@@ -328,7 +328,7 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         }} $clicked={alignmentMode} title="Display results as alignments." />
         <HeatmapButton onClick={() => {
           if (nestingRef.current) {
-            toast.warning("Nestings and Subprocesses not supported for heatmap...");
+            toast.warning("Nestings and multi-instance subprocesses not supported for heatmap...");
             return;
           }
           if (heatmapMode) {
