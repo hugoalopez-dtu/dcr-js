@@ -18,6 +18,11 @@ This tool supports a wide range of process mining activities for DCR graphs:
 
 * Automatic event log generation by sampling models.
 
+## User Manual ##
+The user manual for DCR-js can be found in the [docs folder][https://github.com/hugoalopez-dtu/dcr-js/blob/main/docs/UserManual-DCR-js.pdf] (Document version June 27, 2025)
+A video walk-through explaining the main functionalities of the tool can be watched [here][t http://tiny.cc/ya1o001]
+
+
 ## Development information
 
 This project is organized in three separate modules.
