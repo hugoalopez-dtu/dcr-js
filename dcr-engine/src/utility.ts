@@ -200,3 +200,21 @@ export const makeFullGraph = (events: Set<string>) => {
   }
   return graph;
 };
+
+export class StopWatch {
+  prevTime: number;
+
+  constructor() {
+    this.prevTime = Date.now();
+  }
+
+  reset() {
+    this.prevTime = Date.now();
+  }
+
+  click() {
+    const now = Date.now();
+    console.log(`Took ${now - this.prevTime}ms`);
+    this.prevTime = now;
+  }
+}

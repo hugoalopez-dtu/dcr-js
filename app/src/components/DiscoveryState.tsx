@@ -20,6 +20,7 @@ import { saveAs } from 'file-saver';
 import { useHotkeys } from "react-hotkeys-hook";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import { parseBinaryLog } from "dcr-engine/src/eventLogs";
+import { StopWatch } from "dcr-engine/src/utility";
 
 const FileInput = styled.div`
     border: 1px dashed black;
@@ -116,27 +117,34 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
 
                     const data = customFormState.contents;
                     console.log("Trying to parse log...");
+                    const stopWatch = new StopWatch();
                     const log = parseLog(data);
                     console.log("Parsed log!");
+                    stopWatch.click()
                     const noRoleLog = {
                         events: log.events,
                         traces: Object.keys(log.traces).map(traceId => ({ traceId, trace: log.traces[traceId].map(elem => elem.activity) })).reduce((acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }), {})
                     }
 
                     console.log("Filtering...");
+                    stopWatch.reset();
                     const filteredLog = threshold === 0 ? noRoleLog : filter(noRoleLog, threshold);
                     console.log("Filtering done!");
+                    stopWatch.click()
                     console.log("Discovering...");
                     const logAbs = abstractLog(filteredLog);
                     const graph = mineFromAbstraction(logAbs);
                     console.log("Discovery done!");
+                    stopWatch.click();
                     console.log("Nesting...");
                     const nestings = nestDCR(graph);
                     console.log("Nesting done!");
+                    stopWatch.click();
                     const params: [DCRGraph, Nestings | undefined] = nest ? [nestings.nestedGraph, nestings] : [graph, undefined];
                     console.log("Computing layout...");
                     layoutGraph(...params).then(xml => {
                         console.log("Layout done!");
+                        stopWatch.click();
                         modelerRef.current?.importXML(xml).catch(e => {
                             console.log(e);
                             toast.error("Invalid xml...")
