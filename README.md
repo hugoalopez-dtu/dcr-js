@@ -1,4 +1,4 @@
-# DCR-js: an open-source web process mining tool for DCR graphs
+# DCR-js: an open-source process modelling and mining environment for DCR graphs
 
 [Try it live!](https://hugoalopez-dtu.github.io/dcr-js/)
 
