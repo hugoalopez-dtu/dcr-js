@@ -63,21 +63,25 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
   const [graphName, setGraphName] = useState<string>(lastGraph ? lastGraph : initGraphName);
   const [graphId, setGraphId] = useState<string>("");
 
+  const rawSave = () => {
+    modelerRef.current?.saveXML({ format: false }).then(data => {
+      const newSavedGraphs = { ...savedGraphs };
+      newSavedGraphs[graphName] = data.xml;
+      setGraphId(graphName);
+      setSavedGraphs(newSavedGraphs);
+      setLoading(false);
+      lastSavedGraph.current = graphName;
+      toast.success("Graph saved!");
+    });
+  }
+
   const saveGraph = () => {
     let shouldSave = true;
     if (savedGraphs[graphName] && graphName !== graphId) shouldSave = confirm(`This will overwrite the previously saved graph '${graphName}'. Are you sure you wish to continue?`);
 
     if (shouldSave) {
       setLoading(true);
-      modelerRef.current?.saveXML({ format: false }).then(data => {
-        const newSavedGraphs = { ...savedGraphs };
-        newSavedGraphs[graphName] = data.xml;
-        setGraphId(graphName);
-        setSavedGraphs(newSavedGraphs);
-        setLoading(false);
-        lastSavedGraph.current = graphName;
-        toast.success("Graph saved!");
-      });
+      rawSave();
     }
   }
 
@@ -282,7 +286,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
         }} $clicked={tdmOpen} title="Open Test Driven Modeling Pane" />
         <BiAnalyse title="Layout Graph" onClick={layout} />
         <FullScreenIcon />
-        <BiHome onClick={() => setState(StateEnum.Home)} />
+        <BiHome onClick={() => { if (graphName) rawSave(); setState(StateEnum.Home) }} />
         <ModalMenu elements={menuElements} bottomElements={bottomElements} open={menuOpen} setOpen={setMenuOpen} />
       </TopRightIcons>
       <TestDrivenModeling modelerRef={modelerRef} show={tdmOpen} />

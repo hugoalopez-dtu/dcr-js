@@ -120,12 +120,11 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
                     const stopWatch = new StopWatch();
                     const log = parseLog(data);
                     console.log("Parsed log!");
-                    stopWatch.click()
+                    stopWatch.click();
                     const noRoleLog = {
                         events: log.events,
                         traces: Object.keys(log.traces).map(traceId => ({ traceId, trace: log.traces[traceId].map(elem => elem.activity) })).reduce((acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }), {})
                     }
-
                     console.log("Filtering...");
                     stopWatch.reset();
                     const filteredLog = threshold === 0 ? noRoleLog : filter(noRoleLog, threshold);
@@ -377,7 +376,7 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
             <Modeler modelerRef={modelerRef} override={{ graphRef: graphRef, overrideOnclick: () => null, canvasClassName: "conformance" }} />
             <TopRightIcons>
                 <FullScreenIcon />
-                <BiHome onClick={() => setState(StateEnum.Home)} />
+                <BiHome onClick={() => { if (graphName) saveGraph(); setState(StateEnum.Home) }} />
                 <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
             </TopRightIcons>
         </>

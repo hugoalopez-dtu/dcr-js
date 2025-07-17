@@ -63,6 +63,7 @@ export const parseLog = (
 
   let id = 0;
   for (const i in logJson.log[0].trace) {
+
     const trace: RoleTrace = [];
     let traceId: string = "";
     const xmlTrace = logJson.log[0].trace[i];
