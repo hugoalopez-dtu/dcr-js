@@ -42,7 +42,7 @@ We are happy that you are using our project for research purposes. We would appr
   title={An open-source modeling editor for declarative process models},
   author={Tamo, Lucien Kiven and Abbad-Andaloussi, Amine and Trinh, Dung My Thi and L{\'o}pez, Hugo A.},
   booktitle={International Conference on Cooperative Information Systems 2023},
-  Volume={3552}
+  Volume={3552},
   pages={1--5},
   year={2023},
   organization={CEUR-WS}
