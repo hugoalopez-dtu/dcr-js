@@ -53,8 +53,10 @@ If you use the process mining or simulation capabilities:
 ```bibtex
 @inproceedings{christfort2025dcr,
   title={DCR-JS: An Online Environment for Declarative Process Mining},
-  author={Christfort, Axel KF and L{\'o}pez-Acosta, Hugo-Andr{\'e}s},
+  author={Christfort, Axel KF and L{\'o}pez, Hugo A.},
   booktitle={23rd International Conference on Business Process Management},
+  Volume={4032},
+  pages={1--5},
   year={2025}
 }
 ```
