@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_0bt2eht">
+          <custom>
+            <visualization>
+              <location xLoc="530" yLoc="-230"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_17h6kam">
+          <custom>
+            <visualization>
+              <location xLoc="540" yLoc="360"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Nesting_0chkp2q" type="nesting">
+          <custom>
+            <roles>
+              <role>Nesting</role>
+            </roles>
+            <visualization>
+              <location xLoc="260" yLoc="-25"/>
+              <size width="730" height="300"/>
+            </visualization>
+          </custom>
+          <event id="Event_1sfcuyh">
+            <custom>
+              <visualization>
+                <location xLoc="310" yLoc="65"/>
+                <size width="130" height="150"/>
+              </visualization>
+            </custom>
+          </event>
+          <event id="Event_0afs5u7">
+            <custom>
+              <visualization>
+                <location xLoc="530" yLoc="65"/>
+                <size width="130" height="150"/>
+              </visualization>
+            </custom>
+          </event>
+          <event id="Event_11so7ph">
+            <custom>
+              <visualization>
+                <location xLoc="780" yLoc="65"/>
+                <size width="130" height="150"/>
+              </visualization>
+            </custom>
+          </event>
+        </event>
+        <event id="Event_0d9vg29">
+          <custom>
+            <visualization>
+              <location xLoc="1320" yLoc="-160"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0drr7h3">
+          <custom>
+            <visualization>
+              <location xLoc="1320" yLoc="260"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1gcby6i">
+          <custom>
+            <visualization>
+              <location xLoc="1110" yLoc="70"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1v03bic">
+          <custom>
+            <visualization>
+              <location xLoc="1310" yLoc="70"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0uip4wj">
+          <custom>
+            <visualization>
+              <location xLoc="1540" yLoc="70"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="A"/>
+        <label id="E"/>
+        <label id="B"/>
+        <label id="C"/>
+        <label id="D"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_0bt2eht" labelId="A"/>
+        <labelMapping eventId="Event_17h6kam" labelId="E"/>
+        <labelMapping eventId="Event_1sfcuyh" labelId="B"/>
+        <labelMapping eventId="Event_0afs5u7" labelId="C"/>
+        <labelMapping eventId="Event_11so7ph" labelId="D"/>
+        <labelMapping eventId="Event_0d9vg29" labelId="A"/>
+        <labelMapping eventId="Event_0drr7h3" labelId="E"/>
+        <labelMapping eventId="Event_1gcby6i" labelId="B"/>
+        <labelMapping eventId="Event_1v03bic" labelId="C"/>
+        <labelMapping eventId="Event_0uip4wj" labelId="D"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_0bt2eht" targetId="Nesting_0chkp2q">
+          <custom>
+            <waypoints>
+              <waypoint x="595" y="-80"/>
+              <waypoint x="595" y="-25"/>
+            </waypoints>
+            <id id="Relation_12g08f1"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0afs5u7" targetId="Event_11so7ph">
+          <custom>
+            <waypoints>
+              <waypoint x="660" y="140"/>
+              <waypoint x="780" y="140"/>
+            </waypoints>
+            <id id="Relation_0rby8uv"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_1v03bic" targetId="Event_0uip4wj">
+          <custom>
+            <waypoints>
+              <waypoint x="1440" y="145"/>
+              <waypoint x="1540" y="145"/>
+            </waypoints>
+            <id id="Relation_1cbu6yg"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0d9vg29" targetId="Event_1gcby6i">
+          <custom>
+            <waypoints>
+              <waypoint x="1320" y="-85"/>
+              <waypoint x="1175" y="-85"/>
+              <waypoint x="1175" y="70"/>
+            </waypoints>
+            <id id="Relation_14e5t0q"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0d9vg29" targetId="Event_1v03bic">
+          <custom>
+            <waypoints>
+              <waypoint x="1385" y="-10"/>
+              <waypoint x="1385" y="70"/>
+            </waypoints>
+            <id id="Relation_1ajrwo7"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0d9vg29" targetId="Event_0uip4wj">
+          <custom>
+            <waypoints>
+              <waypoint x="1450" y="-85"/>
+              <waypoint x="1605" y="-85"/>
+              <waypoint x="1605" y="70"/>
+            </waypoints>
+            <id id="Relation_0cwp63o"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Nesting_0chkp2q" targetId="Event_17h6kam">
+          <custom>
+            <waypoints>
+              <waypoint x="605" y="275"/>
+              <waypoint x="605" y="360"/>
+            </waypoints>
+            <id id="Relation_18dtff7"/>
+          </custom>
+        </response>
+        <response sourceId="Event_0uip4wj" targetId="Event_0drr7h3">
+          <custom>
+            <waypoints>
+              <waypoint x="1605" y="220"/>
+              <waypoint x="1605" y="335"/>
+              <waypoint x="1450" y="335"/>
+            </waypoints>
+            <id id="Relation_0k9nvv9"/>
+          </custom>
+        </response>
+        <response sourceId="Event_1v03bic" targetId="Event_0drr7h3">
+          <custom>
+            <waypoints>
+              <waypoint x="1375" y="220"/>
+              <waypoint x="1375" y="260"/>
+            </waypoints>
+            <id id="Relation_06vgk20"/>
+          </custom>
+        </response>
+        <response sourceId="Event_1gcby6i" targetId="Event_0drr7h3">
+          <custom>
+            <waypoints>
+              <waypoint x="1175" y="220"/>
+              <waypoint x="1175" y="335"/>
+              <waypoint x="1320" y="335"/>
+            </waypoints>
+            <id id="Relation_14d7op5"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes/>
+      <includes/>
+      <milestones/>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_0bt2eht"/>
+        <event id="Event_17h6kam"/>
+        <event id="Event_1sfcuyh"/>
+        <event id="Event_0afs5u7"/>
+        <event id="Event_11so7ph"/>
+        <event id="Event_0d9vg29"/>
+        <event id="Event_0drr7h3"/>
+        <event id="Event_1gcby6i"/>
+        <event id="Event_1v03bic"/>
+        <event id="Event_0uip4wj"/>
+      </included>
+      <pendingResponses/>
+    </marking>
+  </runtime>
+</dcrgraph>
