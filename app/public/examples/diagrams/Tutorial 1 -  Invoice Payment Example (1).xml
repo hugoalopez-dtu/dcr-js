@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_02h3k2r">
+          <custom>
+            <roles>
+              <role>Company</role>
+            </roles>
+            <visualization>
+              <location xLoc="220" yLoc="390"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0hj2u32">
+          <custom>
+            <roles>
+              <role>Company</role>
+            </roles>
+            <visualization>
+              <location xLoc="420" yLoc="380"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0ovdkh5">
+          <custom>
+            <roles>
+              <role>Employee</role>
+            </roles>
+            <visualization>
+              <location xLoc="420" yLoc="120"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_01dphc3">
+          <custom>
+            <roles>
+              <role>System</role>
+            </roles>
+            <visualization>
+              <location xLoc="420" yLoc="620"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_11mkefa">
+          <custom>
+            <roles>
+              <role>Company</role>
+            </roles>
+            <visualization>
+              <location xLoc="720" yLoc="120"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1lpriid">
+          <custom>
+            <roles>
+              <role>Company</role>
+            </roles>
+            <visualization>
+              <location xLoc="625" yLoc="380"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1erhpnx">
+          <custom>
+            <roles>
+              <role>Company</role>
+            </roles>
+            <visualization>
+              <location xLoc="625" yLoc="620"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="Receives an invoice"/>
+        <label id="Register invoice in Accounting System"/>
+        <label id="Approve Invoice"/>
+        <label id="Deadline Passed"/>
+        <label id="Pay invoice"/>
+        <label id="Rejects the invoice"/>
+        <label id="Notify the issuer about rejection"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_02h3k2r" labelId="Receives an invoice"/>
+        <labelMapping eventId="Event_0hj2u32" labelId="Register invoice in Accounting System"/>
+        <labelMapping eventId="Event_0ovdkh5" labelId="Approve Invoice"/>
+        <labelMapping eventId="Event_01dphc3" labelId="Deadline Passed"/>
+        <labelMapping eventId="Event_11mkefa" labelId="Pay invoice"/>
+        <labelMapping eventId="Event_1lpriid" labelId="Rejects the invoice"/>
+        <labelMapping eventId="Event_1erhpnx" labelId="Notify the issuer about rejection"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_02h3k2r" targetId="Event_0hj2u32">
+          <custom>
+            <waypoints>
+              <waypoint x="350" y="465"/>
+              <waypoint x="420" y="465"/>
+            </waypoints>
+            <id id="Relation_1vaknp2"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0hj2u32" targetId="Event_0ovdkh5">
+          <custom>
+            <waypoints>
+              <waypoint x="520" y="380"/>
+              <waypoint x="520" y="270"/>
+            </waypoints>
+            <id id="Relation_0dphiv2"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0ovdkh5" targetId="Event_11mkefa">
+          <custom>
+            <waypoints>
+              <waypoint x="550" y="195"/>
+              <waypoint x="720" y="195"/>
+            </waypoints>
+            <id id="Relation_0y753f2"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0hj2u32" targetId="Event_01dphc3">
+          <custom>
+            <waypoints>
+              <waypoint x="485" y="530"/>
+              <waypoint x="485" y="620"/>
+            </waypoints>
+            <id id="Relation_09i9t2h"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0hj2u32" targetId="Event_1lpriid">
+          <custom>
+            <waypoints>
+              <waypoint x="550" y="455"/>
+              <waypoint x="625" y="455"/>
+            </waypoints>
+            <id id="Relation_1jzwgzs"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Event_02h3k2r" targetId="Event_0hj2u32">
+          <custom>
+            <waypoints>
+              <waypoint x="350" y="500"/>
+              <waypoint x="420" y="500"/>
+            </waypoints>
+            <id id="Relation_0r6vork"/>
+          </custom>
+        </response>
+        <response sourceId="Event_0hj2u32" targetId="Event_0ovdkh5">
+          <custom>
+            <waypoints>
+              <waypoint x="485" y="380"/>
+              <waypoint x="485" y="270"/>
+            </waypoints>
+            <id id="Relation_1l0348l"/>
+          </custom>
+        </response>
+        <response sourceId="Event_0ovdkh5" targetId="Event_11mkefa">
+          <custom>
+            <waypoints>
+              <waypoint x="550" y="170"/>
+              <waypoint x="720" y="170"/>
+            </waypoints>
+            <id id="Relation_1afb2fv"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes>
+        <exclude sourceId="Event_11mkefa" targetId="Event_11mkefa">
+          <custom>
+            <waypoints>
+              <waypoint x="785" y="120"/>
+              <waypoint x="785" y="80"/>
+              <waypoint x="750" y="80"/>
+              <waypoint x="750" y="120"/>
+            </waypoints>
+            <id id="Relation_0l4ss9s"/>
+          </custom>
+        </exclude>
+      </excludes>
+      <includes>
+        <include sourceId="Event_1lpriid" targetId="Event_1erhpnx">
+          <custom>
+            <waypoints>
+              <waypoint x="690" y="530"/>
+              <waypoint x="690" y="620"/>
+            </waypoints>
+            <id id="Relation_13ftcm8"/>
+          </custom>
+        </include>
+        <include sourceId="Event_01dphc3" targetId="Event_1erhpnx">
+          <custom>
+            <waypoints>
+              <waypoint x="550" y="695"/>
+              <waypoint x="625" y="695"/>
+            </waypoints>
+            <id id="Relation_1jeucuw"/>
+          </custom>
+        </include>
+      </includes>
+      <milestones/>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_02h3k2r"/>
+        <event id="Event_0hj2u32"/>
+        <event id="Event_0ovdkh5"/>
+        <event id="Event_01dphc3"/>
+        <event id="Event_11mkefa"/>
+        <event id="Event_1lpriid"/>
+      </included>
+      <pendingResponses>
+        <event id="Event_02h3k2r"/>
+      </pendingResponses>
+    </marking>
+  </runtime>
+</dcrgraph>
