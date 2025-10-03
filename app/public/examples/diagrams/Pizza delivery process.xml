@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_0ajon2r">
+          <custom>
+            <roles>
+              <role>Seller</role>
+            </roles>
+            <visualization>
+              <location xLoc="780" yLoc="110"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0d7mdvu">
+          <custom>
+            <roles>
+              <role>Delivery Service</role>
+            </roles>
+            <visualization>
+              <location xLoc="580" yLoc="630"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0kbk7c9">
+          <custom>
+            <roles>
+              <role>Delivery Service</role>
+            </roles>
+            <visualization>
+              <location xLoc="920" yLoc="630"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="SubProcess_1wyn6rl" type="subprocess">
+          <custom>
+            <visualization>
+              <location xLoc="560" yLoc="330"/>
+              <size width="520" height="245"/>
+            </visualization>
+          </custom>
+          <event id="Event_1bs72yb">
+            <custom>
+              <roles>
+                <role>Seller</role>
+              </roles>
+              <visualization>
+                <location xLoc="910" yLoc="380"/>
+                <size width="130" height="150"/>
+              </visualization>
+            </custom>
+          </event>
+          <event id="Event_1h7okte">
+            <custom>
+              <roles>
+                <role>Seller</role>
+              </roles>
+              <visualization>
+                <location xLoc="600" yLoc="380"/>
+                <size width="130" height="150"/>
+              </visualization>
+            </custom>
+          </event>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="Finalize order"/>
+        <label id="Ship Order"/>
+        <label id="Notify Shipment issue"/>
+        <label id="Reject Order"/>
+        <label id="Confirm Order"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_0ajon2r" labelId="Finalize order"/>
+        <labelMapping eventId="Event_0d7mdvu" labelId="Ship Order"/>
+        <labelMapping eventId="Event_0kbk7c9" labelId="Notify Shipment issue"/>
+        <labelMapping eventId="Event_1bs72yb" labelId="Reject Order"/>
+        <labelMapping eventId="Event_1h7okte" labelId="Confirm Order"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_0ajon2r" targetId="Event_1h7okte">
+          <custom>
+            <waypoints>
+              <waypoint x="780" y="200"/>
+              <waypoint x="665" y="200"/>
+              <waypoint x="665" y="380"/>
+            </waypoints>
+            <id id="Relation_1yawyqk"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0ajon2r" targetId="Event_1bs72yb">
+          <custom>
+            <waypoints>
+              <waypoint x="910" y="200"/>
+              <waypoint x="975" y="200"/>
+              <waypoint x="975" y="380"/>
+            </waypoints>
+            <id id="Relation_0qftx4x"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0d7mdvu" targetId="Event_1h7okte">
+          <custom>
+            <waypoints>
+              <waypoint x="655" y="630"/>
+              <waypoint x="655" y="530"/>
+            </waypoints>
+            <id id="Relation_16em25k"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Event_0kbk7c9" targetId="Event_1bs72yb">
+          <custom>
+            <waypoints>
+              <waypoint x="975" y="630"/>
+              <waypoint x="975" y="530"/>
+            </waypoints>
+            <id id="Relation_1vg6v34"/>
+          </custom>
+        </response>
+        <response sourceId="Event_0ajon2r" targetId="SubProcess_1wyn6rl">
+          <custom>
+            <waypoints>
+              <waypoint x="845" y="260"/>
+              <waypoint x="845" y="330"/>
+            </waypoints>
+            <id id="Relation_1mmezpw"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes>
+        <exclude sourceId="Event_1bs72yb" targetId="Event_1h7okte">
+          <custom>
+            <waypoints>
+              <waypoint x="910" y="490"/>
+              <waypoint x="730" y="490"/>
+            </waypoints>
+            <id id="Relation_0ed4yxi"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_0d7mdvu" targetId="Event_0kbk7c9">
+          <custom>
+            <waypoints>
+              <waypoint x="710" y="705"/>
+              <waypoint x="920" y="705"/>
+            </waypoints>
+            <id id="Relation_0vs880s"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_0kbk7c9" targetId="Event_0d7mdvu">
+          <custom>
+            <waypoints>
+              <waypoint x="920" y="740"/>
+              <waypoint x="710" y="740"/>
+            </waypoints>
+            <id id="Relation_013u1o3"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_0ajon2r" targetId="Event_0ajon2r">
+          <custom>
+            <waypoints>
+              <waypoint x="845" y="110"/>
+              <waypoint x="845" y="80"/>
+              <waypoint x="740" y="80"/>
+              <waypoint x="740" y="140"/>
+              <waypoint x="780" y="140"/>
+            </waypoints>
+            <id id="Relation_1dviaxw"/>
+          </custom>
+        </exclude>
+      </excludes>
+      <includes/>
+      <milestones/>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_0ajon2r"/>
+        <event id="Event_0d7mdvu"/>
+        <event id="Event_0kbk7c9"/>
+        <event id="SubProcess_1wyn6rl"/>
+        <event id="Event_1bs72yb"/>
+        <event id="Event_1h7okte"/>
+      </included>
+      <pendingResponses/>
+    </marking>
+  </runtime>
+</dcrgraph>
