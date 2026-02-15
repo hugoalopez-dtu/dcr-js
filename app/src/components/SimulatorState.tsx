@@ -26,7 +26,7 @@ import {
   isAcceptingS,
   type RoleTrace,
   replayTraceS,
-  RegexTraceStreamParser,
+  RegexEventStreamParser,
 } from "dcr-engine";
 import ModalMenu, { type ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
@@ -543,7 +543,7 @@ const SimulatorState = ({
             accept=".xes"
             fileCallback={async (file) => {
               try {
-                const log = await RegexTraceStreamParser.parseAsRoleLog(file);
+                const log = await RegexEventStreamParser.parseAsRoleLog(file);
                 openLog(file.name.slice(0, -4), log);
               } catch {
                 toast.error("Unable to parse log...");
