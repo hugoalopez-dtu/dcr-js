@@ -16,6 +16,6 @@ const GraphNameInput = styled.input`
   &:focus {
     outline: 2px dashed black;
   }
-`
+`;
 
 export default GraphNameInput;

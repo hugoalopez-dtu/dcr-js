@@ -1,27 +1,41 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { BiExitFullscreen, BiFullscreen } from "react-icons/bi";
 
-const FullScreenIcon = () => {
-    const [isFullscreen, setIsFullscreen] = useState(false);
-
-    useEffect(() => {
-        // Add listener to fullscreen changes
-        function onFullscreenChange() {
-            setIsFullscreen(Boolean(document.fullscreenElement));
-        }
-        document.addEventListener('fullscreenchange', onFullscreenChange);
-
-        return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
-    }, [])
-
-    return isFullscreen ?
-        <BiExitFullscreen title='Exit Fullscreen'
-            onClick={() => { document.exitFullscreen(); setIsFullscreen(false) }}
-        />
-        :
-        <BiFullscreen title='Enter Fullscreen'
-            onClick={() => { document.documentElement.requestFullscreen(); setIsFullscreen(true) }}
-        />
+function getSnapshot() {
+  return Boolean(document.fullscreenElement);
 }
+
+function getServerSnapshot() {
+  return false;
+}
+
+function subscribe(callback: () => void) {
+  document.addEventListener("fullscreenchange", callback);
+  return () => document.removeEventListener("fullscreenchange", callback);
+}
+
+function useIsFullscreen() {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+const FullScreenIcon = () => {
+  const isFullscreen = useIsFullscreen();
+
+  return isFullscreen ? (
+    <BiExitFullscreen
+      title="Exit Fullscreen"
+      onClick={() => {
+        document.exitFullscreen();
+      }}
+    />
+  ) : (
+    <BiFullscreen
+      title="Enter Fullscreen"
+      onClick={() => {
+        document.documentElement.requestFullscreen();
+      }}
+    />
+  );
+};
 
 export default FullScreenIcon;

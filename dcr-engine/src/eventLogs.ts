@@ -1,5 +1,14 @@
 import parser, { j2xParser } from "fast-xml-parser";
-import { EventLog, Event, XMLLog, XMLEvent, RoleTrace, BinaryLog, ClassifiedTraces, Trace } from "./types";
+import type {
+  EventLog,
+  Event,
+  XMLLog,
+  XMLEvent,
+  RoleTrace,
+  BinaryLog,
+  ClassifiedTraces,
+  Trace,
+} from "./types";
 
 export const parserOptions = {
   attributeNamePrefix: "",
@@ -29,16 +38,11 @@ const writingOptions = {
   supressEmptyNode: true,
 };
 
-// Parse .xes file to an EventLog
-export const parseLog = (
+function* parseLogGenerator(
   data: string,
   classifierName: string = "Event Name",
-): EventLog<RoleTrace> => {
+) {
   const logJson = parser.parse(data.toString(), parserOptions);
-  const log: EventLog<RoleTrace> = {
-    events: new Set<Event>(),
-    traces: {},
-  };
 
   let keys = "";
   for (const i in logJson.log[0].classifier) {
@@ -46,7 +50,9 @@ export const parseLog = (
       keys = logJson.log[0].classifier[i].attr.keys;
     }
   }
+
   if (keys === "") keys = "concept:name";
+
   // Extract classifiers to array according to https://xes-standard.org/_media/xes/xesstandarddefinition-2.0.pdf
   // Example: "x y 'z w' hello" => ["hello", "x", "y", "z w"]
   const classifiers = (keys + " ") // Fix for case where
@@ -63,31 +69,39 @@ export const parseLog = (
 
   let id = 0;
   for (const i in logJson.log[0].trace) {
-
-    const trace: RoleTrace = [];
     let traceId: string = "";
+    let traceLabel: string = "";
+
     const xmlTrace = logJson.log[0].trace[i];
-    try {
-      for (const elem of xmlTrace.string) {
-        if (elem.attr.key === "concept:name") {
-          traceId = elem.attr.value;
-        }
+    for (const elem of xmlTrace.string) {
+      if (elem.attr.key === "concept:name") {
+        traceId = elem.attr.value;
       }
-    } catch (e) {
-      throw new Error("No trace id found!");
+
+      // This was part of original code, but not part of the XES standard,
+      // but maybe it is common to use in practice with tools like ProM? It is
+      // used for the binary log parsing
+      if (elem.attr.key === "label") {
+        traceLabel = elem.attr.value;
+      }
     }
+
     if (traceId === "") {
       traceId = (id++).toString();
     }
+
     const events = xmlTrace.event ? xmlTrace.event : [];
     for (const elem of events) {
       let nameArr = [];
       let role: string = "";
+
       for (const attr of elem.string) {
+        // Original code used role instead of org:role, and so does this
         if (attr.attr.key === "role") {
           role = attr.attr.value;
         }
       }
+
       for (const clas of classifiers) {
         try {
           const event = elem.string.find(
@@ -100,16 +114,50 @@ export const parseLog = (
           );
         }
       }
-      const name = nameArr.join(":");
-      trace.push({ activity: name, role });
-      log.events.add(name);
-    }
-    log.traces[traceId] = trace;
-  }
-  return log;
-};
 
-export const writeEventLog = (log: EventLog<RoleTrace>): string => {
+      const name = nameArr.join(":");
+      yield { traceId, traceLabel, event: { activity: name, role } };
+    }
+  }
+}
+
+export function parseRoleLog(
+  data: string,
+  classifierName: string = "Event Name",
+): EventLog<RoleTrace> {
+  const events = new Set<Event>();
+  const traces: Record<string, RoleTrace> = {};
+
+  for (const { traceId, event } of parseLogGenerator(data, classifierName)) {
+    if (!traces[traceId]) {
+      traces[traceId] = [];
+    }
+    traces[traceId].push(event);
+    events.add(event.activity);
+  }
+
+  return { events, traces };
+}
+
+export function parseNonRoleLog(
+  data: string,
+  classifierName: string = "Event Name",
+): EventLog<Trace> {
+  const events = new Set<Event>();
+  const traces: Record<string, Trace> = {};
+
+  for (const { traceId, event } of parseLogGenerator(data, classifierName)) {
+    if (!traces[traceId]) {
+      traces[traceId] = [];
+    }
+    traces[traceId].push(event.activity);
+    events.add(event.activity);
+  }
+
+  return { events, traces };
+}
+
+export function writeEventLog(log: EventLog<RoleTrace>): string {
   // Setting log metadata
   const xmlLog: XMLLog = {
     log: {
@@ -118,13 +166,16 @@ export const writeEventLog = (log: EventLog<RoleTrace>): string => {
       "@openxes.version": "1.0RC7",
       global: {
         "@scope": "event",
-        string: [{
-          "@key": "concept:name",
-          "@value": "__INVALID__",
-        }, {
-          "@key": "role",
-          "@value": "__INVALID__",
-        }],
+        string: [
+          {
+            "@key": "concept:name",
+            "@value": "__INVALID__",
+          },
+          {
+            "@key": "role",
+            "@value": "__INVALID__",
+          },
+        ],
       },
       classifier: {
         "@name": "Event Name",
@@ -133,6 +184,7 @@ export const writeEventLog = (log: EventLog<RoleTrace>): string => {
       trace: [],
     },
   };
+
   // Convert the classified log to a form that can be exported as xml
   for (const traceId in log.traces) {
     const trace = log.traces[traceId];
@@ -143,32 +195,39 @@ export const writeEventLog = (log: EventLog<RoleTrace>): string => {
       },
       event: [],
     };
+
     for (const event of trace) {
       const eventElem: XMLEvent = {
-        string: [{
-          "@key": "concept:name",
-          "@value": event.activity,
-        }, {
-          "@key": "role",
-          "@value": event.role,
-        }],
+        string: [
+          {
+            "@key": "concept:name",
+            "@value": event.activity,
+          },
+          {
+            "@key": "role",
+            "@value": event.role,
+          },
+        ],
       };
       traceElem.event.push(eventElem);
     }
+
     xmlLog.log.trace.push(traceElem);
   }
+
   const parser = new j2xParser(writingOptions);
   const xml = parser.parse(xmlLog);
   return xml;
-};
+}
 
-
-// Parse .xes data to a Binary EventLog
-export const parseBinaryLog = (
+export function parseBinaryLog(
   data: string,
   positiveClasifier: string,
-): { trainingLog: BinaryLog; testLog: EventLog<Trace>; gtLog: ClassifiedTraces } => {
-  const logJson = parser.parse(data.toString(), parserOptions);
+): {
+  trainingLog: BinaryLog;
+  testLog: EventLog<Trace>;
+  gtLog: ClassifiedTraces;
+} {
   const trainingLog: BinaryLog = {
     events: new Set<Event>(),
     traces: {},
@@ -182,36 +241,34 @@ export const parseBinaryLog = (
 
   const gtLog: ClassifiedTraces = {};
 
-  for (const i in logJson.log[0].trace) {
-    const trace: Trace = [];
-    let traceId: string = "";
-    let label: string = "";
-    const xmlTrace = logJson.log[0].trace[i];
-    for (const elem of xmlTrace.string) {
-      if (elem.attr.key === "concept:name") {
-        traceId = elem.attr.value;
-      }
-      if (elem.attr.key === "label") {
-        label = elem.attr.value;
-      }
-    }
-    if (traceId === "" || label === "") {
+  for (const { traceId, traceLabel, event } of parseLogGenerator(data)) {
+    if (traceId === "" || traceLabel === "") {
       throw new Error("No trace id or label found!");
     }
-    const events = xmlTrace.event ? xmlTrace.event : [];
-    for (const elem of events) {
-      for (const event of elem.string) {
-        if (event.attr.key === "concept:name") {
-          trace.push(event.attr.value.toString());
-          trainingLog.events.add(event.attr.value.toString());
-        }
+
+    trainingLog.events.add(event.activity);
+
+    if (traceLabel === positiveClasifier) {
+      if (!trainingLog.traces[traceId]) {
+        trainingLog.traces[traceId] = [];
       }
+      trainingLog.traces[traceId].push(event.activity);
+    } else {
+      if (!trainingLog.nTraces[traceId]) {
+        trainingLog.nTraces[traceId] = [];
+      }
+      trainingLog.nTraces[traceId].push(event.activity);
     }
-    (label === positiveClasifier ? trainingLog.traces : trainingLog.nTraces)[traceId] =
-      trace;
-    testLog.traces[traceId] = trace;
-    gtLog[traceId] = label === positiveClasifier;
+
+    testLog.events.add(event.activity);
+    if (!testLog.traces[traceId]) {
+      testLog.traces[traceId] = [];
+    }
+    testLog.traces[traceId].push(event.activity);
+
+    gtLog[traceId] = traceLabel === positiveClasifier;
   }
+
   testLog.events = trainingLog.events;
   return { trainingLog, testLog, gtLog };
-};
+}

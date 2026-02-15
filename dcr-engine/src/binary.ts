@@ -9,20 +9,23 @@ import type {
 } from "./types";
 
 import {
-  copySet,
   copyMarking,
   reverseRelation,
   makeEmptyGraph,
   makeFullGraph,
   copyTraces,
+  mutatingIntersect,
+  mutatingDifference,
 } from "./utility";
 
+// https://www.sciencedirect.com/science/article/pii/S0306437923001758
+
 // Computes sets of which relations cover which negative traces
-const findTraceCover = (
+function findTraceCover(
   initGraph: DCRGraph,
   graphToCover: DCRGraph,
   nTraces: Traces
-): TraceCoverGraph => {
+): TraceCoverGraph {
   const initMarking = copyMarking(initGraph.marking);
   const tcMarking = copyMarking(graphToCover.marking);
 
@@ -47,7 +50,7 @@ const findTraceCover = (
   initTCRelation(graphToCover.excludesTo, tcGraph.excludesTo);
 
   // Mutates graph's marking
-  const execute = (event: Event, graph: DCRGraph) => {
+  function execute(event: Event, graph: DCRGraph) {
     graph.marking.executed.add(event);
     graph.marking.pending.delete(event);
     // Add sink of all response relations to pending
@@ -62,7 +65,7 @@ const findTraceCover = (
     for (const iEvent of graph.includesTo[event]) {
       graph.marking.included.add(iEvent);
     }
-  };
+  }
 
   // Copies and flips excludesTo and responseTo to easily find all events that are the sources of the relations
   const excludesFor = reverseRelation(graphToCover.excludesTo);
@@ -85,12 +88,14 @@ const findTraceCover = (
       execute(event, initGraph);
 
       // For all events that are included (based on the existing graph) but not executed, a conditionsFor would cover this trace
-      const pConds = copySet(initGraph.marking.included).difference(
+      const pConds = mutatingDifference(
+        new Set(initGraph.marking.included),
         initGraph.marking.executed
       );
 
       // Possible conditions that also exists cover this trace
-      for (const otherEvent of pConds.intersect(
+      for (const otherEvent of mutatingIntersect(
+        pConds,
         graphToCover.conditionsFor[event]
       )) {
         tcGraph.conditionsFor[event][otherEvent].add(traceId);
@@ -99,7 +104,8 @@ const findTraceCover = (
       // If event is not included, then for all events, 'otherEvent' that has been executed since 'event'
       // was last included, the relation otherEvent ->% event covers the trace
       if (!graphToCover.marking.included.has(event)) {
-        for (const otherEvent of copySet(localExSinceIn[event]).intersect(
+        for (const otherEvent of mutatingIntersect(
+          new Set(localExSinceIn[event]),
           excludesFor[event]
         )) {
           tcGraph.excludesTo[otherEvent][event].add(traceId);
@@ -122,10 +128,12 @@ const findTraceCover = (
     // For all pending events (that are included according to the initial graph), event, at the end of a trace, all relations
     // s.t. otherEvent *-> event, where otherEvent has been executed
     // after event was last executed covers the trace
-    for (const event of copySet(graphToCover.marking.pending).intersect(
+    for (const event of mutatingIntersect(
+      new Set(graphToCover.marking.pending),
       initGraph.marking.included
     )) {
-      for (const otherEvent of copySet(responseFor[event]).intersect(
+      for (const otherEvent of mutatingIntersect(
+        new Set(responseFor[event]),
         localExSinceEx[event]
       )) {
         tcGraph.responseTo[otherEvent][event].add(traceId);
@@ -137,7 +145,7 @@ const findTraceCover = (
   }
 
   return tcGraph;
-};
+}
 
 type RelName = "cond" | "resp" | "excl" | "";
 
@@ -148,12 +156,12 @@ interface Rel {
 }
 
 // Adds best relation to graph, returns set of traces covered
-const reduceTraceCover = (
+function reduceTraceCover(
   graph: DCRGraph,
   tcGraph: TraceCoverGraph,
   posTcGraph: TraceCoverGraph,
   onlyPos: boolean
-): Set<string> => {
+): Set<string> {
   const nameToRelations = (
     relName: RelName
   ): { rel: EventMap; tcRel: TraceCoverRelation } => {
@@ -206,13 +214,16 @@ const reduceTraceCover = (
   if (cover.relName === "") return new Set();
   else {
     const { rel, tcRel } = nameToRelations(cover.relName);
-    const tcSet = copySet(tcRel[cover.event][cover.otherEvent]);
+    const tcSet = new Set(tcRel[cover.event][cover.otherEvent]);
     rel[cover.event].add(cover.otherEvent);
     return tcSet;
   }
-};
+}
 
-const rejectionMiner = (log: BinaryLog, optimizePrecision: boolean = true): DCRGraph => {
+export default function rejectionMiner(
+  log: BinaryLog,
+  optimizePrecision: boolean = true
+): DCRGraph {
   const nTraces = copyTraces(log.nTraces);
   const traces = log.traces;
 
@@ -252,6 +263,4 @@ const rejectionMiner = (log: BinaryLog, optimizePrecision: boolean = true): DCRG
   }
 
   return graph;
-};
-
-export default rejectionMiner;
+}

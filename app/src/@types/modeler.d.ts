@@ -1,32 +1,41 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 class DCRModeler {
-    constructor(options: any): void;
+  constructor(options: any): void;
 
-    destroy(): void;
+  destroy(): void;
 
-    importXML(xml: string): Promise<void>;
-    importCustomXML(xml: string): Promise<void>;
-    importDCRPortalXML(xml: string): Promise<void>;
+  importXML(xml: string): Promise<void>;
+  importCustomXML(xml: string): Promise<void>;
+  importDCRPortalXML(xml: string): Promise<void>;
 
-    saveXML(options: { format: boolean }): Promise<{ xml: string }>;
-    saveDCRXML(): Promise<{ xml: string }>
-    saveSVG(): Promise<{ svg: string }>
+  saveXML(options: { format: boolean }): Promise<{ xml: string }>;
+  saveDCRXML(): Promise<{ xml: string }>;
+  saveSVG(): Promise<{ svg: string }>;
 
-    setSetting(key: SettingsKey, value: SettingsVal): void;
+  setSetting(
+    key: "markerNotation",
+    value: "HM2011" | "DCR Solutions" | "TAL2023"
+  ): void;
+  setSetting(key: "blackRelations", value: boolean): void;
 
-    on(channel: string, callback: (event: any) => void);
-    off(channel: string, callback: (event: any) => void);
+  on(channel: string, callback: (event: any) => void);
+  off(channel: string, callback: (event: any) => void);
 
-    get(key: string): any;
+  get(key: string): any;
 
-    getElementRegistry(): any;
-    getSelection(): any;
+  getElementRegistry(): any;
+  getSelection(): any;
 
-    updateRendering(graph: DCRGraph): void;
-    updateViolations(arg: { violations: RelationViolations, activations: RelationViolations } | null): void;
-    setSimulating(val: boolean): void;
+  updateRendering(graph: DCRGraph): void;
+  updateViolations(
+    arg: {
+      violations: RelationViolations;
+      activations: RelationViolations;
+    } | null
+  ): void;
+  setSimulating(val: boolean): void;
 }
 
-
 declare module "modeler" {
-    export default DCRModeler;
+  export default DCRModeler;
 }

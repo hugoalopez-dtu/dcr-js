@@ -8,6 +8,6 @@ const MenuElement = styled.div`
   padding: 1rem;
   cursor: default;
   box-sizing: border-box;
-`
+`;
 
 export default MenuElement;

@@ -13,8 +13,9 @@ const StyledFileUpload = styled.div`
     cursor: pointer;
   }
   &:hover {
-      color: white;
-      background-color: Gainsboro;
-  } 
-`
+    color: white;
+    background-color: Gainsboro;
+  }
+`;
+
 export default StyledFileUpload;
