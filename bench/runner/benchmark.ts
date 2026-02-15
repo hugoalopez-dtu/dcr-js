@@ -12,6 +12,7 @@ type BenchmarkStatus = "passed" | "failed" | "timedOut" | "unknown";
 const ITERATIONS = parseInt(process.env.BENCH_ITERATIONS || "20", 10);
 const TIMEOUT = parseInt(process.env.BENCH_TIMEOUT || "90000", 10);
 const SAVE_MODELS = (process.env.BENCH_SAVE_MODELS || "true") === "true";
+const TOP_VARIANTS = process.env.BENCH_TOP_VARIANTS || "100";
 
 const OUTPUT_DIR = process.env.EXP_OUTPUT_DIR
   ? process.env.EXP_OUTPUT_DIR
@@ -93,6 +94,8 @@ async function runProcessDiscoveryBenchmark(
     await page
       .getByLabel("Select event log")
       .setInputFiles(path.join(LOGS_DIR, logFile));
+
+    await page.getByTestId("topVariants").fill(TOP_VARIANTS);
 
     const waitForDiscovery = page.waitForEvent("console", {
       predicate: (msg) => msg.text().includes("Finished discovery!"),

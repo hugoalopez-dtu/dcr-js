@@ -38,6 +38,7 @@ services:
       - BENCH_TIMEOUT=${BENCH_TIMEOUT:-90000}
       - BENCH_SAVE_MODELS=${BENCH_SAVE_MODELS:-true}
       - BENCH_TYPE=${BENCH_TYPE:-all}
+      - BENCH_TOP_VARIANTS=${BENCH_TOP_VARIANTS:-100}
       - CI=true
     deploy:
       resources:

@@ -8,6 +8,7 @@ import {
   type DCRGraph,
   type EventLog,
   filter,
+  filterVariantByTopPercentage,
   getBinaryVariants,
   getVariants,
   layoutGraph,
@@ -157,6 +158,21 @@ const DiscoveryState = ({
           />
         </MenuElement>,
         <MenuElement>
+          <Label>Top Variants %</Label>
+          <Input
+            type="number"
+            required
+            data-testid="topVariants"
+            name="topVariants"
+            min="0"
+            max="100"
+            defaultValue={
+              customFormState?.topVariants ? customFormState.topVariants : "100"
+            }
+            step="1"
+          />
+        </MenuElement>,
+        <MenuElement>
           <Label title="Saves the uploaded event log for later use in conformance checking, simulation, etc.">
             Save Log
           </Label>
@@ -176,12 +192,18 @@ const DiscoveryState = ({
         const threshold = rawThreshold && parseFloat(rawThreshold.toString());
         const nest = !!formData.get("nest");
         const save = !!formData.get("save");
+        const rawTopVarints = formData.get("topVariants");
+        const topVariants = rawTopVarints
+          ? parseFloat(rawTopVarints.toString()) / 100
+          : 1;
+        console.info("Top variants: ", topVariants);
 
         setCustomFormState({
           ...customFormState,
           threshold,
           nest,
           save,
+          topVariants: rawTopVarints,
         });
 
         const logFile = customFormState?.logFile;
@@ -237,16 +259,41 @@ const DiscoveryState = ({
           console.timeEnd("collect-variants");
           logMemory("After collecting variants");
 
+          console.info("Started variant filtering...");
+          console.time("filter-variants");
+          performance.mark("filter-variants-start");
+
+          if (topVariants >= 1) {
+            console.info("No variant filtering will be applied to log.");
+          }
+
+          const filteredVariantLog =
+            topVariants < 1
+              ? filterVariantByTopPercentage(variantLog, topVariants)
+              : variantLog;
+
+          performance.mark("filter-variants-end");
+          performance.measure(
+            "filter-variants",
+            "filter-variants-start",
+            "filter-variants-end",
+          );
+          console.info("Finished variant filtering!");
+          console.timeEnd("filter-variants");
+          logMemory("After filtering variants");
+
           console.info("Started filtering log...");
           console.time("filter-log");
           performance.mark("filter-log-start");
 
           if (threshold <= 0) {
-            console.info("No filtering will be applied to log.");
+            console.info("No noise filtering will be applied to log.");
           }
 
           const filteredLog =
-            threshold === 0 ? variantLog : filter(variantLog, threshold);
+            threshold === 0
+              ? filteredVariantLog
+              : filter(filteredVariantLog, threshold);
 
           performance.mark("filter-log-end");
           performance.measure(

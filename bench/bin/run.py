@@ -66,6 +66,12 @@ def main():
         "--no-analyze", action="store_true",
         help="Skip running analysis after the benchmark"
     )
+    parser.add_argument(
+        "--top-variants",
+        type=int,
+        default=100,
+        help="Number of top variants to filter for Process Discovery (default: 100)"
+    )
     args = parser.parse_args()
 
     name = args.name
@@ -135,6 +141,7 @@ def main():
     env["BENCH_ITERATIONS"] = str(args.iterations)
     env["BENCH_TIMEOUT"] = str(args.timeout)
     env["BENCH_SAVE_MODELS"] = "false" if args.no_save_models else "true"
+    env["BENCH_TOP_VARIANTS"] = str(args.top_variants)
 
     run_command(
         ["docker-compose", "-f",

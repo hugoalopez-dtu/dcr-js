@@ -89,6 +89,32 @@ function collectVariants<T extends Trace | RoleTrace>(
   return { variants, count };
 }
 
+export function filterVariantByTopPercentage(variantLog: VariantLog<Trace>, topPercentage: number): VariantLog<Trace> {
+  // topPercantage, being we want the variants that make up the topPercentage of the log, i.e., 
+  // 50% of the log should be made up of the top 50% of variants, we can assume the variants 
+  // are sorted by count in descending order (highest to lowest)
+  
+  const totalTraceCount = variantLog.count;
+  const targetTraceCount = Math.ceil(topPercentage * totalTraceCount);
+  
+  const filteredVariants: Variant<Trace>[] = [];
+  let accumulatedCount = 0;
+  
+  for (const variant of variantLog.variants) {
+    if (accumulatedCount >= targetTraceCount) {
+      break;
+    }
+    filteredVariants.push(variant);
+    accumulatedCount += variant.count;
+  }
+  
+  return {
+    events: variantLog.events,
+    variants: filteredVariants,
+    count: accumulatedCount,
+  };
+}
+
 export function getRandomInt(min: number, max: number): number {
   const minCeiled = Math.ceil(min);
   const maxFloored = Math.floor(max);

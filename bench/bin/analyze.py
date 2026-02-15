@@ -13,6 +13,7 @@ PD_STEPS = [
     "parse-log",
     "transform-log",
     "collect-variants",
+    "filter-variants",
     "filter-log",
     "abstract-log",
     "mine-log",
