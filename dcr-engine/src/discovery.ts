@@ -6,10 +6,12 @@ import type {
   EventMap,
   DCRGraph,
   FuzzyRelation,
+  VariantLog,
 } from "./types";
 import {
   copyEventMap,
   fullRelation,
+  isEventLog,
   mutatingDifference,
   mutatingIntersect,
   mutatingUnion,
@@ -18,10 +20,10 @@ import {
 // https://link.springer.com/article/10.1007/s10009-021-00616-0
 
 // Create abstraction of an EventLog in order to make fewer passes when mining constraints
-export function abstractLog(log: EventLog<Trace>): LogAbstraction {
+export function abstractLog(log: EventLog<Trace> | VariantLog<Trace>): LogAbstraction {
   const logAbstraction: LogAbstraction = {
     events: new Set(log.events),
-    traces: { ...log.traces },
+    traces: {}, // We populate this below
     // At first we assume all events will be seen at least once
     // Once we see them twice in a trace, they are removed from atMostOnce
     atMostOnce: new Set(log.events),
@@ -31,6 +33,7 @@ export function abstractLog(log: EventLog<Trace>): LogAbstraction {
     responseTo: {},
     successor: {},
   };
+
   // Initialize all EventMaps in the Log Abstraction.
   // Predecessor and successor sets start empty,
   // while the rest are initialized to be all events besides itself
@@ -98,9 +101,17 @@ export function abstractLog(log: EventLog<Trace>): LogAbstraction {
     }
   };
 
-  for (const traceId in log.traces) {
-    const trace = log.traces[traceId];
-    parseTrace(trace);
+  if (isEventLog(log)) {
+    for (const traceId in log.traces) {
+      const trace = log.traces[traceId];
+      parseTrace(trace);
+      logAbstraction.traces[traceId] = trace;
+    }
+  } else {
+    for (const variant of log.variants) {
+      parseTrace(variant.trace);
+      logAbstraction.traces[variant.variantId] = variant.trace;
+    }
   }
 
   // Compute successor set based on duality with predecessor set
@@ -377,7 +388,12 @@ export default function mineFromAbstraction(
 
 // https://link.springer.com/chapter/10.1007/978-3-031-25383-6_21
 
-export function filter(log: EventLog<Trace>, DT: number): EventLog<Trace> {
+export function filter(log: EventLog<Trace>, DT: number): EventLog<Trace>;
+export function filter(log: VariantLog<Trace>, DT: number): VariantLog<Trace>;
+export function filter(
+  log: EventLog<Trace> | VariantLog<Trace>,
+  DT: number
+): EventLog<Trace> | VariantLog<Trace> {
   const alpha = 0.5;
   const GNF = 0.02;
   const C1 = 4;
@@ -396,15 +412,30 @@ export function filter(log: EventLog<Trace>, DT: number): EventLog<Trace> {
     sucSets[event] = new Set();
   }
 
-  for (const traceId in log.traces) {
-    let lastEvent: string | null = null;
-    for (const event of log.traces[traceId]) {
-      if (lastEvent) {
-        sucSets[lastEvent].add(event);
-        preSets[event].add(lastEvent);
-        DFDs[lastEvent][event] += 1;
+  if (isEventLog(log)) {
+    for (const traceId in log.traces) {
+      const trace = log.traces[traceId];
+      let lastEvent: string | null = null;
+      for (const event of trace) {
+        if (lastEvent) {
+          sucSets[lastEvent].add(event);
+          preSets[event].add(lastEvent);
+          DFDs[lastEvent][event] += 1;
+        }
+        lastEvent = event;
       }
-      lastEvent = event;
+    }
+  } else {
+    for (const variant of log.variants) {
+      let lastEvent: string | null = null;
+      for (const event of variant.trace) {
+        if (lastEvent) {
+          sucSets[lastEvent].add(event);
+          preSets[event].add(lastEvent);
+          DFDs[lastEvent][event] += variant.count;
+        }
+        lastEvent = event;
+      }
     }
   }
 
@@ -430,6 +461,7 @@ export function filter(log: EventLog<Trace>, DT: number): EventLog<Trace> {
       dfdSum += DFDs[event][otherEvent];
     }
   }
+
   let theta = 0;
   for (const event in DFDs) {
     for (const otherEvent in DFDs[event]) {
@@ -454,40 +486,80 @@ export function filter(log: EventLog<Trace>, DT: number): EventLog<Trace> {
           1 -
           1 / ((1 + Math.exp(sucExp)) * 2) -
           1 / ((1 + Math.exp(preExp)) * 2);
+
         // global dependency
         const dGlobal = 1 / (1 + Math.exp(1 - DFDs[ei][ej] / theta));
+
         // mixed dependency
         mdMatrix[ei][ej] = alpha * dLocal + (1 - alpha) * dGlobal;
       }
     }
   }
 
-  const filteredLog: EventLog<Trace> = {
-    events: new Set(log.events),
-    traces: {},
-  };
+  if (isEventLog(log)) {
+    const filteredLog: EventLog<Trace> = {
+      events: new Set(log.events),
+      traces: {},
+    };
 
-  for (const traceId in log.traces) {
-    let ei = null;
-    let addTrace = true;
-    const filteredTrace = [];
-    for (const ej of log.traces[traceId]) {
-      if (ei === null) {
-        ei = ej;
-        filteredTrace.push(ej);
-      } else {
-        if (mdMatrix[ei][ej] >= DT) {
-          filteredTrace.push(ej);
+    for (const traceId in log.traces) {
+      let ei = null;
+      let addTrace = true;
+      const filteredTrace = [];
+      for (const ej of log.traces[traceId]) {
+        if (ei === null) {
           ei = ej;
+          filteredTrace.push(ej);
         } else {
-          addTrace = false;
-          break;
+          if (mdMatrix[ei][ej] >= DT) {
+            filteredTrace.push(ej);
+            ei = ej;
+          } else {
+            addTrace = false;
+            break;
+          }
         }
+      }
+      if (addTrace) {
+        filteredLog.traces[traceId] = filteredTrace;
       }
     }
 
-    if (addTrace) filteredLog.traces[traceId] = filteredTrace;
-  }
+    return filteredLog;
+  } else {
+    const filteredLog: VariantLog<Trace> = {
+      events: new Set(log.events),
+      variants: [],
+      count: log.count,
+    }
 
-  return filteredLog;
+    for (const variant of log.variants) {
+      let ei = null;
+      let addTrace = true;
+      const filteredTrace = [];
+      for (const ej of variant.trace) {
+        if (ei === null) {
+          ei = ej;
+          filteredTrace.push(ej);
+        } else {
+          if (mdMatrix[ei][ej] >= DT) {
+            filteredTrace.push(ej);
+            ei = ej;
+          } else {
+            addTrace = false;
+            break;
+          }
+        }
+      }
+
+      if (addTrace) {
+        filteredLog.variants.push({
+          ...variant,
+          trace: filteredTrace,
+        })
+      }
+    }
+
+    return filteredLog;
+  }
 }

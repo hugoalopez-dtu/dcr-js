@@ -70,16 +70,21 @@ const ReplayResults = ({
         </FlexBox>
       </ResultsHeader>
       <ul>
-        {replayLogResults.map(({ traceId, isPositive }) => (
-          <ResultsElement
-            $selected={selectedTrace?.traceId === traceId}
-            key={traceId}
-            onClick={() => setSelectedTraceId(traceId)}
-          >
-            <Label>{traceId}</Label>
-            {resultIcon(isPositive)}
-          </ResultsElement>
-        ))}
+        {replayLogResults.map(
+          ({ traceName, traceId, isPositive, count, frequency }) => (
+            <ResultsElement
+              $selected={selectedTrace?.traceId === traceId}
+              key={traceId}
+              onClick={() => setSelectedTraceId(traceId)}
+            >
+              <Label>
+                {traceName || traceId} {`(${count} occurrences)`}{" "}
+                {frequency ? `(${(frequency * 100).toFixed(2)}%)` : ""}
+              </Label>
+              {resultIcon(isPositive)}
+            </ResultsElement>
+          ),
+        )}
       </ul>
     </ResultsWindow>
   );

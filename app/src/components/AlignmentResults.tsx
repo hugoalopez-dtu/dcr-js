@@ -75,21 +75,26 @@ const AlignmentResults = ({
         </FlexBox>
       </ResultsHeader>
       <ul>
-        {alignmentLogResults.map(({ traceId, results }) => (
-          <ResultsElement
-            $selected={
-              selectedTrace !== null && selectedTrace.traceId === traceId
-            }
-            key={traceId}
-            onClick={() => setSelectedTraceId(traceId)}
-          >
-            <Label>{traceId}</Label>
-            <ResultContainer>
-              {results?.cost}
-              {resultIcon(results?.cost === 0)}
-            </ResultContainer>
-          </ResultsElement>
-        ))}
+        {alignmentLogResults.map(
+          ({ traceName, traceId, results, count, frequency }) => (
+            <ResultsElement
+              $selected={
+                selectedTrace !== null && selectedTrace.traceId === traceId
+              }
+              key={traceId}
+              onClick={() => setSelectedTraceId(traceId)}
+            >
+              <Label>
+                {traceName || traceId} {`(${count} occurrences)`}{" "}
+                {frequency ? `(${(frequency * 100).toFixed(2)}%)` : ""}
+              </Label>
+              <ResultContainer>
+                {results?.cost}
+                {resultIcon(results?.cost === 0)}
+              </ResultContainer>
+            </ResultsElement>
+          ),
+        )}
       </ul>
     </ResultsWindow>
   );

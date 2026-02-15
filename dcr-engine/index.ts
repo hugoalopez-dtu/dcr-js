@@ -10,6 +10,7 @@ import type {
   RoleTrace,
   Nestings,
   RelationViolations,
+  VariantLog,
 } from "./src/types";
 import { isSubProcess } from "./src/types";
 import {
@@ -21,7 +22,7 @@ import {
   isAcceptingS,
 } from "./src/executionEngine";
 import { moddleToDCR } from "./src/graphConversion";
-import { copyMarking } from "./src/utility";
+import { copyMarking, getBinaryVariants, getVariants } from "./src/utility";
 import {
   parseRoleLog,
   parseNonRoleLog,
@@ -62,6 +63,7 @@ export {
   type RoleTrace,
   type Nestings,
   type RelationViolations,
+  type VariantLog,
   isSubProcess,
   execute,
   isAccepting,
@@ -83,10 +85,12 @@ export {
   filter,
   mergeViolations,
   quantifyViolations,
+  getVariants,
   generateEventLog,
   runTest,
   alignTrace,
   rejectionMiner,
+  getBinaryVariants,
   NaiveDOMParser,
   RegexTraceStreamParser,
   DOMTraceStreamParser,

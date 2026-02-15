@@ -18,12 +18,18 @@ export const isColoredRelations = (obj: unknown): obj is ColoredRelations => {
 
 export type ReplayLogResults = Array<{
   traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
   isPositive?: boolean;
   trace: RoleTrace;
 }>;
 
 export type ViolationLogResults = Array<{
   traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
   results?: {
     totalViolations: number;
     violations: RelationViolations;
@@ -34,6 +40,9 @@ export type ViolationLogResults = Array<{
 
 export type AlignmentLogResults = Array<{
   traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
   results?: {
     cost: number;
     trace: Trace;

@@ -1,4 +1,4 @@
-import type { EventLog, Trace, RoleTrace, BinaryLog, ClassifiedTraces } from "../types";
+import type { EventLog, Trace, RoleTrace, VariantLog, Variant, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 
 type Input = string;
@@ -181,4 +181,75 @@ export async function parseAsBinaryLog(file: File, positiveClassifier: string): 
   }
 
   return { trainingLog, testLog, gtLog };
+}
+
+export async function parseAsNonRoleVariantLog(file: File): Promise<VariantLog<Trace>> {
+  const variantsMap = new Map<string, { trace: Trace; count: number }>();
+  const events = new Set<string>();
+  let totalCount = 0;
+
+  for await (const { events: parsedEvents } of streamTraces(file)) {
+    const trace = parsedEvents.map(e => e.activity);
+    const hash = trace.join(";;");
+
+    trace.forEach(activity => events.add(activity));
+
+    if (!variantsMap.has(hash)) {
+      variantsMap.set(hash, { trace, count: 0 });
+    }
+
+    variantsMap.get(hash)!.count++;
+    totalCount++;
+  }
+
+  const variants: Variant<Trace>[] = Array.from(variantsMap.entries()).map(
+    ([_, val]) => ({
+      variantId: crypto.randomUUID(),
+      trace: val.trace,
+      count: val.count,
+    })
+  ).sort((a, b) => b.count - a.count);
+
+  return {
+    events,
+    variants,
+    count: totalCount,
+  };
+}
+
+export async function parseAsRoleVariantLog(file: File): Promise<VariantLog<RoleTrace>> {
+  const variantsMap = new Map<string, { trace: RoleTrace; count: number }>();
+  const events = new Set<string>();
+  let totalCount = 0;
+
+  for await (const { events: parsedEvents } of streamTraces(file)) {
+    const trace: RoleTrace = parsedEvents.map(e => ({
+      activity: e.activity,
+      role: e.role || ""
+    }));
+    const hash = trace.map(t => t.activity + "##" + t.role).join(";;");
+
+    parsedEvents.forEach(e => events.add(e.activity));
+
+    if (!variantsMap.has(hash)) {
+      variantsMap.set(hash, { trace, count: 0 });
+    }
+
+    variantsMap.get(hash)!.count++;
+    totalCount++;
+  }
+
+  const variants: Variant<RoleTrace>[] = Array.from(variantsMap.entries()).map(
+    ([_, val]) => ({
+      variantId: crypto.randomUUID(),
+      trace: val.trace,
+      count: val.count,
+    })
+  ).sort((a, b) => b.count - a.count);
+
+  return {
+    events,
+    variants,
+    count: totalCount,
+  };
 }

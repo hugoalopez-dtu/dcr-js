@@ -93,7 +93,7 @@ const resultIcon = (val: boolean | undefined) => {
 interface AlignmentTraceViewProps {
   selectedTrace: {
     traceId: string;
-    traceName: string;
+    traceName?: string;
     trace: RoleTrace;
     results?: { cost: number; trace: Trace };
     isPositive?: boolean;
@@ -110,7 +110,7 @@ const AlignmentTraceView = ({
   return (
     <TraceWindow>
       <ResultsHeader>
-        {selectedTrace.traceName}
+        {selectedTrace.traceName || selectedTrace.traceId}
         {resultIcon(selectedTrace.isPositive)}
         <CloseTrace
           onClick={() => {
