@@ -23,7 +23,7 @@ import {
 } from "../types";
 import {
   alignTrace,
-  DOMTraceStreamParser,
+  DOMEventStreamParser,
   mergeViolations,
   moddleToDCR,
   quantifyViolations,
@@ -626,7 +626,7 @@ const ConformanceCheckingState = ({
               performance.mark("parse-log-start");
 
               try {
-                const log = await DOMTraceStreamParser.parseAsRoleLog(file);
+                const log = await DOMEventStreamParser.parseAsRoleLog(file);
                 saveLog(file.name, log);
               } catch (e) {
                 console.log(e);

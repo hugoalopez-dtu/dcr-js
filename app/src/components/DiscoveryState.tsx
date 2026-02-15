@@ -6,7 +6,7 @@ import { StateEnum, type StateProps } from "../App";
 import {
   abstractLog,
   type DCRGraph,
-  DOMTraceStreamParser,
+  DOMEventStreamParser,
   type EventLog,
   filter,
   layoutGraph,
@@ -211,7 +211,7 @@ const DiscoveryState = ({
           // Parse as non-role log directly instead of transforming to non-role
           // log to reduce noise in benchmark
           const noRoleLog =
-            await DOMTraceStreamParser.parseAsNonRoleLog(logFile);
+            await DOMEventStreamParser.parseAsNonRoleLog(logFile);
 
           performance.mark("parse-log-end");
           performance.measure("parse-log", "parse-log-start", "parse-log-end");
@@ -479,7 +479,7 @@ const DiscoveryState = ({
           performance.mark("parse-log-start");
 
           const { trainingLog, testLog } =
-            await DOMTraceStreamParser.parseAsBinaryLog(
+            await DOMEventStreamParser.parseAsBinaryLog(
               logFile,
               positiveClassifier,
             );
