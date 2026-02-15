@@ -13,7 +13,7 @@ import {
   nestDCR,
   type Nestings,
   parseBinaryLog,
-  parseRoleLog,
+  parseNonRoleLog,
   rejectionMiner,
   type RoleTrace,
 } from "dcr-engine";
@@ -210,43 +210,16 @@ const DiscoveryState = ({
           performance.mark("parse-log-start");
 
           const data = await logFile.text();
-          const roleLog = parseRoleLog(data);
+
+          // Parse as non-role log directly instead of transforming to non-role
+          // log to reduce noise in benchmark
+          const noRoleLog = parseNonRoleLog(data);
 
           performance.mark("parse-log-end");
           performance.measure("parse-log", "parse-log-start", "parse-log-end");
           console.info("Finished parsing log!");
           console.timeEnd("parse-log");
           logMemory("After parsing log");
-
-          console.info("Started transforming log...");
-          console.time("transform-log");
-          performance.mark("transform-log-start");
-
-          const noRoleLog = {
-            events: roleLog.events,
-            traces: Object.keys(roleLog.traces)
-              .map((traceId) => ({
-                traceId,
-                trace: roleLog.traces[traceId].map((elem) => elem.activity),
-              }))
-              .reduce(
-                (acc, { traceId, trace }) => ({ ...acc, [traceId]: trace }),
-                {},
-              ),
-          };
-
-          performance.mark("transform-log-end");
-          performance.measure(
-            "transform-log",
-            "transform-log-start",
-            "transform-log-end",
-          );
-          console.info("Finished transforming log!");
-          console.timeEnd("transform-log");
-          logMemory("After transforming log");
-
-          // In old code with StopWatch:
-          // stopWatch.reset(); // <-- gives wrong sense of ability (skips transforming time)
 
           console.info("Started filtering log...");
           console.time("filter-log");
@@ -359,6 +332,17 @@ const DiscoveryState = ({
                 console.info("Started saving log...");
                 console.time("save-log");
                 performance.mark("save-log-start");
+
+                const roleLog: EventLog<RoleTrace> = {
+                  events: noRoleLog.events,
+                  traces: {},
+                };
+
+                for (const traceId in noRoleLog.traces) {
+                  roleLog.traces[traceId] = noRoleLog.traces[traceId].map(
+                    (activity) => ({ activity, role: "" }),
+                  );
+                }
 
                 saveLog(roleLog, logFile.name);
 
