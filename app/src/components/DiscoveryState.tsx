@@ -6,13 +6,13 @@ import { StateEnum, type StateProps } from "../App";
 import {
   abstractLog,
   type DCRGraph,
-  DOMEventStreamParser,
   type EventLog,
   filter,
   layoutGraph,
   mineFromAbstraction,
   nestDCR,
   type Nestings,
+  RegexTraceStreamParser,
   rejectionMiner,
   type RoleTrace,
 } from "dcr-engine";
@@ -211,7 +211,7 @@ const DiscoveryState = ({
           // Parse as non-role log directly instead of transforming to non-role
           // log to reduce noise in benchmark
           const noRoleLog =
-            await DOMEventStreamParser.parseAsNonRoleLog(logFile);
+            await RegexTraceStreamParser.parseAsNonRoleLog(logFile);
 
           performance.mark("parse-log-end");
           performance.measure("parse-log", "parse-log-start", "parse-log-end");
@@ -479,7 +479,7 @@ const DiscoveryState = ({
           performance.mark("parse-log-start");
 
           const { trainingLog, testLog } =
-            await DOMEventStreamParser.parseAsBinaryLog(
+            await RegexTraceStreamParser.parseAsBinaryLog(
               logFile,
               positiveClassifier,
             );
