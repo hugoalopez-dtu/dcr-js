@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dcr:definitions xmlns:dcr="http://tk/schema/dcr" xmlns:dcrDi="http://tk/schema/dcrDi" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC">
+  <dcr:dcrGraph id="dcrGraph">
+    <dcr:event id="Event_1" description="O_Create Offer" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:event id="Event_2" description="O_Created" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:event id="Event_3" description="O_Sent (online only)" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:event id="Event_4" description="O_Cancelled" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:event id="Event_5" description="O_Sent (mail and online)" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:event id="Event_6" description="O_Returned" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:event id="Event_7" description="O_Accepted" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:event id="Event_8" description="O_Refused" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:relation id="Relation_1" type="condition" sourceRef="Event_1" targetRef="Event_2" />
+    <dcr:relation id="Relation_2" type="condition" sourceRef="Event_2" targetRef="Event_3" />
+    <dcr:relation id="Relation_3" type="condition" sourceRef="Event_2" targetRef="Event_4" />
+    <dcr:relation id="Relation_4" type="condition" sourceRef="Event_2" targetRef="Event_5" />
+    <dcr:relation id="Relation_5" type="condition" sourceRef="Event_5" targetRef="Event_6" />
+    <dcr:relation id="Relation_6" type="condition" sourceRef="Event_3" targetRef="Event_6" />
+    <dcr:relation id="Relation_7" type="condition" sourceRef="Event_6" targetRef="Event_7" />
+    <dcr:relation id="Relation_8" type="condition" sourceRef="Event_2" targetRef="Event_7" />
+    <dcr:relation id="Relation_9" type="condition" sourceRef="Event_2" targetRef="Event_8" />
+    <dcr:relation id="Relation_10" type="response" sourceRef="Event_1" targetRef="Event_2" />
+    <dcr:relation id="Relation_11" type="exclude" sourceRef="Event_1" targetRef="Event_1" />
+    <dcr:relation id="Relation_12" type="exclude" sourceRef="Event_2" targetRef="Event_2" />
+    <dcr:relation id="Relation_13" type="exclude" sourceRef="Event_3" targetRef="Event_3" />
+    <dcr:relation id="Relation_14" type="exclude" sourceRef="Event_3" targetRef="Event_5" />
+    <dcr:relation id="Relation_15" type="exclude" sourceRef="Event_4" targetRef="Event_4" />
+    <dcr:relation id="Relation_16" type="exclude" sourceRef="Event_4" targetRef="Event_7" />
+    <dcr:relation id="Relation_17" type="exclude" sourceRef="Event_4" targetRef="Event_8" />
+    <dcr:relation id="Relation_18" type="exclude" sourceRef="Event_5" targetRef="Event_5" />
+    <dcr:relation id="Relation_19" type="exclude" sourceRef="Event_5" targetRef="Event_3" />
+    <dcr:relation id="Relation_20" type="exclude" sourceRef="Event_6" targetRef="Event_6" />
+    <dcr:relation id="Relation_21" type="exclude" sourceRef="Event_7" targetRef="Event_7" />
+    <dcr:relation id="Relation_22" type="exclude" sourceRef="Event_7" targetRef="Event_4" />
+    <dcr:relation id="Relation_23" type="exclude" sourceRef="Event_7" targetRef="Event_8" />
+    <dcr:relation id="Relation_24" type="exclude" sourceRef="Event_8" targetRef="Event_8" />
+    <dcr:relation id="Relation_25" type="exclude" sourceRef="Event_8" targetRef="Event_4" />
+    <dcr:relation id="Relation_26" type="exclude" sourceRef="Event_8" targetRef="Event_7" />
+    <dcr:relation id="Relation_27" type="include" sourceRef="Event_1" targetRef="Event_2" />
+    <dcr:relation id="Relation_28" type="include" sourceRef="Event_2" targetRef="Event_3" />
+    <dcr:relation id="Relation_29" type="include" sourceRef="Event_2" targetRef="Event_5" />
+    <dcr:relation id="Relation_30" type="include" sourceRef="Event_6" targetRef="Event_7" />
+  </dcr:dcrGraph>
+  <dcrDi:dcrRootBoard id="RootBoard">
+    <dcrDi:dcrPlane id="Plane" boardElement="dcrGraph">
+      <dcrDi:relation id="Relation_30_di" boardElement="Relation_30">
+        <dcrDi:waypoint x="872" y="232" />
+        <dcrDi:waypoint x="882" y="232" />
+        <dcrDi:waypoint x="882" y="219.5" />
+        <dcrDi:waypoint x="922" y="219.5" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_29_di" boardElement="Relation_29">
+        <dcrDi:waypoint x="322" y="298.25" />
+        <dcrDi:waypoint x="372" y="298.25" />
+        <dcrDi:waypoint x="372" y="242" />
+        <dcrDi:waypoint x="382" y="242" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_28_di" boardElement="Relation_28">
+        <dcrDi:waypoint x="322" y="317" />
+        <dcrDi:waypoint x="522" y="317" />
+        <dcrDi:waypoint x="522" y="277" />
+        <dcrDi:waypoint x="562" y="277" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_27_di" boardElement="Relation_27">
+        <dcrDi:waypoint x="142" y="317" />
+        <dcrDi:waypoint x="192" y="317" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_26_di" boardElement="Relation_26">
+        <dcrDi:waypoint x="1282" y="222" />
+        <dcrDi:waypoint x="1242" y="222" />
+        <dcrDi:waypoint x="1242" y="227" />
+        <dcrDi:waypoint x="1052" y="227" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_25_di" boardElement="Relation_25">
+        <dcrDi:waypoint x="1282" y="172" />
+        <dcrDi:waypoint x="1242" y="172" />
+        <dcrDi:waypoint x="1242" y="122" />
+        <dcrDi:waypoint x="1232" y="122" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_24_di" boardElement="Relation_24">
+        <dcrDi:waypoint x="1325.3333333333333" y="122" />
+        <dcrDi:waypoint x="1325.3333333333333" y="112" />
+        <dcrDi:waypoint x="1368.6666666666667" y="112" />
+        <dcrDi:waypoint x="1368.6666666666667" y="122" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_23_di" boardElement="Relation_23">
+        <dcrDi:waypoint x="1052" y="197" />
+        <dcrDi:waypoint x="1282" y="197" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_22_di" boardElement="Relation_22">
+        <dcrDi:waypoint x="1052" y="167" />
+        <dcrDi:waypoint x="1072" y="167" />
+        <dcrDi:waypoint x="1072" y="134.5" />
+        <dcrDi:waypoint x="1102" y="134.5" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_21_di" boardElement="Relation_21">
+        <dcrDi:waypoint x="965.3333333333334" y="107" />
+        <dcrDi:waypoint x="965.3333333333334" y="97" />
+        <dcrDi:waypoint x="1008.6666666666666" y="97" />
+        <dcrDi:waypoint x="1008.6666666666666" y="107" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_20_di" boardElement="Relation_20">
+        <dcrDi:waypoint x="785.3333333333334" y="132" />
+        <dcrDi:waypoint x="785.3333333333334" y="122" />
+        <dcrDi:waypoint x="828.6666666666666" y="122" />
+        <dcrDi:waypoint x="828.6666666666666" y="132" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_19_di" boardElement="Relation_19">
+        <dcrDi:waypoint x="512" y="254.5" />
+        <dcrDi:waypoint x="522" y="254.5" />
+        <dcrDi:waypoint x="522" y="247" />
+        <dcrDi:waypoint x="562" y="247" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_18_di" boardElement="Relation_18">
+        <dcrDi:waypoint x="425.3333333333333" y="142" />
+        <dcrDi:waypoint x="425.3333333333333" y="132" />
+        <dcrDi:waypoint x="468.6666666666667" y="132" />
+        <dcrDi:waypoint x="468.6666666666667" y="142" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_17_di" boardElement="Relation_17">
+        <dcrDi:waypoint x="1232" y="72" />
+        <dcrDi:waypoint x="1252" y="72" />
+        <dcrDi:waypoint x="1252" y="147" />
+        <dcrDi:waypoint x="1282" y="147" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_16_di" boardElement="Relation_16">
+        <dcrDi:waypoint x="1102" y="97" />
+        <dcrDi:waypoint x="1062" y="97" />
+        <dcrDi:waypoint x="1062" y="137" />
+        <dcrDi:waypoint x="1052" y="137" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_15_di" boardElement="Relation_15">
+        <dcrDi:waypoint x="1145.3333333333333" y="22" />
+        <dcrDi:waypoint x="1145.3333333333333" y="12" />
+        <dcrDi:waypoint x="1188.6666666666667" y="12" />
+        <dcrDi:waypoint x="1188.6666666666667" y="22" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_14_di" boardElement="Relation_14">
+        <dcrDi:waypoint x="562" y="217" />
+        <dcrDi:waypoint x="512" y="217" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_13_di" boardElement="Relation_13">
+        <dcrDi:waypoint x="605.3333333333334" y="157" />
+        <dcrDi:waypoint x="605.3333333333334" y="147" />
+        <dcrDi:waypoint x="648.6666666666666" y="147" />
+        <dcrDi:waypoint x="648.6666666666666" y="157" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_12_di" boardElement="Relation_12">
+        <dcrDi:waypoint x="235.33333333333334" y="204.5" />
+        <dcrDi:waypoint x="235.33333333333334" y="194.5" />
+        <dcrDi:waypoint x="278.6666666666667" y="194.5" />
+        <dcrDi:waypoint x="278.6666666666667" y="204.5" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_11_di" boardElement="Relation_11">
+        <dcrDi:waypoint x="55.333333333333336" y="204.5" />
+        <dcrDi:waypoint x="55.333333333333336" y="194.5" />
+        <dcrDi:waypoint x="98.66666666666667" y="194.5" />
+        <dcrDi:waypoint x="98.66666666666667" y="204.5" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_10_di" boardElement="Relation_10">
+        <dcrDi:waypoint x="142" y="279.5" />
+        <dcrDi:waypoint x="192" y="279.5" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_9_di" boardElement="Relation_9">
+        <dcrDi:waypoint x="322" y="335.75" />
+        <dcrDi:waypoint x="1242" y="335.75" />
+        <dcrDi:waypoint x="1242" y="247" />
+        <dcrDi:waypoint x="1282" y="247" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_8_di" boardElement="Relation_8">
+        <dcrDi:waypoint x="322" y="242" />
+        <dcrDi:waypoint x="342" y="242" />
+        <dcrDi:waypoint x="342" y="95" />
+        <dcrDi:waypoint x="882" y="95" />
+        <dcrDi:waypoint x="882" y="144.5" />
+        <dcrDi:waypoint x="922" y="144.5" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_7_di" boardElement="Relation_7">
+        <dcrDi:waypoint x="872" y="182" />
+        <dcrDi:waypoint x="922" y="182" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_6_di" boardElement="Relation_6">
+        <dcrDi:waypoint x="692" y="232" />
+        <dcrDi:waypoint x="742" y="232" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_5_di" boardElement="Relation_5">
+        <dcrDi:waypoint x="512" y="179.5" />
+        <dcrDi:waypoint x="522" y="179.5" />
+        <dcrDi:waypoint x="522" y="121" />
+        <dcrDi:waypoint x="702" y="121" />
+        <dcrDi:waypoint x="702" y="182" />
+        <dcrDi:waypoint x="742" y="182" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_4_di" boardElement="Relation_4">
+        <dcrDi:waypoint x="322" y="279.5" />
+        <dcrDi:waypoint x="362" y="279.5" />
+        <dcrDi:waypoint x="362" y="192" />
+        <dcrDi:waypoint x="382" y="192" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_3_di" boardElement="Relation_3">
+        <dcrDi:waypoint x="322" y="223.25" />
+        <dcrDi:waypoint x="332" y="223.25" />
+        <dcrDi:waypoint x="332" y="71" />
+        <dcrDi:waypoint x="1062" y="71" />
+        <dcrDi:waypoint x="1062" y="59.5" />
+        <dcrDi:waypoint x="1102" y="59.5" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_2_di" boardElement="Relation_2">
+        <dcrDi:waypoint x="322" y="260.75" />
+        <dcrDi:waypoint x="352" y="260.75" />
+        <dcrDi:waypoint x="352" y="106" />
+        <dcrDi:waypoint x="532" y="106" />
+        <dcrDi:waypoint x="532" y="187" />
+        <dcrDi:waypoint x="562" y="187" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_1_di" boardElement="Relation_1">
+        <dcrDi:waypoint x="142" y="242" />
+        <dcrDi:waypoint x="192" y="242" />
+      </dcrDi:relation>
+      <dcrDi:dcrShape id="Event_1_di" boardElement="Event_1">
+        <dc:Bounds x="12" y="204.5" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_2_di" boardElement="Event_2">
+        <dc:Bounds x="192" y="204.5" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_3_di" boardElement="Event_3">
+        <dc:Bounds x="562" y="157" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_4_di" boardElement="Event_4">
+        <dc:Bounds x="1102" y="22" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_5_di" boardElement="Event_5">
+        <dc:Bounds x="382" y="142" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_6_di" boardElement="Event_6">
+        <dc:Bounds x="742" y="132" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_7_di" boardElement="Event_7">
+        <dc:Bounds x="922" y="107" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_8_di" boardElement="Event_8">
+        <dc:Bounds x="1282" y="122" width="130" height="150" />
+      </dcrDi:dcrShape>
+    </dcrDi:dcrPlane>
+  </dcrDi:dcrRootBoard>
+</dcr:definitions>
