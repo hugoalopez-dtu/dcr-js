@@ -34,17 +34,27 @@ Each State should implement the following properties as defined in `App.tsx`:
 
 ```
 interface StateProps {
-  savedGraphs: DCRGraphRepository;
-  setSavedGraphs: (repository: DCRGraphRepository) => void;
   setState: (state: StateEnum) => void;
+  savedGraphs: DCRGraphRepository;
+  setSavedGraphs: React.Dispatch<React.SetStateAction<DCRGraphRepository>>;
   savedLogs: EventLogRepository;
-  setSavedLogs: (repository: EventLogRepository) => void;
-  lastSavedGraph: React.RefObject<string | undefined>;
-  lastSavedLog: React.RefObject<string | undefined>;
+  setSavedLogs: React.Dispatch<React.SetStateAction<EventLogRepository>>;
+  currentGraph: DCRGraphEntry | null;
+  setCurrentGraph: (graphName: string | null) => void;
+  currentLog: EventLogEntry | null;
+  setCurrentLog: (logName: string | null) => void;
+  saveGraph: (name: string, graph: string) => boolean;
+  saveLog: (name: string, log: EventLog<RoleTrace>) => boolean;
+  pickGraph: (name?: string | null) => void;
+  pickLog: (name?: string | null) => void;
+  markerNotation: MarkerNotation;
+  changeMarkerNotation: (value: unknown) => void;
+  coloredRelations: ColoredRelations;
+  changeColoredRelations: (value: unknown) => void;
 }
 ```
 
-These properties allows you to access the saved logs and graphs, change State with `setState`, as well as update the saved graphs and logs with `setSavedGraphs` and `setSavedLogs` respectively. `lastSavedGraph` and `lastSavedLog` allows you to access which graph and log were last saved, in order to _e.g._ access the last saved graph as the initial graph in Simulation.
+These properties allows you to access the saved logs and graphs, change State with `setState`, as well as update the saved graphs and logs with `saveGraph` and `saveLog` respectively. `currentGraph` and `currentLog` allows you to access the graph and log which were last used, in order to _e.g._ access the last used graph as the initial graph in Simulation.
 
 ### New Algorithms
 
