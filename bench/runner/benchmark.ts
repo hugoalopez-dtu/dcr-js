@@ -438,9 +438,13 @@ async function runConformanceCheckingBenchmarks() {
   const startTime = performance.now();
   logger(`CC benchmark started at ${new Date().toISOString()}`);
 
-  for (let i = 0; i < Math.min(logFiles.length, modelFiles.length); i++) {
-    const logFile = logFiles[i];
-    const modelFile = modelFiles[i];
+  for (const logFile of logFiles) {
+    const logPrefix = logFile.split(" ")[0];
+    const modelFile = modelFiles.find((m) => m.split(" ")[0] === logPrefix);
+    if (!modelFile) {
+      logger(`No matching model found for ${logFile}, skipping.`);
+      continue;
+    }
 
     const logStartTime = performance.now();
     logger("================================================================");
