@@ -36,7 +36,7 @@ import ReactiveModeler from "./ReactiveModeler";
 import RawFileUpload from "../utilComponents/RawFileUpload";
 
 function logMemory(label: string) {
-  if (window.gc) {
+  if ("gc" in window && typeof window.gc === "function") {
     window.gc();
   }
 
