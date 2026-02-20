@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type { EventLog, Trace, RoleTrace, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 import sax from "sax";
@@ -70,7 +71,7 @@ export async function parseWithCallback(file: File, callback: TraceCallback): Pr
     } else if (tagName === "trace" && inTrace) {
       if (currentTrace.length > 0) {
         callback({
-          traceId: currentTraceId || crypto.randomUUID(),
+          traceId: currentTraceId || v4(),
           traceLabel: currentTraceLabel ?? undefined,
           events: currentTrace,
         });
