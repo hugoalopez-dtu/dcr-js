@@ -273,7 +273,7 @@ export async function parseAsNonRoleVariantLog(file: File): Promise<VariantLog<T
 
   const variants: Variant<Trace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })
@@ -310,7 +310,7 @@ export async function parseAsRoleVariantLog(file: File): Promise<VariantLog<Role
 
   const variants: Variant<RoleTrace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })

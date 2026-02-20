@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type {
   DCRGraph,
   EventMap,
@@ -80,7 +81,7 @@ function collectVariants<T extends Trace | RoleTrace>(
   }
 
   const variants = Array.from(variantsMap.entries()).map<Variant<T>>(([, val]) => ({
-    variantId: crypto.randomUUID(),
+    variantId: v4(),
     trace: val.trace,
     count: val.count,
   }))
