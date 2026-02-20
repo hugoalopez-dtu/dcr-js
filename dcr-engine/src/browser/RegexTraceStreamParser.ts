@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type { EventLog, Trace, RoleTrace, VariantLog, Variant, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 
@@ -67,7 +68,7 @@ class DefaultTransformer implements Transformer<Input, Output> {
   private parseTrace(traceXml: string, controller: TransformStreamDefaultController<Output>) {
     // Extract trace ID
     const traceIdMatch = traceXml.match(this.traceIdRegex);
-    const traceId = traceIdMatch?.[1] || crypto.randomUUID();
+    const traceId = traceIdMatch?.[1] || v4();
     const traceLabelMatch = traceXml.match(this.traceLabelRegex);
     const traceLabel = traceLabelMatch?.[1];
 

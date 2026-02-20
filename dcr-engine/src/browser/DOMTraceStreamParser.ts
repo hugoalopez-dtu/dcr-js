@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type { EventLog, Trace, RoleTrace, VariantLog, Variant, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 
@@ -70,7 +71,7 @@ class DefaultTransformer implements Transformer<Input, Output> {
 
     // Extract trace ID
     const traceIdEl = traceEl.querySelector('string[key="concept:name"]');
-    const traceId = traceIdEl?.getAttribute("value") || crypto.randomUUID();
+    const traceId = traceIdEl?.getAttribute("value") || v4()
     const traceLabelEl = traceEl.querySelector('string[key="label"]');
     const traceLabel = traceLabelEl?.getAttribute("value") ?? undefined;
 
