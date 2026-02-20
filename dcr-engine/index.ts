@@ -49,7 +49,6 @@ import * as DOMEventStreamParser from "./src/browser/DOMEventStreamParser";
 import * as RegexEventStreamParser from "./src/browser/RegexEventStreamParser";
 import * as DOMTraceStreamParser from "./src/browser/DOMTraceStreamParser";
 import * as RegexTraceStreamParser from "./src/browser/RegexTraceStreamParser";
-import * as NaiveDOMParser from "./src/browser/NaiveDOMParser";
 
 export {
   type DCRGraph,
@@ -92,7 +91,6 @@ export {
   rejectionMiner,
   getBinaryVariants,
   filterVariantByTopPercentage,
-  NaiveDOMParser,
   RegexTraceStreamParser,
   DOMTraceStreamParser,
   RegexEventStreamParser,
