@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type { EventLog, Trace, RoleTrace, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 
@@ -161,7 +162,7 @@ class DefaultTransformer implements Transformer<Input, Output> {
   private finalizeTrace(controller: TransformStreamDefaultController<Output>): void {
     if (this.currentTrace.length > 0) {
       controller.enqueue({
-        traceId: this.currentTraceId || crypto.randomUUID(),
+        traceId: this.currentTraceId || v4(),
         traceLabel: this.currentTraceLabel ?? undefined,
         events: this.currentTrace
       });
