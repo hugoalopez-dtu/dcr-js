@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type { EventLog, Trace, RoleTrace, VariantLog, Variant, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 
@@ -145,7 +146,7 @@ class DefaultTransformer implements Transformer<Input, Output> {
   private finalizeTrace(controller: TransformStreamDefaultController<Output>) {
     if (this.currentTrace.length > 0) {
       controller.enqueue({
-        traceId: this.currentTraceId || crypto.randomUUID(),
+        traceId: this.currentTraceId || v4(),
         traceLabel: this.currentTraceLabel ?? undefined,
         events: this.currentTrace
       });
@@ -256,7 +257,7 @@ export async function parseAsNonRoleVariantLog(file: File): Promise<VariantLog<T
 
   const variants: Variant<Trace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })
@@ -293,7 +294,7 @@ export async function parseAsRoleVariantLog(file: File): Promise<VariantLog<Role
 
   const variants: Variant<RoleTrace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })

@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type { EventLog, Trace, RoleTrace, VariantLog, Variant, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 
@@ -70,7 +71,7 @@ class DefaultTransformer implements Transformer<Input, Output> {
 
     // Extract trace ID
     const traceIdEl = traceEl.querySelector('string[key="concept:name"]');
-    const traceId = traceIdEl?.getAttribute("value") || crypto.randomUUID();
+    const traceId = traceIdEl?.getAttribute("value") || v4()
     const traceLabelEl = traceEl.querySelector('string[key="label"]');
     const traceLabel = traceLabelEl?.getAttribute("value") ?? undefined;
 
@@ -208,7 +209,7 @@ export async function parseAsNonRoleVariantLog(file: File): Promise<VariantLog<T
 
   const variants: Variant<Trace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })
@@ -245,7 +246,7 @@ export async function parseAsRoleVariantLog(file: File): Promise<VariantLog<Role
 
   const variants: Variant<RoleTrace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })

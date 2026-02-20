@@ -1,3 +1,4 @@
+import { v4 } from "uuid";
 import type { EventLog, Trace, RoleTrace, VariantLog, Variant, BinaryLog, ClassifiedTraces } from "../types";
 import type { ParsedTrace, ParsedEvent } from "./types";
 import sax from "sax";
@@ -70,7 +71,7 @@ export async function parseWithCallback(file: File, callback: TraceCallback): Pr
     } else if (tagName === "trace" && inTrace) {
       if (currentTrace.length > 0) {
         callback({
-          traceId: currentTraceId || crypto.randomUUID(),
+          traceId: currentTraceId || v4(),
           traceLabel: currentTraceLabel ?? undefined,
           events: currentTrace,
         });
@@ -188,7 +189,7 @@ export async function parseAsNonRoleVariantLog(file: File): Promise<VariantLog<T
 
   const variants: Variant<Trace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })
@@ -225,7 +226,7 @@ export async function parseAsRoleVariantLog(file: File): Promise<VariantLog<Role
 
   const variants: Variant<RoleTrace>[] = Array.from(variantsMap.entries()).map(
     ([_, val]) => ({
-      variantId: crypto.randomUUID(),
+      variantId: v4(),
       trace: val.trace,
       count: val.count,
     })
