@@ -90,6 +90,11 @@ function collectVariants<T extends Trace | RoleTrace>(
   return { variants, count };
 }
 
+let _nextId = 0;
+export function generateId() {
+  return ++_nextId;
+}
+
 export function getRandomInt(min: number, max: number): number {
   const minCeiled = Math.ceil(min);
   const maxFloored = Math.floor(max);
