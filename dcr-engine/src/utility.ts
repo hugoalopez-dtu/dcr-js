@@ -1,4 +1,3 @@
-import { v4 } from "uuid";
 import type {
   DCRGraph,
   EventMap,
@@ -14,20 +13,26 @@ import type {
   BinaryVariantLog,
 } from "./types";
 
-export function isEventLog(log: EventLog<Trace> | VariantLog<Trace>): log is EventLog<Trace> {
+export function isEventLog(
+  log: EventLog<Trace> | VariantLog<Trace>,
+): log is EventLog<Trace> {
   return "traces" in log;
 }
 
-export function isVariantLog(log: EventLog<Trace> | VariantLog<Trace>): log is VariantLog<Trace> {
+export function isVariantLog(
+  log: EventLog<Trace> | VariantLog<Trace>,
+): log is VariantLog<Trace> {
   return "variants" in log;
 }
 
-export function isBinaryVariantLog(log: BinaryLog | BinaryVariantLog): log is BinaryVariantLog {
+export function isBinaryVariantLog(
+  log: BinaryLog | BinaryVariantLog,
+): log is BinaryVariantLog {
   return Array.isArray(log.traces);
 }
 
 export function getVariants<T extends Trace | RoleTrace>(
-  log: EventLog<T>
+  log: EventLog<T>,
 ): VariantLog<T> {
   const { variants, count } = collectVariants(log.traces);
   return {
@@ -49,22 +54,26 @@ export function getBinaryVariants(log: BinaryLog): BinaryVariantLog {
 
 function hashTrace<T extends Trace | RoleTrace>(traceOrRoleTrace: T): string {
   if (Array.isArray(traceOrRoleTrace)) {
-    if (traceOrRoleTrace.length > 0 && typeof traceOrRoleTrace[0] === "string") {
+    if (
+      traceOrRoleTrace.length > 0 &&
+      typeof traceOrRoleTrace[0] === "string"
+    ) {
       const trace = traceOrRoleTrace as string[];
       return trace.join(";;");
-    } else if (traceOrRoleTrace.length > 0 && typeof traceOrRoleTrace[0] === "object") {
+    } else if (
+      traceOrRoleTrace.length > 0 &&
+      typeof traceOrRoleTrace[0] === "object"
+    ) {
       const roleTrace = traceOrRoleTrace as RoleTrace;
-      return roleTrace
-        .map((t) => t.activity + "##" + t.role)
-        .join(";;");
+      return roleTrace.map((t) => t.activity + "##" + t.role).join(";;");
     }
   }
   return "";
 }
 
-function collectVariants<T extends Trace | RoleTrace>(
-  traces: { [traceId: string]: T }
-): { variants: Variant<T>[]; count: number } {
+function collectVariants<T extends Trace | RoleTrace>(traces: {
+  [traceId: string]: T;
+}): { variants: Variant<T>[]; count: number } {
   const variantsMap = new Map<string, { trace: T; count: number }>();
   let count = 0;
 
@@ -80,27 +89,31 @@ function collectVariants<T extends Trace | RoleTrace>(
     count++;
   }
 
-  const variants = Array.from(variantsMap.entries()).map<Variant<T>>(([, val]) => ({
-    variantId: v4(),
-    trace: val.trace,
-    count: val.count,
-  }))
+  const variants = Array.from(variantsMap.entries())
+    .map<Variant<T>>(([, val]) => ({
+      variantId: String(generateId()),
+      trace: val.trace,
+      count: val.count,
+    }))
     .sort((a, b) => b.count - a.count);
 
   return { variants, count };
 }
 
-export function filterVariantByTopPercentage(variantLog: VariantLog<Trace>, topPercentage: number): VariantLog<Trace> {
-  // topPercantage, being we want the variants that make up the topPercentage of the log, i.e., 
-  // 50% of the log should be made up of the top 50% of variants, we can assume the variants 
+export function filterVariantByTopPercentage(
+  variantLog: VariantLog<Trace>,
+  topPercentage: number,
+): VariantLog<Trace> {
+  // topPercantage, being we want the variants that make up the topPercentage of the log, i.e.,
+  // 50% of the log should be made up of the top 50% of variants, we can assume the variants
   // are sorted by count in descending order (highest to lowest)
-  
+
   const totalTraceCount = variantLog.count;
   const targetTraceCount = Math.ceil(topPercentage * totalTraceCount);
-  
+
   const filteredVariants: Variant<Trace>[] = [];
   let accumulatedCount = 0;
-  
+
   for (const variant of variantLog.variants) {
     if (accumulatedCount >= targetTraceCount) {
       break;
@@ -108,12 +121,17 @@ export function filterVariantByTopPercentage(variantLog: VariantLog<Trace>, topP
     filteredVariants.push(variant);
     accumulatedCount += variant.count;
   }
-  
+
   return {
     events: variantLog.events,
     variants: filteredVariants,
     count: accumulatedCount,
   };
+}
+
+let _nextId = 0;
+export function generateId() {
+  return ++_nextId;
 }
 
 export function getRandomInt(min: number, max: number): number {
