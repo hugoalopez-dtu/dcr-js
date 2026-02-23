@@ -14,7 +14,7 @@ import {
   type Nestings,
   rejectionMiner,
   type RoleTrace,
-  StringTraceStreamParser,
+  StringEventStreamParser,
 } from "dcr-engine";
 import MenuElement from "../utilComponents/MenuElement";
 import DropDown from "../utilComponents/DropDown";
@@ -211,7 +211,7 @@ const DiscoveryState = ({
           // Parse as non-role log directly instead of transforming to non-role
           // log to reduce noise in benchmark
           const noRoleLog =
-            await StringTraceStreamParser.parseAsNonRoleLog(logFile);
+            await StringEventStreamParser.parseAsNonRoleLog(logFile);
 
           performance.mark("parse-log-end");
           performance.measure("parse-log", "parse-log-start", "parse-log-end");
@@ -479,7 +479,7 @@ const DiscoveryState = ({
           performance.mark("parse-log-start");
 
           const { trainingLog, testLog } =
-            await StringTraceStreamParser.parseAsBinaryLog(
+            await StringEventStreamParser.parseAsBinaryLog(
               logFile,
               positiveClassifier,
             );
