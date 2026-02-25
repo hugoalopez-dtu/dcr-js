@@ -1,18 +1,56 @@
-export type XesAttribute = string | number | boolean;
-export type XesAttributes = Record<string, XesAttribute>;
+export type XesEventClassifiers = {
+  [name: string]: string; // keys
+};
 
-export interface ParsedTrace {
-  traceAttributes: XesAttributes;
-  events: XesAttributes[];
-}
+export type XesAttribute =
+  | string // string
+  | number // date, int, float
+  | boolean // boolean
+  | XesAttribute[]; // list, container
 
-export const TAG_NAMES = new Set(["string", "date", "int", "float", "boolean"]);
+export type XesAttributes = {
+  [key: string]: XesAttribute;
+};
+
+export type XesLogAttributes = {
+  globalEventAttributes: XesEventAttributes;
+  eventClassifiers: XesEventClassifiers;
+};
+
+export type XesTraceAttributes = XesAttributes;
+
+export type XesEventAttributes = XesAttributes;
+
+export const SCALAR_TAG_NAMES = new Set([
+  "string",
+  "date",
+  "int",
+  "float",
+  "boolean",
+]);
+
+// TODO: Add support for "container" and "list" attributes
+
+export const COMPOUND_TAG_NAMES = new Set(["list", "container"]);
+
+export const TAG_NAMES = new Set([...SCALAR_TAG_NAMES, ...COMPOUND_TAG_NAMES]);
 
 export function isAttributeTag(tagName: string) {
   return TAG_NAMES.has(tagName);
 }
 
-export function parseAttribute(type: string, value: string): XesAttribute {
+export function isScalarAttributeTag(tagName: string) {
+  return SCALAR_TAG_NAMES.has(tagName);
+}
+
+export function isCompoundAttributeTag(tagName: string) {
+  return COMPOUND_TAG_NAMES.has(tagName);
+}
+
+export function parseAttribute(
+  type: string,
+  value: string,
+): Exclude<XesAttribute, XesAttribute[]> {
   switch (type) {
     case "date":
       return Date.parse(value);
@@ -32,12 +70,18 @@ export const TRACE_END_TAG = "</trace>";
 export const EVENT_START_TAG = "<event>";
 export const EVENT_END_TAG = "</event>";
 
+export const CUSTOM_LOG_ATTRIBUTES_START_TAG = "<_logAttributes>";
+export const CUSTOM_LOG_ATTRIBUTES_END_TAG = "</_logAttributes>";
+export const CUSTOM_TRACE_ATTRIBUTES_START_TAG = "<_traceAttributes>";
+export const CUSTOM_TRACE_ATTRIBUTES_END_TAG = "</_traceAttributes>";
+
 export async function* getXesTraceBlocks(file: File) {
   const reader = file.stream().pipeThrough(new TextDecoderStream()).getReader();
 
   try {
     let buffer = "";
     let cursor = 0;
+    let preamble = true;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -55,6 +99,19 @@ export async function* getXesTraceBlocks(file: File) {
 
       let traceStart = buffer.indexOf(TRACE_START_TAG, cursor);
       while (traceStart !== -1) {
+        if (preamble) {
+          preamble = false;
+
+          const logStart = buffer.indexOf("<log", cursor);
+          if (logStart !== -1) {
+            const logStartEnd = buffer.indexOf(">", logStart);
+            if (logStartEnd !== -1) {
+              // Yield log attributes between <log> and first <trace>
+              yield `${CUSTOM_LOG_ATTRIBUTES_START_TAG}${buffer.substring(logStartEnd + 1, traceStart)}${CUSTOM_LOG_ATTRIBUTES_END_TAG}`;
+            }
+          }
+        }
+
         const traceEnd = buffer.indexOf(TRACE_END_TAG, traceStart);
 
         if (traceEnd !== -1) {
@@ -83,6 +140,7 @@ export async function* getXesEventBlocks(file: File) {
   try {
     let buffer = "";
     let cursor = 0;
+    let preamble = true;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -102,8 +160,21 @@ export async function* getXesEventBlocks(file: File) {
       while (eventStart !== -1) {
         const traceStart = buffer.indexOf(TRACE_START_TAG, cursor);
         if (traceStart !== -1 && traceStart < eventStart) {
+          if (preamble) {
+            preamble = false;
+
+            const logStart = buffer.indexOf("<log", cursor);
+            if (logStart !== -1) {
+              const logStartEnd = buffer.indexOf(">", logStart);
+              if (logStartEnd !== -1) {
+                // Yield log attributes between <log> and first <trace>
+                yield `${CUSTOM_LOG_ATTRIBUTES_START_TAG}${buffer.substring(logStartEnd + 1, traceStart)}${CUSTOM_LOG_ATTRIBUTES_END_TAG}`;
+              }
+            }
+          }
+
           // Yield trace attributes between <trace> and first <event>
-          yield `<_traceAttributes>${buffer.substring(traceStart + TRACE_START_TAG.length, eventStart)}</_traceAttributes>`;
+          yield `${CUSTOM_TRACE_ATTRIBUTES_START_TAG}${buffer.substring(traceStart + TRACE_START_TAG.length, eventStart)}${CUSTOM_TRACE_ATTRIBUTES_END_TAG}`;
 
           // Advance cursor to just before first <event> so we don't yield <trace> again, if we don't find full <event>...</event> in this chunk
           cursor = eventStart;
@@ -151,21 +222,19 @@ export function extractTraceAttributesXmlWithString(xml: string) {
   );
 }
 
-export function extractAttributesWithDOM(
-  parent: Element,
-  onEvent?: (eventElement: Element) => void,
-): XesAttributes {
+export function extractAttributesWithDOM(parent: Element): XesAttributes {
   const attributes: XesAttributes = {};
   let node = parent.firstElementChild;
   while (node) {
-    if (isAttributeTag(node.tagName)) {
+    if (isScalarAttributeTag(node.tagName)) {
       const key = node.getAttribute("key");
       const value = node.getAttribute("value");
       if (typeof key === "string" && key !== "" && typeof value === "string") {
         attributes[key] = parseAttribute(node.tagName, value);
       }
-    } else if (onEvent && node.tagName === "event") {
-      onEvent(node);
+    } else if (node.tagName === "event" || node.tagName === "trace") {
+      // Per spec, attributes comes before <event> or <trace> at the same level
+      break;
     }
     node = node.nextElementSibling;
   }
@@ -175,11 +244,12 @@ export function extractAttributesWithDOM(
 export function extractAttributesWithRegex(xml: string) {
   const attributes: XesAttributes = {};
 
-  const attributeRegex = /<(string|date|int|float|boolean)\s+([^>]+?)>/g;
+  const attributeRegex =
+    /<(string|date|int|float|boolean)\s+([^>]+?)(?:\/>|>[\s\S]*?<\/\1>)/g;
   let attributeMatch;
   while ((attributeMatch = attributeRegex.exec(xml)) !== null) {
     const type = attributeMatch[1];
-    if (!isAttributeTag(type)) {
+    if (!isScalarAttributeTag(type)) {
       continue;
     }
 
@@ -208,24 +278,18 @@ export function extractAttributesWithRegex(xml: string) {
   return attributes;
 }
 
-const TAG_OPEN = "<";
-const TAG_CLOSE = ">";
-const KEY_ATTRIBUTE_OPEN = 'key="';
-const VALUE_ATTRIBUTE_OPEN = 'value="';
-const ATTRIBUTE_CLOSE = '"';
-
 export function extractAttributesWithString(xml: string) {
   const attributes: XesAttributes = {};
 
   let position = 0;
-  while ((position = xml.indexOf(TAG_OPEN, position)) !== -1) {
-    const end = xml.indexOf(TAG_CLOSE, position);
+  while ((position = xml.indexOf("<", position)) !== -1) {
+    const end = xml.indexOf(">", position);
     if (end === -1) {
       break;
     }
 
-    const tag = xml.substring(position + TAG_OPEN.length, end);
-    position = end + TAG_CLOSE.length;
+    const tag = xml.substring(position + "<".length, end);
+    position = end + ">".length;
 
     let firstWhitespaceIdx = -1;
     for (let i = 0; i < tag.length; i++) {
@@ -241,33 +305,182 @@ export function extractAttributesWithString(xml: string) {
     }
 
     const type = tag.substring(0, firstWhitespaceIdx);
-    if (!isAttributeTag(type)) {
+    if (!isScalarAttributeTag(type)) {
       continue;
     }
 
-    const keyIdx = tag.indexOf(KEY_ATTRIBUTE_OPEN);
+    const keyIdx = tag.indexOf('key="');
     if (keyIdx === -1) {
       continue;
     }
 
-    const keyStart = keyIdx + KEY_ATTRIBUTE_OPEN.length;
-    const keyEnd = tag.indexOf(ATTRIBUTE_CLOSE, keyStart);
+    const keyStart = keyIdx + 'key="'.length;
+    const keyEnd = tag.indexOf('"', keyStart);
+    if (keyEnd === -1) {
+      continue;
+    }
+
     const key = tag.substring(keyStart, keyEnd);
     if (key === "") {
       continue;
     }
 
-    const valueIdx = tag.indexOf(VALUE_ATTRIBUTE_OPEN);
+    const valueIdx = tag.indexOf('value="');
     if (valueIdx === -1) {
       continue;
     }
 
-    const valueStart = valueIdx + VALUE_ATTRIBUTE_OPEN.length;
-    const valueEnd = tag.indexOf(ATTRIBUTE_CLOSE, valueStart);
+    const valueStart = valueIdx + 'value="'.length;
+    const valueEnd = tag.indexOf('"', valueStart);
+    if (valueEnd === -1) {
+      continue;
+    }
+
     const value = tag.substring(valueStart, valueEnd);
 
     attributes[key] = parseAttribute(type, value);
+
+    const isSelfClosing = tag.endsWith("/");
+    if (!isSelfClosing) {
+      const closingTag = `</${type}>`;
+      const closingIdx = xml.indexOf(closingTag, position);
+      if (closingIdx !== -1) {
+        position = closingIdx + closingTag.length;
+      }
+    }
   }
 
   return attributes;
+}
+
+export function extractLogAttributesWithDOM(parent: Element): XesLogAttributes {
+  let globalEventAttributes: XesEventAttributes = {};
+  const classifiers: XesEventClassifiers = {};
+
+  let node = parent.firstElementChild;
+  while (node) {
+    if (node.tagName === "global") {
+      const scope = node.getAttribute("scope");
+      if (scope === "event") {
+        globalEventAttributes = extractAttributesWithDOM(node);
+      }
+    } else if (node.tagName === "classifier") {
+      const name = node.getAttribute("name");
+      const keys = node.getAttribute("keys");
+      if (name && name !== "" && keys) {
+        classifiers[name] = keys;
+      }
+    } else if (node.tagName === "trace") {
+      // Per spec, no more globals or classifiers after first trace
+      break;
+    }
+    node = node.nextElementSibling;
+  }
+
+  return { globalEventAttributes, eventClassifiers: classifiers };
+}
+
+export function extractLogAttributesWithRegex(xml: string): XesLogAttributes {
+  let globalEventAttributes: XesEventAttributes = {};
+  const classifiers: XesEventClassifiers = {};
+
+  // Per spec, <global> comes before <classifier>, so search <global> first
+  const globalRegex = /<global\s+scope="event"\s*>([\s\S]*?)<\/global>/g;
+  let globalMatch;
+  while ((globalMatch = globalRegex.exec(xml)) !== null) {
+    globalEventAttributes = extractAttributesWithRegex(globalMatch[1]);
+  }
+
+  // Per spec, <classifier> comes after <global>, so continue from current position
+  const classifierRegex = /<classifier\s+([^>]+?)\/?\s*>/g;
+  classifierRegex.lastIndex = globalRegex.lastIndex;
+  let classifierMatch;
+  while ((classifierMatch = classifierRegex.exec(xml)) !== null) {
+    const attrs = classifierMatch[1];
+    const nameMatch = /name="([^"]*)"/.exec(attrs);
+    const keysMatch = /keys="([^"]*)"/.exec(attrs);
+    if (nameMatch && nameMatch[1] !== "" && keysMatch) {
+      classifiers[nameMatch[1]] = keysMatch[1];
+    }
+  }
+
+  return {
+    globalEventAttributes,
+    eventClassifiers: classifiers,
+  } satisfies XesLogAttributes;
+}
+
+export function extractLogAttributesWithString(xml: string): XesLogAttributes {
+  let globalEventAttributes: XesEventAttributes = {};
+  const classifiers: XesEventClassifiers = {};
+
+  // Per spec, <global> comes before <classifier>, so search <global> first
+  let position = 0;
+  while ((position = xml.indexOf("<global", position)) !== -1) {
+    const globalTagEnd = xml.indexOf(">", position);
+    if (globalTagEnd === -1) {
+      break;
+    }
+
+    const globalTag = xml.substring(position, globalTagEnd + ">".length);
+    position = globalTagEnd + ">".length;
+
+    if (!globalTag.includes('scope="event"')) {
+      continue;
+    }
+
+    const globalClose = xml.indexOf("</global>", globalTagEnd);
+    if (globalClose === -1) {
+      continue;
+    }
+
+    const globalContent = xml.substring(position, globalClose);
+    globalEventAttributes = extractAttributesWithString(globalContent);
+
+    position = globalClose + "</global>".length;
+  }
+
+  // Per spec, <classifier> comes after <global>, so continue from current position
+  while ((position = xml.indexOf("<classifier", position)) !== -1) {
+    const classifierEnd = xml.indexOf(">", position);
+    if (classifierEnd === -1) {
+      break;
+    }
+
+    const tag = xml.substring(position, classifierEnd + ">".length);
+    position = classifierEnd + ">".length;
+
+    const nameIdx = tag.indexOf('name="');
+    if (nameIdx === -1) {
+      continue;
+    }
+
+    const nameStart = nameIdx + 'name="'.length;
+    const nameEnd = tag.indexOf('"', nameStart);
+    if (nameEnd === -1) {
+      continue;
+    }
+
+    const name = tag.substring(nameStart, nameEnd);
+    if (name === "") {
+      continue;
+    }
+
+    const keysIdx = tag.indexOf('keys="');
+    if (keysIdx === -1) {
+      continue;
+    }
+
+    const keysStart = keysIdx + 'keys="'.length;
+    const keysEnd = tag.indexOf('"', keysStart);
+    if (keysEnd === -1) {
+      continue;
+    }
+
+    const keys = tag.substring(keysStart, keysEnd);
+
+    classifiers[name] = keys;
+  }
+
+  return { globalEventAttributes, eventClassifiers: classifiers };
 }

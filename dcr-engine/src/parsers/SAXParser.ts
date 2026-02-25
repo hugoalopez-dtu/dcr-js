@@ -1,33 +1,68 @@
 import sax from "sax";
-import { createParser, type TraceCallback } from "./lib/factories";
 import {
-  type XesAttributes,
-  isAttributeTag,
+  type LogCallback,
+  type EventCallback,
+  createParser,
+} from "./lib/factories";
+import {
+  type XesTraceAttributes,
+  type XesEventAttributes,
+  type XesEventClassifiers,
+  isScalarAttributeTag,
   parseAttribute,
 } from "./lib/shared";
 
 export const SAXParser = createParser(parseWithSAX);
 
-async function parseWithSAX(file: File, onTrace: TraceCallback): Promise<void> {
+async function parseWithSAX(
+  file: File,
+  onEvent: EventCallback,
+  onLog?: LogCallback,
+): Promise<void> {
   const parser = sax.parser(true);
+  let preamble = true;
 
   let inTrace = false;
   let inEvent = false;
-  let traceAttributes: XesAttributes = {};
-  let eventAttributes: XesAttributes = {};
-  let events: XesAttributes[] = [];
+  let inGlobalEvent = false;
+  let traceAttributes: XesTraceAttributes = {};
+  let eventAttributes: XesEventAttributes = {};
+
+  const globalEventAttributes: XesEventAttributes = {};
+  const classifiers: XesEventClassifiers = {};
 
   parser.onopentag = (node) => {
     const tag = node.name;
 
-    if (tag === "trace") {
+    if (tag === "global") {
+      const scope = node.attributes.scope;
+      if (scope === "event") {
+        inGlobalEvent = true;
+      }
+    } else if (tag === "classifier") {
+      const name = node.attributes.name;
+      const keys = node.attributes.keys;
+      if (typeof name === "string" && typeof keys === "string") {
+        classifiers[name] = keys;
+      }
+    } else if (isScalarAttributeTag(tag) && inGlobalEvent) {
+      const key = node.attributes.key;
+      const value = node.attributes.value;
+      if (typeof key === "string" && key !== "" && typeof value === "string") {
+        globalEventAttributes[key] = parseAttribute(tag, value);
+      }
+    } else if (tag === "trace") {
+      if (preamble) {
+        preamble = false;
+        onLog?.({ globalEventAttributes, eventClassifiers: classifiers });
+      }
+
       inTrace = true;
       traceAttributes = {};
-      events = [];
     } else if (tag === "event" && inTrace) {
       inEvent = true;
       eventAttributes = {};
-    } else if (isAttributeTag(tag) && inTrace) {
+    } else if (isScalarAttributeTag(tag) && inTrace) {
       const key = node.attributes.key;
       const value = node.attributes.value;
       if (typeof key === "string" && key !== "" && typeof value === "string") {
@@ -42,13 +77,12 @@ async function parseWithSAX(file: File, onTrace: TraceCallback): Promise<void> {
   };
 
   parser.onclosetag = (tag) => {
-    if (tag === "event" && inEvent) {
-      events.push(eventAttributes);
+    if (tag === "global" && inGlobalEvent) {
+      inGlobalEvent = false;
+    } else if (tag === "event" && inEvent) {
+      onEvent(traceAttributes, eventAttributes);
       inEvent = false;
     } else if (tag === "trace" && inTrace) {
-      if (events.length > 0) {
-        onTrace({ traceAttributes, events });
-      }
       inTrace = false;
     }
   };
