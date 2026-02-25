@@ -31,7 +31,10 @@ async function parseWithStringUsingTraceBuffer(
         break;
       }
 
-      const eventXml = traceXml.substring(eventStart, eventEnd);
+      const eventXml = traceXml.substring(
+        eventStart + EVENT_START_TAG.length,
+        eventEnd,
+      );
       const eventAttributes = extractAttributesWithString(eventXml);
       events.push(eventAttributes);
 
