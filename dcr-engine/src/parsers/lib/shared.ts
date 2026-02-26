@@ -1,3 +1,6 @@
+// TODO: Add extraction support for "nested-attributes" extension, and "container" and "list" attributes,
+//       which will require modifying below types and extraction functions.
+
 export type XesEventClassifiers = {
   [name: string]: string; // keys
 };
@@ -5,8 +8,7 @@ export type XesEventClassifiers = {
 export type XesAttribute =
   | string // string
   | number // date, int, float
-  | boolean // boolean
-  | XesAttribute[]; // list, container
+  | boolean; // boolean
 
 export type XesAttributes = {
   [key: string]: XesAttribute;
@@ -27,24 +29,11 @@ export const SCALAR_TAG_NAMES = new Set([
   "int",
   "float",
   "boolean",
+  "id",
 ]);
-
-// TODO: Add support for "container" and "list" attributes
-
-export const COMPOUND_TAG_NAMES = new Set(["list", "container"]);
-
-export const TAG_NAMES = new Set([...SCALAR_TAG_NAMES, ...COMPOUND_TAG_NAMES]);
-
-export function isAttributeTag(tagName: string) {
-  return TAG_NAMES.has(tagName);
-}
 
 export function isScalarAttributeTag(tagName: string) {
   return SCALAR_TAG_NAMES.has(tagName);
-}
-
-export function isCompoundAttributeTag(tagName: string) {
-  return COMPOUND_TAG_NAMES.has(tagName);
 }
 
 export function parseAttribute(
@@ -61,7 +50,7 @@ export function parseAttribute(
     case "boolean":
       return value.toLowerCase() === "true";
     default:
-      return value;
+      return value; // string, id
   }
 }
 
@@ -245,7 +234,7 @@ export function extractAttributesWithRegex(xml: string) {
   const attributes: XesAttributes = {};
 
   const attributeRegex =
-    /<(string|date|int|float|boolean)\s+([^>]+?)(?:\/>|>[\s\S]*?<\/\1>)/g;
+    /<(string|date|int|float|boolean|id)\s+([^>]+?)(?:\/>|>[\s\S]*?<\/\1>)/g;
   let attributeMatch;
   while ((attributeMatch = attributeRegex.exec(xml)) !== null) {
     const type = attributeMatch[1];
@@ -407,7 +396,7 @@ export function extractLogAttributesWithRegex(xml: string): XesLogAttributes {
   return {
     globalEventAttributes,
     eventClassifiers: classifiers,
-  } satisfies XesLogAttributes;
+  };
 }
 
 export function extractLogAttributesWithString(xml: string): XesLogAttributes {
