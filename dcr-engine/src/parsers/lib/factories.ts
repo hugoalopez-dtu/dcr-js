@@ -99,11 +99,6 @@ function createEventClassifier(
   let rawKeys: string | undefined;
   if (classifierName in eventClassifiers) {
     rawKeys = eventClassifiers[classifierName];
-  } else {
-    const names = Object.keys(eventClassifiers);
-    if (names.length > 0) {
-      rawKeys = eventClassifiers[names[0]];
-    }
   }
 
   const classifierKeys = rawKeys
