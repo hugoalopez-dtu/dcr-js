@@ -247,7 +247,6 @@ export function parseBinaryLog(
     }
 
     trainingLog.events.add(event.activity);
-
     if (traceLabel === positiveClasifier) {
       if (!trainingLog.traces[traceId]) {
         trainingLog.traces[traceId] = [];
@@ -269,6 +268,5 @@ export function parseBinaryLog(
     gtLog[traceId] = traceLabel === positiveClasifier;
   }
 
-  testLog.events = trainingLog.events;
   return { trainingLog, testLog, gtLog };
 }
