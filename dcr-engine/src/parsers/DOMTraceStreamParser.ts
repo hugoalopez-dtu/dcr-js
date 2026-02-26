@@ -1,8 +1,13 @@
-import { createParser, type TraceCallback } from "./lib/factories";
 import {
-  type XesAttributes,
+  type LogCallback,
+  type EventCallback,
+  createParser,
+} from "./lib/factories";
+import {
+  CUSTOM_LOG_ATTRIBUTES_START_TAG,
   getXesTraceBlocks,
   extractAttributesWithDOM,
+  extractLogAttributesWithDOM,
 } from "./lib/shared";
 
 // Parser using XML buffer of size O(Trace)
@@ -11,23 +16,31 @@ export const DOMTraceStreamParser = createParser(parseWithDOMUsingTraceBuffer);
 
 async function parseWithDOMUsingTraceBuffer(
   file: File,
-  onTrace: TraceCallback,
+  onEvent: EventCallback,
+  onLog?: LogCallback,
 ): Promise<void> {
   const parser = new DOMParser();
 
-  for await (const traceXml of getXesTraceBlocks(file)) {
-    const document = parser.parseFromString(traceXml, "application/xml");
-    const traceNode = document.documentElement;
+  for await (const xml of getXesTraceBlocks(file)) {
+    const document = parser.parseFromString(xml, "application/xml");
+    const node = document.documentElement;
 
-    const events: XesAttributes[] = [];
+    const isLogAttributes = xml.startsWith(CUSTOM_LOG_ATTRIBUTES_START_TAG);
+    if (isLogAttributes) {
+      const header = extractLogAttributesWithDOM(node);
+      onLog?.(header);
+      continue;
+    }
 
-    const traceAttributes = extractAttributesWithDOM(traceNode, (eventNode) => {
-      const eventAttributes = extractAttributesWithDOM(eventNode);
-      events.push(eventAttributes);
-    });
+    const traceAttributes = extractAttributesWithDOM(node);
 
-    if (events.length > 0) {
-      onTrace({ traceAttributes, events });
+    let child = node.firstElementChild;
+    while (child) {
+      if (child.tagName === "event") {
+        const eventAttributes = extractAttributesWithDOM(child);
+        onEvent(traceAttributes, eventAttributes);
+      }
+      child = child.nextElementSibling;
     }
   }
 }

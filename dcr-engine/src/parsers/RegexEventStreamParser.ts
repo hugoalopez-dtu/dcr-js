@@ -1,9 +1,15 @@
-import { createParser, type TraceCallback } from "./lib/factories";
 import {
-  type XesAttributes,
-  EVENT_START_TAG,
+  type LogCallback,
+  type EventCallback,
+  createParser,
+} from "./lib/factories";
+import {
+  type XesTraceAttributes,
+  CUSTOM_LOG_ATTRIBUTES_START_TAG,
+  CUSTOM_TRACE_ATTRIBUTES_START_TAG,
   getXesEventBlocks,
   extractAttributesWithRegex,
+  extractLogAttributesWithRegex,
 } from "./lib/shared";
 
 // Parser using XML buffer of size O(Event)
@@ -16,29 +22,25 @@ export const RegexEventStreamParser = createParser(
 
 async function parseWithRegexUsingEventBuffer(
   file: File,
-  onTrace: TraceCallback,
+  onEvent: EventCallback,
+  onLog?: LogCallback,
 ): Promise<void> {
-  let traceAttributes: XesAttributes = {};
-  let events: XesAttributes[] = [];
+  let traceAttributes: XesTraceAttributes = {};
 
-  for await (const eventOrTraceAttributeXml of getXesEventBlocks(file)) {
-    const isTraceAttribute =
-      !eventOrTraceAttributeXml.startsWith(EVENT_START_TAG);
-
-    const attributes = extractAttributesWithRegex(eventOrTraceAttributeXml);
-
-    if (isTraceAttribute) {
-      if (events.length > 0) {
-        onTrace({ traceAttributes, events });
-      }
-      traceAttributes = attributes;
-      events = [];
-    } else {
-      events.push(attributes);
+  for await (const xml of getXesEventBlocks(file)) {
+    const isLogAttributes = xml.startsWith(CUSTOM_LOG_ATTRIBUTES_START_TAG);
+    if (isLogAttributes) {
+      const header = extractLogAttributesWithRegex(xml);
+      onLog?.(header);
+      continue;
     }
-  }
 
-  if (events.length > 0) {
-    onTrace({ traceAttributes, events });
+    const isTraceAttribute = xml.startsWith(CUSTOM_TRACE_ATTRIBUTES_START_TAG);
+    if (isTraceAttribute) {
+      traceAttributes = extractAttributesWithRegex(xml);
+    } else {
+      const eventAttributes = extractAttributesWithRegex(xml);
+      onEvent(traceAttributes, eventAttributes);
+    }
   }
 }
