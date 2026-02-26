@@ -1,9 +1,15 @@
-import { createParser, type TraceCallback } from "./lib/factories";
 import {
-  type XesAttributes,
-  EVENT_START_TAG,
+  type LogCallback,
+  type EventCallback,
+  createParser,
+} from "./lib/factories";
+import {
+  type XesTraceAttributes,
+  CUSTOM_LOG_ATTRIBUTES_START_TAG,
+  CUSTOM_TRACE_ATTRIBUTES_START_TAG,
   getXesEventBlocks,
   extractAttributesWithDOM,
+  extractLogAttributesWithDOM,
 } from "./lib/shared";
 
 // Parser using XML buffer of size O(Event)
@@ -14,37 +20,30 @@ export const DOMEventStreamParser = createParser(parseWithDOMUsingEventBuffer);
 
 async function parseWithDOMUsingEventBuffer(
   file: File,
-  onTrace: TraceCallback,
+  onEvent: EventCallback,
+  onLog?: LogCallback,
 ): Promise<void> {
-  let traceAttributes: XesAttributes = {};
-  let events: XesAttributes[] = [];
-
   const parser = new DOMParser();
 
-  for await (const eventOrTraceAttributeXml of getXesEventBlocks(file)) {
-    const isTraceAttribute =
-      !eventOrTraceAttributeXml.startsWith(EVENT_START_TAG);
+  let traceAttributes: XesTraceAttributes = {};
 
-    const document = parser.parseFromString(
-      eventOrTraceAttributeXml,
-      "application/xml",
-    );
-    const eventOrTraceAttributeNode = document.documentElement;
+  for await (const xml of getXesEventBlocks(file)) {
+    const document = parser.parseFromString(xml, "application/xml");
+    const node = document.documentElement;
 
-    const attributes = extractAttributesWithDOM(eventOrTraceAttributeNode);
-
-    if (isTraceAttribute) {
-      if (events.length > 0) {
-        onTrace({ traceAttributes, events });
-      }
-      traceAttributes = attributes;
-      events = [];
-    } else {
-      events.push(attributes);
+    const isLogAttributes = xml.startsWith(CUSTOM_LOG_ATTRIBUTES_START_TAG);
+    if (isLogAttributes) {
+      const header = extractLogAttributesWithDOM(node);
+      onLog?.(header);
+      continue;
     }
-  }
 
-  if (events.length > 0) {
-    onTrace({ traceAttributes, events });
+    const isTraceAttribute = xml.startsWith(CUSTOM_TRACE_ATTRIBUTES_START_TAG);
+    if (isTraceAttribute) {
+      traceAttributes = extractAttributesWithDOM(node);
+    } else {
+      const eventAttributes = extractAttributesWithDOM(node);
+      onEvent(traceAttributes, eventAttributes);
+    }
   }
 }

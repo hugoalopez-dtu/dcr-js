@@ -65,25 +65,38 @@ async function runProcessDiscoveryBenchmark(
       browserConsoleMessages.push(entry);
     });
 
+    client.on("Tracing.dataCollected", (event) => {
+      for (const e of event.value) {
+        if (
+          (e.cat?.includes("blink.user_timing") ||
+            e.cat?.includes("blink.console")) &&
+          (e.ph === "b" || e.ph === "e")
+        ) {
+          traceEvents.push(e);
+        } else if (e.name === "UpdateCounters") {
+          traceEvents.push(e);
+        }
+      }
+    });
+
     await client.send("Tracing.start", {
       transferMode: "ReportEvents",
       traceConfig: {
+        // The other flags are useful, if you want to open and view the trace file in Chrome
         includedCategories: [
-          "v8",
+          // "v8",
           "blink.console",
-          "devtools.timeline",
+          // "devtools.timeline",
           "disabled-by-default-devtools.timeline",
-          "disabled-by-default-v8.gc",
-          "disabled-by-default-memory-infra",
-          "toplevel",
+          // "disabled-by-default-v8.gc",
+          // "disabled-by-default-memory-infra",
+          // "toplevel",
           "blink.user_timing",
         ],
         memoryDumpConfig: {},
+        recordMode: "recordContinuously",
+        traceBufferSizeInKb: 524_288, // 512 MB
       },
-    });
-
-    client.on("Tracing.dataCollected", (event) => {
-      traceEvents.push(...event.value);
     });
 
     await page.goto(BASE_URL);
@@ -108,12 +121,11 @@ async function runProcessDiscoveryBenchmark(
 
     await client.send("HeapProfiler.collectGarbage");
 
-    await client.send("Tracing.end");
-    await new Promise<void>((resolve) =>
-      client.once("Tracing.tracingComplete", () => {
-        resolve();
-      }),
+    const tracingComplete = new Promise<void>((resolve) =>
+      client.once("Tracing.tracingComplete", () => resolve()),
     );
+    await client.send("Tracing.end");
+    await tracingComplete;
 
     const consoleMessages = await page.consoleMessages();
     const failedMessage = consoleMessages.find((msg) =>
@@ -219,25 +231,38 @@ async function runConformanceCheckingBenchmark(
       browserConsoleMessages.push(entry);
     });
 
+    client.on("Tracing.dataCollected", (event) => {
+      for (const e of event.value) {
+        if (
+          (e.cat?.includes("blink.user_timing") ||
+            e.cat?.includes("blink.console")) &&
+          (e.ph === "b" || e.ph === "e")
+        ) {
+          traceEvents.push(e);
+        } else if (e.name === "UpdateCounters") {
+          traceEvents.push(e);
+        }
+      }
+    });
+
     await client.send("Tracing.start", {
       transferMode: "ReportEvents",
       traceConfig: {
+        // The other flags are useful, if you want to open and view the trace file in Chrome
         includedCategories: [
-          "v8",
+          // "v8",
           "blink.console",
-          "devtools.timeline",
+          // "devtools.timeline",
           "disabled-by-default-devtools.timeline",
-          "disabled-by-default-v8.gc",
-          "disabled-by-default-memory-infra",
-          "toplevel",
+          // "disabled-by-default-v8.gc",
+          // "disabled-by-default-memory-infra",
+          // "toplevel",
           "blink.user_timing",
         ],
         memoryDumpConfig: {},
+        recordMode: "recordContinuously",
+        traceBufferSizeInKb: 524_288, // 512 MB
       },
-    });
-
-    client.on("Tracing.dataCollected", (event) => {
-      traceEvents.push(...event.value);
     });
 
     await page.goto(BASE_URL);
@@ -282,12 +307,11 @@ async function runConformanceCheckingBenchmark(
 
     await client.send("HeapProfiler.collectGarbage");
 
-    await client.send("Tracing.end");
-    await new Promise<void>((resolve) =>
-      client.once("Tracing.tracingComplete", () => {
-        resolve();
-      }),
+    const tracingComplete = new Promise<void>((resolve) =>
+      client.once("Tracing.tracingComplete", () => resolve()),
     );
+    await client.send("Tracing.end");
+    await tracingComplete;
 
     const consoleMessages = await page.consoleMessages();
     const failedMessage = consoleMessages.find((msg) =>

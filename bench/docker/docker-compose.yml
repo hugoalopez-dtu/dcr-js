@@ -45,7 +45,7 @@ services:
         limits:
           cpus: "2"
           memory: "4G"
-    command: /bin/bash -c "npm install && npx tsx ./runner/benchmark.ts"
+    command: /bin/bash -c "npm install && npx playwright install chromium && npx tsx ./runner/benchmark.ts"
 
 networks:
   dcr_net:
