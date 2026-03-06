@@ -3,6 +3,7 @@ import {
   useEffect,
   useEffectEvent,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { StateEnum, type StateProps } from "../App";
@@ -30,6 +31,8 @@ import {
   replayTraceS,
   type DCRGraphS,
   StringTraceStreamParser,
+  filterVariantByTopPercentage,
+  filterVariantByBottomPercentage,
 } from "dcr-engine";
 import { toast } from "react-toastify";
 import TraceView from "../utilComponents/TraceView";
@@ -57,6 +60,8 @@ import ReactiveModeler from "./ReactiveModeler";
 import emptyBoardXML from "../resources/emptyBoard";
 import Form from "../utilComponents/Form";
 import RawFileUpload from "../utilComponents/RawFileUpload";
+import Label from "../utilComponents/Label";
+import MenuElement from "../utilComponents/MenuElement";
 
 function logMemory(label: string) {
   if ("gc" in window && typeof window.gc === "function") {
@@ -126,6 +131,23 @@ const AlignButton = styled(BiSolidRocket)<{
       : ``}
 `;
 
+const Input = styled.input`
+  width: 7rem;
+  font-size: 20px;
+`;
+
+const Select = styled.select`
+  padding: 0.5rem;
+  font-size: 20px;
+  background-color: white;
+  border: 2px solid gainsboro;
+  cursor: pointer;
+  &:hover {
+    background-color: gainsboro;
+    color: white;
+  }
+`;
+
 const alignShowDesc = (
   trace: Trace,
   graph: LabelDCRPP,
@@ -171,6 +193,9 @@ const ConformanceCheckingState = ({
     useState<AlignmentLogResults>([]);
 
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
+
+  const variantsDirectionRef = useRef<HTMLSelectElement>(null);
+  const variantsPercentageRef = useRef<HTMLInputElement>(null);
 
   const selectedReplayTrace = useMemo(() => {
     if (!selectedTraceId) {
@@ -256,6 +281,15 @@ const ConformanceCheckingState = ({
 
   const performConformanceChecking = useCallback(
     (graph: DCRGraphS, log: EventLog<RoleTrace>) => {
+      const rawVariantsDirection = variantsDirectionRef.current?.value;
+      const variantsDirection =
+        rawVariantsDirection === "top" ? "top" : "bottom";
+      const rawVariantsPercentage = variantsPercentageRef.current?.value;
+      const variantsPercentage = rawVariantsPercentage
+        ? parseFloat(rawVariantsPercentage.toString()) / 100
+        : 1;
+      console.info("variants%", variantsPercentage, variantsDirection);
+
       try {
         logMemory("Before conformance checking");
         console.info("Started conformance checking...");
@@ -278,21 +312,48 @@ const ConformanceCheckingState = ({
         console.timeEnd("collect-variants");
         logMemory("After collecting variants");
 
+        console.info("Started variant filtering...");
+        console.time("filter-variants");
+        performance.mark("filter-variants-start");
+
+        if (variantsPercentage >= 1) {
+          console.info("No variant filtering will be applied to log.");
+        }
+
+        const filteredVariantLog =
+          variantsPercentage < 1
+            ? variantsDirection === "top"
+              ? filterVariantByTopPercentage(variantLog, variantsPercentage)
+              : filterVariantByBottomPercentage(variantLog, variantsPercentage)
+            : variantLog;
+
+        performance.mark("filter-variants-end");
+        performance.measure(
+          "filter-variants",
+          "filter-variants-start",
+          "filter-variants-end",
+        );
+        console.info("Finished variant filtering!");
+        console.timeEnd("filter-variants");
+        logMemory("After filtering variants");
+
         console.info("Started replaying log...");
         console.time("replay-log");
         performance.mark("replay-log-start");
 
         setReplayLogResults(
-          variantLog.variants.map(({ variantId, trace, count }, index) => {
-            return {
-              traceId: variantId,
-              traceName: `Trace Variant #${index + 1}`,
-              count,
-              frequency: count / variantLog.count,
-              trace,
-              isPositive: replayTraceS(graph, trace),
-            };
-          }),
+          filteredVariantLog.variants.map(
+            ({ variantId, trace, count }, index) => {
+              return {
+                traceId: variantId,
+                traceName: `Trace Variant #${index + 1}`,
+                count,
+                frequency: count / variantLog.count, // relative to the original log
+                trace,
+                isPositive: replayTraceS(graph, trace),
+              };
+            },
+          ),
         );
 
         performance.mark("replay-log-end");
@@ -307,14 +368,16 @@ const ConformanceCheckingState = ({
           performance.mark("quantify-violations-start");
 
           setViolationLogResults(
-            variantLog.variants.map(({ variantId, trace, count }, index) => ({
-              traceId: variantId,
-              traceName: `Trace Variant #${index + 1}`,
-              count,
-              frequency: count / variantLog.count,
-              trace,
-              results: quantifyViolations(graph, trace),
-            })),
+            filteredVariantLog.variants.map(
+              ({ variantId, trace, count }, index) => ({
+                traceId: variantId,
+                traceName: `Trace Variant #${index + 1}`,
+                count,
+                frequency: count / variantLog.count, // relative to the original log
+                trace,
+                results: quantifyViolations(graph, trace),
+              }),
+            ),
           );
 
           performance.mark("quantify-violations-end");
@@ -350,17 +413,19 @@ const ConformanceCheckingState = ({
           performance.mark("align-log-start");
 
           setAlignmentLogResults(
-            variantLog.variants.map(({ variantId, trace, count }, index) => ({
-              traceId: variantId,
-              traceName: `Trace Variant #${index + 1}`,
-              count,
-              frequency: count / variantLog.count,
-              trace,
-              results: alignShowDesc(
-                trace.map((event) => event.activity),
-                graphPP,
-              ),
-            })),
+            filteredVariantLog.variants.map(
+              ({ variantId, trace, count }, index) => ({
+                traceId: variantId,
+                traceName: `Trace Variant #${index + 1}`,
+                count,
+                frequency: count / variantLog.count, // relative to the original log
+                trace,
+                results: alignShowDesc(
+                  trace.map((event) => event.activity),
+                  graphPP,
+                ),
+              }),
+            ),
           );
 
           performance.mark("align-log-end");
@@ -668,6 +733,40 @@ const ConformanceCheckingState = ({
     },
     ...savedGraphElements(),
     ...savedLogElements(),
+    {
+      customElement: (
+        <MenuElement>
+          <Label>Select Variants</Label>
+          <Select
+            name="variantsDirection"
+            data-testid="variantsDirection"
+            defaultValue="top"
+            ref={variantsDirectionRef}
+          >
+            <option value="top">Most frequent</option>
+            <option value="bottom">Least frequent</option>
+          </Select>
+        </MenuElement>
+      ),
+    },
+    {
+      customElement: (
+        <MenuElement>
+          <Label>Variant % to keep</Label>
+          <Input
+            type="number"
+            required
+            data-testid="variantsPercentage"
+            name="variantsPercentage"
+            min="0"
+            max="100"
+            defaultValue="100"
+            step="1"
+            ref={variantsPercentageRef}
+          />
+        </MenuElement>
+      ),
+    },
     {
       customElement: (
         <Form

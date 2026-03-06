@@ -63,16 +63,17 @@ uv run bin/run.py <name> [options]
 
 ### Options
 
-| Flag               | Description                                  | Default |
-| :----------------- | :------------------------------------------- | :------ |
-| `--type`           | `discovery`, `conformance`, or `all`         | `all`   |
-| `--iterations N`   | Number of iterations per log                 | `20`    |
-| `--timeout N`      | Timeout per step in ms                       | `90000` |
-| `--top-variants N` | Top variants to filter for Process Discovery | `100`   |
-| `--no-save-models` | Skip downloading output models (XML/SVG)     | off     |
-| `--no-snapshot`    | Skip source code snapshot                    | off     |
-| `--no-save-image`  | Skip saving the Docker image as `.tar`       | off     |
-| `--no-analyze`     | Skip running analysis after the benchmark    | off     |
+| Flag                      | Description                                        | Default |
+| :------------------------ | :------------------------------------------------- | :------ |
+| `--type`                  | `discovery`, `conformance`, or `all`               | `all`   |
+| `--iterations N`          | Number of iterations per log                       | `20`    |
+| `--timeout N`             | Timeout per step in ms                             | `90000` |
+| `--variants-percentage N` | Percentage of variants to keep                     | `100`   |
+| `--variants-direction D`  | `top` (most frequent) or `bottom` (least frequent) | `top`   |
+| `--no-save-models`        | Skip downloading output models (XML/SVG)           | off     |
+| `--no-snapshot`           | Skip source code snapshot                          | off     |
+| `--no-save-image`         | Skip saving the Docker image as `.tar`             | off     |
+| `--no-analyze`            | Skip running analysis after the benchmark          | off     |
 
 ### Examples
 

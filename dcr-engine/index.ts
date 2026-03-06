@@ -25,6 +25,7 @@ import { moddleToDCR } from "./src/graphConversion";
 import {
   copyMarking,
   filterVariantByTopPercentage,
+  filterVariantByBottomPercentage,
   getBinaryVariants,
   getVariants,
 } from "./src/utility";
@@ -98,6 +99,7 @@ export {
   rejectionMiner,
   getBinaryVariants,
   filterVariantByTopPercentage,
+  filterVariantByBottomPercentage,
   StringTraceStreamParser,
   RegexTraceStreamParser,
   DOMTraceStreamParser,

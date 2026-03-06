@@ -9,6 +9,7 @@ import {
   type EventLog,
   filter,
   filterVariantByTopPercentage,
+  filterVariantByBottomPercentage,
   getBinaryVariants,
   getVariants,
   layoutGraph,
@@ -68,6 +69,18 @@ const FileInput = styled.div`
 const Input = styled.input`
   width: 7rem;
   font-size: 20px;
+`;
+
+const Select = styled.select`
+  padding: 0.5rem;
+  font-size: 20px;
+  background-color: white;
+  border: 2px solid gainsboro;
+  cursor: pointer;
+  &:hover {
+    background-color: gainsboro;
+    color: white;
+  }
 `;
 
 const initGraphName = "";
@@ -158,16 +171,33 @@ const DiscoveryState = ({
           />
         </MenuElement>,
         <MenuElement>
-          <Label>Top Variants %</Label>
+          <Label>Select Variants</Label>
+          <Select
+            name="variantsDirection"
+            data-testid="variantsDirection"
+            defaultValue={
+              customFormState?.variantsDirection
+                ? customFormState.variantsDirection
+                : "top"
+            }
+          >
+            <option value="top">Most frequent</option>
+            <option value="bottom">Least frequent</option>
+          </Select>
+        </MenuElement>,
+        <MenuElement>
+          <Label>Variant % to keep</Label>
           <Input
             type="number"
             required
-            data-testid="topVariants"
-            name="topVariants"
+            data-testid="variantsPercentage"
+            name="variantsPercentage"
             min="0"
             max="100"
             defaultValue={
-              customFormState?.topVariants ? customFormState.topVariants : "100"
+              customFormState?.variantsPercentage
+                ? customFormState.variantsPercentage
+                : "100"
             }
             step="1"
           />
@@ -192,18 +222,22 @@ const DiscoveryState = ({
         const threshold = rawThreshold && parseFloat(rawThreshold.toString());
         const nest = !!formData.get("nest");
         const save = !!formData.get("save");
-        const rawTopVarints = formData.get("topVariants");
-        const topVariants = rawTopVarints
-          ? parseFloat(rawTopVarints.toString()) / 100
+        const rawVariantsDirection = formData.get("variantsDirection");
+        const variantsDirection =
+          rawVariantsDirection === "bottom" ? "bottom" : "top";
+        const rawVariantsPercentage = formData.get("variantsPercentage");
+        const variantsPercentage = rawVariantsPercentage
+          ? parseFloat(rawVariantsPercentage.toString()) / 100
           : 1;
-        console.info("Top variants: ", topVariants);
+        console.info("variants%", variantsPercentage, variantsDirection);
 
         setCustomFormState({
           ...customFormState,
           threshold,
           nest,
           save,
-          topVariants: rawTopVarints,
+          variantsDirection: rawVariantsDirection,
+          variantsPercentage: rawVariantsPercentage,
         });
 
         const logFile = customFormState?.logFile;
@@ -263,13 +297,18 @@ const DiscoveryState = ({
           console.time("filter-variants");
           performance.mark("filter-variants-start");
 
-          if (topVariants >= 1) {
+          if (variantsPercentage >= 1) {
             console.info("No variant filtering will be applied to log.");
           }
 
           const filteredVariantLog =
-            topVariants < 1
-              ? filterVariantByTopPercentage(variantLog, topVariants)
+            variantsPercentage < 1
+              ? variantsDirection === "top"
+                ? filterVariantByTopPercentage(variantLog, variantsPercentage)
+                : filterVariantByBottomPercentage(
+                    variantLog,
+                    variantsPercentage,
+                  )
               : variantLog;
 
           performance.mark("filter-variants-end");

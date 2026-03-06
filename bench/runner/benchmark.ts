@@ -12,7 +12,8 @@ type BenchmarkStatus = "passed" | "failed" | "timedOut" | "unknown";
 const ITERATIONS = parseInt(process.env.BENCH_ITERATIONS || "20", 10);
 const TIMEOUT = parseInt(process.env.BENCH_TIMEOUT || "90000", 10);
 const SAVE_MODELS = (process.env.BENCH_SAVE_MODELS || "true") === "true";
-const TOP_VARIANTS = process.env.BENCH_TOP_VARIANTS || "100";
+const VARIANTS_PERCENTAGE = process.env.BENCH_VARIANTS_PERCENTAGE || "100";
+const VARIANTS_DIRECTION = process.env.BENCH_VARIANTS_DIRECTION || "top";
 
 const OUTPUT_DIR = process.env.EXP_OUTPUT_DIR
   ? process.env.EXP_OUTPUT_DIR
@@ -108,7 +109,10 @@ async function runProcessDiscoveryBenchmark(
       .getByLabel("Select event log")
       .setInputFiles(path.join(LOGS_DIR, logFile));
 
-    await page.getByTestId("topVariants").fill(TOP_VARIANTS);
+    await page
+      .getByTestId("variantsDirection")
+      .selectOption(VARIANTS_DIRECTION);
+    await page.getByTestId("variantsPercentage").fill(VARIANTS_PERCENTAGE);
 
     const waitForDiscovery = page.waitForEvent("console", {
       predicate: (msg) => msg.text().includes("Finished discovery!"),
@@ -293,6 +297,11 @@ async function runConformanceCheckingBenchmark(
       .setInputFiles(path.join(MODELS_DIR, modelFile));
 
     await waitForModel;
+
+    await page
+      .getByTestId("variantsDirection")
+      .selectOption(VARIANTS_DIRECTION);
+    await page.getByTestId("variantsPercentage").fill(VARIANTS_PERCENTAGE);
 
     await Promise.all([
       page.getByRole("button", { name: "Check!" }).click({
