@@ -104,6 +104,23 @@ const DEFAULT_EVENT_LOG = {
 
 const DEFAULT_SELECTED_TRACE = "Trace 0";
 
+function isDefaultEventLog(traces: Record<string, { trace: RoleTrace }>) {
+  const keys = Object.keys(traces);
+  if (keys.length === 0) {
+    return true;
+  }
+
+  if (
+    keys.length === 1 &&
+    keys[0] === DEFAULT_SELECTED_TRACE &&
+    traces[keys[0]].trace.length === 0
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 const DEFAULT_SIMULATION_STATUS = SimulatingEnum.Default;
 
 const SimulatorState = ({
@@ -287,7 +304,8 @@ const SimulatorState = ({
   const resetSelectedTrace = useCallback(() => {
     if (selectedTraceId === null) return;
     resetTrace(selectedTraceId);
-  }, [selectedTraceId, resetTrace]);
+    resetCurrentDcrGraph();
+  }, [selectedTraceId, resetTrace, resetCurrentDcrGraph]);
 
   const [simulationStatus, setSimulationStatus] = useState<SimulatingEnum>(
     DEFAULT_SIMULATION_STATUS,
@@ -296,7 +314,7 @@ const SimulatorState = ({
   const openLog = useCallback(
     (name: string, log: EventLog<RoleTrace>) => {
       if (
-        Object.keys(eventLog.traces).length === 0 ||
+        isDefaultEventLog(eventLog.traces) ||
         confirm(
           "This will override your current event log! Do you wish to continue?",
         )
@@ -355,7 +373,7 @@ const SimulatorState = ({
       toast.error("Multi-instance subprocesses not supported...");
     } else {
       if (
-        Object.keys(eventLog.traces).length === 0 ||
+        isDefaultEventLog(eventLog.traces) ||
         confirm(
           "This will override your current event log! Do you wish to continue?",
         )
@@ -363,7 +381,9 @@ const SimulatorState = ({
         if (parse) {
           parse(data)
             .then(() => {
-              resetEventLog();
+              setSimulationStatus(DEFAULT_SIMULATION_STATUS);
+              setEventLog(DEFAULT_EVENT_LOG);
+              setSelectedTraceId(DEFAULT_SELECTED_TRACE);
             })
             .catch((e) => {
               console.log(e);
@@ -436,6 +456,7 @@ const SimulatorState = ({
     setEventLog(eventLogCopy);
 
     setSimulationStatus(SimulatingEnum.Not);
+    resetCurrentDcrGraph();
   };
 
   function savedGraphElements() {
@@ -585,12 +606,6 @@ const SimulatorState = ({
 
     modeler
       .importXML(currentGraph?.graph ?? emptyBoardXML)
-      .then(() => {
-        if (currentLog) {
-          openLog(currentLog.name, currentLog.log);
-        }
-        // otherwise use the default log
-      })
       .catch((e: Error) => console.log(e));
   });
 
