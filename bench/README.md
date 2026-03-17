@@ -23,33 +23,27 @@ bench/
 
 ## 1. Download Datasets
 
-The XES log files are too large for git. Use the download script to fetch them from 4TU.ResearchData and Kaggle:
+The XES log files are too large for git. Use the download script to fetch them from 4TU.ResearchData:
 
 ```bash
 uv run --with requests,tqdm bin/download.py
-```
-
-Dataset #02 (Sepsis Cases) requires Kaggle credentials:
-
-```bash
-uv run --with requests,tqdm bin/download.py --kaggle-username YOUR_USER --kaggle-key YOUR_KEY
 ```
 
 ### Dataset Manifest
 
 | ID  | Name                              | Source | Size (Approx) |
 | :-- | :-------------------------------- | :----- | :------------ |
-| 01  | Artificial Event Log (0% Noise)   | 4TU    | 192 MB        |
-| 02  | Sepsis Cases                      | Kaggle | 5.4 MB        |
+| 01  | Artificial Event Log (0% Noise)   | 4TU    | 193 MB        |
+| 02  | Sepsis Cases                      | 4TU    | 5 MB          |
 | 03  | BPI Challenge 2020                | 4TU    | 15 MB         |
-| 04  | BPI Challenge 2013                | 4TU    | 39 MB         |
+| 04  | BPI Challenge 2013                | 4TU    | 40 MB         |
 | 05  | Synthetic Review Example          | 4TU    | 69 MB         |
 | 06  | BPI Challenge 2012                | 4TU    | 74 MB         |
-| 07  | BPI Challenge 2017                | 4TU    | 109 MB        |
+| 07  | BPI Challenge 2017                | 4TU    | 110 MB        |
 | 08  | Hospital Billing                  | 4TU    | 174 MB        |
 | 09  | Large Bank Transaction (No Noise) | 4TU    | 162 MB        |
 | 10  | Road Traffic Fine Management      | 4TU    | 185 MB        |
-| 11  | BPI Challenge 2019                | 4TU    | 728 MB        |
+| 11  | BPI Challenge 2019                | 4TU    | 729 MB        |
 
 All datasets are used under their respective Open Access licenses (CC-BY 4.0).
 
