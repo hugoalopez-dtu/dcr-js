@@ -97,6 +97,7 @@ const DiscoveryState = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [customFormState, setCustomFormState] = useState<any>();
   const [graphName, setGraphName] = useState<string>(initGraphName);
+  const [lastSavedXML, setLastSavedXML] = useState<string | null>(null);
 
   const saveLog = (eventLog: EventLog<RoleTrace>, name: string) => {
     commitSaveLog(name, eventLog);
@@ -610,6 +611,7 @@ const DiscoveryState = ({
       const data = await modeler.saveXML({ format: false });
       if (commitSaveGraph(graphName, data.xml)) {
         toast.success("Graph saved!");
+        setLastSavedXML(data.xml);
         saved = true;
       }
     } catch {
@@ -779,9 +781,30 @@ const DiscoveryState = ({
       <TopRightIcons>
         <FullScreenIcon data-testid="full-screen-icon" />
         <BiHome
-          onClick={() => {
-            if (graphName) saveGraph();
-            setState(StateEnum.Home);
+          onClick={async () => {
+            if (!modeler) {
+              setState(StateEnum.Home);
+              return;
+            }
+
+            try {
+              const data = await modeler.saveXML({ format: false });
+              const hasUnsavedChanges =
+                lastSavedXML !== null && data.xml !== lastSavedXML;
+              if (hasUnsavedChanges) {
+                const wantSave = window.confirm(
+                  "You have unsaved changes. Save before leaving?",
+                );
+                if (wantSave) {
+                  const saved = await saveGraph();
+                  if (!saved) {
+                    return;
+                  }
+                }
+              }
+            } finally {
+              setState(StateEnum.Home);
+            }
           }}
           data-testid="home-icon"
         />
