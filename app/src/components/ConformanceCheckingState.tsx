@@ -172,6 +172,13 @@ const ConformanceCheckingState = ({
 
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
 
+  const resetAllResults = useCallback(() => {
+    setReplayLogResults([]);
+    setViolationLogResults([]);
+    setAlignmentLogResults([]);
+    setSelectedTraceId(null);
+  }, []);
+
   const selectedReplayTrace = useMemo(() => {
     if (!selectedTraceId) {
       return null;
@@ -476,6 +483,7 @@ const ConformanceCheckingState = ({
             try {
               await modeler.importXML(graph);
               pickGraph(name);
+              resetAllResults();
             } catch (e) {
               console.log(e);
               toast.error("Unable to parse XML...");
