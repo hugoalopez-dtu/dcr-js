@@ -91,7 +91,11 @@ const App = () => {
 
   const saveGraph = useCallback(
     (name: string, graph: string) => {
-      if (!graphs.has(name) || window.confirm("Overwrite existing graph?")) {
+      if (
+        !graphs.has(name) ||
+        name === currentGraphName ||
+        window.confirm("Overwrite existing graph?")
+      ) {
         setGraphs((prev) => {
           const newMap = new Map(prev);
           newMap.set(name, { name, graph });
@@ -102,12 +106,16 @@ const App = () => {
       }
       return false;
     },
-    [graphs],
+    [graphs, currentGraphName],
   );
 
   const saveLog = useCallback(
     (name: string, log: EventLog<RoleTrace>) => {
-      if (!logs.has(name) || window.confirm("Overwrite existing log?")) {
+      if (
+        !logs.has(name) ||
+        name === currentLogName ||
+        window.confirm("Overwrite existing log?")
+      ) {
         setLogs((prev) => {
           const newMap = new Map(prev);
           newMap.set(name, { name, log });
@@ -118,7 +126,7 @@ const App = () => {
       }
       return false;
     },
-    [logs],
+    [logs, currentLogName],
   );
 
   const pickGraph = useCallback(
