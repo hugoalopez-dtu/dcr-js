@@ -1,6 +1,5 @@
 import os
 import sys
-import argparse
 import requests
 import hashlib
 import gzip
@@ -27,9 +26,9 @@ DATASETS = [
     {
         "id": "02",
         "target_filename": "02 Sepsis Cases - Event Log.xes",
-        "url": "https://www.kaggle.com/api/v1/datasets/download/asjad99/sepsis-treatment-careflow",
-        "md5": None,
-        "pipeline": [{"action": "kaggle_download"}, {"action": "unzip_extract", "src": "Sepsis Cases - Event Log.xes"}]
+        "url": "https://data.4tu.nl/file/33632f3c-5c48-40cf-8d8f-2db57f5a6ce7/643dccf2-985a-459e-835c-a82bce1c0339",
+        "md5": "b5671166ac71eb20680d3c74616c43d2",
+        "pipeline": [{"action": "ungzip"}]
     },
     {
         "id": "03",
@@ -110,13 +109,10 @@ def calculate_md5(file_path):
     return hash_md5.hexdigest()
 
 
-def download_file(url, temp_path, auth=None):
+def download_file(url, temp_path):
     print(f"Downloading: {url}...")
     try:
-        with requests.get(url, stream=True, auth=auth) as r:
-            if r.status_code == 401 or r.status_code == 403:
-                raise PermissionError(
-                    "Authentication failed. Check --kaggle-username and --kaggle-key.")
+        with requests.get(url, stream=True) as r:
             r.raise_for_status()
             total_size = int(r.headers.get('content-length', 0))
             with open(temp_path, 'wb') as f, tqdm(total=total_size, unit='B', unit_scale=True) as bar:
@@ -129,7 +125,7 @@ def download_file(url, temp_path, auth=None):
         raise e
 
 
-def run_pipeline(ds, kaggle_auth=None):
+def run_pipeline(ds):
     final_path = os.path.join(OUTPUT_DIR, ds['target_filename'])
 
     if os.path.exists(final_path):
@@ -140,28 +136,18 @@ def run_pipeline(ds, kaggle_auth=None):
     temp_dl = os.path.join(OUTPUT_DIR, f"temp_dl_{ds['id']}")
 
     try:
-        if ds['pipeline'][0]['action'] == 'kaggle_download':
-            if not kaggle_auth:
-                print(
-                    "Skipping Kaggle dataset (no --kaggle-username / --kaggle-key provided).")
+        download_file(ds['url'], temp_dl)
+        if ds.get('md5'):
+            print("Verifying MD5...")
+            if calculate_md5(temp_dl) != ds['md5']:
+                print("MD5 mismatch!")
+                os.remove(temp_dl)
                 return
-            elif not os.path.exists(temp_dl):
-                download_file(ds['url'], temp_dl, auth=kaggle_auth)
-
-        else:
-            download_file(ds['url'], temp_dl)
-            if ds.get('md5'):
-                print("Verifying MD5...")
-                if calculate_md5(temp_dl) != ds['md5']:
-                    print("MD5 mismatch!")
-                    os.remove(temp_dl)
-                    return
-                print("MD5 verified!")
+            print("MD5 verified!")
 
         current_file = temp_dl
-        start_index = 1 if ds['pipeline'][0]['action'] == 'kaggle_download' else 0
 
-        for step in ds['pipeline'][start_index:]:
+        for step in ds['pipeline']:
             action = step['action']
 
             if action == 'direct':
@@ -219,15 +205,7 @@ def run_pipeline(ds, kaggle_auth=None):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Download benchmark datasets")
-    parser.add_argument("--kaggle-username", help="Kaggle username")
-    parser.add_argument("--kaggle-key", help="Kaggle API key")
-    args = parser.parse_args()
-
-    kaggle_auth = (
-        args.kaggle_username, args.kaggle_key) if args.kaggle_username and args.kaggle_key else None
-
     print("Processing datasets...")
     for ds in DATASETS:
-        run_pipeline(ds, kaggle_auth=kaggle_auth)
+        run_pipeline(ds)
     print("\nAll datasets processed.")
