@@ -176,6 +176,8 @@ const ConformanceCheckingState = ({
     setViolationLogResults([]);
     setAlignmentLogResults([]);
     setSelectedTraceId(null);
+    setHeatmapMode(false);
+    setAlignmentMode(false);
   }, []);
 
   const selectedReplayTrace = useMemo(() => {
