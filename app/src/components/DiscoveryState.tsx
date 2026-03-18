@@ -922,9 +922,10 @@ const DiscoveryState = ({
                   }
                 }
               }
-            } finally {
-              setState(StateEnum.Home);
+            } catch {
+              // Do nothing
             }
+            setState(StateEnum.Home);
           }}
           data-testid="home-icon"
         />
