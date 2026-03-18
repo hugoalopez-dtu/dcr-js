@@ -92,8 +92,6 @@ const ModelerState = ({
     currentGraph?.name ?? initGraphName,
   );
 
-  const [lastSavedXML, setLastSavedXML] = useState<string | null>(null);
-
   async function saveGraph() {
     if (!modeler) {
       return;
@@ -106,7 +104,6 @@ const ModelerState = ({
       const data = await modeler.saveXML({ format: false });
       if (commitSaveGraph(graphName, data.xml)) {
         toast.success("Graph saved!");
-        setLastSavedXML(data.xml);
         saved = true;
       }
     } catch {
@@ -395,10 +392,6 @@ const ModelerState = ({
 
     modeler
       .importXML(currentGraph?.graph ?? emptyBoardXML)
-      .then(async () => {
-        const data = await modeler.saveXML({ format: false });
-        setLastSavedXML(data.xml);
-      })
       .catch((e: Error) => {
         console.log(e);
         toast.error("Unable to import XML...");
@@ -462,30 +455,16 @@ const ModelerState = ({
         <FullScreenIcon data-testid="fullscreen-icon" />
         <BiHome
           onClick={async () => {
-            if (!modeler) {
-              setState(StateEnum.Home);
+            const saved = await saveGraph();
+            if (
+              !saved &&
+              !window.confirm(
+                "Graph wasn't saved. Are you sure you wish to exit modeler?",
+              )
+            ) {
               return;
             }
-
-            try {
-              const data = await modeler.saveXML({ format: false });
-              const hasUnsavedChanges =
-                data.xml !== lastSavedXML && data.xml !== emptyBoardXML;
-
-              if (hasUnsavedChanges) {
-                const wantSave = window.confirm(
-                  "You have unsaved changes. Save before leaving?",
-                );
-                if (wantSave) {
-                  const saved = await saveGraph();
-                  if (!saved) {
-                    return;
-                  }
-                }
-              }
-            } finally {
-              setState(StateEnum.Home);
-            }
+            setState(StateEnum.Home);
           }}
           data-testid="home-icon"
         />
