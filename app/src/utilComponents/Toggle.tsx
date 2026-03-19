@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { type ChangeEvent } from "react";
 import styled from "styled-components";
 
 const Label = styled.label`
@@ -44,17 +44,14 @@ const Input = styled.input`
 `;
 
 interface ToggleProps {
-  initChecked: boolean;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
 }
 
-const Toggle = ({ initChecked, onChange }: ToggleProps) => {
-  const [checked, setChecked] = useState(initChecked);
-
+const Toggle = ({ checked, onChange }: ToggleProps) => {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onChange(e);
-    setChecked(e.target.checked);
-  }
+    onChange?.(e.target.checked);
+  };
 
   return (
     <Label>
@@ -64,4 +61,4 @@ const Toggle = ({ initChecked, onChange }: ToggleProps) => {
   );
 };
 
-export default Toggle
+export default Toggle;

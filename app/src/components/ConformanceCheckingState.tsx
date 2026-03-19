@@ -1,23 +1,46 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { StateEnum, StateProps } from "../App";
-import Modeler from "./Modeler";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useState,
+} from "react";
+import { StateEnum, type StateProps } from "../App";
 import TopRightIcons from "../utilComponents/TopRightIcons";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
-import { BiHome, BiLeftArrowCircle, BiSolidFlame, BiSolidRocket, BiUpload } from "react-icons/bi";
-import ModalMenu, { ModalMenuElement } from "../utilComponents/ModalMenu";
-import Toggle from "../utilComponents/Toggle";
-import DropDown from "../utilComponents/DropDown";
-import { AlignmentLogResults, isSettingsVal, ReplayLogResults, ViolationLogResults } from "../types";
-import { alignTrace, copyMarking, mergeViolations, moddleToDCR, parseLog, quantifyViolations } from "dcr-engine";
+import {
+  BiHome,
+  BiLeftArrowCircle,
+  BiSolidFlame,
+  BiSolidRocket,
+  BiUpload,
+} from "react-icons/bi";
+import ModalMenu, { type ModalMenuElement } from "../utilComponents/ModalMenu";
+import {
+  type AlignmentLogResults,
+  type ReplayLogResults,
+  type ViolationLogResults,
+} from "../types";
+import {
+  alignTrace,
+  mergeViolations,
+  moddleToDCR,
+  parseRoleLog,
+  quantifyViolations,
+} from "dcr-engine";
 import { toast } from "react-toastify";
-import FileUpload from "../utilComponents/FileUpload";
 import { replayTraceS } from "dcr-engine";
-import { DCRGraphS } from "dcr-engine";
+import type { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
-import { EventLog, LabelDCRPP, RelationActivations, RelationViolations, RoleTrace, Trace } from "dcr-engine/src/types";
+import type {
+  EventLog,
+  LabelDCRPP,
+  RelationActivations,
+  RelationViolations,
+  RoleTrace,
+  Trace,
+} from "dcr-engine/src/types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
-import MenuElement from "../utilComponents/MenuElement";
-import Label from "../utilComponents/Label";
 import ReplayResults from "./ReplayResults";
 import styled from "styled-components";
 import HeatmapResults from "./HeatmapResults";
@@ -25,210 +48,456 @@ import { graphToGraphPP } from "dcr-engine/src/align";
 import AlignmentResults from "./AlignmentResults";
 import AlignmentTraceView from "./AlignmentTraceView";
 import { mergeActivations } from "dcr-engine/src/conformance";
+import {
+  ColoredRelationsSetting,
+  MarkerNotationSetting,
+} from "./GlobalModalMenuElements";
+import ReactiveModeler from "./ReactiveModeler";
+import emptyBoardXML from "../resources/emptyBoard";
+import Form from "../utilComponents/Form";
+import RawFileUpload from "../utilComponents/RawFileUpload";
 
-const HeatmapButton = styled(BiSolidFlame) <{ $clicked: boolean, $disabled?: boolean }>`
-    ${props => props.$clicked ? `
-        background-color: black !important;
-        color: white;
-    ` : ``}
-    ${props => props.$disabled ? `
-        color : grey;
-        border-color: grey !important;
-        cursor: default !important;
-        &:hover {
-            box-shadow: none !important;
-        }    
-    ` : ""}
-`
+function logMemory(label: string) {
+  if ("gc" in window && typeof window.gc === "function") {
+    window.gc();
+  }
 
-const AlignButton = styled(BiSolidRocket) <{ $clicked: boolean, $disabled?: boolean }>`
-    ${props => props.$clicked ? `
-        background-color: black !important;
-        color: white;
-    ` : ``}
-    ${props => props.$disabled ? `
-        color : grey;
-        border-color: grey !important;
-        cursor: default !important;
-        &:hover {
-            box-shadow: none !important;
-        }    
-    ` : ""}
-`
+  // @ts-expect-error: Only available in some browsers
+  const mem = window.performance.memory
+    ? // @ts-expect-error: Only available in some browsers
+      window.performance.memory.usedJSHeapSize
+    : 0;
 
-const alignShowDesc = (trace: Trace, graph: LabelDCRPP): { cost: number, trace: Trace } => {
-  const alignment = alignTrace(trace, graph);
-  return { cost: alignment.cost, trace: alignment.trace.map(event => graph.labelMap[event]) }
+  console.info(`[${label}] Memory: ${(mem / 1024 / 1024).toFixed(2)} MB`);
 }
 
-const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedGraph, lastSavedLog }: StateProps) => {
-  const [menuOpen, setMenuOpen] = useState(false);
+interface ConformanceCheckingSummary {
+  totalViolations: number;
+  violations: RelationViolations;
+  activations: RelationActivations;
+}
+
+const HeatmapButton = styled(BiSolidFlame)<{
+  $clicked: boolean;
+  $disabled?: boolean;
+}>`
+  ${(props) =>
+    props.$clicked
+      ? `
+        background-color: black !important;
+        color: white;
+      `
+      : ``}
+  ${(props) =>
+    props.$disabled
+      ? `
+        color : grey;
+        border-color: grey !important;
+        cursor: default !important;
+        &:hover {
+          box-shadow: none !important;
+        }    
+      `
+      : ``}
+`;
+
+const AlignButton = styled(BiSolidRocket)<{
+  $clicked: boolean;
+  $disabled?: boolean;
+}>`
+  ${(props) =>
+    props.$clicked
+      ? `
+        background-color: black !important;
+        color: white;
+      `
+      : ``}
+  ${(props) =>
+    props.$disabled
+      ? `
+        color : grey;
+        border-color: grey !important;
+        cursor: default !important;
+        &:hover {
+          box-shadow: none !important;
+        }    
+      `
+      : ``}
+`;
+
+const alignShowDesc = (
+  trace: Trace,
+  graph: LabelDCRPP,
+): { cost: number; trace: Trace } => {
+  const alignment = alignTrace(trace, graph);
+
+  return {
+    cost: alignment.cost,
+    trace: alignment.trace.map((event) => graph.labelMap[event]),
+  };
+};
+
+const ConformanceCheckingState = ({
+  savedGraphs,
+  savedLogs,
+  setState,
+  currentGraph,
+  currentLog,
+  saveGraph,
+  saveLog,
+  pickGraph,
+  pickLog,
+  markerNotation,
+  changeMarkerNotation,
+  coloredRelations,
+  changeColoredRelations,
+}: StateProps) => {
+  const [menuOpen, setMenuOpen] = useState(true);
   const [heatmapMode, setHeatmapMode] = useState(false);
   const [alignmentMode, setAlignmentMode] = useState(false);
 
-  const modelerRef = useRef<DCRModeler | null>(null);
-  const graphRef = useRef<{ initial: DCRGraphS, current: DCRGraphS } | null>(null);
+  const [modeler, setModeler] = useState<DCRModeler | null>(null);
+  const [currentDcrGraph, setCurrentDcrGraph] = useState<DCRGraphS | null>(
+    null,
+  );
 
-  const [logResults, setLogResults] = useState<ReplayLogResults>([]);
-  const [violationLogResults, setViolationLogResults] = useState<ViolationLogResults>([]);
-  const [alignmentLogResults, setAlignmentLogResults] = useState<AlignmentLogResults>([]);
+  const [replayLogResults, setReplayLogResults] = useState<ReplayLogResults>(
+    [],
+  );
+  const [violationLogResults, setViolationLogResults] =
+    useState<ViolationLogResults>([]);
+  const [alignmentLogResults, setAlignmentLogResults] =
+    useState<AlignmentLogResults>([]);
 
-  const [logName, setLogName] = useState<string>("");
-  const [selectedTrace, setSelectedTrace] = useState<{ traceId: string, traceName: string, trace: RoleTrace, results?: { cost: number, trace: Trace } } | null>(null);
+  const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
 
-  const nestingRef = useRef<boolean>(true);
-  const roleSPRef = useRef<boolean>(true);
-
-  useEffect(() => {
-    const lastGraph = lastSavedGraph.current;
-    const initXml = lastGraph ? savedGraphs[lastGraph] : undefined;
-
-    const nestings = initXml ? (initXml.includes("Nesting")) : false;
-    roleSPRef.current = initXml ? (initXml.includes("role") || initXml.includes("subProcess")) : false;
-    nestingRef.current = nestings
-
-    setHeatmapMode(!nestings);
+  const resetAllResults = useCallback(() => {
+    setReplayLogResults([]);
+    setViolationLogResults([]);
+    setAlignmentLogResults([]);
+    setSelectedTraceId(null);
+    setHeatmapMode(false);
+    setAlignmentMode(false);
   }, []);
 
-  const totalLogResults = useMemo<{
-    totalViolations: number,
-    violations: RelationViolations,
-    activations: RelationActivations
-  } | undefined>(() => {
-    if (violationLogResults.length === 0) return undefined;
-    const retval = violationLogResults.reduce((acc, cum) => cum.results ? {
-      totalViolations: acc.totalViolations + cum.results.totalViolations,
-      violations: mergeViolations(acc.violations, cum.results.violations),
-      activations: mergeActivations(acc.activations, cum.results.activations),
-    } : acc, {
-      totalViolations: 0,
-      violations: {
-        conditionsFor: {},
-        responseTo: {},
-        excludesTo: {},
-        milestonesFor: {}
-      },
-      activations: {
-        conditionsFor: {},
-        responseTo: {},
-        excludesTo: {},
-        milestonesFor: {},
-        includesTo: {}
+  const selectedReplayTrace = useMemo(() => {
+    if (!selectedTraceId) {
+      return null;
+    }
+
+    const trace = replayLogResults.find((tr) => tr.traceId === selectedTraceId);
+
+    if (!trace) {
+      return null;
+    }
+
+    return {
+      traceId: selectedTraceId,
+      traceName: selectedTraceId,
+      trace: trace.trace,
+      isPositive: trace.isPositive,
+    };
+  }, [selectedTraceId, replayLogResults]);
+
+  const selectedViolationTrace = useMemo(() => {
+    if (!selectedTraceId) {
+      return null;
+    }
+
+    const trace = violationLogResults.find(
+      (tr) => tr.traceId === selectedTraceId,
+    );
+
+    if (!trace) {
+      return null;
+    }
+
+    return {
+      traceId: selectedTraceId,
+      traceName: selectedTraceId,
+      trace: trace.trace,
+      results: trace.results,
+    };
+  }, [selectedTraceId, violationLogResults]);
+
+  const selectedAlignmentTrace = useMemo(() => {
+    if (!selectedTraceId) {
+      return null;
+    }
+
+    const trace = alignmentLogResults.find(
+      (tr) => tr.traceId === selectedTraceId,
+    );
+
+    if (!trace) {
+      return null;
+    }
+
+    return {
+      traceId: selectedTraceId,
+      traceName: selectedTraceId,
+      trace: trace.trace,
+      results: trace.results,
+    };
+  }, [selectedTraceId, alignmentLogResults]);
+
+  const hasNesting = useMemo(() => {
+    return currentGraph?.graph.includes("Nesting") ?? false;
+  }, [currentGraph?.graph]);
+
+  const hasRole = useMemo(() => {
+    return currentGraph?.graph.includes("role") ?? false;
+  }, [currentGraph?.graph]);
+
+  const hasSubProcess = useMemo(() => {
+    return currentGraph?.graph.includes("subProcess") ?? false;
+  }, [currentGraph?.graph]);
+
+  const heatmapIsAllowed = !hasNesting;
+  const alignmentIsAllowed = !(hasRole || hasSubProcess);
+
+  const performConformanceChecking = useCallback(
+    (graph: DCRGraphS, log: EventLog<RoleTrace>) => {
+      try {
+        logMemory("Before conformance checking");
+        console.info("Started conformance checking...");
+        console.time("conformance-checking");
+        performance.mark("conformance-checking-start");
+
+        console.info("Started transforming log...");
+        console.time("transform-log");
+        performance.mark("transform-log-start");
+
+        const traces = Object.entries(log.traces);
+
+        performance.mark("transform-log-end");
+        performance.measure(
+          "transform-log",
+          "transform-log-start",
+          "transform-log-end",
+        );
+        console.info("Finished transforming log!");
+        console.timeEnd("transform-log");
+        logMemory("After transforming log");
+
+        console.info("Started replaying log...");
+        console.time("replay-log");
+        performance.mark("replay-log-start");
+
+        setReplayLogResults(
+          traces.map(([traceId, trace]) => {
+            return {
+              traceId,
+              trace,
+              isPositive: replayTraceS(graph, trace),
+            };
+          }),
+        );
+
+        performance.mark("replay-log-end");
+        performance.measure("replay-log", "replay-log-start", "replay-log-end");
+        console.info("Finished replaying log!");
+        console.timeEnd("replay-log");
+        logMemory("After replaying log");
+
+        if (!hasNesting) {
+          console.info("Started quantifying violations...");
+          console.time("quantify-violations");
+          performance.mark("quantify-violations-start");
+
+          setViolationLogResults(
+            traces.map(([traceId, trace]) => ({
+              traceId,
+              trace,
+              results: quantifyViolations(graph, trace),
+            })),
+          );
+
+          performance.mark("quantify-violations-end");
+          performance.measure(
+            "quantify-violations",
+            "quantify-violations-start",
+            "quantify-violations-end",
+          );
+          console.info("Finished quantifying violations!");
+          console.timeEnd("quantify-violations");
+          logMemory("After quantifying violations");
+        }
+
+        if (!(hasRole || hasSubProcess)) {
+          console.info("Started precomputing properties...");
+          console.time("precompute-properties");
+          performance.mark("precompute-properties-start");
+
+          const graphPP = graphToGraphPP(graph);
+
+          performance.mark("precompute-properties-end");
+          performance.measure(
+            "precompute-properties",
+            "precompute-properties-start",
+            "precompute-properties-end",
+          );
+          console.info("Started precomputing properties!");
+          console.timeEnd("precompute-properties");
+          logMemory("After precomputing properties");
+
+          console.info("Started aligning log...");
+          console.time("align-log");
+          performance.mark("align-log-start");
+
+          setAlignmentLogResults(
+            traces.map(([traceId, trace]) => ({
+              traceId,
+              trace,
+              results: alignShowDesc(
+                trace.map((event) => event.activity),
+                graphPP,
+              ),
+            })),
+          );
+
+          performance.mark("align-log-end");
+          performance.measure("align-log", "align-log-start", "align-log-end");
+          console.info("Finished aligning log!");
+          console.timeEnd("align-log");
+          logMemory("After aligning log");
+        }
+      } catch (e) {
+        console.log(e);
+        console.error("Failed conformance checking!");
       }
-    });
-    modelerRef.current?.updateViolations(retval);
-    return retval
+
+      performance.mark("conformance-checking-end");
+      performance.measure(
+        "conformance-checking",
+        "conformance-checking-start",
+        "conformance-checking-end",
+      );
+      console.info("Finished conformance checking!");
+      console.timeEnd("conformance-checking");
+      logMemory("After conformance checking");
+    },
+    [hasNesting, hasRole, hasSubProcess],
+  );
+
+  const aggregatedViolationLogResults = useMemo<
+    ConformanceCheckingSummary | undefined
+  >(() => {
+    if (violationLogResults.length === 0) {
+      return undefined;
+    }
+
+    return violationLogResults.reduce(
+      (acc, result) => {
+        if (!result.results) {
+          return acc;
+        }
+
+        return {
+          totalViolations: acc.totalViolations + result.results.totalViolations,
+          violations: mergeViolations(
+            acc.violations,
+            result.results.violations,
+          ),
+          activations: mergeActivations(
+            acc.activations,
+            result.results.activations,
+          ),
+        };
+      },
+      {
+        totalViolations: 0,
+        violations: {
+          conditionsFor: {},
+          responseTo: {},
+          excludesTo: {},
+          milestonesFor: {},
+        },
+        activations: {
+          conditionsFor: {},
+          responseTo: {},
+          excludesTo: {},
+          milestonesFor: {},
+          includesTo: {},
+        },
+      },
+    );
   }, [violationLogResults]);
 
-  const open = (data: string, parse: ((xml: string) => Promise<void>) | undefined) => {
-    if (data.includes("multi-instance=\"true\"")) {
-      toast.error("Multi-instance subprocesses not supported...");
-    } else {
-      parse && parse(data).then((_) => {
-        if (data.includes("Nesting")) {
-          setHeatmapMode(false);
-          nestingRef.current = true;
-        }
-        else nestingRef.current = false;
-        if (data.includes("role") || data.includes("subProcess")) {
-          setAlignmentMode(false);
-          roleSPRef.current = true;
-        }
-        else nestingRef.current = false;
-        if (modelerRef.current && graphRef.current) {
-          const graph = moddleToDCR(modelerRef.current.getElementRegistry());
-          graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
-          if (logResults) {
-            const newResults = logResults.map(({ traceId, trace }) => ({ traceId, trace, isPositive: replayTraceS(graph, trace) }));
-            setLogResults(newResults);
-          }
-          if (violationLogResults && !nestingRef.current) {
-            const newResults = violationLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: quantifyViolations(graph, trace) }));
-            setViolationLogResults(newResults);
-          }
-          if (alignmentLogResults && !roleSPRef.current) {
-            const graphPP = graphToGraphPP(graph);
-            const newResults = alignmentLogResults.map(({ trace, traceId }) => ({ traceId, trace, results: alignShowDesc(trace.map(event => event.activity), graphPP) }));
-            setAlignmentLogResults(newResults);
-          }
-        }
-      }).catch((e) => { console.log(e); toast.error("Unable to parse XML...") });
+  useEffect(() => {
+    if (!modeler || !heatmapMode) {
+      return;
     }
-  }
 
-  const openLog = (name: string, log: EventLog<RoleTrace>, graph: DCRGraphS | undefined) => {
-    const results = Object.keys(log.traces).map(traceId => {
-      const trace = log.traces[traceId];
-      return {
-        traceId,
-        trace,
-        isPositive: graph ? replayTraceS(graph, trace) : undefined,
-      }
-    });
-    setLogName(name);
-    setLogResults(results);
-    if (!nestingRef.current) {
-      const violationResults = Object.keys(log.traces).map(traceId => {
-        const trace = log.traces[traceId];
-        return {
-          traceId,
-          trace,
-          results: graph ? quantifyViolations(graph, trace) : undefined,
-        }
-      });
-      setViolationLogResults(violationResults);
+    if (selectedViolationTrace?.results) {
+      modeler.updateViolations(selectedViolationTrace.results);
+    } else if (aggregatedViolationLogResults) {
+      modeler.updateViolations(aggregatedViolationLogResults);
     }
-    if (!roleSPRef.current) {
-      const graphPP = graph ? graphToGraphPP(graph) : undefined;
-      const alignmentResults = Object.keys(log.traces).map(traceId => {
-        const trace = log.traces[traceId];
-        return {
-          traceId,
-          trace,
-          results: graphPP ? alignShowDesc(trace.map(event => event.activity), graphPP) : undefined,
-        }
-      });
-      setAlignmentLogResults(alignmentResults);
-    }
-  }
 
-  const handleLogUpload = (name: string, data: string) => {
-    try {
-      const log = parseLog(data);
-      openLog(name.slice(0, -4), log, graphRef.current?.current);
-    } catch (e) {
-      console.log(e);
-      toast.error("Cannot parse log...");
-    }
-  }
+    return () => {
+      modeler.updateViolations(null);
+    };
+  }, [
+    heatmapMode,
+    selectedViolationTrace?.results,
+    aggregatedViolationLogResults,
+    modeler,
+  ]);
 
-  const savedGraphElements = () => {
-    return Object.keys(savedGraphs).length > 0 ? [{
-      text: "Saved Graphs:",
-      elements: Object.keys(savedGraphs).map(name => {
-        return ({
+  function savedGraphElements(): Array<ModalMenuElement> {
+    if (savedGraphs.size === 0) {
+      return [];
+    }
+
+    return [
+      {
+        text: "Saved Graphs:",
+        elements: [...savedGraphs.values()].map(({ name, graph }) => ({
           icon: <BiLeftArrowCircle />,
           text: name,
-          onClick: () => { open(savedGraphs[name], modelerRef.current?.importXML); setMenuOpen(false) },
-        })
-      })
-    }] : [];
+          onClick: async () => {
+            if (!modeler) {
+              return;
+            }
+
+            if (graph.includes('multi-instance="true"')) {
+              toast.error("Multi-instance subprocesses not supported...");
+              return;
+            }
+
+            try {
+              await modeler.importXML(graph);
+              pickGraph(name);
+              resetAllResults();
+            } catch (e) {
+              console.log(e);
+              toast.error("Unable to parse XML...");
+              return;
+            }
+          },
+        })),
+      },
+    ];
   }
 
-  const savedLogElements = () => {
-    return Object.keys(savedLogs).length > 0 ? [{
-      text: "Saved Logs:",
-      elements: Object.keys(savedLogs).map(name => {
-        return ({
+  function savedLogElements(): Array<ModalMenuElement> {
+    if (savedLogs.size === 0) {
+      return [];
+    }
+
+    return [
+      {
+        text: "Saved Logs:",
+        elements: [...savedLogs.values()].map(({ name }) => ({
           icon: <BiLeftArrowCircle />,
           text: name,
           onClick: () => {
-            const log = savedLogs[name];
-            openLog(name, log, graphRef.current?.current);
+            pickLog(name);
           },
-        })
-      })
-    }] : [];
+        })),
+      },
+    ];
   }
 
   const menuElements: Array<ModalMenuElement> = [
@@ -238,115 +507,329 @@ const ConformanceCheckingState = ({ savedGraphs, savedLogs, setState, lastSavedG
         {
           customElement: (
             <StyledFileUpload>
-              <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importXML); setMenuOpen(false); }}>
+              <RawFileUpload
+                accept="text/xml"
+                fileCallback={async (file) => {
+                  if (!modeler) {
+                    return;
+                  }
+
+                  logMemory("Before opening model");
+                  console.info("Started opening model...");
+                  console.time("open-model");
+                  performance.mark("open-model-start");
+
+                  try {
+                    const rawData = await file.text();
+                    if (rawData.includes('multi-instance="true"')) {
+                      throw new Error(
+                        "Multi-instance subprocesses not supported...",
+                        {
+                          cause: "Validation",
+                        },
+                      );
+                    }
+
+                    await modeler.importXML(rawData);
+
+                    const data = await modeler.saveXML({
+                      format: false,
+                    });
+
+                    saveGraph(file.name, data.xml);
+                  } catch (e) {
+                    if (e instanceof Error && e.cause === "Validation") {
+                      toast.error(e.message);
+                      return;
+                    }
+                    console.log(e);
+                    toast.error("Unable to parse XML...");
+                  }
+
+                  performance.mark("open-model-end");
+                  performance.measure(
+                    "open-model",
+                    "open-model-start",
+                    "open-model-end",
+                  );
+                  console.info("Finished opening model!");
+                  console.timeEnd("open-model");
+                  logMemory("After opening model");
+                }}
+              >
                 <div />
-                <>Open Editor XML</>
-              </FileUpload>
-            </StyledFileUpload>),
+                Open Editor XML
+              </RawFileUpload>
+            </StyledFileUpload>
+          ),
         },
         {
           customElement: (
             <StyledFileUpload>
-              <FileUpload accept="text/xml" fileCallback={(_, contents) => { open(contents, modelerRef.current?.importDCRPortalXML); setMenuOpen(false); }}>
+              <RawFileUpload
+                accept="text/xml"
+                fileCallback={async (file) => {
+                  if (!modeler) {
+                    return;
+                  }
+
+                  logMemory("Before opening model");
+                  console.info("Started opening model...");
+                  console.time("open-model");
+                  performance.mark("open-model-start");
+
+                  try {
+                    const rawData = await file.text();
+                    if (rawData.includes('multi-instance="true"')) {
+                      throw new Error(
+                        "Multi-instance subprocesses not supported...",
+                        {
+                          cause: "Validation",
+                        },
+                      );
+                    }
+
+                    await modeler.importDCRPortalXML(rawData);
+
+                    const data = await modeler.saveXML({
+                      format: false,
+                    });
+
+                    saveGraph(file.name, data.xml);
+                  } catch (e) {
+                    if (e instanceof Error && e.cause === "Validation") {
+                      toast.error(e.message);
+                      return;
+                    }
+                    console.log(e);
+                    toast.error("Unable to parse XML...");
+                  }
+
+                  performance.mark("open-model-end");
+                  performance.measure(
+                    "open-model",
+                    "open-model-start",
+                    "open-model-end",
+                  );
+                  console.info("Finished opening model!");
+                  console.timeEnd("open-model");
+                  logMemory("After opening model");
+                }}
+              >
                 <div />
-                <>Open DCR Solution XML</>
-              </FileUpload>
-            </StyledFileUpload>),
+                Open DCR Solution XML
+              </RawFileUpload>
+            </StyledFileUpload>
+          ),
         },
-      ]
-    }, {
+      ],
+    },
+    {
       customElement: (
         <StyledFileUpload>
-          <FileUpload accept=".xes" fileCallback={(name, contents) => { handleLogUpload(name, contents); setMenuOpen(false); }}>
+          <RawFileUpload
+            accept=".xes"
+            fileCallback={async (file) => {
+              logMemory("Before parsing log");
+              console.info("Started parsing log...");
+              console.time("parse-log");
+              performance.mark("parse-log-start");
+
+              try {
+                const rawData = await file.text();
+                const log = parseRoleLog(rawData);
+                saveLog(file.name, log);
+              } catch (e) {
+                console.log(e);
+                toast.error("Cannot parse log...");
+              }
+
+              performance.mark("parse-log-end");
+              performance.measure(
+                "parse-log",
+                "parse-log-start",
+                "parse-log-end",
+              );
+              console.info("Finished parsing log!");
+              console.timeEnd("parse-log");
+              logMemory("After parsing log");
+            }}
+          >
             <BiUpload />
-            <>Upload Log</>
-          </FileUpload>
-        </StyledFileUpload>),
+            Upload Log
+          </RawFileUpload>
+        </StyledFileUpload>
+      ),
     },
     ...savedGraphElements(),
     ...savedLogElements(),
+    {
+      customElement: (
+        <Form
+          submitText="Check!"
+          submit={() => {
+            if (currentDcrGraph && currentLog) {
+              performConformanceChecking(currentDcrGraph, currentLog.log);
+            }
+          }}
+        />
+      ),
+    },
   ];
 
   const bottomElements: Array<ModalMenuElement> = [
     {
-      customElement:
-        <MenuElement>
-          <Toggle initChecked={true} onChange={(e) => modelerRef.current?.setSetting("blackRelations", !e.target.checked)} />
-          <Label>Coloured Relations</Label>
-        </MenuElement>
+      customElement: (
+        <ColoredRelationsSetting
+          coloredRelations={coloredRelations}
+          changeColoredRelations={changeColoredRelations}
+        />
+      ),
     },
     {
-      customElement:
-        <MenuElement>
-          <DropDown
-            options={[{ title: "TAL2023", value: "TAL2023", tooltip: "https://link.springer.com/chapter/10.1007/978-3-031-46846-9_12" }, { title: "HM2011", value: "HM2011", tooltip: "https://arxiv.org/abs/1110.4161" }, { title: "DCR Solutions", value: "DCR Solutions", tooltip: "https://dcrsolutions.net/" }]}
-            onChange={(option) => isSettingsVal(option) && modelerRef.current?.setSetting("markerNotation", option)}
-          />
-          <Label>Relation Notation</Label>
-        </MenuElement>
-    }
+      customElement: (
+        <MarkerNotationSetting
+          markerNotation={markerNotation}
+          changeMarkerNotation={changeMarkerNotation}
+        />
+      ),
+    },
   ];
 
-  const onLoadCallback = lastSavedLog.current && savedLogs[lastSavedLog.current] ? (graph: DCRGraphS) => {
-    if (nestingRef.current) {
+  const onInitModeler = useEffectEvent((modeler: DCRModeler) => {
+    // Import the current graph (if any).
+    // After this import will happen on action (manual calls to importXml),
+    // so no need to do it reactively when current graph changes (is imported).
+
+    modeler
+      .importXML(currentGraph?.graph ?? emptyBoardXML)
+      .catch((e: Error) => console.log(e));
+  });
+
+  useEffect(() => {
+    if (!modeler) {
       return;
     }
-    const initLog = lastSavedLog.current && savedLogs[lastSavedLog.current]
-    if (!initLog) return;
 
-    lastSavedLog.current && openLog(lastSavedLog.current, initLog, graph);
-  } : undefined;
+    onInitModeler(modeler);
+  }, [modeler]);
 
   return (
     <>
-      <Modeler modelerRef={modelerRef} initXml={lastSavedGraph.current && savedGraphs[lastSavedGraph.current]} override={{ graphRef: graphRef, noRendering: true, overrideOnclick: () => null, canvasClassName: "conformance", onLoadCallback }} />
-      {logResults.length > 0 && !heatmapMode && !alignmentMode && <ReplayResults logName={logName} logResults={logResults} selectedTrace={selectedTrace} setLogResults={setLogResults} setSelectedTrace={setSelectedTrace} />}
-      {violationLogResults.length > 0 && heatmapMode && <HeatmapResults totalLogResults={totalLogResults} logName={logName} violationLogResults={violationLogResults} selectedTrace={selectedTrace} setViolationLogResults={setViolationLogResults} setSelectedTrace={setSelectedTrace} modelerRef={modelerRef} />}
-      {alignmentLogResults.length > 0 && alignmentMode && <AlignmentResults alignmentLogResults={alignmentLogResults} logName={logName} selectedTrace={selectedTrace} setAlignmentLogResults={setAlignmentLogResults} setSelectedTrace={setSelectedTrace} />}
-      {selectedTrace && !alignmentMode && <TraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} onCloseCallback={() => {
-        if (heatmapMode && totalLogResults) {
-          modelerRef.current?.updateViolations(totalLogResults);
-        }
-      }} />}
-      {selectedTrace && alignmentMode && <AlignmentTraceView graphRef={graphRef} selectedTrace={selectedTrace} setSelectedTrace={setSelectedTrace} />}
+      <ReactiveModeler
+        modeler={modeler}
+        setModeler={setModeler}
+        coloredRelations={coloredRelations}
+        markerNotation={markerNotation}
+        disableControls={true}
+        isSimulating={false}
+        className="conformance"
+        onClickElement={() => {
+          // Clear selection
+          const selection = modeler?.getSelection();
+          selection?.select([]);
+        }}
+        onImport={() => {
+          if (!modeler) {
+            return;
+          }
+
+          const graph = moddleToDCR(modeler.getElementRegistry());
+          setCurrentDcrGraph(graph);
+        }}
+      />
+      {/* Default view: When heatmap and alignment is disabled */}
+      {replayLogResults.length > 0 && !heatmapMode && !alignmentMode && (
+        <ReplayResults
+          logName={currentLog?.name ?? ""}
+          replayLogResults={replayLogResults}
+          selectedTrace={selectedReplayTrace}
+          setSelectedTraceId={setSelectedTraceId}
+        />
+      )}
+      {/* Heatmap view: When heatmap is enabled (alignment cannot be enabled at the same time) */}
+      {violationLogResults.length > 0 && heatmapMode && (
+        <HeatmapResults
+          logName={currentLog?.name ?? ""}
+          violationLogResults={violationLogResults}
+          aggregatedViolationLogResults={aggregatedViolationLogResults}
+          selectedTrace={selectedViolationTrace}
+          setSelectedTraceId={setSelectedTraceId}
+        />
+      )}
+      {/* Alignment view: When alignment is enabled (heatmap cannot be enabled at the same time) */}
+      {alignmentLogResults.length > 0 && alignmentMode && (
+        <AlignmentResults
+          logName={currentLog?.name ?? ""}
+          alignmentLogResults={alignmentLogResults}
+          selectedTrace={selectedAlignmentTrace}
+          setSelectedTraceId={setSelectedTraceId}
+        />
+      )}
+      {/* Default view: When alignment is disabled (heatmap can be enabled or disabled in this view) */}
+      {selectedReplayTrace && !alignmentMode && (
+        <TraceView
+          selectedTrace={selectedReplayTrace}
+          setSelectedTraceId={setSelectedTraceId}
+        />
+      )}
+      {/* Alignment view: When alignment is enabled (heatmap cannot be enabled at the same time) */}
+      {selectedAlignmentTrace && alignmentMode && (
+        <AlignmentTraceView
+          selectedTrace={{
+            ...selectedAlignmentTrace,
+            isPositive: selectedReplayTrace?.isPositive,
+          }}
+          setSelectedTraceId={setSelectedTraceId}
+        />
+      )}
       <TopRightIcons>
-        <AlignButton onClick={() => {
-          if (roleSPRef.current) {
-            toast.warning("Roles and subprocesses not supported for alignment...");
-            return;
-          }
-          if (heatmapMode) {
-            modelerRef.current?.updateViolations(null);
-          }
-          if (!alignmentMode && selectedTrace && graphRef.current) {
-            const newSelectedTrace = { ...selectedTrace };
-            newSelectedTrace.results = alignShowDesc(newSelectedTrace.trace.map(event => event.activity), graphToGraphPP(graphRef.current?.current));
-            setSelectedTrace(newSelectedTrace);
-          }
-          setAlignmentMode(!alignmentMode);
-          setHeatmapMode(false);
-        }} $clicked={alignmentMode} title="Display results as alignments." />
-        <HeatmapButton onClick={() => {
-          if (nestingRef.current) {
-            toast.warning("Nestings and multi-instance subprocesses not supported for heatmap...");
-            return;
-          }
-          if (heatmapMode) {
-            modelerRef.current?.updateViolations(null);
-          } else {
-            const viols = selectedTrace ? violationLogResults.find(elem => elem.traceId === selectedTrace.traceId)?.results : totalLogResults;
-            console.log(viols);
-            viols && modelerRef.current?.updateViolations(viols);
-          }
-          setHeatmapMode(!heatmapMode);
-          setAlignmentMode(false);
-        }} $clicked={heatmapMode} title="Display results as contraint violation heatmap." />
-        <FullScreenIcon />
-        <BiHome onClick={() => setState(StateEnum.Home)} />
-        <ModalMenu elements={menuElements} open={menuOpen} bottomElements={bottomElements} setOpen={setMenuOpen} />
+        <AlignButton
+          onClick={() => {
+            if (!alignmentIsAllowed) {
+              toast.warning(
+                "Roles and subprocesses not supported for alignment...",
+              );
+              return;
+            }
+
+            setAlignmentMode((alignmentMode) => !alignmentMode);
+            setHeatmapMode(false);
+          }}
+          $clicked={alignmentIsAllowed && alignmentMode}
+          title="Display results as alignments."
+          data-testid="alignment-icon"
+        />
+        <HeatmapButton
+          onClick={() => {
+            if (!heatmapIsAllowed) {
+              toast.warning(
+                "Nestings and multi-instance subprocesses not supported for heatmap...",
+              );
+              return;
+            }
+
+            setHeatmapMode((heatmapMode) => !heatmapMode);
+            setAlignmentMode(false);
+          }}
+          $clicked={heatmapIsAllowed && heatmapMode}
+          title="Display results as constraint violation heatmap."
+          data-testid="heatmap-icon"
+        />
+        <FullScreenIcon data-testid="fullscreen-icon" />
+        <BiHome
+          onClick={() => setState(StateEnum.Home)}
+          data-testid="home-icon"
+        />
+        <ModalMenu
+          elements={menuElements}
+          open={menuOpen}
+          bottomElements={bottomElements}
+          setOpen={setMenuOpen}
+        />
       </TopRightIcons>
     </>
-  )
-}
+  );
+};
 
-export default ConformanceCheckingState
+export default ConformanceCheckingState;
