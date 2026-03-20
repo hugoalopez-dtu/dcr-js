@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  dcr_app:
+    build:
+      context: ../../
+      dockerfile: bench/docker/Dockerfile.app
+    networks:
+      - dcr_net
+    ports:
+      - "8080:80"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/dcr-js/"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  dcr_benchmarker:
+    image: mcr.microsoft.com/playwright:v1.57.0-jammy
+    ipc: host
+    depends_on:
+      dcr_app:
+        condition: service_healthy
+    networks:
+      - dcr_net
+    volumes:
+      - ../:/app/bench
+    working_dir: /app/bench
+    environment:
+      - BASE_URL=http://dcr_app:80/dcr-js/
+      - EXP_OUTPUT_DIR=${EXP_OUTPUT_DIR}
+      - BENCH_ITERATIONS=${BENCH_ITERATIONS:-20}
+      - BENCH_TIMEOUT=${BENCH_TIMEOUT:-90000}
+      - BENCH_SAVE_MODELS=${BENCH_SAVE_MODELS:-true}
+      - BENCH_TYPE=${BENCH_TYPE:-all}
+      - CI=true
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "4G"
+    command: /bin/bash -c "npm install && npx playwright install chromium && npx tsx ./runner/benchmark.ts"
+
+networks:
+  dcr_net:
