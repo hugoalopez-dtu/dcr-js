@@ -43,6 +43,14 @@ import rejectionMiner from "./src/binary";
 
 import mineFromAbstraction, { abstractLog, filter } from "./src/discovery";
 
+import { StringTraceStreamParser } from "./src/parsers/StringTraceStreamParser";
+import { RegexTraceStreamParser } from "./src/parsers/RegexTraceStreamParser";
+import { DOMTraceStreamParser } from "./src/parsers/DOMTraceStreamParser";
+import { StringEventStreamParser } from "./src/parsers/StringEventStreamParser";
+import { RegexEventStreamParser } from "./src/parsers/RegexEventStreamParser";
+import { DOMEventStreamParser } from "./src/parsers/DOMEventStreamParser";
+import { SAXParser } from "./src/parsers/SAXParser";
+
 export {
   type DCRGraph,
   type DCRGraphS,
@@ -80,4 +88,11 @@ export {
   runTest,
   alignTrace,
   rejectionMiner,
+  StringTraceStreamParser,
+  RegexTraceStreamParser,
+  DOMTraceStreamParser,
+  StringEventStreamParser,
+  RegexEventStreamParser,
+  DOMEventStreamParser,
+  SAXParser,
 };

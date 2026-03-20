@@ -25,8 +25,8 @@ import {
   alignTrace,
   mergeViolations,
   moddleToDCR,
-  parseRoleLog,
   quantifyViolations,
+  StringTraceStreamParser,
 } from "dcr-engine";
 import { toast } from "react-toastify";
 import { replayTraceS } from "dcr-engine";
@@ -636,8 +636,7 @@ const ConformanceCheckingState = ({
               performance.mark("parse-log-start");
 
               try {
-                const rawData = await file.text();
-                const log = parseRoleLog(rawData);
+                const log = await StringTraceStreamParser.parseAsRoleLog(file);
                 saveLog(file.name, log);
               } catch (e) {
                 console.log(e);

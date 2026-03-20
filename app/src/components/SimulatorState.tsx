@@ -26,6 +26,7 @@ import {
   isAcceptingS,
   type RoleTrace,
   replayTraceS,
+  StringTraceStreamParser,
 } from "dcr-engine";
 import ModalMenu, { type ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
@@ -35,7 +36,7 @@ import type { DCRGraphS, EventLog } from "dcr-engine";
 import Button from "../utilComponents/Button";
 
 import { saveAs } from "file-saver";
-import { parseRoleLog, writeEventLog } from "dcr-engine";
+import { writeEventLog } from "dcr-engine";
 import EventLogView from "./EventLogView";
 import TraceView from "../utilComponents/TraceView";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
@@ -45,6 +46,7 @@ import {
 } from "./GlobalModalMenuElements";
 import ReactiveModeler, { type TargetElement } from "./ReactiveModeler";
 import emptyBoardXML from "../resources/emptyBoard";
+import RawFileUpload from "../utilComponents/RawFileUpload";
 
 const GreyOut = styled.div`
   position: fixed;
@@ -558,12 +560,12 @@ const SimulatorState = ({
     {
       customElement: (
         <StyledFileUpload>
-          <FileUpload
+          <RawFileUpload
             accept=".xes"
-            fileCallback={(name, contents) => {
+            fileCallback={async (file) => {
               try {
-                const log = parseRoleLog(contents);
-                openLog(name.slice(0, -4), log);
+                const log = await StringTraceStreamParser.parseAsRoleLog(file);
+                openLog(file.name.slice(0, -4), log);
               } catch {
                 toast.error("Unable to parse log...");
               }
@@ -572,7 +574,7 @@ const SimulatorState = ({
           >
             <BiUpload />
             <>Upload Log</>
-          </FileUpload>
+          </RawFileUpload>
         </StyledFileUpload>
       ),
     },
