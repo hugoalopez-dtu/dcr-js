@@ -909,16 +909,20 @@ const DiscoveryState = ({
 
             try {
               const data = await modeler.saveXML({ format: false });
-              const hasUnsavedChanges =
-                lastSavedXML !== null && data.xml !== lastSavedXML;
-              if (hasUnsavedChanges) {
-                const wantSave = window.confirm(
-                  "You have unsaved changes. Save before leaving?",
-                );
-                if (wantSave) {
-                  const saved = await saveGraph();
-                  if (!saved) {
-                    return;
+              if (lastSavedXML === null && graphName !== "") {
+                // Graph was discovered but never saved, so try to save it silently
+                await saveGraph();
+              } else {
+                const hasUnsavedChanges = data.xml !== lastSavedXML;
+                if (hasUnsavedChanges) {
+                  const wantSave = window.confirm(
+                    "You have unsaved changes. Save before leaving?",
+                  );
+                  if (wantSave) {
+                    const saved = await saveGraph();
+                    if (!saved) {
+                      return;
+                    }
                   }
                 }
               }
