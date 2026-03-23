@@ -1,4 +1,104 @@
-import type { DCRGraph, EventMap, Marking, Event, Traces } from "./types";
+import type {
+  DCRGraph,
+  EventMap,
+  Marking,
+  Event,
+  Traces,
+  EventLog,
+  VariantLog,
+  Trace,
+  RoleTrace,
+  Variant,
+  BinaryLog,
+  BinaryVariantLog,
+} from "./types";
+
+export function isEventLog(
+  log: EventLog<Trace> | VariantLog<Trace>,
+): log is EventLog<Trace> {
+  return "traces" in log;
+}
+
+export function isVariantLog(
+  log: EventLog<Trace> | VariantLog<Trace>,
+): log is VariantLog<Trace> {
+  return "variants" in log;
+}
+
+export function isBinaryVariantLog(
+  log: BinaryLog | BinaryVariantLog,
+): log is BinaryVariantLog {
+  return Array.isArray(log.traces);
+}
+
+export function getVariants<T extends Trace | RoleTrace>(
+  log: EventLog<T>,
+): VariantLog<T> {
+  const { variants, count } = collectVariants(log.traces);
+  return {
+    events: log.events,
+    variants,
+    count,
+  };
+}
+
+export function getBinaryVariants(log: BinaryLog): BinaryVariantLog {
+  const { variants: traces } = collectVariants(log.traces);
+  const { variants: nTraces } = collectVariants(log.nTraces);
+  return {
+    events: log.events,
+    traces,
+    nTraces,
+  };
+}
+
+function hashTrace<T extends Trace | RoleTrace>(traceOrRoleTrace: T): string {
+  if (Array.isArray(traceOrRoleTrace)) {
+    if (
+      traceOrRoleTrace.length > 0 &&
+      typeof traceOrRoleTrace[0] === "string"
+    ) {
+      const trace = traceOrRoleTrace as string[];
+      return trace.join(";;");
+    } else if (
+      traceOrRoleTrace.length > 0 &&
+      typeof traceOrRoleTrace[0] === "object"
+    ) {
+      const roleTrace = traceOrRoleTrace as RoleTrace;
+      return roleTrace.map((t) => t.activity + "##" + t.role).join(";;");
+    }
+  }
+  return "";
+}
+
+function collectVariants<T extends Trace | RoleTrace>(traces: {
+  [traceId: string]: T;
+}): { variants: Variant<T>[]; count: number } {
+  const variantsMap = new Map<string, { trace: T; count: number }>();
+  let count = 0;
+
+  for (const traceId in traces) {
+    const trace = traces[traceId];
+    const hash = hashTrace(trace);
+
+    if (!variantsMap.has(hash)) {
+      variantsMap.set(hash, { trace, count: 0 });
+    }
+
+    variantsMap.get(hash)!.count++;
+    count++;
+  }
+
+  const variants = Array.from(variantsMap.entries())
+    .map<Variant<T>>(([, val]) => ({
+      variantId: String(generateId()),
+      trace: val.trace,
+      count: val.count,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return { variants, count };
+}
 
 let _nextId = 0;
 export function generateId() {

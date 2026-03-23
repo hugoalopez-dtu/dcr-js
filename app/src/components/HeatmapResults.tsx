@@ -86,21 +86,26 @@ const HeatmapResults = ({
         </FlexBox>
       </ResultsHeader>
       <ul>
-        {violationLogResults.map(({ traceId, results }) => (
-          <ResultsElement
-            $selected={
-              selectedTrace !== null && selectedTrace.traceId === traceId
-            }
-            key={traceId}
-            onClick={() => setSelectedTraceId(traceId)}
-          >
-            <Label>{traceId}</Label>
-            <ResultContainer>
-              {results?.totalViolations}
-              {resultIcon(results?.totalViolations === 0)}
-            </ResultContainer>
-          </ResultsElement>
-        ))}
+        {violationLogResults.map(
+          ({ traceName, traceId, results, count, frequency }) => (
+            <ResultsElement
+              $selected={
+                selectedTrace !== null && selectedTrace.traceId === traceId
+              }
+              key={traceId}
+              onClick={() => setSelectedTraceId(traceId)}
+            >
+              <Label>
+                {traceName || traceId} {`(${count} occurrences)`}{" "}
+                {frequency ? `(${(frequency * 100).toFixed(2)}%)` : ""}
+              </Label>
+              <ResultContainer>
+                {results?.totalViolations}
+                {resultIcon(results?.totalViolations === 0)}
+              </ResultContainer>
+            </ResultsElement>
+          ),
+        )}
       </ul>
     </ResultsWindow>
   );

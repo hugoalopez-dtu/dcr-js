@@ -12,6 +12,7 @@ PD_STEPS = [
     "discover",  # Wrapper
     "parse-log",
     "transform-log",
+    "collect-variants",
     "filter-log",
     "abstract-log",
     "mine-log",
@@ -26,6 +27,7 @@ CC_STEPS = [
     "parse-log",
     "open-model",
     "transform-log",
+    "collect-variants",
     "replay-log",
     "quantify-violations",
     "precompute-properties",

@@ -216,6 +216,12 @@ export interface BinaryLog {
   nTraces: Traces;
 }
 
+export interface BinaryVariantLog {
+  events: Set<Event>;
+  traces: Variant<Trace>[];
+  nTraces: Variant<Trace>[];
+}
+
 export interface ClassifiedLog {
   [traceId: string]: {
     isPositive: boolean;
@@ -225,4 +231,16 @@ export interface ClassifiedLog {
 
 export interface ClassifiedTraces {
   [traceId: string]: boolean;
+}
+
+export interface Variant<T> {
+  variantId: string;
+  trace: T;
+  count: number;
+}
+
+export interface VariantLog<T> {
+  events: Set<Event>;
+  variants: Variant<T>[];
+  count: number;
 }

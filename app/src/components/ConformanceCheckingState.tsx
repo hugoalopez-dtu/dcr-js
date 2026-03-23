@@ -26,11 +26,12 @@ import {
   mergeViolations,
   moddleToDCR,
   quantifyViolations,
+  getVariants,
+  replayTraceS,
+  type DCRGraphS,
   StringTraceStreamParser,
 } from "dcr-engine";
 import { toast } from "react-toastify";
-import { replayTraceS } from "dcr-engine";
-import type { DCRGraphS } from "dcr-engine";
 import TraceView from "../utilComponents/TraceView";
 import type {
   EventLog,
@@ -193,8 +194,10 @@ const ConformanceCheckingState = ({
 
     return {
       traceId: selectedTraceId,
-      traceName: selectedTraceId,
+      traceName: trace.traceName,
       trace: trace.trace,
+      count: trace.count,
+      frequency: trace.frequency,
       isPositive: trace.isPositive,
     };
   }, [selectedTraceId, replayLogResults]);
@@ -214,8 +217,10 @@ const ConformanceCheckingState = ({
 
     return {
       traceId: selectedTraceId,
-      traceName: selectedTraceId,
+      traceName: trace.traceName,
       trace: trace.trace,
+      count: trace.count,
+      frequency: trace.frequency,
       results: trace.results,
     };
   }, [selectedTraceId, violationLogResults]);
@@ -235,8 +240,10 @@ const ConformanceCheckingState = ({
 
     return {
       traceId: selectedTraceId,
-      traceName: selectedTraceId,
+      traceName: trace.traceName,
       trace: trace.trace,
+      count: trace.count,
+      frequency: trace.frequency,
       results: trace.results,
     };
   }, [selectedTraceId, alignmentLogResults]);
@@ -264,30 +271,33 @@ const ConformanceCheckingState = ({
         console.time("conformance-checking");
         performance.mark("conformance-checking-start");
 
-        console.info("Started transforming log...");
-        console.time("transform-log");
-        performance.mark("transform-log-start");
+        console.info("Started collecting variants...");
+        console.time("collect-variants");
+        performance.mark("collect-variants-start");
 
-        const traces = Object.entries(log.traces);
+        const variantLog = getVariants(log);
 
-        performance.mark("transform-log-end");
+        performance.mark("collect-variants-end");
         performance.measure(
-          "transform-log",
-          "transform-log-start",
-          "transform-log-end",
+          "collect-variants",
+          "collect-variants-start",
+          "collect-variants-end",
         );
-        console.info("Finished transforming log!");
-        console.timeEnd("transform-log");
-        logMemory("After transforming log");
+        console.info("Finished collecting variants!");
+        console.timeEnd("collect-variants");
+        logMemory("After collecting variants");
 
         console.info("Started replaying log...");
         console.time("replay-log");
         performance.mark("replay-log-start");
 
         setReplayLogResults(
-          traces.map(([traceId, trace]) => {
+          variantLog.variants.map(({ variantId, trace, count }, index) => {
             return {
-              traceId,
+              traceId: variantId,
+              traceName: `Trace Variant #${index + 1}`,
+              count,
+              frequency: count / variantLog.count,
               trace,
               isPositive: replayTraceS(graph, trace),
             };
@@ -306,8 +316,11 @@ const ConformanceCheckingState = ({
           performance.mark("quantify-violations-start");
 
           setViolationLogResults(
-            traces.map(([traceId, trace]) => ({
-              traceId,
+            variantLog.variants.map(({ variantId, trace, count }, index) => ({
+              traceId: variantId,
+              traceName: `Trace Variant #${index + 1}`,
+              count,
+              frequency: count / variantLog.count,
               trace,
               results: quantifyViolations(graph, trace),
             })),
@@ -346,8 +359,11 @@ const ConformanceCheckingState = ({
           performance.mark("align-log-start");
 
           setAlignmentLogResults(
-            traces.map(([traceId, trace]) => ({
-              traceId,
+            variantLog.variants.map(({ variantId, trace, count }, index) => ({
+              traceId: variantId,
+              traceName: `Trace Variant #${index + 1}`,
+              count,
+              frequency: count / variantLog.count,
               trace,
               results: alignShowDesc(
                 trace.map((event) => event.activity),

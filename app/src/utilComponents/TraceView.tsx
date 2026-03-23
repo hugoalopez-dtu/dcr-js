@@ -122,7 +122,7 @@ const resultIcon = (val: boolean | undefined) => {
 interface TraceViewProps {
   selectedTrace: {
     traceId: string;
-    traceName: string;
+    traceName?: string;
     trace: RoleTrace;
     isPositive?: boolean;
   };
@@ -143,7 +143,7 @@ const TraceView = ({
   hugLeft,
   children,
 }: TraceViewProps) => {
-  const [traceName, setTraceName] = useState(selectedTrace.traceName);
+  const [traceName, setTraceName] = useState(selectedTrace.traceName || selectedTrace.traceId);
 
   return (
     <TraceWindow $hugLeft={!!hugLeft}>

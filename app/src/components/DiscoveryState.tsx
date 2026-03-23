@@ -8,6 +8,8 @@ import {
   type DCRGraph,
   type EventLog,
   filter,
+  getBinaryVariants,
+  getVariants,
   layoutGraph,
   mineFromAbstraction,
   nestDCR,
@@ -220,6 +222,22 @@ const DiscoveryState = ({
           console.timeEnd("parse-log");
           logMemory("After parsing log");
 
+          console.info("Started collecting variants...");
+          console.time("collect-variants");
+          performance.mark("collect-variants-start");
+
+          const variantLog = getVariants(noRoleLog);
+
+          performance.mark("collect-variants-end");
+          performance.measure(
+            "collect-variants",
+            "collect-variants-start",
+            "collect-variants-end",
+          );
+          console.info("Finished collecting variants!");
+          console.timeEnd("collect-variants");
+          logMemory("After collecting variants");
+
           console.info("Started filtering log...");
           console.time("filter-log");
           performance.mark("filter-log-start");
@@ -229,7 +247,7 @@ const DiscoveryState = ({
           }
 
           const filteredLog =
-            threshold === 0 ? noRoleLog : filter(noRoleLog, threshold);
+            threshold === 0 ? variantLog : filter(variantLog, threshold);
 
           performance.mark("filter-log-end");
           performance.measure(
@@ -491,11 +509,27 @@ const DiscoveryState = ({
           console.timeEnd("parse-log");
           logMemory("After parsing log");
 
+          console.info("Started collecting variants...");
+          console.time("collect-variants");
+          performance.mark("collect-variants-start");
+
+          const variantTrainingLog = getBinaryVariants(trainingLog);
+
+          performance.mark("collect-variants-end");
+          performance.measure(
+            "collect-variants",
+            "collect-variants-start",
+            "collect-variants-end",
+          );
+          console.info("Finished collecting variants!");
+          console.timeEnd("collect-variants");
+          logMemory("After collecting variants");
+
           console.info("Started mining log...");
           console.time("mine-log");
           performance.mark("mine-log-start");
 
-          const graph = rejectionMiner(trainingLog, optimizePrecision);
+          const graph = rejectionMiner(variantTrainingLog, optimizePrecision);
 
           performance.mark("mine-log-end");
           performance.measure("mine-log", "mine-log-start", "mine-log-end");
@@ -789,16 +823,20 @@ const DiscoveryState = ({
 
             try {
               const data = await modeler.saveXML({ format: false });
-              const hasUnsavedChanges =
-                lastSavedXML !== null && data.xml !== lastSavedXML;
-              if (hasUnsavedChanges) {
-                const wantSave = window.confirm(
-                  "You have unsaved changes. Save before leaving?",
-                );
-                if (wantSave) {
-                  const saved = await saveGraph();
-                  if (!saved) {
-                    return;
+              if (lastSavedXML === null && graphName !== "") {
+                // Graph was discovered but never saved, so try to save it silently
+                await saveGraph();
+              } else {
+                const hasUnsavedChanges = data.xml !== lastSavedXML;
+                if (hasUnsavedChanges) {
+                  const wantSave = window.confirm(
+                    "You have unsaved changes. Save before leaving?",
+                  );
+                  if (wantSave) {
+                    const saved = await saveGraph();
+                    if (!saved) {
+                      return;
+                    }
                   }
                 }
               }

@@ -6,6 +6,7 @@ import type {
   Traces,
   TraceCoverRelation,
   BinaryLog,
+  BinaryVariantLog,
 } from "./types";
 
 import {
@@ -16,6 +17,7 @@ import {
   copyTraces,
   mutatingIntersect,
   mutatingDifference,
+  isBinaryVariantLog,
 } from "./utility";
 
 // https://www.sciencedirect.com/science/article/pii/S0306437923001758
@@ -155,12 +157,27 @@ interface Rel {
   relName: RelName;
 }
 
+// Helper function that computes weighted size of a cover set.
+//
+// When weights are empty, falls back to size of set to preserve original 
+// behavior for non-variant BinaryLog inputs. Otherwise, use the sum of variant 
+// sizes (weights) to preserve original behavior for variant BinaryLog inputs.
+function getSize(set: Set<string>, weights: Record<string, number>): number {
+  if (Object.keys(weights).length === 0) return set.size;
+  let total = 0;
+  for (const id of set) {
+    total += weights[id] ?? 1;
+  }
+  return total;
+}
+
 // Adds best relation to graph, returns set of traces covered
 function reduceTraceCover(
   graph: DCRGraph,
   tcGraph: TraceCoverGraph,
   posTcGraph: TraceCoverGraph,
-  onlyPos: boolean
+  onlyPos: boolean,
+  weights: Record<string, number> = {}
 ): Set<string> {
   const nameToRelations = (
     relName: RelName
@@ -185,20 +202,19 @@ function reduceTraceCover(
     ) => {
       for (const event in rel) {
         for (const otherEvent in rel[event]) {
+          const relSize = getSize(rel[event][otherEvent], weights);
           let cond;
           if (posRel && !onlyPos) {
-            cond =
-              rel[event][otherEvent].size - posRel[event][otherEvent].size >
-              max;
+            const posSize = getSize(posRel[event][otherEvent], weights);
+            cond = relSize - posSize > max;
           } else if (posRel && onlyPos) {
-            cond =
-              posRel[event][otherEvent].size === 0 &&
-              rel[event][otherEvent].size > max;
+            const posSize = getSize(posRel[event][otherEvent], weights);
+            cond = posSize === 0 && relSize > max;
           } else {
-            cond = rel[event][otherEvent].size > max;
+            cond = relSize > max;
           }
           if (cond) {
-            max = rel[event][otherEvent].size;
+            max = relSize;
             res = { relName, event, otherEvent };
           }
         }
@@ -221,11 +237,36 @@ function reduceTraceCover(
 }
 
 export default function rejectionMiner(
-  log: BinaryLog,
+  log: BinaryLog | BinaryVariantLog,
   optimizePrecision: boolean = true
 ): DCRGraph {
-  const nTraces = copyTraces(log.nTraces);
-  const traces = log.traces;
+  // When using "BinaryVariantLog" instead of "BinaryLog", identical traces 
+  // are deduplicated into variants with counts. Since identical traces produce 
+  // identical execution paths in "findTraceCover" and thus identical cover set 
+  // memberships, processing each variant once is equivalent to processing all 
+  // its duplicates. The `weights` map ensures that "reduceTraceCover" accounts 
+  // for variant frequency, preserving the same behavior as with raw duplicate 
+  // traces.
+  let nTraces: Traces;
+  let traces: Traces;
+  const weights: Record<string, number> = {};
+
+  if (isBinaryVariantLog(log)) {
+    nTraces = {};
+    for (const variant of log.nTraces) {
+      nTraces[variant.variantId] = [...variant.trace];
+      weights[variant.variantId] = variant.count;
+    }
+    
+    traces = {};
+    for (const variant of log.traces) {
+      traces[variant.variantId] = variant.trace;
+      weights[variant.variantId] = variant.count;
+    }
+  } else {
+    nTraces = copyTraces(log.nTraces);
+    traces = log.traces;
+  }
 
   const graph = makeEmptyGraph(log.events);
   const patterns = makeFullGraph(log.events);
@@ -242,7 +283,7 @@ export default function rejectionMiner(
     const tcGraph = findTraceCover(graph, patterns, nTraces);
     const posTcGraph = findTraceCover(graph, patterns, traces);
     // Reduce graph to smallest trace cover of negative traces
-    coveredTraces = reduceTraceCover(graph, tcGraph, posTcGraph, true);
+    coveredTraces = reduceTraceCover(graph, tcGraph, posTcGraph, true, weights);
     coveredTracesCount += coveredTraces.size;
   }
 
@@ -257,7 +298,7 @@ export default function rejectionMiner(
       }
       const negTcGraph = findTraceCover(graph, patterns, nTraces);
       const posTcGraph = findTraceCover(graph, patterns, traces);
-      coveredTraces = reduceTraceCover(graph, negTcGraph, posTcGraph, false);
+      coveredTraces = reduceTraceCover(graph, negTcGraph, posTcGraph, false, weights);
       initial = false;
     }
   }
