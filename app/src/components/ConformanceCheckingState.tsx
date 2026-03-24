@@ -871,6 +871,7 @@ const ConformanceCheckingState = ({
   }, [currentLog]);
 
   function handleCheck() {
+    resetAllResults();
     if (currentDcrGraph && variantLog) {
       performConformanceChecking(currentDcrGraph, variantLog);
     }
