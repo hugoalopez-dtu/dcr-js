@@ -16,6 +16,14 @@ export const isColoredRelations = (obj: unknown): obj is ColoredRelations => {
   return typeof obj === "boolean";
 };
 
+export type EmptyLogResults = Array<{
+  traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
+  trace: RoleTrace;
+}>;
+
 export type ReplayLogResults = Array<{
   traceId: string;
   traceName?: string;

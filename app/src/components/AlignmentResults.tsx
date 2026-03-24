@@ -9,6 +9,7 @@ import { BiCheck, BiQuestionMark, BiX } from "react-icons/bi";
 import FlexBox from "../utilComponents/FlexBox";
 import { useMemo } from "react";
 import ResultContainer from "../utilComponents/ResultContainer";
+import Form from "../utilComponents/Form";
 
 const resultIcon = (val: boolean | undefined) => {
   switch (val) {
@@ -26,6 +27,7 @@ interface AlignmentResultsProps {
   alignmentLogResults: AlignmentLogResults;
   selectedTrace: AlignmentLogResults[number] | null;
   setSelectedTraceId: React.Dispatch<React.SetStateAction<string | null>>;
+  onCheck: () => void;
 }
 
 const AlignmentResults = ({
@@ -33,6 +35,7 @@ const AlignmentResults = ({
   alignmentLogResults,
   selectedTrace,
   setSelectedTraceId,
+  onCheck,
 }: AlignmentResultsProps) => {
   const { positiveCount, negativeCount, totalCost } = useMemo<{
     positiveCount: number;
@@ -74,6 +77,7 @@ const AlignmentResults = ({
           </FlexBox>
         </FlexBox>
       </ResultsHeader>
+      <Form submitText="Check!" submit={onCheck} />
       <ul>
         {alignmentLogResults.map(
           ({ traceName, traceId, results, count, frequency }) => (

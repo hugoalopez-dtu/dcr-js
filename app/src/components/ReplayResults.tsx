@@ -9,6 +9,7 @@ import {
 } from "../utilComponents/ConformanceUtil";
 import FlexBox from "../utilComponents/FlexBox";
 import ResultContainer from "../utilComponents/ResultContainer";
+import Form from "../utilComponents/Form";
 
 const resultIcon = (val: boolean | undefined) => {
   switch (val) {
@@ -26,6 +27,7 @@ interface ReplayResultsProps {
   replayLogResults: ReplayLogResults;
   selectedTrace: ReplayLogResults[number] | null;
   setSelectedTraceId: React.Dispatch<React.SetStateAction<string | null>>;
+  onCheck: () => void;
 }
 
 const ReplayResults = ({
@@ -33,6 +35,7 @@ const ReplayResults = ({
   replayLogResults,
   selectedTrace,
   setSelectedTraceId,
+  onCheck,
 }: ReplayResultsProps) => {
   const { positiveCount, negativeCount } = useMemo<{
     positiveCount: number;
@@ -69,6 +72,7 @@ const ReplayResults = ({
           </FlexBox>
         </FlexBox>
       </ResultsHeader>
+      <Form submitText="Check!" submit={onCheck} />
       <ul>
         {replayLogResults.map(
           ({ traceName, traceId, isPositive, count, frequency }) => (
