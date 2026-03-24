@@ -741,7 +741,7 @@ const ConformanceCheckingState = ({
     {
       customElement: (
         <MenuElement>
-          <Label>Select Variants</Label>
+          <Label>Variant Ordering</Label>
           <Select
             name="variantsDirection"
             data-testid="variantsDirection"
@@ -757,7 +757,7 @@ const ConformanceCheckingState = ({
     {
       customElement: (
         <MenuElement>
-          <Label>Variant % to keep</Label>
+          <Label>Coverage Threshold</Label>
           <Input
             type="number"
             required

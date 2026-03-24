@@ -172,7 +172,7 @@ const DiscoveryState = ({
           />
         </MenuElement>,
         <MenuElement>
-          <Label>Select Variants</Label>
+          <Label>Variant Ordering</Label>
           <Select
             name="variantsDirection"
             data-testid="variantsDirection"
@@ -187,7 +187,7 @@ const DiscoveryState = ({
           </Select>
         </MenuElement>,
         <MenuElement>
-          <Label>Variant % to keep</Label>
+          <Label>Coverage Threshold</Label>
           <Input
             type="number"
             required
