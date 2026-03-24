@@ -100,6 +100,78 @@ function collectVariants<T extends Trace | RoleTrace>(traces: {
   return { variants, count };
 }
 
+export function filterVariantByTopPercentage<T extends Trace | RoleTrace>(
+  variantLog: VariantLog<T>,
+  topPercentage: number,
+): VariantLog<T> {
+  console.info("Taking top %", topPercentage);
+  // topPercentage: we want the most frequent variants that make up the topPercentage of the log.
+  // Variants are sorted by count in descending order (highest to lowest), sp we iterate from the head.
+  // Once the threshold is crossed, all variants with the same count
+  // as the one that crossed it are also included (matching PM4Py behavior).
+
+  const totalTraceCount = variantLog.count;
+  const targetTraceCount = Math.ceil(topPercentage * totalTraceCount);
+
+  const filteredVariants: Variant<T>[] = [];
+  let accumulatedCount = 0;
+  let shallBreakUnder = -Infinity;
+
+  for (let i = 0; i < variantLog.variants.length; i++) {
+    const variant = variantLog.variants[i];
+    if (variant.count < shallBreakUnder) {
+      break;
+    }
+    filteredVariants.push(variant);
+    accumulatedCount += variant.count;
+    if (accumulatedCount >= targetTraceCount) {
+      shallBreakUnder = variant.count;
+    }
+  }
+
+  return {
+    events: variantLog.events,
+    variants: filteredVariants,
+    count: accumulatedCount,
+  };
+}
+
+export function filterVariantByBottomPercentage<T extends Trace | RoleTrace>(
+  variantLog: VariantLog<T>,
+  bottomPercentage: number,
+): VariantLog<T> {
+  console.info("Taking bottom %", bottomPercentage);
+  // bottomPercentage: we want the least frequent variants that make up the bottomPercentage of the log.
+  // Variants are sorted by count in descending order (highest to lowest), so we iterate from the tail.
+  // Once the threshold is crossed, all variants with the same count
+  // as the one that crossed it are also included (matching PM4Py behavior).
+
+  const totalTraceCount = variantLog.count;
+  const targetTraceCount = Math.ceil(bottomPercentage * totalTraceCount);
+
+  const filteredVariants: Variant<T>[] = [];
+  let accumulatedCount = 0;
+  let shallBreakOver = Infinity;
+
+  for (let i = variantLog.variants.length - 1; i >= 0; i--) {
+    const variant = variantLog.variants[i];
+    if (variant.count > shallBreakOver) {
+      break;
+    }
+    filteredVariants.push(variant);
+    accumulatedCount += variant.count;
+    if (accumulatedCount >= targetTraceCount) {
+      shallBreakOver = variant.count;
+    }
+  }
+
+  return {
+    events: variantLog.events,
+    variants: filteredVariants,
+    count: accumulatedCount,
+  };
+}
+
 let _nextId = 0;
 export function generateId() {
   return ++_nextId;

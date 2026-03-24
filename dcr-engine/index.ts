@@ -22,7 +22,13 @@ import {
   isAcceptingS,
 } from "./src/executionEngine";
 import { moddleToDCR } from "./src/graphConversion";
-import { copyMarking, getBinaryVariants, getVariants } from "./src/utility";
+import {
+  copyMarking,
+  filterVariantByTopPercentage,
+  filterVariantByBottomPercentage,
+  getBinaryVariants,
+  getVariants,
+} from "./src/utility";
 import {
   parseRoleLog,
   parseNonRoleLog,
@@ -92,6 +98,8 @@ export {
   alignTrace,
   rejectionMiner,
   getBinaryVariants,
+  filterVariantByTopPercentage,
+  filterVariantByBottomPercentage,
   StringTraceStreamParser,
   RegexTraceStreamParser,
   DOMTraceStreamParser,

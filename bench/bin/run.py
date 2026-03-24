@@ -66,6 +66,18 @@ def main():
         "--no-analyze", action="store_true",
         help="Skip running analysis after the benchmark"
     )
+    parser.add_argument(
+        "--variants-percentage",
+        type=int,
+        default=100,
+        help="Percentage of variants to keep (default: 100)"
+    )
+    parser.add_argument(
+        "--variants-direction",
+        choices=["top", "bottom"],
+        default="top",
+        help="Direction for variant filtering: 'top' (most frequent) or 'bottom' (least frequent) (default: top)"
+    )
     args = parser.parse_args()
 
     name = args.name
@@ -135,6 +147,8 @@ def main():
     env["BENCH_ITERATIONS"] = str(args.iterations)
     env["BENCH_TIMEOUT"] = str(args.timeout)
     env["BENCH_SAVE_MODELS"] = "false" if args.no_save_models else "true"
+    env["BENCH_VARIANTS_PERCENTAGE"] = str(args.variants_percentage)
+    env["BENCH_VARIANTS_DIRECTION"] = args.variants_direction
 
     run_command(
         ["docker-compose", "-f",

@@ -8,6 +8,8 @@ import {
   type DCRGraph,
   type EventLog,
   filter,
+  filterVariantByTopPercentage,
+  filterVariantByBottomPercentage,
   getBinaryVariants,
   getVariants,
   layoutGraph,
@@ -67,6 +69,18 @@ const FileInput = styled.div`
 const Input = styled.input`
   width: 7rem;
   font-size: 20px;
+`;
+
+const Select = styled.select`
+  padding: 0.5rem;
+  font-size: 20px;
+  background-color: white;
+  border: 2px solid gainsboro;
+  cursor: pointer;
+  &:hover {
+    background-color: gainsboro;
+    color: white;
+  }
 `;
 
 const initGraphName = "";
@@ -158,6 +172,38 @@ const DiscoveryState = ({
           />
         </MenuElement>,
         <MenuElement>
+          <Label>Variant Ordering</Label>
+          <Select
+            name="variantsDirection"
+            data-testid="variantsDirection"
+            defaultValue={
+              customFormState?.variantsDirection
+                ? customFormState.variantsDirection
+                : "top"
+            }
+          >
+            <option value="top">Most frequent</option>
+            <option value="bottom">Least frequent</option>
+          </Select>
+        </MenuElement>,
+        <MenuElement>
+          <Label>Coverage Threshold</Label>
+          <Input
+            type="number"
+            required
+            data-testid="variantsPercentage"
+            name="variantsPercentage"
+            min="0"
+            max="100"
+            defaultValue={
+              customFormState?.variantsPercentage
+                ? customFormState.variantsPercentage
+                : "100"
+            }
+            step="1"
+          />
+        </MenuElement>,
+        <MenuElement>
           <Label title="Saves the uploaded event log for later use in conformance checking, simulation, etc.">
             Save Log
           </Label>
@@ -177,12 +223,22 @@ const DiscoveryState = ({
         const threshold = rawThreshold && parseFloat(rawThreshold.toString());
         const nest = !!formData.get("nest");
         const save = !!formData.get("save");
+        const rawVariantsDirection = formData.get("variantsDirection");
+        const variantsDirection =
+          rawVariantsDirection === "bottom" ? "bottom" : "top";
+        const rawVariantsPercentage = formData.get("variantsPercentage");
+        const variantsPercentage = rawVariantsPercentage
+          ? parseFloat(rawVariantsPercentage.toString()) / 100
+          : 1;
+        console.info("variants%", variantsPercentage, variantsDirection);
 
         setCustomFormState({
           ...customFormState,
           threshold,
           nest,
           save,
+          variantsDirection: rawVariantsDirection,
+          variantsPercentage: rawVariantsPercentage,
         });
 
         const logFile = customFormState?.logFile;
@@ -238,16 +294,46 @@ const DiscoveryState = ({
           console.timeEnd("collect-variants");
           logMemory("After collecting variants");
 
+          console.info("Started variant filtering...");
+          console.time("filter-variants");
+          performance.mark("filter-variants-start");
+
+          if (variantsPercentage >= 1) {
+            console.info("No variant filtering will be applied to log.");
+          }
+
+          const filteredVariantLog =
+            variantsPercentage < 1
+              ? variantsDirection === "top"
+                ? filterVariantByTopPercentage(variantLog, variantsPercentage)
+                : filterVariantByBottomPercentage(
+                    variantLog,
+                    variantsPercentage,
+                  )
+              : variantLog;
+
+          performance.mark("filter-variants-end");
+          performance.measure(
+            "filter-variants",
+            "filter-variants-start",
+            "filter-variants-end",
+          );
+          console.info("Finished variant filtering!");
+          console.timeEnd("filter-variants");
+          logMemory("After filtering variants");
+
           console.info("Started filtering log...");
           console.time("filter-log");
           performance.mark("filter-log-start");
 
           if (threshold <= 0) {
-            console.info("No filtering will be applied to log.");
+            console.info("No noise filtering will be applied to log.");
           }
 
           const filteredLog =
-            threshold === 0 ? variantLog : filter(variantLog, threshold);
+            threshold === 0
+              ? filteredVariantLog
+              : filter(filteredVariantLog, threshold);
 
           performance.mark("filter-log-end");
           performance.measure(
