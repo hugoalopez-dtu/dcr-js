@@ -906,7 +906,7 @@ const ConformanceCheckingState = ({
         <EmptyResults
           logName={currentLog?.name ?? ""}
           emptyLogResults={emptyLogResults}
-          selectedTrace={selectedReplayTrace}
+          selectedTrace={selectedEmptyTrace}
           setSelectedTraceId={setSelectedTraceId}
           onCheck={handleCheck}
         />
@@ -945,6 +945,7 @@ const ConformanceCheckingState = ({
       {/* Empty results view: When no results has been calculated */}
       {selectedEmptyTrace && !selectedReplayTrace && (
         <TraceView
+          key={selectedEmptyTrace.traceId}
           selectedTrace={selectedEmptyTrace}
           setSelectedTraceId={setSelectedTraceId}
         />
@@ -952,6 +953,7 @@ const ConformanceCheckingState = ({
       {/* Default view: When alignment is disabled (heatmap can be enabled or disabled in this view) */}
       {selectedReplayTrace && !alignmentMode && (
         <TraceView
+          key={selectedReplayTrace.traceId}
           selectedTrace={selectedReplayTrace}
           setSelectedTraceId={setSelectedTraceId}
         />
