@@ -143,7 +143,9 @@ const TraceView = ({
   hugLeft,
   children,
 }: TraceViewProps) => {
-  const [traceName, setTraceName] = useState(selectedTrace.traceName || selectedTrace.traceId);
+  const [traceName, setTraceName] = useState(
+    selectedTrace.traceName || selectedTrace.traceId,
+  );
 
   return (
     <TraceWindow $hugLeft={!!hugLeft}>
@@ -159,7 +161,9 @@ const TraceView = ({
         ) : (
           traceName
         )}
-        {resultIcon(selectedTrace.isPositive)}
+        {"isPositive" in selectedTrace
+          ? resultIcon(selectedTrace.isPositive)
+          : null}
         {onResetTrace && <ResetTrace onClick={onResetTrace} />}
         <CloseTrace
           onClick={() => {

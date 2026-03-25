@@ -15,6 +15,7 @@ const StyledForm = styled.form`
     font-size: 20px;
     margin-top: 1rem;
   }
+  padding-bottom: 1rem;
 `;
 
 const Form = ({ children, submit, submitText }: FormProps) => {

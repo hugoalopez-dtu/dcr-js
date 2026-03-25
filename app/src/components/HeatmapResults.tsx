@@ -10,6 +10,7 @@ import { BiCheck, BiQuestionMark, BiX } from "react-icons/bi";
 import FlexBox from "../utilComponents/FlexBox";
 import { useMemo } from "react";
 import ResultContainer from "../utilComponents/ResultContainer";
+import Form from "../utilComponents/Form";
 
 const resultIcon = (val: boolean | undefined) => {
   switch (val) {
@@ -33,6 +34,7 @@ interface HeatmapResultsProps {
     | undefined;
   selectedTrace: ViolationLogResults[number] | null;
   setSelectedTraceId: React.Dispatch<React.SetStateAction<string | null>>;
+  onCheck: () => void;
 }
 
 const HeatmapResults = ({
@@ -41,6 +43,7 @@ const HeatmapResults = ({
   aggregatedViolationLogResults,
   selectedTrace,
   setSelectedTraceId,
+  onCheck,
 }: HeatmapResultsProps) => {
   const { positiveCount, negativeCount } = useMemo<{
     positiveCount: number;
@@ -85,6 +88,7 @@ const HeatmapResults = ({
           </FlexBox>
         </FlexBox>
       </ResultsHeader>
+      <Form submitText="Check!" submit={onCheck} />
       <ul>
         {violationLogResults.map(
           ({ traceName, traceId, results, count, frequency }) => (

@@ -37,12 +37,12 @@ import {
 import { toast } from "react-toastify";
 import TraceView from "../utilComponents/TraceView";
 import type {
-  EventLog,
   LabelDCRPP,
   RelationActivations,
   RelationViolations,
   RoleTrace,
   Trace,
+  VariantLog,
 } from "dcr-engine/src/types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import ReplayResults from "./ReplayResults";
@@ -58,10 +58,10 @@ import {
 } from "./GlobalModalMenuElements";
 import ReactiveModeler from "./ReactiveModeler";
 import emptyBoardXML from "../resources/emptyBoard";
-import Form from "../utilComponents/Form";
 import RawFileUpload from "../utilComponents/RawFileUpload";
 import Label from "../utilComponents/Label";
 import MenuElement from "../utilComponents/MenuElement";
+import EmptyResults from "./EmptyResults";
 
 function logMemory(label: string) {
   if ("gc" in window && typeof window.gc === "function") {
@@ -184,6 +184,26 @@ const ConformanceCheckingState = ({
     null,
   );
 
+  const [variantLog, setVariantLog] = useState<VariantLog<RoleTrace> | null>(
+    null,
+  );
+
+  const emptyLogResults = useMemo(() => {
+    if (!variantLog) {
+      return [];
+    }
+
+    return variantLog.variants.map((variant, index) => {
+      return {
+        traceId: variant.variantId,
+        traceName: `Trace Variant #${index + 1}`,
+        count: variant.count,
+        frequency: variant.count / variantLog.count,
+        trace: variant.trace,
+      };
+    });
+  }, [variantLog]);
+
   const [replayLogResults, setReplayLogResults] = useState<ReplayLogResults>(
     [],
   );
@@ -205,6 +225,26 @@ const ConformanceCheckingState = ({
     setHeatmapMode(false);
     setAlignmentMode(false);
   }, []);
+
+  const selectedEmptyTrace = useMemo(() => {
+    if (!selectedTraceId) {
+      return null;
+    }
+
+    const trace = emptyLogResults.find((tr) => tr.traceId === selectedTraceId);
+
+    if (!trace) {
+      return null;
+    }
+
+    return {
+      traceId: selectedTraceId,
+      traceName: trace.traceName,
+      trace: trace.trace,
+      count: trace.count,
+      frequency: trace.frequency,
+    };
+  }, [selectedTraceId, emptyLogResults]);
 
   const selectedReplayTrace = useMemo(() => {
     if (!selectedTraceId) {
@@ -289,7 +329,7 @@ const ConformanceCheckingState = ({
   const alignmentIsAllowed = !(hasRole || hasSubProcess);
 
   const performConformanceChecking = useCallback(
-    (graph: DCRGraphS, log: EventLog<RoleTrace>) => {
+    (graph: DCRGraphS, variantLog: VariantLog<RoleTrace>) => {
       const rawVariantsDirection = variantsDirectionRef.current?.value;
       const variantsDirection =
         rawVariantsDirection === "top" ? "top" : "bottom";
@@ -304,22 +344,6 @@ const ConformanceCheckingState = ({
         console.info("Started conformance checking...");
         console.time("conformance-checking");
         performance.mark("conformance-checking-start");
-
-        console.info("Started collecting variants...");
-        console.time("collect-variants");
-        performance.mark("collect-variants-start");
-
-        const variantLog = getVariants(log);
-
-        performance.mark("collect-variants-end");
-        performance.measure(
-          "collect-variants",
-          "collect-variants-start",
-          "collect-variants-end",
-        );
-        console.info("Finished collecting variants!");
-        console.timeEnd("collect-variants");
-        logMemory("After collecting variants");
 
         console.info("Started variant filtering...");
         console.time("filter-variants");
@@ -443,9 +467,16 @@ const ConformanceCheckingState = ({
           console.timeEnd("align-log");
           logMemory("After aligning log");
         }
+
+        // Enable heatmap by default after conformance checking completes
+        if (heatmapIsAllowed) {
+          setHeatmapMode(true);
+          setAlignmentMode(false);
+        }
       } catch (e) {
         console.log(e);
         console.error("Failed conformance checking!");
+        resetAllResults();
       }
 
       performance.mark("conformance-checking-end");
@@ -458,7 +489,7 @@ const ConformanceCheckingState = ({
       console.timeEnd("conformance-checking");
       logMemory("After conformance checking");
     },
-    [hasNesting, hasRole, hasSubProcess],
+    [hasNesting, hasRole, hasSubProcess, heatmapIsAllowed, resetAllResults],
   );
 
   const aggregatedViolationLogResults = useMemo<
@@ -705,42 +736,6 @@ const ConformanceCheckingState = ({
         },
       ],
     },
-    {
-      customElement: (
-        <StyledFileUpload>
-          <RawFileUpload
-            accept=".xes"
-            fileCallback={async (file) => {
-              logMemory("Before parsing log");
-              console.info("Started parsing log...");
-              console.time("parse-log");
-              performance.mark("parse-log-start");
-
-              try {
-                const log = await StringTraceStreamParser.parseAsRoleLog(file);
-                saveLog(file.name, log);
-              } catch (e) {
-                console.log(e);
-                toast.error("Cannot parse log...");
-              }
-
-              performance.mark("parse-log-end");
-              performance.measure(
-                "parse-log",
-                "parse-log-start",
-                "parse-log-end",
-              );
-              console.info("Finished parsing log!");
-              console.timeEnd("parse-log");
-              logMemory("After parsing log");
-            }}
-          >
-            <BiUpload />
-            Upload Log
-          </RawFileUpload>
-        </StyledFileUpload>
-      ),
-    },
     ...savedGraphElements(),
     ...savedLogElements(),
     {
@@ -779,14 +774,38 @@ const ConformanceCheckingState = ({
     },
     {
       customElement: (
-        <Form
-          submitText="Check!"
-          submit={() => {
-            if (currentDcrGraph && currentLog) {
-              performConformanceChecking(currentDcrGraph, currentLog.log);
-            }
-          }}
-        />
+        <StyledFileUpload>
+          <RawFileUpload
+            accept=".xes"
+            fileCallback={async (file) => {
+              logMemory("Before parsing log");
+              console.info("Started parsing log...");
+              console.time("parse-log");
+              performance.mark("parse-log-start");
+
+              try {
+                const log = await StringTraceStreamParser.parseAsRoleLog(file);
+                saveLog(file.name, log);
+              } catch (e) {
+                console.log(e);
+                toast.error("Cannot parse log...");
+              }
+
+              performance.mark("parse-log-end");
+              performance.measure(
+                "parse-log",
+                "parse-log-start",
+                "parse-log-end",
+              );
+              console.info("Finished parsing log!");
+              console.timeEnd("parse-log");
+              logMemory("After parsing log");
+            }}
+          >
+            <BiUpload />
+            Upload Log
+          </RawFileUpload>
+        </StyledFileUpload>
       ),
     },
   ];
@@ -828,6 +847,36 @@ const ConformanceCheckingState = ({
     onInitModeler(modeler);
   }, [modeler]);
 
+  useEffect(() => {
+    logMemory("Before collecting variants");
+
+    if (currentLog) {
+      console.info("Started collecting variants...");
+      console.time("collect-variants");
+      performance.mark("collect-variants-start");
+
+      const variantLog = getVariants(currentLog.log);
+      setVariantLog(variantLog);
+
+      performance.mark("collect-variants-end");
+      performance.measure(
+        "collect-variants",
+        "collect-variants-start",
+        "collect-variants-end",
+      );
+      console.info("Finished collecting variants!");
+      console.timeEnd("collect-variants");
+      logMemory("After collecting variants");
+    }
+  }, [currentLog]);
+
+  function handleCheck() {
+    resetAllResults();
+    if (currentDcrGraph && variantLog) {
+      performConformanceChecking(currentDcrGraph, variantLog);
+    }
+  }
+
   return (
     <>
       <ReactiveModeler
@@ -852,6 +901,16 @@ const ConformanceCheckingState = ({
           setCurrentDcrGraph(graph);
         }}
       />
+      {/* Empty results view: When no results has been calculated */}
+      {emptyLogResults.length > 0 && replayLogResults.length === 0 && (
+        <EmptyResults
+          logName={currentLog?.name ?? ""}
+          emptyLogResults={emptyLogResults}
+          selectedTrace={selectedEmptyTrace}
+          setSelectedTraceId={setSelectedTraceId}
+          onCheck={handleCheck}
+        />
+      )}
       {/* Default view: When heatmap and alignment is disabled */}
       {replayLogResults.length > 0 && !heatmapMode && !alignmentMode && (
         <ReplayResults
@@ -859,6 +918,7 @@ const ConformanceCheckingState = ({
           replayLogResults={replayLogResults}
           selectedTrace={selectedReplayTrace}
           setSelectedTraceId={setSelectedTraceId}
+          onCheck={handleCheck}
         />
       )}
       {/* Heatmap view: When heatmap is enabled (alignment cannot be enabled at the same time) */}
@@ -869,6 +929,7 @@ const ConformanceCheckingState = ({
           aggregatedViolationLogResults={aggregatedViolationLogResults}
           selectedTrace={selectedViolationTrace}
           setSelectedTraceId={setSelectedTraceId}
+          onCheck={handleCheck}
         />
       )}
       {/* Alignment view: When alignment is enabled (heatmap cannot be enabled at the same time) */}
@@ -878,11 +939,21 @@ const ConformanceCheckingState = ({
           alignmentLogResults={alignmentLogResults}
           selectedTrace={selectedAlignmentTrace}
           setSelectedTraceId={setSelectedTraceId}
+          onCheck={handleCheck}
+        />
+      )}
+      {/* Empty results view: When no results has been calculated */}
+      {selectedEmptyTrace && !selectedReplayTrace && (
+        <TraceView
+          key={selectedEmptyTrace.traceId}
+          selectedTrace={selectedEmptyTrace}
+          setSelectedTraceId={setSelectedTraceId}
         />
       )}
       {/* Default view: When alignment is disabled (heatmap can be enabled or disabled in this view) */}
       {selectedReplayTrace && !alignmentMode && (
         <TraceView
+          key={selectedReplayTrace.traceId}
           selectedTrace={selectedReplayTrace}
           setSelectedTraceId={setSelectedTraceId}
         />
