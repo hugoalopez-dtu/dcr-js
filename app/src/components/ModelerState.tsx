@@ -223,9 +223,9 @@ import os
 from xml.dom import minidom
       `);
 
-      const bpmnParserCode = await fetch('/dcr-js/src/bpmn2dcr-pycore/bpmn_parser.py').then(r => r.text());
-      const translationEngineCode = await fetch('/dcr-js/src/bpmn2dcr-pycore/translation_engine.py').then(r => r.text());
-      const dcrGeneratorCode = await fetch('/dcr-js/src/bpmn2dcr-pycore/dcr_generator.py').then(r => r.text());
+      const bpmnParserCode = await fetch('/dcr-js/bpmn2dcr-pycore/bpmn_parser.py').then(r => r.text());
+      const translationEngineCode = await fetch('/dcr-js/bpmn2dcr-pycore/translation_engine.py').then(r => r.text());
+      const dcrGeneratorCode = await fetch('/dcr-js/bpmn2dcr-pycore/dcr_generator.py').then(r => r.text());
 
       const cleanBpmnParserCode = bpmnParserCode;
       const cleanTranslationEngineCode = translationEngineCode.replace('from bpmn_parser import BPMNProcess, BPMNObject', '');
