@@ -1,16 +1,4 @@
 // -----------------------------------------------------------
-// -------------------- Extended Set Type --------------------
-// -----------------------------------------------------------
-
-declare global {
-  interface Set<T> {
-    union(b: Set<T>): Set<T>;
-    intersect(b: Set<T>): Set<T>;
-    difference(b: Set<T>): Set<T>;
-  }
-}
-
-// -----------------------------------------------------------
 // --------------------- DCR Graph Types ---------------------
 // -----------------------------------------------------------
 
@@ -18,7 +6,12 @@ export type Event = string;
 export type Label = string;
 export type Role = string;
 
-export type RelationType = "condition" | "response" | "include" | "exclude" | "milestone";
+export type RelationType =
+  | "condition"
+  | "response"
+  | "include"
+  | "exclude"
+  | "milestone";
 
 export interface Marking {
   executed: Set<Event>;
@@ -26,7 +19,10 @@ export interface Marking {
   pending: Set<Event>;
 }
 
-export type Nestings = { nestingIds: Set<string>, nestingRelations: { [event: Event]: string } };
+export type Nestings = {
+  nestingIds: Set<string>;
+  nestingRelations: { [event: Event]: string };
+};
 
 // Map from event to a set of events
 // Used to denote different relations between events
@@ -45,7 +41,7 @@ export type RelationViolations = {
   responseTo: FuzzyRelation;
   excludesTo: FuzzyRelation;
   milestonesFor: FuzzyRelation;
-}
+};
 
 export type RelationActivations = {
   conditionsFor: FuzzyRelation;
@@ -53,7 +49,7 @@ export type RelationActivations = {
   excludesTo: FuzzyRelation;
   milestonesFor: FuzzyRelation;
   includesTo: FuzzyRelation;
-}
+};
 
 export interface DCRGraph {
   events: Set<Event>;
@@ -72,10 +68,10 @@ export type CostFun = (action: AlignAction, target: Event) => number;
 export type Alignment = { cost: number; trace: Trace };
 
 export type Test = {
-  polarity: "+" | "-",
-  trace: Trace,
-  context: Set<Event>
-}
+  polarity: "+" | "-";
+  trace: Trace;
+  context: Set<Event>;
+};
 
 export interface Labelling {
   labels: Set<Label>;
@@ -93,16 +89,17 @@ export type LabelDCR = DCRGraph & Labelling;
 
 export type LabelDCRPP = DCRGraph & Labelling & Optimizations;
 
-export type DCRGraphS = DCRGraph & Labelling & {
-  subProcesses: {
-    [id: string]: SubProcess;
+export type DCRGraphS = DCRGraph &
+  Labelling & {
+    subProcesses: {
+      [id: string]: SubProcess;
+    };
+    subProcessMap: {
+      [event: Event]: SubProcess;
+    };
+    roles: Set<Role>;
+    roleMap: { [event: Event]: Role };
   };
-  subProcessMap: {
-    [event: Event]: SubProcess;
-  };
-  roles: Set<Role>;
-  roleMap: { [event: Event]: Role };
-}
 
 export interface SubProcess {
   id: string;
@@ -110,29 +107,31 @@ export interface SubProcess {
   events: Set<Event>;
 }
 
-export const isSubProcess = (obj: unknown): obj is SubProcess => {
+export function isSubProcess(obj: unknown): obj is SubProcess {
   return (obj as SubProcess).parent !== undefined;
 }
 
 export type Trace = Array<Event>;
-export type RoleTrace = Array<{ activity: Label, role: Role }>
+export type RoleTrace = Array<{ activity: Label; role: Role }>;
 
 export interface EventLog<T extends RoleTrace | Trace> {
   events: Set<Event>;
   traces: {
     [traceId: string]: T;
-  }
+  };
 }
 
 export interface XMLEvent {
-  string: [{
-    "@key": "concept:name";
-    "@value": string;
-  }, {
-    "@key": "role";
-    "@value": string;
-  }];
-
+  string: [
+    {
+      "@key": "concept:name";
+      "@value": string;
+    },
+    {
+      "@key": "role";
+      "@value": string;
+    },
+  ];
 }
 
 export interface XMLTrace {
@@ -154,13 +153,16 @@ export interface XMLLog {
     "@openxes.version": "1.0RC7";
     global: {
       "@scope": "event";
-      string: [{
-        "@key": "concept:name";
-        "@value": "__INVALID__";
-      }, {
-        "@key": "role";
-        "@value": "__INVALID__";
-      }];
+      string: [
+        {
+          "@key": "concept:name";
+          "@value": "__INVALID__";
+        },
+        {
+          "@key": "role";
+          "@value": "__INVALID__";
+        },
+      ];
     };
     classifier: {
       "@name": "Event Name";
@@ -186,7 +188,6 @@ export interface LogAbstraction {
   precedesButNeverSuceeds?: EventMap;
 }
 
-
 export interface TraceCoverRelation {
   [startEventId: string]: {
     [endEventId: string]: Set<TraceId>;
@@ -205,7 +206,6 @@ export interface TraceCoverGraph {
 
 type TraceId = string;
 
-
 export type Traces = {
   [traceId: TraceId]: Trace;
 };
@@ -214,6 +214,12 @@ export interface BinaryLog {
   events: Set<Event>;
   traces: Traces;
   nTraces: Traces;
+}
+
+export interface BinaryVariantLog {
+  events: Set<Event>;
+  traces: Variant<Trace>[];
+  nTraces: Variant<Trace>[];
 }
 
 export interface ClassifiedLog {
@@ -225,4 +231,16 @@ export interface ClassifiedLog {
 
 export interface ClassifiedTraces {
   [traceId: string]: boolean;
+}
+
+export interface Variant<T> {
+  variantId: string;
+  trace: T;
+  count: number;
+}
+
+export interface VariantLog<T> {
+  events: Set<Event>;
+  variants: Variant<T>[];
+  count: number;
 }

@@ -1,2 +1,8 @@
 Arrange meeting.xml
 Prescribe medicine.xml
+Legal Compliance by Design.xml
+Nesting.xml
+Pizza delivery process.xml
+Prescribe medicine.xml
+Subprocess.xml
+Tax Calculation.xml

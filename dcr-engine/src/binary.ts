@@ -6,23 +6,28 @@ import type {
   Traces,
   TraceCoverRelation,
   BinaryLog,
+  BinaryVariantLog,
 } from "./types";
 
 import {
-  copySet,
   copyMarking,
   reverseRelation,
   makeEmptyGraph,
   makeFullGraph,
   copyTraces,
+  mutatingIntersect,
+  mutatingDifference,
+  isBinaryVariantLog,
 } from "./utility";
 
+// https://www.sciencedirect.com/science/article/pii/S0306437923001758
+
 // Computes sets of which relations cover which negative traces
-const findTraceCover = (
+function findTraceCover(
   initGraph: DCRGraph,
   graphToCover: DCRGraph,
   nTraces: Traces
-): TraceCoverGraph => {
+): TraceCoverGraph {
   const initMarking = copyMarking(initGraph.marking);
   const tcMarking = copyMarking(graphToCover.marking);
 
@@ -47,7 +52,7 @@ const findTraceCover = (
   initTCRelation(graphToCover.excludesTo, tcGraph.excludesTo);
 
   // Mutates graph's marking
-  const execute = (event: Event, graph: DCRGraph) => {
+  function execute(event: Event, graph: DCRGraph) {
     graph.marking.executed.add(event);
     graph.marking.pending.delete(event);
     // Add sink of all response relations to pending
@@ -62,7 +67,7 @@ const findTraceCover = (
     for (const iEvent of graph.includesTo[event]) {
       graph.marking.included.add(iEvent);
     }
-  };
+  }
 
   // Copies and flips excludesTo and responseTo to easily find all events that are the sources of the relations
   const excludesFor = reverseRelation(graphToCover.excludesTo);
@@ -85,12 +90,14 @@ const findTraceCover = (
       execute(event, initGraph);
 
       // For all events that are included (based on the existing graph) but not executed, a conditionsFor would cover this trace
-      const pConds = copySet(initGraph.marking.included).difference(
+      const pConds = mutatingDifference(
+        new Set(initGraph.marking.included),
         initGraph.marking.executed
       );
 
       // Possible conditions that also exists cover this trace
-      for (const otherEvent of pConds.intersect(
+      for (const otherEvent of mutatingIntersect(
+        pConds,
         graphToCover.conditionsFor[event]
       )) {
         tcGraph.conditionsFor[event][otherEvent].add(traceId);
@@ -99,7 +106,8 @@ const findTraceCover = (
       // If event is not included, then for all events, 'otherEvent' that has been executed since 'event'
       // was last included, the relation otherEvent ->% event covers the trace
       if (!graphToCover.marking.included.has(event)) {
-        for (const otherEvent of copySet(localExSinceIn[event]).intersect(
+        for (const otherEvent of mutatingIntersect(
+          new Set(localExSinceIn[event]),
           excludesFor[event]
         )) {
           tcGraph.excludesTo[otherEvent][event].add(traceId);
@@ -122,10 +130,12 @@ const findTraceCover = (
     // For all pending events (that are included according to the initial graph), event, at the end of a trace, all relations
     // s.t. otherEvent *-> event, where otherEvent has been executed
     // after event was last executed covers the trace
-    for (const event of copySet(graphToCover.marking.pending).intersect(
+    for (const event of mutatingIntersect(
+      new Set(graphToCover.marking.pending),
       initGraph.marking.included
     )) {
-      for (const otherEvent of copySet(responseFor[event]).intersect(
+      for (const otherEvent of mutatingIntersect(
+        new Set(responseFor[event]),
         localExSinceEx[event]
       )) {
         tcGraph.responseTo[otherEvent][event].add(traceId);
@@ -137,7 +147,7 @@ const findTraceCover = (
   }
 
   return tcGraph;
-};
+}
 
 type RelName = "cond" | "resp" | "excl" | "";
 
@@ -147,13 +157,28 @@ interface Rel {
   relName: RelName;
 }
 
+// Helper function that computes weighted size of a cover set.
+//
+// When weights are empty, falls back to size of set to preserve original 
+// behavior for non-variant BinaryLog inputs. Otherwise, use the sum of variant 
+// sizes (weights) to preserve original behavior for variant BinaryLog inputs.
+function getSize(set: Set<string>, weights: Record<string, number>): number {
+  if (Object.keys(weights).length === 0) return set.size;
+  let total = 0;
+  for (const id of set) {
+    total += weights[id] ?? 1;
+  }
+  return total;
+}
+
 // Adds best relation to graph, returns set of traces covered
-const reduceTraceCover = (
+function reduceTraceCover(
   graph: DCRGraph,
   tcGraph: TraceCoverGraph,
   posTcGraph: TraceCoverGraph,
-  onlyPos: boolean
-): Set<string> => {
+  onlyPos: boolean,
+  weights: Record<string, number> = {}
+): Set<string> {
   const nameToRelations = (
     relName: RelName
   ): { rel: EventMap; tcRel: TraceCoverRelation } => {
@@ -177,20 +202,19 @@ const reduceTraceCover = (
     ) => {
       for (const event in rel) {
         for (const otherEvent in rel[event]) {
+          const relSize = getSize(rel[event][otherEvent], weights);
           let cond;
           if (posRel && !onlyPos) {
-            cond =
-              rel[event][otherEvent].size - posRel[event][otherEvent].size >
-              max;
+            const posSize = getSize(posRel[event][otherEvent], weights);
+            cond = relSize - posSize > max;
           } else if (posRel && onlyPos) {
-            cond =
-              posRel[event][otherEvent].size === 0 &&
-              rel[event][otherEvent].size > max;
+            const posSize = getSize(posRel[event][otherEvent], weights);
+            cond = posSize === 0 && relSize > max;
           } else {
-            cond = rel[event][otherEvent].size > max;
+            cond = relSize > max;
           }
           if (cond) {
-            max = rel[event][otherEvent].size;
+            max = relSize;
             res = { relName, event, otherEvent };
           }
         }
@@ -206,15 +230,43 @@ const reduceTraceCover = (
   if (cover.relName === "") return new Set();
   else {
     const { rel, tcRel } = nameToRelations(cover.relName);
-    const tcSet = copySet(tcRel[cover.event][cover.otherEvent]);
+    const tcSet = new Set(tcRel[cover.event][cover.otherEvent]);
     rel[cover.event].add(cover.otherEvent);
     return tcSet;
   }
-};
+}
 
-const rejectionMiner = (log: BinaryLog, optimizePrecision: boolean = true): DCRGraph => {
-  const nTraces = copyTraces(log.nTraces);
-  const traces = log.traces;
+export default function rejectionMiner(
+  log: BinaryLog | BinaryVariantLog,
+  optimizePrecision: boolean = true
+): DCRGraph {
+  // When using "BinaryVariantLog" instead of "BinaryLog", identical traces 
+  // are deduplicated into variants with counts. Since identical traces produce 
+  // identical execution paths in "findTraceCover" and thus identical cover set 
+  // memberships, processing each variant once is equivalent to processing all 
+  // its duplicates. The `weights` map ensures that "reduceTraceCover" accounts 
+  // for variant frequency, preserving the same behavior as with raw duplicate 
+  // traces.
+  let nTraces: Traces;
+  let traces: Traces;
+  const weights: Record<string, number> = {};
+
+  if (isBinaryVariantLog(log)) {
+    nTraces = {};
+    for (const variant of log.nTraces) {
+      nTraces[variant.variantId] = [...variant.trace];
+      weights[variant.variantId] = variant.count;
+    }
+    
+    traces = {};
+    for (const variant of log.traces) {
+      traces[variant.variantId] = variant.trace;
+      weights[variant.variantId] = variant.count;
+    }
+  } else {
+    nTraces = copyTraces(log.nTraces);
+    traces = log.traces;
+  }
 
   const graph = makeEmptyGraph(log.events);
   const patterns = makeFullGraph(log.events);
@@ -231,7 +283,7 @@ const rejectionMiner = (log: BinaryLog, optimizePrecision: boolean = true): DCRG
     const tcGraph = findTraceCover(graph, patterns, nTraces);
     const posTcGraph = findTraceCover(graph, patterns, traces);
     // Reduce graph to smallest trace cover of negative traces
-    coveredTraces = reduceTraceCover(graph, tcGraph, posTcGraph, true);
+    coveredTraces = reduceTraceCover(graph, tcGraph, posTcGraph, true, weights);
     coveredTracesCount += coveredTraces.size;
   }
 
@@ -246,12 +298,10 @@ const rejectionMiner = (log: BinaryLog, optimizePrecision: boolean = true): DCRG
       }
       const negTcGraph = findTraceCover(graph, patterns, nTraces);
       const posTcGraph = findTraceCover(graph, patterns, traces);
-      coveredTraces = reduceTraceCover(graph, negTcGraph, posTcGraph, false);
+      coveredTraces = reduceTraceCover(graph, negTcGraph, posTcGraph, false, weights);
       initial = false;
     }
   }
 
   return graph;
-};
-
-export default rejectionMiner;
+}

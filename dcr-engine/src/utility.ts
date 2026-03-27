@@ -1,44 +1,215 @@
-import type { DCRGraph, EventMap, Marking, Event, Traces } from "./types";
+import type {
+  DCRGraph,
+  EventMap,
+  Marking,
+  Event,
+  Traces,
+  EventLog,
+  VariantLog,
+  Trace,
+  RoleTrace,
+  Variant,
+  BinaryLog,
+  BinaryVariantLog,
+} from "./types";
 
-export const avg = (arr: Array<number>): number => arr.reduce((partialSum, a) => partialSum + a, 0) / arr.length;
+export function isEventLog(
+  log: EventLog<Trace> | VariantLog<Trace>,
+): log is EventLog<Trace> {
+  return "traces" in log;
+}
 
-export const getRandomInt = (min: number, max: number): number => {
+export function isVariantLog(
+  log: EventLog<Trace> | VariantLog<Trace>,
+): log is VariantLog<Trace> {
+  return "variants" in log;
+}
+
+export function isBinaryVariantLog(
+  log: BinaryLog | BinaryVariantLog,
+): log is BinaryVariantLog {
+  return Array.isArray(log.traces);
+}
+
+export function getVariants<T extends Trace | RoleTrace>(
+  log: EventLog<T>,
+): VariantLog<T> {
+  const { variants, count } = collectVariants(log.traces);
+  return {
+    events: log.events,
+    variants,
+    count,
+  };
+}
+
+export function getBinaryVariants(log: BinaryLog): BinaryVariantLog {
+  const { variants: traces } = collectVariants(log.traces);
+  const { variants: nTraces } = collectVariants(log.nTraces);
+  return {
+    events: log.events,
+    traces,
+    nTraces,
+  };
+}
+
+function hashTrace<T extends Trace | RoleTrace>(traceOrRoleTrace: T): string {
+  if (Array.isArray(traceOrRoleTrace)) {
+    if (
+      traceOrRoleTrace.length > 0 &&
+      typeof traceOrRoleTrace[0] === "string"
+    ) {
+      const trace = traceOrRoleTrace as string[];
+      return trace.join(";;");
+    } else if (
+      traceOrRoleTrace.length > 0 &&
+      typeof traceOrRoleTrace[0] === "object"
+    ) {
+      const roleTrace = traceOrRoleTrace as RoleTrace;
+      return roleTrace.map((t) => t.activity + "##" + t.role).join(";;");
+    }
+  }
+  return "";
+}
+
+function collectVariants<T extends Trace | RoleTrace>(traces: {
+  [traceId: string]: T;
+}): { variants: Variant<T>[]; count: number } {
+  const variantsMap = new Map<string, { trace: T; count: number }>();
+  let count = 0;
+
+  for (const traceId in traces) {
+    const trace = traces[traceId];
+    const hash = hashTrace(trace);
+
+    if (!variantsMap.has(hash)) {
+      variantsMap.set(hash, { trace, count: 0 });
+    }
+
+    variantsMap.get(hash)!.count++;
+    count++;
+  }
+
+  const variants = Array.from(variantsMap.entries())
+    .map<Variant<T>>(([, val]) => ({
+      variantId: String(generateId()),
+      trace: val.trace,
+      count: val.count,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return { variants, count };
+}
+
+export function filterVariantByTopPercentage<T extends Trace | RoleTrace>(
+  variantLog: VariantLog<T>,
+  topPercentage: number,
+): VariantLog<T> {
+  console.info("Taking top %", topPercentage);
+  // topPercentage: we want the most frequent variants that make up the topPercentage of the log.
+  // Variants are sorted by count in descending order (highest to lowest), sp we iterate from the head.
+  // Once the threshold is crossed, all variants with the same count
+  // as the one that crossed it are also included (matching PM4Py behavior).
+
+  const totalTraceCount = variantLog.count;
+  const targetTraceCount = Math.ceil(topPercentage * totalTraceCount);
+
+  const filteredVariants: Variant<T>[] = [];
+  let accumulatedCount = 0;
+  let shallBreakUnder = -Infinity;
+
+  for (let i = 0; i < variantLog.variants.length; i++) {
+    const variant = variantLog.variants[i];
+    if (variant.count < shallBreakUnder) {
+      break;
+    }
+    filteredVariants.push(variant);
+    accumulatedCount += variant.count;
+    if (accumulatedCount >= targetTraceCount) {
+      shallBreakUnder = variant.count;
+    }
+  }
+
+  return {
+    events: variantLog.events,
+    variants: filteredVariants,
+    count: accumulatedCount,
+  };
+}
+
+export function filterVariantByBottomPercentage<T extends Trace | RoleTrace>(
+  variantLog: VariantLog<T>,
+  bottomPercentage: number,
+): VariantLog<T> {
+  console.info("Taking bottom %", bottomPercentage);
+  // bottomPercentage: we want the least frequent variants that make up the bottomPercentage of the log.
+  // Variants are sorted by count in descending order (highest to lowest), so we iterate from the tail.
+  // Once the threshold is crossed, all variants with the same count
+  // as the one that crossed it are also included (matching PM4Py behavior).
+
+  const totalTraceCount = variantLog.count;
+  const targetTraceCount = Math.ceil(bottomPercentage * totalTraceCount);
+
+  const filteredVariants: Variant<T>[] = [];
+  let accumulatedCount = 0;
+  let shallBreakOver = Infinity;
+
+  for (let i = variantLog.variants.length - 1; i >= 0; i--) {
+    const variant = variantLog.variants[i];
+    if (variant.count > shallBreakOver) {
+      break;
+    }
+    filteredVariants.push(variant);
+    accumulatedCount += variant.count;
+    if (accumulatedCount >= targetTraceCount) {
+      shallBreakOver = variant.count;
+    }
+  }
+
+  return {
+    events: variantLog.events,
+    variants: filteredVariants,
+    count: accumulatedCount,
+  };
+}
+
+let _nextId = 0;
+export function generateId() {
+  return ++_nextId;
+}
+
+export function getRandomInt(min: number, max: number): number {
   const minCeiled = Math.ceil(min);
   const maxFloored = Math.floor(max);
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
 }
 
-export const getRandomItem = <T>(set: Set<T>) => {
+export function getRandomItem<T>(set: Set<T>) {
   let items = Array.from(set);
   return items[Math.floor(Math.random() * items.length)];
 }
 
-export const randomChoice = () => {
+export function randomChoice() {
   return Math.random() < 0.5;
 }
 
 // Makes deep copy of a eventMap
-export const copyEventMap = (eventMap: EventMap): EventMap => {
+export function copyEventMap(eventMap: EventMap): EventMap {
   const copy: EventMap = {};
   for (const startEvent in eventMap) {
     copy[startEvent] = new Set(eventMap[startEvent]);
   }
   return copy;
-};
+}
 
-export const copySet = <T>(set: Set<T>): Set<T> => {
-  return new Set(set);
-};
-
-export const copyMarking = (marking: Marking): Marking => {
+export function copyMarking(marking: Marking): Marking {
   return {
-    executed: copySet(marking.executed),
-    included: copySet(marking.included),
-    pending: copySet(marking.pending),
+    executed: new Set(marking.executed),
+    included: new Set(marking.included),
+    pending: new Set(marking.pending),
   };
-};
+}
 
-export const reverseRelation = (relation: EventMap): EventMap => {
+export function reverseRelation(relation: EventMap): EventMap {
   const retRelation: EventMap = {};
   for (const e in relation) {
     retRelation[e] = new Set();
@@ -49,9 +220,9 @@ export const reverseRelation = (relation: EventMap): EventMap => {
     }
   }
   return retRelation;
-};
+}
 
-export const relationCount = (model: DCRGraph) => {
+export function relationCount(model: DCRGraph) {
   let count = 0;
   const relCount = (rel: EventMap) => {
     for (const e in rel) {
@@ -66,18 +237,18 @@ export const relationCount = (model: DCRGraph) => {
   relCount(model.responseTo);
   relCount(model.milestonesFor);
   return count;
-};
-
-export const fullRelation = (events: Set<Event>): EventMap => {
-  const retrel: EventMap = {};
-  for (const event of events) {
-    retrel[event] = copySet(events);
-    retrel[event].delete(event);
-  }
-  return retrel
 }
 
-export const flipEventMap = (em: EventMap): EventMap => {
+export function fullRelation(events: Set<Event>): EventMap {
+  const retrel: EventMap = {};
+  for (const event of events) {
+    retrel[event] = new Set(events);
+    retrel[event].delete(event);
+  }
+  return retrel;
+}
+
+export function flipEventMap(em: EventMap): EventMap {
   const retval: EventMap = {};
   for (const event of Object.keys(em)) {
     retval[event] = new Set();
@@ -91,16 +262,6 @@ export const flipEventMap = (em: EventMap): EventMap => {
   return retval;
 }
 
-
-export const intersect = <T>(s1: Set<T>, s2: Set<T>): Set<T> => {
-  const retset = new Set<T>();
-  const { smallestSet, otherSet } = s1.size > s2.size ? { smallestSet: s2, otherSet: s1 } : { smallestSet: s1, otherSet: s2 };
-  for (const elem of smallestSet) {
-    if (otherSet.has(elem)) retset.add(elem);
-  }
-  return retset;
-}
-
 // Allows sets to be serialized by converting them to arrays
 function set2JSON(_: any, value: any) {
   if (typeof value === "object" && value instanceof Set) {
@@ -108,6 +269,7 @@ function set2JSON(_: any, value: any) {
   }
   return value;
 }
+
 // Parses arrays back to sets
 function JSON2Set(key: any, value: any) {
   if (typeof value === "object" && value instanceof Array && key !== "trace") {
@@ -116,38 +278,38 @@ function JSON2Set(key: any, value: any) {
   return value;
 }
 
-export const writeSerialized = <T>(obj: T): string => {
+export function writeSerialized<T>(obj: T): string {
   return JSON.stringify(obj, set2JSON, 4);
-};
+}
 
-export const parseSerialized = <T>(data: string): T => {
+export function parseSerialized<T>(data: string): T {
   const obj = JSON.parse(data, JSON2Set);
   return obj;
-};
+}
 
-export const copyTraces = (traces: Traces): Traces => {
+export function copyTraces(traces: Traces): Traces {
   const copy: Traces = {};
   for (const traceId in traces) {
     copy[traceId] = [...traces[traceId]];
   }
   return copy;
-};
+}
 
-export const copyGraph = (graph: DCRGraph): DCRGraph => {
+export function copyGraph(graph: DCRGraph): DCRGraph {
   return {
     conditionsFor: copyEventMap(graph.conditionsFor),
-    events: copySet(graph.events),
+    events: new Set(graph.events),
     excludesTo: copyEventMap(graph.excludesTo),
     includesTo: copyEventMap(graph.includesTo),
     marking: copyMarking(graph.marking),
     milestonesFor: copyEventMap(graph.milestonesFor),
     responseTo: copyEventMap(graph.responseTo),
   };
-};
+}
 
-export const makeEmptyGraph = (events: Set<string>) => {
+export function makeEmptyGraph(events: Set<string>) {
   const graph: DCRGraph = {
-    events: copySet(events),
+    events: new Set(events),
     conditionsFor: {},
     excludesTo: {},
     includesTo: {},
@@ -156,7 +318,7 @@ export const makeEmptyGraph = (events: Set<string>) => {
     marking: {
       executed: new Set<Event>(),
       pending: new Set<Event>(),
-      included: copySet(events),
+      included: new Set(events),
     },
   };
   for (const event of events) {
@@ -167,11 +329,11 @@ export const makeEmptyGraph = (events: Set<string>) => {
     graph.milestonesFor[event] = new Set();
   }
   return graph;
-};
+}
 
-export const makeFullGraph = (events: Set<string>) => {
+export function makeFullGraph(events: Set<string>) {
   const graph: DCRGraph = {
-    events: copySet(events),
+    events: new Set(events),
     conditionsFor: {},
     excludesTo: {},
     includesTo: {},
@@ -180,7 +342,7 @@ export const makeFullGraph = (events: Set<string>) => {
     marking: {
       executed: new Set<Event>(),
       pending: new Set<Event>(),
-      included: copySet(events),
+      included: new Set(events),
     },
   };
   for (const e of events) {
@@ -199,22 +361,39 @@ export const makeFullGraph = (events: Set<string>) => {
     }
   }
   return graph;
-};
+}
 
-export class StopWatch {
-  prevTime: number;
-
-  constructor() {
-    this.prevTime = Date.now();
+export function customIntersect<T>(s1: Set<T>, s2: Set<T>): Set<T> {
+  const retset = new Set<T>();
+  const { smallestSet, otherSet } =
+    s1.size > s2.size
+      ? { smallestSet: s2, otherSet: s1 }
+      : { smallestSet: s1, otherSet: s2 };
+  for (const elem of smallestSet) {
+    if (otherSet.has(elem)) retset.add(elem);
   }
+  return retset;
+}
 
-  reset() {
-    this.prevTime = Date.now();
+export function mutatingUnion<T>(a: Set<T>, b: Set<T>): Set<T> {
+  for (const elem of b) {
+    a.add(elem);
   }
+  return a;
+}
 
-  click() {
-    const now = Date.now();
-    console.log(`Took ${now - this.prevTime}ms`);
-    this.prevTime = now;
+export function mutatingDifference<T>(a: Set<T>, b: Set<T>): Set<T> {
+  for (const elem of b) {
+    a.delete(elem);
   }
+  return a;
+}
+
+export function mutatingIntersect<T>(a: Set<T>, b: Set<T>): Set<T> {
+  for (const elem of a) {
+    if (!b.has(elem)) {
+      a.delete(elem);
+    }
+  }
+  return a;
 }

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_18xy8vi">
+          <custom>
+            <roles>
+              <role>Citizen</role>
+            </roles>
+            <visualization>
+              <location xLoc="230" yLoc="-150"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0tc3bqe">
+          <custom>
+            <roles>
+              <role>Municipality</role>
+            </roles>
+            <visualization>
+              <location xLoc="415" yLoc="-150"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0cbmdxj">
+          <custom>
+            <roles>
+              <role>Citizen</role>
+            </roles>
+            <visualization>
+              <location xLoc="610" yLoc="-150"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_13yrxob">
+          <custom>
+            <roles>
+              <role>Citizen</role>
+            </roles>
+            <visualization>
+              <location xLoc="250" yLoc="150"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1omcj5d">
+          <custom>
+            <roles>
+              <role>Citizen</role>
+            </roles>
+            <visualization>
+              <location xLoc="415" yLoc="150"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_05ru0on">
+          <custom>
+            <roles>
+              <role>Citizen</role>
+            </roles>
+            <visualization>
+              <location xLoc="610" yLoc="150"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="Has reached pension age"/>
+        <label id="Grant public pension"/>
+        <label id="Has lived in Denmark for the last 8 years"/>
+        <label id="Has danish citizenship"/>
+        <label id="Lives in Denmark"/>
+        <label id="Has lived in Denmark for at least three years between 15 and pension age"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_18xy8vi" labelId="Has reached pension age"/>
+        <labelMapping eventId="Event_0tc3bqe" labelId="Grant public pension"/>
+        <labelMapping eventId="Event_0cbmdxj" labelId="Has lived in Denmark for the last 8 years"/>
+        <labelMapping eventId="Event_13yrxob" labelId="Has danish citizenship"/>
+        <labelMapping eventId="Event_1omcj5d" labelId="Lives in Denmark"/>
+        <labelMapping eventId="Event_05ru0on" labelId="Has lived in Denmark for at least three years between 15 and pension age"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_18xy8vi" targetId="Event_0tc3bqe">
+          <custom>
+            <waypoints>
+              <waypoint x="360" y="-75"/>
+              <waypoint x="415" y="-75"/>
+            </waypoints>
+            <id id="Relation_0bmitn7"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_0cbmdxj" targetId="Event_0tc3bqe">
+          <custom>
+            <waypoints>
+              <waypoint x="610" y="-75"/>
+              <waypoint x="545" y="-75"/>
+            </waypoints>
+            <id id="Relation_1fs45hu"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_13yrxob" targetId="Event_0tc3bqe">
+          <custom>
+            <waypoints>
+              <waypoint x="360" y="150"/>
+              <waypoint x="360" y="80"/>
+              <waypoint x="430" y="80"/>
+              <waypoint x="430" y="0"/>
+            </waypoints>
+            <id id="Relation_1fy1cmg"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_1omcj5d" targetId="Event_0tc3bqe">
+          <custom>
+            <waypoints>
+              <waypoint x="480" y="150"/>
+              <waypoint x="480" y="0"/>
+            </waypoints>
+            <id id="Relation_10wi3cn"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_05ru0on" targetId="Event_0tc3bqe">
+          <custom>
+            <waypoints>
+              <waypoint x="630" y="150"/>
+              <waypoint x="630" y="80"/>
+              <waypoint x="530" y="80"/>
+              <waypoint x="530" y="0"/>
+            </waypoints>
+            <id id="Relation_11c37ji"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Event_18xy8vi" targetId="Event_0tc3bqe">
+          <custom>
+            <waypoints>
+              <waypoint x="360" y="-40"/>
+              <waypoint x="415" y="-40"/>
+            </waypoints>
+            <id id="Relation_1tf80mg"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes>
+        <exclude sourceId="Event_05ru0on" targetId="Event_0cbmdxj">
+          <custom>
+            <waypoints>
+              <waypoint x="700" y="150"/>
+              <waypoint x="700" y="0"/>
+            </waypoints>
+            <id id="Relation_0668l1u"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_0cbmdxj" targetId="Event_05ru0on">
+          <custom>
+            <waypoints>
+              <waypoint x="675" y="0"/>
+              <waypoint x="675" y="150"/>
+            </waypoints>
+            <id id="Relation_0r1jfm2"/>
+          </custom>
+        </exclude>
+      </excludes>
+      <includes>
+        <include sourceId="Event_1omcj5d" targetId="Event_0cbmdxj">
+          <custom>
+            <waypoints>
+              <waypoint x="500" y="150"/>
+              <waypoint x="500" y="100"/>
+              <waypoint x="620" y="100"/>
+              <waypoint x="620" y="0"/>
+            </waypoints>
+            <id id="Relation_0cpyv0r"/>
+          </custom>
+        </include>
+      </includes>
+      <milestones/>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed>
+        <event id="Event_18xy8vi"/>
+      </executed>
+      <included>
+        <event id="Event_18xy8vi"/>
+        <event id="Event_0tc3bqe"/>
+        <event id="Event_13yrxob"/>
+        <event id="Event_1omcj5d"/>
+        <event id="Event_05ru0on"/>
+      </included>
+      <pendingResponses>
+        <event id="Event_0tc3bqe"/>
+      </pendingResponses>
+    </marking>
+  </runtime>
+</dcrgraph>

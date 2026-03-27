@@ -37,6 +37,7 @@ This project is organized into three separate modules.
 # Citing DCR-js
 We are happy that you are using our project for research purposes. We would appreciate it if you cite our project in case you decide to use the models in your publication:
 
+If you use only the editor capabilities:
 ```bibtex
 @inproceedings{dcrjs,
   title={An open-source modeling editor for declarative process models},
@@ -46,6 +47,17 @@ We are happy that you are using our project for research purposes. We would appr
   pages={1--5},
   year={2023},
   organization={CEUR-WS}
+}
+```
+If you use the process mining or simulation capabilities:
+```bibtex
+@inproceedings{christfort2025dcr,
+  title={DCR-JS: An Online Environment for Declarative Process Mining},
+  author={Christfort, Axel KF and L{\'o}pez, Hugo A.},
+  booktitle={23rd International Conference on Business Process Management},
+  Volume={4032},
+  pages={1--5},
+  year={2025}
 }
 ```
 

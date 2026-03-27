@@ -36,6 +36,6 @@ const sampleXML = `<?xml version="1.0" encoding="UTF-8"?>
       </dcrDi:dcrShape>
     </dcrDi:dcrPlane>
   </dcrDi:dcrRootBoard>
-</dcr:definitions>`
+</dcr:definitions>`;
 
 export default sampleXML;

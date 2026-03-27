@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_1sf8tgw">
+          <custom>
+            <visualization>
+              <location xLoc="170" yLoc="-200"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_191im4m">
+          <custom>
+            <visualization>
+              <location xLoc="355" yLoc="-200"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1gdggek">
+          <custom>
+            <visualization>
+              <location xLoc="545" yLoc="-200"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_094x5ae">
+          <custom>
+            <visualization>
+              <location xLoc="735" yLoc="-200"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1pnwfru">
+          <custom>
+            <visualization>
+              <location xLoc="925" yLoc="-200"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_1upi9ve">
+          <custom>
+            <visualization>
+              <location xLoc="160" yLoc="100"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="SubProcess_1fhz1v1" type="subprocess">
+          <custom>
+            <visualization>
+              <location xLoc="500" yLoc="115"/>
+              <size width="400" height="280"/>
+            </visualization>
+          </custom>
+          <event id="Event_0fa2ln8">
+            <custom>
+              <visualization>
+                <location xLoc="540" yLoc="170"/>
+                <size width="130" height="150"/>
+              </visualization>
+            </custom>
+          </event>
+          <event id="Event_1as2ff2">
+            <custom>
+              <visualization>
+                <location xLoc="730" yLoc="170"/>
+                <size width="130" height="150"/>
+              </visualization>
+            </custom>
+          </event>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="Start Evaluation Round"/>
+        <label id="Receive Application"/>
+        <label id="Host board meeting"/>
+        <label id="Update Report"/>
+        <label id="Approve Report"/>
+        <label id="Application Deadline Passed"/>
+        <label id="Assess Conflict of Interests"/>
+        <label id="Disclose reviewers names to applicant"/>
+        <label id="Filter Reviewers with Conflict of Interests according to the applicant report"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_1sf8tgw" labelId="Start Evaluation Round"/>
+        <labelMapping eventId="Event_191im4m" labelId="Receive Application"/>
+        <labelMapping eventId="Event_1gdggek" labelId="Host board meeting"/>
+        <labelMapping eventId="Event_094x5ae" labelId="Update Report"/>
+        <labelMapping eventId="Event_1pnwfru" labelId="Approve Report"/>
+        <labelMapping eventId="Event_1upi9ve" labelId="Application Deadline Passed"/>
+        <labelMapping eventId="SubProcess_1fhz1v1" labelId="Assess Conflict of Interests"/>
+        <labelMapping eventId="Event_0fa2ln8" labelId="Disclose reviewers names to applicant"/>
+        <labelMapping eventId="Event_1as2ff2" labelId="Filter Reviewers with Conflict of Interests according to the applicant report"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_1sf8tgw" targetId="Event_191im4m">
+          <custom>
+            <waypoints>
+              <waypoint x="300" y="-125"/>
+              <waypoint x="355" y="-125"/>
+            </waypoints>
+            <id id="Relation_1q3uoeh"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_191im4m" targetId="SubProcess_1fhz1v1">
+          <custom>
+            <waypoints>
+              <waypoint x="450" y="-50"/>
+              <waypoint x="450" y="175"/>
+              <waypoint x="500" y="175"/>
+            </waypoints>
+            <id id="Relation_1f03k3v"/>
+          </custom>
+        </condition>
+        <condition sourceId="SubProcess_1fhz1v1" targetId="Event_1gdggek">
+          <custom>
+            <waypoints>
+              <waypoint x="610" y="115"/>
+              <waypoint x="610" y="-50"/>
+            </waypoints>
+            <id id="Relation_1xw2c29"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Event_191im4m" targetId="Event_1gdggek">
+          <custom>
+            <waypoints>
+              <waypoint x="485" y="-140"/>
+              <waypoint x="545" y="-140"/>
+            </waypoints>
+            <id id="Relation_144xd9q"/>
+          </custom>
+        </response>
+        <response sourceId="Event_1gdggek" targetId="Event_094x5ae">
+          <custom>
+            <waypoints>
+              <waypoint x="675" y="-125"/>
+              <waypoint x="735" y="-125"/>
+            </waypoints>
+            <id id="Relation_0bifg9s"/>
+          </custom>
+        </response>
+        <response sourceId="Event_094x5ae" targetId="Event_1pnwfru">
+          <custom>
+            <waypoints>
+              <waypoint x="865" y="-90"/>
+              <waypoint x="925" y="-90"/>
+            </waypoints>
+            <id id="Relation_1lso2h2"/>
+          </custom>
+        </response>
+        <response sourceId="Event_0fa2ln8" targetId="Event_1as2ff2">
+          <custom>
+            <waypoints>
+              <waypoint x="670" y="245"/>
+              <waypoint x="730" y="245"/>
+            </waypoints>
+            <id id="Relation_06xe9tv"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes>
+        <exclude sourceId="Event_1upi9ve" targetId="Event_191im4m">
+          <custom>
+            <waypoints>
+              <waypoint x="290" y="175"/>
+              <waypoint x="390" y="175"/>
+              <waypoint x="390" y="-50"/>
+            </waypoints>
+            <id id="Relation_00oi2jp"/>
+          </custom>
+        </exclude>
+      </excludes>
+      <includes/>
+      <milestones>
+        <milestone sourceId="Event_094x5ae" targetId="Event_1pnwfru">
+          <custom>
+            <waypoints>
+              <waypoint x="865" y="-125"/>
+              <waypoint x="925" y="-125"/>
+            </waypoints>
+            <id id="Relation_1twp5ft"/>
+          </custom>
+        </milestone>
+      </milestones>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_1sf8tgw"/>
+        <event id="Event_191im4m"/>
+        <event id="Event_1gdggek"/>
+        <event id="Event_094x5ae"/>
+        <event id="Event_1pnwfru"/>
+        <event id="Event_1upi9ve"/>
+        <event id="SubProcess_1fhz1v1"/>
+        <event id="Event_0fa2ln8"/>
+        <event id="Event_1as2ff2"/>
+      </included>
+      <pendingResponses/>
+    </marking>
+  </runtime>
+</dcrgraph>

@@ -1,36 +1,59 @@
-import { RelationViolations, RoleTrace, Trace } from "dcr-engine";
-import { RelationActivations } from "dcr-engine/src/types";
+import type { RelationViolations, RoleTrace, Trace } from "dcr-engine";
+import type { RelationActivations } from "dcr-engine/src/types";
 
-export type Children = string | React.JSX.Element | React.JSX.Element[];
+export type MarkerNotation = "HM2011" | "DCR Solutions" | "TAL2023";
 
-export type SettingsKey = "markerNotation" | "blackRelations";
-export type SettingsVal = "HM2011" | "DCR Solutions" | "TAL2023" | boolean;
+export const isMarkerNotation = (obj: unknown): obj is MarkerNotation => {
+  return (
+    typeof obj === "string" &&
+    ["HM2011", "DCR Solutions", "TAL2023"].includes(obj)
+  );
+};
 
-export const isSettingsVal = (obj: unknown): obj is SettingsVal => {
-    return typeof (obj) === "boolean" || ["HM2011", "DCR Solutions", "TAL2023"].includes(obj as string);
-}
+export type ColoredRelations = boolean;
+
+export const isColoredRelations = (obj: unknown): obj is ColoredRelations => {
+  return typeof obj === "boolean";
+};
+
+export type EmptyLogResults = Array<{
+  traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
+  trace: RoleTrace;
+}>;
 
 export type ReplayLogResults = Array<{
-    traceId: string,
-    isPositive?: boolean,
-    trace: RoleTrace
-}>
+  traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
+  isPositive?: boolean;
+  trace: RoleTrace;
+}>;
 
 export type ViolationLogResults = Array<{
-    traceId: string,
-    results?: {
-        totalViolations: number,
-        violations: RelationViolations,
-        activations: RelationActivations,
-    },
-    trace: RoleTrace
-}>
+  traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
+  results?: {
+    totalViolations: number;
+    violations: RelationViolations;
+    activations: RelationActivations;
+  };
+  trace: RoleTrace;
+}>;
 
 export type AlignmentLogResults = Array<{
-    traceId: string,
-    results?: {
-        cost: number,
-        trace: Trace,
-    },
-    trace: RoleTrace
-}>
+  traceId: string;
+  traceName?: string;
+  count: number;
+  frequency?: number;
+  results?: {
+    cost: number;
+    trace: Trace;
+  };
+  trace: RoleTrace;
+}>;

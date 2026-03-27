@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_1bvmrm9">
+          <custom>
+            <roles>
+              <role>HHRR</role>
+            </roles>
+            <visualization>
+              <location xLoc="180" yLoc="180"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_084mgdk">
+          <custom>
+            <roles>
+              <role>Employee</role>
+            </roles>
+            <visualization>
+              <location xLoc="180" yLoc="500"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0zaxxoa">
+          <custom>
+            <roles>
+              <role>Economy Department</role>
+            </roles>
+            <visualization>
+              <location xLoc="550" yLoc="500"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_0ea55hv">
+          <custom>
+            <roles>
+              <role>Accounting</role>
+            </roles>
+            <visualization>
+              <location xLoc="550" yLoc="180"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="Consult Employee's salary agreement"/>
+        <label id="Report Additional Income Sources"/>
+        <label id="Perform tax calculation for employee"/>
+        <label id="Pay salary"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_1bvmrm9" labelId="Consult Employee's salary agreement"/>
+        <labelMapping eventId="Event_084mgdk" labelId="Report Additional Income Sources"/>
+        <labelMapping eventId="Event_0zaxxoa" labelId="Perform tax calculation for employee"/>
+        <labelMapping eventId="Event_0ea55hv" labelId="Pay salary"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_1bvmrm9" targetId="Event_0zaxxoa">
+          <custom>
+            <waypoints>
+              <waypoint x="245" y="330"/>
+              <waypoint x="245" y="410"/>
+              <waypoint x="350" y="410"/>
+              <waypoint x="350" y="560"/>
+              <waypoint x="550" y="560"/>
+            </waypoints>
+            <id id="Relation_0cn7s17"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_1bvmrm9" targetId="Event_0ea55hv">
+          <custom>
+            <waypoints>
+              <waypoint x="310" y="255"/>
+              <waypoint x="550" y="255"/>
+            </waypoints>
+            <id id="Relation_04y1thg"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Event_084mgdk" targetId="Event_0zaxxoa">
+          <custom>
+            <waypoints>
+              <waypoint x="310" y="620"/>
+              <waypoint x="550" y="620"/>
+            </waypoints>
+            <id id="Relation_1y7uzkr"/>
+          </custom>
+        </response>
+        <response sourceId="Event_1bvmrm9" targetId="Event_0ea55hv">
+          <custom>
+            <waypoints>
+              <waypoint x="310" y="280"/>
+              <waypoint x="550" y="280"/>
+            </waypoints>
+            <id id="Relation_0e60zds"/>
+          </custom>
+        </response>
+        <response sourceId="Event_1bvmrm9" targetId="Event_0zaxxoa">
+          <custom>
+            <waypoints>
+              <waypoint x="280" y="330"/>
+              <waypoint x="280" y="400"/>
+              <waypoint x="360" y="400"/>
+              <waypoint x="360" y="540"/>
+              <waypoint x="550" y="540"/>
+            </waypoints>
+            <id id="Relation_0h9u9vx"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes/>
+      <includes/>
+      <milestones>
+        <milestone sourceId="Event_0zaxxoa" targetId="Event_0ea55hv">
+          <custom>
+            <waypoints>
+              <waypoint x="615" y="500"/>
+              <waypoint x="615" y="330"/>
+            </waypoints>
+            <id id="Relation_0knz8rr"/>
+          </custom>
+        </milestone>
+      </milestones>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_1bvmrm9"/>
+        <event id="Event_084mgdk"/>
+        <event id="Event_0zaxxoa"/>
+        <event id="Event_0ea55hv"/>
+      </included>
+      <pendingResponses/>
+    </marking>
+  </runtime>
+</dcrgraph>
