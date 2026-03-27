@@ -1,4 +1,6 @@
 {
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
   "editor.formatOnSave": true,
@@ -10,5 +12,5 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.autopep8"
   },
-  "prettier.prettierPath": "./node_modules/prettier",
+  "prettier.prettierPath": "./node_modules/prettier"
 }
