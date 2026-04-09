@@ -1,3 +1,5 @@
+
+
 from dataclasses import dataclass, field
 from typing import List, Dict, Literal, Tuple
 from bpmn_parser import BPMNProcess, BPMNObject
@@ -130,22 +132,32 @@ class TranslationEngine:
 
         for flow_id, (source_id, target_id) in self.bpmn_process.sequence_flows.items():
             source_obj = self.bpmn_process.objects.get(source_id)
-            if not source_obj:
+            target_obj = self.bpmn_process.objects.get(target_id)
+            if not source_obj or not target_obj:
                 continue
 
-            is_gateway_rel = source_id in split_ids or target_id in join_ids
-            if not is_gateway_rel:
+            handled = False
+
+            if source_id in split_ids:
+                handled = True
+                if source_obj.gateway_type == 'Exclusive':
+                    self._map_xor_split_relation(source_id, target_id)
+                elif source_obj.gateway_type == 'Parallel':
+                    self._map_and_split_relation(source_id, target_id)
+                elif source_obj.gateway_type == 'Inclusive':
+                    self._map_or_split_relation(source_id, target_id)
+
+            if target_id in join_ids:
+                handled = True
+                if target_obj.gateway_type == 'Exclusive':
+                    self._map_xor_join_relation(source_id, target_id)
+                elif target_obj.gateway_type == 'Parallel':
+                    self._map_and_join_relation(source_id, target_id)
+                elif target_obj.gateway_type == 'Inclusive':
+                    self._map_or_join_relation(source_id, target_id, flow_id)
+
+            if not handled:
                 self._map_basic_relation(source_id, target_id)
-            else:
-                gateway_obj = source_obj if source_id in split_ids else self.bpmn_process.objects[
-                    target_id]
-                if gateway_obj.gateway_type == 'Exclusive':
-                    self._map_xor_gateway_relation(source_id, target_id)
-                elif gateway_obj.gateway_type == 'Parallel':
-                    self._map_and_gateway_relation(source_id, target_id)
-                elif gateway_obj.gateway_type == 'Inclusive':
-                    self._map_or_gateway_relation(
-                        source_id, target_id, flow_id)
 
     def _map_basic_relation(self, source_id: str, target_id: str):
         self.dcr_graph.relations.append(
@@ -153,56 +165,54 @@ class TranslationEngine:
         self.dcr_graph.relations.append(
             DCRRelation(source_id, target_id, 'include'))
 
-    def _map_xor_gateway_relation(self, source_id: str, target_id: str):
+    def _map_xor_split_relation(self, source_id: str, target_id: str):
         source_obj = self.bpmn_process.objects[source_id]
-        if source_obj.gateway_function == 'Split':
-            self._map_basic_relation(source_id, target_id)
-            all_targets = [self.bpmn_process.sequence_flows[fid][1]
-                           for fid in source_obj.outgoing_flows]
-            for sibling_id in all_targets:
-                if target_id != sibling_id:
-                    self.dcr_graph.relations.append(
-                        DCRRelation(target_id, sibling_id, 'exclude'))
-                    self.dcr_graph.relations.append(
-                        DCRRelation(sibling_id, target_id, 'exclude'))
-        else:
-            self._map_basic_relation(source_id, target_id)
+        self._map_basic_relation(source_id, target_id)
+        all_targets = [self.bpmn_process.sequence_flows[fid][1]
+                       for fid in source_obj.outgoing_flows]
+        for sibling_id in all_targets:
+            if target_id != sibling_id:
+                self.dcr_graph.relations.append(
+                    DCRRelation(target_id, sibling_id, 'exclude'))
+                self.dcr_graph.relations.append(
+                    DCRRelation(sibling_id, target_id, 'exclude'))
 
-    def _map_and_gateway_relation(self, source_id: str, target_id: str):
-        source_obj = self.bpmn_process.objects[source_id]
-        if source_obj.gateway_function == 'Split':
-            self._map_basic_relation(source_id, target_id)
-            pair = next(p for p in self.bpmn_process.gateway_pairs.values(
-            ) if p.split_gateway_id == source_id)
-            self.dcr_graph.relations.append(DCRRelation(
-                source_id, pair.join_gateway_id, 'response'))
-        else:
-            aux_id = self._create_auxiliary_event("AND", source_id)
+    def _map_xor_join_relation(self, source_id: str, target_id: str):
+        self._map_basic_relation(source_id, target_id)
+
+    def _map_and_split_relation(self, source_id: str, target_id: str):
+        self._map_basic_relation(source_id, target_id)
+        pair = next(p for p in self.bpmn_process.gateway_pairs.values(
+        ) if p.split_gateway_id == source_id)
+        self.dcr_graph.relations.append(DCRRelation(
+            source_id, pair.join_gateway_id, 'response'))
+
+    def _map_and_join_relation(self, source_id: str, target_id: str):
+        aux_id = self._create_auxiliary_event("AND", source_id)
+        self.dcr_graph.relations.append(
+            DCRRelation(source_id, aux_id, 'exclude'))
+        self.dcr_graph.relations.append(
+            DCRRelation(aux_id, target_id, 'condition'))
+        self.dcr_graph.relations.append(
+            DCRRelation(source_id, target_id, 'include'))
+
+    def _map_or_split_relation(self, source_id: str, target_id: str):
+        pair = next(p for p in self.bpmn_process.gateway_pairs.values(
+        ) if p.split_gateway_id == source_id)
+        self._map_basic_relation(source_id, target_id)
+        self.dcr_graph.relations.append(DCRRelation(
+            source_id, pair.join_gateway_id, 'response'))
+        self.dcr_graph.relations.append(DCRRelation(
+            pair.join_gateway_id, target_id, 'exclude'))
+
+    def _map_or_join_relation(self, source_id: str, target_id: str, flow_id: str):
+        if flow_id in self.or_join_flow_map:
+            aux_event_id, trace_start_id = self.or_join_flow_map[flow_id]
             self.dcr_graph.relations.append(
-                DCRRelation(source_id, aux_id, 'exclude'))
+                DCRRelation(source_id, aux_event_id, 'exclude'))
             self.dcr_graph.relations.append(
-                DCRRelation(aux_id, target_id, 'condition'))
+                DCRRelation(aux_event_id, target_id, 'condition'))
             self.dcr_graph.relations.append(
                 DCRRelation(source_id, target_id, 'include'))
-
-    def _map_or_gateway_relation(self, source_id: str, target_id: str, flow_id: str):
-        source_obj = self.bpmn_process.objects[source_id]
-        if source_obj.gateway_function == 'Split':
-            pair = next(p for p in self.bpmn_process.gateway_pairs.values(
-            ) if p.split_gateway_id == source_id)
-            self._map_basic_relation(source_id, target_id)
             self.dcr_graph.relations.append(DCRRelation(
-                source_id, pair.join_gateway_id, 'response'))
-            self.dcr_graph.relations.append(DCRRelation(
-                pair.join_gateway_id, target_id, 'exclude'))
-        else:
-            if flow_id in self.or_join_flow_map:
-                aux_event_id, trace_start_id = self.or_join_flow_map[flow_id]
-                self.dcr_graph.relations.append(
-                    DCRRelation(source_id, aux_event_id, 'exclude'))
-                self.dcr_graph.relations.append(
-                    DCRRelation(aux_event_id, target_id, 'condition'))
-                self.dcr_graph.relations.append(
-                    DCRRelation(source_id, target_id, 'include'))
-                self.dcr_graph.relations.append(DCRRelation(
-                    trace_start_id, aux_event_id, 'include'))
+                trace_start_id, aux_event_id, 'include'))
