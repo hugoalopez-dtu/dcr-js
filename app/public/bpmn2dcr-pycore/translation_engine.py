@@ -195,6 +195,11 @@ class TranslationEngine:
             DCRRelation(aux_id, target_id, 'condition'))
         self.dcr_graph.relations.append(
             DCRRelation(source_id, target_id, 'include'))
+        pair = next((p for p in self.bpmn_process.gateway_pairs.values()
+                     if p.join_gateway_id == target_id), None)
+        if pair:
+            self.dcr_graph.relations.append(
+                DCRRelation(pair.split_gateway_id, aux_id, 'include'))
 
     def _map_or_split_relation(self, source_id: str, target_id: str):
         pair = next(p for p in self.bpmn_process.gateway_pairs.values(
