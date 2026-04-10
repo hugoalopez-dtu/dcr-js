@@ -275,13 +275,13 @@ const SimulatorState = ({
   }, [eventLog.traces, selectedTraceId]);
 
   const isSelectedTracePositive = useMemo(() => {
-    if (!selectedTrace?.trace || !currentDcrGraph) {
+    if (!selectedTrace?.trace || !initialDcrGraph) {
       return;
     }
 
     const draftDcrGraph = {
-      ...currentDcrGraph,
-      marking: copyMarking(currentDcrGraph.marking),
+      ...initialDcrGraph,
+      marking: copyMarking(initialDcrGraph.marking),
     };
 
     return replayTraceS(draftDcrGraph, selectedTrace.trace);
