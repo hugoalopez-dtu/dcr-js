@@ -65,7 +65,7 @@ export default function BaseViewer(options) {
 
   this.importCustomXML = this.importCustomXML.bind(this);
   this.importXML = this.importXML.bind(this);
-  this.importDCRPortalXML = this.importCustomXML.bind(this);
+  this.importDCRPortalXML = this.importDCRPortalXML.bind(this);
   this.getSelection = this.getSelection.bind(this);
 }
 

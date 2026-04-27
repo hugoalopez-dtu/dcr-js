@@ -117,7 +117,8 @@ function handleEvent(event, xml, bpmn, parent, parentMap) {
     parent["dcr:event"].push({
       $: {
         id: event.$.id,
-        role: event.custom[0]?.roles?.[0]?.role.join(", "),
+        role: event.custom[0]?.roles?.[0]?.role?.map(r => typeof r === 'object' ? r._
+        : r).filter(Boolean).join(", "),
         description: getDescription(event.$.id, xml),
         included: getIncluded(event.$.id, xml),
         executed: getExecuted(event.$.id, xml),
@@ -143,7 +144,8 @@ function handleEvent(event, xml, bpmn, parent, parentMap) {
     parent["dcr:nesting"].push({
       $: {
         id: event.$.id,
-        role: event.custom[0]?.roles?.[0]?.role[0],
+        role: (() => { const r = event.custom[0]?.roles?.[0]?.role?.[0]; return typeof
+        r === 'object' ? r._ : r; })(),
         description: getDescription(event.$.id, xml),
       },
       "dcr:event": [],
@@ -295,7 +297,7 @@ function handleRelations(xml, bpmn, parentMap) {
     if (relationGroup[0] === '') continue;
     let type = getRelationType(relationGroup);
     for (let relation of Object.values(relationGroup[0])[0]) {
-      const idNew = relation.$.sourceId + relation.$.targetId;
+      const idNew = relation.$.sourceId + relation.$.targetId + type;
       parentMap.get(relation.$.sourceId)["dcr:relation"].push({
         $: {
           id: idNew,
@@ -305,12 +307,14 @@ function handleRelations(xml, bpmn, parentMap) {
         }
       });
       const activities = bpmn["dcr:definitions"]["dcrDi:dcrRootBoard"]["dcrDi:dcrPlane"]["dcrDi:dcrShape"];
-      const activity1 = activities.find(a => a.$.id == relation.$.sourceId + "_id");
+      const activity1 = activities.find(a => a.$.id === relation.$.sourceId + "_id" 
+      || a.$.id === relation.$.sourceId + "_di"); 
       const a1x = parseInt(activity1["dc:Bounds"].$.x);
       const a1y = parseInt(activity1["dc:Bounds"].$.y);
       const a1w = parseInt(activity1["dc:Bounds"].$.width);
       const a1h = parseInt(activity1["dc:Bounds"].$.height);
-      const activity2 = activities.find(a => a.$.id == relation.$.targetId + "_id");
+      const activity2 = activities.find(a => a.$.id === relation.$.targetId + "_id" 
+      || a.$.id === relation.$.targetId + "_di");
       const a2x = parseInt(activity2["dc:Bounds"].$.x);
       const a2y = parseInt(activity2["dc:Bounds"].$.y);
       const a2w = parseInt(activity2["dc:Bounds"].$.width);
@@ -321,6 +325,21 @@ function handleRelations(xml, bpmn, parentMap) {
       let a1cy = a1y + a1h/2;
       let a2cx = a2x + a2w/2;
       let a2cy = a2y + a2h/2;
+
+      if (relation.$.sourceId === relation.$.targetId) {
+	    const OFFSET = 50;                                     
+	    bpmn["dcr:definitions"]["dcrDi:dcrRootBoard"]["dcrDi:dcrPlane"]["dcrDi:relation"].push({                                                            
+	      $: { id: `${idNew}id`, boardElement: idNew },
+	      "dcrDi:waypoint": [                                                  
+		{$: {x: a1cx,         y: a1y + a1h}},
+		{$: {x: a1cx,         y: a1y + a1h + OFFSET}},                         
+		{$: {x: a1x - OFFSET, y: a1y + a1h + OFFSET}},                         
+		{$: {x: a1x - OFFSET, y: a1cy}},
+		{$: {x: a1x,          y: a1cy}},                                 
+	      ]
+	    });                                                                    
+	    continue;
+	  }
 
       
       if (a1cx < a2cx && a1cy < a2cy) { // a1 is (left + above) a2
@@ -374,9 +393,7 @@ function checkValidGraph(dcrGraph) {
     for(let constraint of spec.constraints.filter(isObject)) {
       for(let c of constraint.conditions.filter(isObject)) {
         for(let condition of c.condition.filter(isObject)){
-          if(condition.$?.time) {
-            return "\"time\" attribute is not supported.";
-          }
+          
         }
       }
     }
@@ -385,9 +402,7 @@ function checkValidGraph(dcrGraph) {
         for (let event of e.event.filter(isObject)){
           for (let custom of event.custom.filter(isObject)) {
             for (let eventData of custom.eventData.filter(isObject)) {
-              if(eventData.dataType[0]) {
-                return "\"dataType\" attribute is not supported.";
-              }
+              
             }
           }
         }
