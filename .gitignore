@@ -21,3 +21,31 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Training logs (too large for git)
+*.log
+tmp_cluster_logs/
+dcr_tensorboard*/
+
+# Compiled output (regenerate with npm build)
+node-adapter/dist/
+
+# Trained model artifacts (regenerate by re-running training)
+dcr-gymnasium-agent/dcr-gymnasium-agent/python/models/
+dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcr_ppo/
+dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcr_ppo.zip
+
+# IDE
+.vscode/
+
+# Temporary / debug files
+test.txt
+test-parse.ts
+test-parse.js
+debug_xes.ts
+validate_script.js
+package-lock.json
+
+# Root-level temp event logs
+Event\ Log\ \(10\).xes
+Event\ Log\ \(11\).xes

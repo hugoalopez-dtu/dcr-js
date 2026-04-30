@@ -82,18 +82,16 @@ const Examples = ({ examplesData, setExamplesOpen, openCustomXML, openDCRXML, se
                     <input type="text" onChange={(event) => setSearchStr(event.target.value)} />
                 </TextBox>
                 <FlexBox direction="row" $justify="space-around">
-                    {examplesData.map((exampleStr) => {
-                        if (exampleStr.toLowerCase().includes(searchStr.toLowerCase())) {
-                            return (
-                                <Example key={exampleStr} onClick={() => exampleClick(exampleStr)}>
-                                    <ExampleText>{exampleStr}</ExampleText>
-                                    <Img src={`/dcr-js/examples/images/${exampleStr}.svg`} />
-                                </Example>
-                            )
-                        } else {
-                            <></>
-                        }
-                    })}
+                    {examplesData
+                        .filter((exampleStr) =>
+                            exampleStr.toLowerCase().includes(searchStr.toLowerCase())
+                        )
+                        .map((exampleStr) => (
+                            <Example key={exampleStr} onClick={() => exampleClick(exampleStr)}>
+                                <ExampleText>{exampleStr}</ExampleText>
+                                <Img src={`/dcr-js/examples/images/${exampleStr}.svg`} />
+                            </Example>
+                        ))}
                 </FlexBox>
             </Popup>
         </>

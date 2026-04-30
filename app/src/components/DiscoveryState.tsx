@@ -120,6 +120,11 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
                     const stopWatch = new StopWatch();
                     const log = parseLog(data);
                     console.log("Parsed log!");
+                    if (log.events.size === 0 || Object.keys(log.traces).length === 0) {
+                        toast.error("El fichero no contiene un event log XES valido (sin eventos/trazas). Usa un .xes real, no metadata XML ni un DCR XML.");
+                        setLoading(false);
+                        return;
+                    }
                     stopWatch.click();
                     const noRoleLog = {
                         events: log.events,
@@ -129,6 +134,11 @@ const DiscoveryState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph,
                     stopWatch.reset();
                     const filteredLog = threshold === 0 ? noRoleLog : filter(noRoleLog, threshold);
                     console.log("Filtering done!");
+                    if (Object.keys(filteredLog.traces).length === 0) {
+                        toast.error("El filtro elimino todas las trazas. Prueba con Noise Threshold = 0 o un valor mas bajo.");
+                        setLoading(false);
+                        return;
+                    }
                     stopWatch.click()
                     console.log("Discovering...");
                     const logAbs = abstractLog(filteredLog);

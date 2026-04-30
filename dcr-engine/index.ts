@@ -6,7 +6,7 @@ import { parseLog, writeEventLog } from "./src/eventLogs";
 import { replayTraceS, mergeViolations, quantifyViolations } from "./src/conformance";
 import layoutGraph from "./src/layout";
 import { nestDCR } from "./src/nesting";
-import generateEventLog from "./src/generation";
+import { DCREnvironment, testEnvironment, generateEventLog } from "./src/generation";
 import runTest from "./src/tdm";
 import alignTrace from "./src/align";
 

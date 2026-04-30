@@ -1,0 +1,22 @@
+{
+  "name": "dcr-node-adapter",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "build": "tsc",
+    "bundle": "esbuild src/server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.mjs"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "tsx": "^3.12.7"
+  }
+}

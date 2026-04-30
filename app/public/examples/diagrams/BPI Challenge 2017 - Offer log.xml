@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph>
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_1">
+          <custom>
+            <visualization>
+              <location xLoc="12" yLoc="204.5"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_2">
+          <custom>
+            <visualization>
+              <location xLoc="192" yLoc="204.5"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_3">
+          <custom>
+            <visualization>
+              <location xLoc="562" yLoc="157"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_4">
+          <custom>
+            <visualization>
+              <location xLoc="1102" yLoc="22"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_5">
+          <custom>
+            <visualization>
+              <location xLoc="382" yLoc="142"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_6">
+          <custom>
+            <visualization>
+              <location xLoc="742" yLoc="132"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_7">
+          <custom>
+            <visualization>
+              <location xLoc="922" yLoc="107"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="Event_8">
+          <custom>
+            <visualization>
+              <location xLoc="1282" yLoc="122"/>
+              <size width="130" height="150"/>
+            </visualization>
+          </custom>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="O_Create Offer"/>
+        <label id="O_Created"/>
+        <label id="O_Sent (online only)"/>
+        <label id="O_Cancelled"/>
+        <label id="O_Sent (mail and online)"/>
+        <label id="O_Returned"/>
+        <label id="O_Accepted"/>
+        <label id="O_Refused"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_1" labelId="O_Create Offer"/>
+        <labelMapping eventId="Event_2" labelId="O_Created"/>
+        <labelMapping eventId="Event_3" labelId="O_Sent (online only)"/>
+        <labelMapping eventId="Event_4" labelId="O_Cancelled"/>
+        <labelMapping eventId="Event_5" labelId="O_Sent (mail and online)"/>
+        <labelMapping eventId="Event_6" labelId="O_Returned"/>
+        <labelMapping eventId="Event_7" labelId="O_Accepted"/>
+        <labelMapping eventId="Event_8" labelId="O_Refused"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_1" targetId="Event_2">
+          <custom>
+            <waypoints>
+              <waypoint x="142" y="242"/>
+              <waypoint x="192" y="242"/>
+            </waypoints>
+            <id id="Relation_1"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_2" targetId="Event_3">
+          <custom>
+            <waypoints>
+              <waypoint x="322" y="260.75"/>
+              <waypoint x="352" y="260.75"/>
+              <waypoint x="352" y="106"/>
+              <waypoint x="532" y="106"/>
+              <waypoint x="532" y="187"/>
+              <waypoint x="562" y="187"/>
+            </waypoints>
+            <id id="Relation_2"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_2" targetId="Event_4">
+          <custom>
+            <waypoints>
+              <waypoint x="322" y="223.25"/>
+              <waypoint x="332" y="223.25"/>
+              <waypoint x="332" y="71"/>
+              <waypoint x="1062" y="71"/>
+              <waypoint x="1062" y="59.5"/>
+              <waypoint x="1102" y="59.5"/>
+            </waypoints>
+            <id id="Relation_3"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_2" targetId="Event_5">
+          <custom>
+            <waypoints>
+              <waypoint x="322" y="279.5"/>
+              <waypoint x="362" y="279.5"/>
+              <waypoint x="362" y="192"/>
+              <waypoint x="382" y="192"/>
+            </waypoints>
+            <id id="Relation_4"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_5" targetId="Event_6">
+          <custom>
+            <waypoints>
+              <waypoint x="512" y="179.5"/>
+              <waypoint x="522" y="179.5"/>
+              <waypoint x="522" y="121"/>
+              <waypoint x="702" y="121"/>
+              <waypoint x="702" y="182"/>
+              <waypoint x="742" y="182"/>
+            </waypoints>
+            <id id="Relation_5"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_3" targetId="Event_6">
+          <custom>
+            <waypoints>
+              <waypoint x="692" y="232"/>
+              <waypoint x="742" y="232"/>
+            </waypoints>
+            <id id="Relation_6"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_6" targetId="Event_7">
+          <custom>
+            <waypoints>
+              <waypoint x="872" y="182"/>
+              <waypoint x="922" y="182"/>
+            </waypoints>
+            <id id="Relation_7"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_2" targetId="Event_7">
+          <custom>
+            <waypoints>
+              <waypoint x="322" y="242"/>
+              <waypoint x="342" y="242"/>
+              <waypoint x="342" y="95"/>
+              <waypoint x="882" y="95"/>
+              <waypoint x="882" y="144.5"/>
+              <waypoint x="922" y="144.5"/>
+            </waypoints>
+            <id id="Relation_8"/>
+          </custom>
+        </condition>
+        <condition sourceId="Event_2" targetId="Event_8">
+          <custom>
+            <waypoints>
+              <waypoint x="322" y="335.75"/>
+              <waypoint x="1242" y="335.75"/>
+              <waypoint x="1242" y="247"/>
+              <waypoint x="1282" y="247"/>
+            </waypoints>
+            <id id="Relation_9"/>
+          </custom>
+        </condition>
+      </conditions>
+      <responses>
+        <response sourceId="Event_1" targetId="Event_2">
+          <custom>
+            <waypoints>
+              <waypoint x="142" y="279.5"/>
+              <waypoint x="192" y="279.5"/>
+            </waypoints>
+            <id id="Relation_10"/>
+          </custom>
+        </response>
+      </responses>
+      <coresponces/>
+      <excludes>
+        <exclude sourceId="Event_1" targetId="Event_1">
+          <custom>
+            <waypoints>
+              <waypoint x="55.333333333333336" y="204.5"/>
+              <waypoint x="55.333333333333336" y="194.5"/>
+              <waypoint x="98.66666666666667" y="194.5"/>
+              <waypoint x="98.66666666666667" y="204.5"/>
+            </waypoints>
+            <id id="Relation_11"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_2" targetId="Event_2">
+          <custom>
+            <waypoints>
+              <waypoint x="235.33333333333334" y="204.5"/>
+              <waypoint x="235.33333333333334" y="194.5"/>
+              <waypoint x="278.6666666666667" y="194.5"/>
+              <waypoint x="278.6666666666667" y="204.5"/>
+            </waypoints>
+            <id id="Relation_12"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_3" targetId="Event_3">
+          <custom>
+            <waypoints>
+              <waypoint x="605.3333333333334" y="157"/>
+              <waypoint x="605.3333333333334" y="147"/>
+              <waypoint x="648.6666666666666" y="147"/>
+              <waypoint x="648.6666666666666" y="157"/>
+            </waypoints>
+            <id id="Relation_13"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_3" targetId="Event_5">
+          <custom>
+            <waypoints>
+              <waypoint x="562" y="217"/>
+              <waypoint x="512" y="217"/>
+            </waypoints>
+            <id id="Relation_14"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_4" targetId="Event_4">
+          <custom>
+            <waypoints>
+              <waypoint x="1145.3333333333333" y="22"/>
+              <waypoint x="1145.3333333333333" y="12"/>
+              <waypoint x="1188.6666666666667" y="12"/>
+              <waypoint x="1188.6666666666667" y="22"/>
+            </waypoints>
+            <id id="Relation_15"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_4" targetId="Event_7">
+          <custom>
+            <waypoints>
+              <waypoint x="1102" y="97"/>
+              <waypoint x="1062" y="97"/>
+              <waypoint x="1062" y="137"/>
+              <waypoint x="1052" y="137"/>
+            </waypoints>
+            <id id="Relation_16"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_4" targetId="Event_8">
+          <custom>
+            <waypoints>
+              <waypoint x="1232" y="72"/>
+              <waypoint x="1252" y="72"/>
+              <waypoint x="1252" y="147"/>
+              <waypoint x="1282" y="147"/>
+            </waypoints>
+            <id id="Relation_17"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_5" targetId="Event_5">
+          <custom>
+            <waypoints>
+              <waypoint x="425.3333333333333" y="142"/>
+              <waypoint x="425.3333333333333" y="132"/>
+              <waypoint x="468.6666666666667" y="132"/>
+              <waypoint x="468.6666666666667" y="142"/>
+            </waypoints>
+            <id id="Relation_18"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_5" targetId="Event_3">
+          <custom>
+            <waypoints>
+              <waypoint x="512" y="254.5"/>
+              <waypoint x="522" y="254.5"/>
+              <waypoint x="522" y="247"/>
+              <waypoint x="562" y="247"/>
+            </waypoints>
+            <id id="Relation_19"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_6" targetId="Event_6">
+          <custom>
+            <waypoints>
+              <waypoint x="785.3333333333334" y="132"/>
+              <waypoint x="785.3333333333334" y="122"/>
+              <waypoint x="828.6666666666666" y="122"/>
+              <waypoint x="828.6666666666666" y="132"/>
+            </waypoints>
+            <id id="Relation_20"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_7" targetId="Event_7">
+          <custom>
+            <waypoints>
+              <waypoint x="965.3333333333334" y="107"/>
+              <waypoint x="965.3333333333334" y="97"/>
+              <waypoint x="1008.6666666666666" y="97"/>
+              <waypoint x="1008.6666666666666" y="107"/>
+            </waypoints>
+            <id id="Relation_21"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_7" targetId="Event_4">
+          <custom>
+            <waypoints>
+              <waypoint x="1052" y="167"/>
+              <waypoint x="1072" y="167"/>
+              <waypoint x="1072" y="134.5"/>
+              <waypoint x="1102" y="134.5"/>
+            </waypoints>
+            <id id="Relation_22"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_7" targetId="Event_8">
+          <custom>
+            <waypoints>
+              <waypoint x="1052" y="197"/>
+              <waypoint x="1282" y="197"/>
+            </waypoints>
+            <id id="Relation_23"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_8" targetId="Event_8">
+          <custom>
+            <waypoints>
+              <waypoint x="1325.3333333333333" y="122"/>
+              <waypoint x="1325.3333333333333" y="112"/>
+              <waypoint x="1368.6666666666667" y="112"/>
+              <waypoint x="1368.6666666666667" y="122"/>
+            </waypoints>
+            <id id="Relation_24"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_8" targetId="Event_4">
+          <custom>
+            <waypoints>
+              <waypoint x="1282" y="172"/>
+              <waypoint x="1242" y="172"/>
+              <waypoint x="1242" y="122"/>
+              <waypoint x="1232" y="122"/>
+            </waypoints>
+            <id id="Relation_25"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="Event_8" targetId="Event_7">
+          <custom>
+            <waypoints>
+              <waypoint x="1282" y="222"/>
+              <waypoint x="1242" y="222"/>
+              <waypoint x="1242" y="227"/>
+              <waypoint x="1052" y="227"/>
+            </waypoints>
+            <id id="Relation_26"/>
+          </custom>
+        </exclude>
+      </excludes>
+      <includes>
+        <include sourceId="Event_1" targetId="Event_2">
+          <custom>
+            <waypoints>
+              <waypoint x="142" y="317"/>
+              <waypoint x="192" y="317"/>
+            </waypoints>
+            <id id="Relation_27"/>
+          </custom>
+        </include>
+        <include sourceId="Event_2" targetId="Event_3">
+          <custom>
+            <waypoints>
+              <waypoint x="322" y="317"/>
+              <waypoint x="522" y="317"/>
+              <waypoint x="522" y="277"/>
+              <waypoint x="562" y="277"/>
+            </waypoints>
+            <id id="Relation_28"/>
+          </custom>
+        </include>
+        <include sourceId="Event_2" targetId="Event_5">
+          <custom>
+            <waypoints>
+              <waypoint x="322" y="298.25"/>
+              <waypoint x="372" y="298.25"/>
+              <waypoint x="372" y="242"/>
+              <waypoint x="382" y="242"/>
+            </waypoints>
+            <id id="Relation_29"/>
+          </custom>
+        </include>
+        <include sourceId="Event_6" targetId="Event_7">
+          <custom>
+            <waypoints>
+              <waypoint x="872" y="232"/>
+              <waypoint x="882" y="232"/>
+              <waypoint x="882" y="219.5"/>
+              <waypoint x="922" y="219.5"/>
+            </waypoints>
+            <id id="Relation_30"/>
+          </custom>
+        </include>
+      </includes>
+      <milestones/>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_1"/>
+        <event id="Event_2"/>
+        <event id="Event_3"/>
+        <event id="Event_4"/>
+        <event id="Event_5"/>
+        <event id="Event_6"/>
+        <event id="Event_7"/>
+        <event id="Event_8"/>
+      </included>
+      <pendingResponses/>
+    </marking>
+  </runtime>
+</dcrgraph>

@@ -1,6 +1,8 @@
-import { executeS, isAcceptingS, isEnabledS } from "./executionEngine";
-import { DCRGraphS, EventLog, RoleTrace } from "./types";
-import { copyMarking, copySet, getRandomInt, getRandomItem, randomChoice } from "./utility";
+// Actualiza estas líneas al principio de generation.ts:
+import { executeS, isAcceptingS, isEnabledS, printEventLabels } from "./executionEngine.js";
+import { DCRGraphS, EventLog, RoleTrace, Marking } from "./types.js";
+import { copyMarking, copySet, getRandomInt, getRandomItem, randomChoice } from "./utility.js";
+
 
 const noisify = (trace: RoleTrace, noisePercentage: number, graph: DCRGraphS): RoleTrace => {
     const retTrace: RoleTrace = [];
@@ -48,7 +50,8 @@ const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: numbe
         for (const event of allEvents) {
             const group = graph.subProcessMap[event] ? graph.subProcessMap[event] : graph;
             if (isEnabledS(event, graph, group).enabled) {
-                console.log(event, " is enabled");
+                // Log the event and its corresponding activity name
+                console.log(`${event} (${graph.labelMap[event]}) is enabled`);
                 retval.add(event);
             }
         }
@@ -64,6 +67,10 @@ const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: numbe
     let botchedTraces = 0;
 
     const initMarking = copyMarking(graph.marking);
+
+    // Log the mapping of events to labels
+    printEventLabels(graph);
+
     while (goodTraces < noTraces) {
         let trace: RoleTrace = [];
         while (trace.length <= maxTraceLen) {
@@ -73,11 +80,15 @@ const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: numbe
                 retval.traces["Trace " + goodTraces++] = noisyTrace;
                 break;
             }
+            // Log the trace number being analyzed
+            console.log(`Analyzing trace number: ${goodTraces + 1}`);
             const enabled = allEnabled();
             if (enabled.size === 0) break;
             const event = getRandomItem(enabled);
+            console.log(`Chosen event: ${event} (${graph.labelMap[event]})`);
             executeS(event, graph);
-            trace.push({ activity: graph.labelMap[event], role: graph.roleMap[event] })
+            trace.push({ activity: graph.labelMap[event], role: graph.roleMap[event] });
+            console.log(`Current trace: ${trace.map(t => `${t.role}: ${t.activity}`).join(" | ")}`);
         }
         if (trace.length > maxTraceLen || trace.length < minTraceLen) {
             botchedTraces++;
@@ -92,4 +103,169 @@ const generateEventLog = (graph: DCRGraphS, noTraces: number, minTraceLen: numbe
     return retval;
 }
 
-export default generateEventLog
+class DCREnvironment {
+    private graph: DCRGraphS;
+    private initialMarking: Marking;
+    private maxSteps: number;
+    private currentStep: number;
+
+    constructor(graph: DCRGraphS, maxSteps: number = 100) {
+        this.graph = graph;
+        this.initialMarking = copyMarking(graph.marking);
+        this.maxSteps = maxSteps;
+        this.currentStep = 0;
+    }
+
+    reset() {
+        this.graph.marking = copyMarking(this.initialMarking);
+        this.currentStep = 0;
+        return this.getState();
+    }
+
+    getState() {
+        return {
+            included: Array.from(this.graph.marking.included),
+            executed: Array.from(this.graph.marking.executed),
+            pending: Array.from(this.graph.marking.pending),
+        };
+    }
+
+    getValidActions() {
+        const allEvents = Object.values(this.graph.subProcesses).reduce(
+            (acc, cum) => acc.union(cum.events),
+            copySet(this.graph.events)
+        );
+
+        const enabledEvents = new Set<string>();
+        for (const event of allEvents) {
+            const group = this.graph.subProcessMap[event] ? this.graph.subProcessMap[event] : this.graph;
+            if (isEnabledS(event, this.graph, group).enabled) {
+                enabledEvents.add(event);
+            }
+        }
+        return Array.from(enabledEvents);
+    }
+
+    step(action: string) {
+        const validActions = this.getValidActions();
+        if (!validActions.includes(action)) {
+            throw new Error(`Invalid action: ${action}`);
+        }
+
+        executeS(action, this.graph);
+        this.currentStep++;
+
+        const reward = -1; // Simple reward for now
+        const done = isAcceptingS(this.graph, this.graph) || this.currentStep >= this.maxSteps;
+
+        return {
+            state: this.getState(),
+            reward,
+            done,
+            info: { step: this.currentStep },
+        };
+    }
+}
+
+class RLDCREnvironment {
+    private graph: DCRGraphS;
+    private initialMarking: Marking;
+    private maxSteps: number;
+    private currentStep: number;
+
+    constructor(graph: DCRGraphS, maxSteps: number = 100) {
+        this.graph = graph;
+        this.initialMarking = copyMarking(graph.marking);
+        this.maxSteps = maxSteps;
+        this.currentStep = 0;
+    }
+
+    reset() {
+        this.graph.marking = copyMarking(this.initialMarking);
+        this.currentStep = 0;
+        return this.getState();
+    }
+
+    getState() {
+        return {
+            included: Array.from(this.graph.marking.included),
+            executed: Array.from(this.graph.marking.executed),
+            pending: Array.from(this.graph.marking.pending),
+        };
+    }
+    getValidActions() {
+        const enabledEvents = new Set<string>();
+        for (const event of this.graph.events) {
+            const group = this.graph.subProcessMap[event] ? this.graph.subProcessMap[event] : this.graph;
+            if (isEnabledS(event, this.graph, group).enabled) {
+                enabledEvents.add(event);
+            }
+        }
+        return Array.from(enabledEvents);
+    }
+
+    step(action: string): {
+        action: string; 
+        state: any, 
+        reward: number, 
+        done: boolean, 
+        msg: string, 
+        info: { compliant: boolean, step: number } 
+    } {
+        const validActions = this.getValidActions();
+        const isCompliant = validActions.includes(action);
+
+        if (!isCompliant) {
+            // OPTION B: Penalty for non-compliant action. State does NOT change.
+            return {
+                action,
+                state: this.getState(),
+                reward: -10, 
+                done: false,
+                msg: `Non-compliant move attempted: ${action}`,
+                info: { compliant: false, step: this.currentStep },
+            };
+        }
+
+        // Action is compliant: Execute transition
+        executeS(action, this.graph);
+        this.currentStep++;
+
+        const accepting = isAcceptingS(this.graph, this.graph);
+        // Reward: 100 if completed, -1 for each step taken (to optimize length)
+        const reward = accepting ? 100 : -1; 
+        const done = accepting || this.currentStep >= this.maxSteps;
+
+        return {
+            action,
+            state: this.getState(),
+            reward,
+            done,
+            msg: `Compliant move: ${action}`,
+            info: { compliant: true, step: this.currentStep },
+        };
+    }
+}
+
+// Example usage for testing
+const testEnvironment = (graph: DCRGraphS) => {
+    const env = new DCREnvironment(graph);
+
+    console.log("Initial State:", env.reset());
+
+    const validActions = env.getValidActions();
+    console.log("Valid Actions:", validActions);
+
+    if (validActions.length > 0) {
+        const action = validActions[0];
+        console.log(`Executing action: ${action}`);
+        const result = env.step(action);
+        console.log("New State:", result.state);
+        console.log("Reward:", result.reward);
+        console.log("Done:", result.done);
+    } else {
+        console.log("No valid actions available.");
+    }
+};
+
+export { DCREnvironment, RLDCREnvironment, testEnvironment, generateEventLog };
