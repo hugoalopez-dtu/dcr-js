@@ -181,6 +181,51 @@ export default function DCRRenderer(
     }
   }
 
+  function renderCostDuration(parentGfx, element) {
+    var bo = getBusinessObject(element);
+    var cost = bo.get('cost');
+    var duration = bo.get('duration');
+
+    var hasCost = cost !== null && cost !== undefined;
+    var hasDuration = duration !== null && duration !== undefined;
+    if (!hasCost && !hasDuration) return;
+
+    var parts = [];
+    if (hasCost) parts.push('C:' + cost);
+    if (hasDuration) parts.push('D:' + duration);
+    var label = parts.join('  ');
+
+    var badgeH = 16;
+    var badgeY = element.height - badgeH - 3;
+
+    var badge = svgCreate('rect');
+    svgAttr(badge, {
+      x: 4,
+      y: badgeY,
+      width: element.width - 8,
+      height: badgeH,
+      rx: 3,
+      ry: 3,
+      fill: '#EEF2FF',
+      stroke: '#A5B4FC',
+      'stroke-width': 1,
+    });
+    svgAppend(parentGfx, badge);
+
+    var textEl = svgCreate('text');
+    svgAttr(textEl, {
+      x: element.width / 2,
+      y: badgeY + badgeH - 4,
+      'text-anchor': 'middle',
+      'font-size': '10px',
+      'font-weight': 'bold',
+      fill: '#3730A3',
+      'font-family': 'Arial, sans-serif',
+    });
+    textEl.textContent = label;
+    svgAppend(parentGfx, textEl);
+  }
+
   function getMarkers() {
     switch (settings.markerNotation) {
       case "DCR Solutions":
@@ -334,6 +379,8 @@ export default function DCRRenderer(
       renderTitleLabel(parentGfx, element);
 
       renderDescription(parentGfx, element, 'center-middle', 30);
+
+      renderCostDuration(parentGfx, element);
 
       if (pending) {
         renderer('PendingMarker')(parentGfx, element);

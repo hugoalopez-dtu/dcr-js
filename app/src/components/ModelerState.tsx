@@ -27,6 +27,7 @@ import { DCRGraph, layoutGraph, moddleToDCR, nestDCR, Nestings } from 'dcr-engin
 import GraphNameInput from '../utilComponents/GraphNameInput';
 import styled from 'styled-components';
 import TestDrivenModeling from './TestDrivenModeling';
+import EventPropertiesPanel from './EventPropertiesPanel';
 
 
 const HeatmapButton = styled(BiTestTube) <{ $clicked: boolean, $disabled?: boolean }>`
@@ -53,6 +54,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
   const [tdmOpen, setTdmOpen] = useState(false);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [modelerReady, setModelerReady] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -100,7 +102,8 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
         let files = data.split('\n');
         files.pop(); // Remove last empty line
         files = files.map(name => name.split('.').slice(0, -1).join('.')); // Shave file extension off
-        setExamplesData(files);
+        // Keep example names unique to avoid React key collisions in the popup list.
+        setExamplesData(Array.from(new Set(files)));
       })
   }, []);
 
@@ -272,7 +275,8 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
         onChange={e => setGraphName(e.target.value)}
       />
       {loading && <Loading />}
-      <Modeler initXml={initXml} modelerRef={modelerRef} />
+      <Modeler initXml={initXml} modelerRef={modelerRef} onReady={() => setModelerReady(true)} />
+      {modelerReady && <EventPropertiesPanel modelerRef={modelerRef} />}
       <TopRightIcons>
         <HeatmapButton onClick={() => {
           if (!modelerRef.current) return;

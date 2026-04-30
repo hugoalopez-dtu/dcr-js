@@ -53,6 +53,16 @@
           "name": "enabled",
           "isAttr": true,
           "type": "Boolean"
+        },
+        {
+          "name": "cost",
+          "isAttr": true,
+          "type": "Integer"
+        },
+        {
+          "name": "duration",
+          "isAttr": true,
+          "type": "Integer"
         }
       ]
     },

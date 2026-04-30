@@ -7,6 +7,7 @@ import { DCRGraphS } from "dcr-engine";
 interface ModelerProps {
     modelerRef: React.RefObject<DCRModeler | null>,
     initXml?: string,
+    onReady?: (modeler: DCRModeler) => void,
     override?: {
         graphRef: React.RefObject<{ initial: DCRGraph, current: DCRGraph } | { initial: DCRGraphS, current: DCRGraphS } | null>,
         overrideOnclick: (e: any) => void;
@@ -16,10 +17,11 @@ interface ModelerProps {
     }
 }
 
-const Modeler = ({ modelerRef, override, initXml }: ModelerProps) => {
+const Modeler = ({ modelerRef, override, initXml, onReady }: ModelerProps) => {
 
     useEffect(() => {
         let initModeler: DCRModeler;
+        let disposed = false;
 
         if (!modelerRef.current) {
             initModeler = new DCRModeler(override ? {
@@ -47,7 +49,9 @@ const Modeler = ({ modelerRef, override, initXml }: ModelerProps) => {
             });
 
             initModeler.importXML(initXml ? initXml : emptyBoardXML).then(() => {
+                if (disposed) return;
                 modelerRef.current = initModeler;
+                onReady?.(initModeler);
                 if (override) {
                     const graph = moddleToDCR(modelerRef.current.getElementRegistry());
                     override.graphRef.current = { initial: graph, current: { ...graph, marking: copyMarking(graph.marking) } };
@@ -70,15 +74,14 @@ const Modeler = ({ modelerRef, override, initXml }: ModelerProps) => {
                         console.log(e);
                     }
                 }
-            }).catch((e: any) => console.log(`
-                This error happens in development because the component is mounted twice due to Strict Mode. 
-                This means that the async importXML call of the first mount returns this error, 
-                since the corresponding modeler has since been destroyed by cleanup. 
-                I.e. it should be harmless
-            `, e));
+            }).catch((e: any) => {
+                if (disposed) return;
+                console.log("Modeler importXML failed", e);
+            });
         }
 
         return () => {
+            disposed = true;
             // Ensure that all modelers that are set are also destroyed
             initModeler?.destroy();
             modelerRef.current = null;
