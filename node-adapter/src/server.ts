@@ -6,9 +6,9 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import fs from "fs";
 
-import { xmlToDCR } from "../../../dcr-engine/src/graphConversion.js";
-import { RLDCREnvironment } from "../../../dcr-engine/src/generation.js";
-import { computeStepReward, countPendingIncluded } from "../../../dcr-engine/dist/reward.js";
+import { xmlToDCR } from "../../dcr-engine/src/graphConversion.js";
+import { RLDCREnvironment } from "../../dcr-engine/src/generation.js";
+import { computeStepReward, countPendingIncluded } from "../../dcr-engine/src/reward.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

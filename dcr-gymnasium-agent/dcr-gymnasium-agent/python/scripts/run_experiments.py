@@ -50,6 +50,7 @@ EXPERIMENTS = [
     #    "total_steps": 30000,
     #    "ent_coef": 0.1,
     #},
+
     # {
     #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Pizza delivery process.xml"),
     #     "exp_id": "Pizza_30k",
