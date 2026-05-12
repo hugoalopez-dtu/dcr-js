@@ -25,26 +25,24 @@ if (!fs.existsSync(XML_PATH)) {
   process.exit(1);
 }
 const xmlContent = fs.readFileSync(XML_PATH, "utf-8");
-const graph = xmlToDCR(xmlContent);
-const env = new RLDCREnvironment(graph);
+let graph = xmlToDCR(xmlContent);
+let env = new RLDCREnvironment(graph);
 
 // --- Config ---
 const MAX_EPISODE_STEPS = Number(process.env.MAX_EPISODE_STEPS || 100);
 const STEP_PENALTY = Number(process.env.STEP_PENALTY || -0.1);
 const GOAL_LABEL = (process.env.GOAL_LABEL || "").trim();
 const STRICT_GOAL_TERMINATION = process.env.STRICT_GOAL_TERMINATION === "1";
+const COST_WEIGHT     = Number(process.env.COST_WEIGHT     || 0);
+const DURATION_WEIGHT = Number(process.env.DURATION_WEIGHT || 0);
 
-// Termination modes:
-// - structural: accepting when Pending ∩ Included = ∅
-// - strict goal: accepting when structural accepting AND selected event matches GOAL_LABEL
-
-// Per-episode event tracking — cleared on every reset.
-// Penalises re-execution of the same event within a single episode.
 const executedInEpisode = new Set<string>();
 
 let lastResult: any = null;
 let episodeSteps = 0;
 let illegalTracesCount = 0;
+let episodeCost = 0;
+let episodeDuration = 0;
 
 // --- Helpers ---
 const buildActionMask = (events: string[], validActions: string[]) => {
@@ -72,6 +70,8 @@ app.post("/reset", (_req, res) => {
     env.reset();
     episodeSteps = 0;
     illegalTracesCount = 0;
+    episodeCost = 0;
+    episodeDuration = 0;
     lastResult = null;
 
     executedInEpisode.clear();
@@ -123,11 +123,19 @@ app.post("/action", (req, res) => {
     // Ensure reward.ts uses the acceptance mode selected above.
     const rewardInput: any = { ...result, accepting, done: accepting };
 
-    // Compute reward (no GOAL_LABEL dependency)
-    // Pass the action so reward.ts can track repetition within this episode
+    // Look up optional cost/duration for this event
+    const eventCost     = graph.costMap?.[action];
+    const eventDuration = graph.durationMap?.[action];
+
+    const isLegal = result.reward !== -10;
+
+    // Accumulate episode totals only for legal actions
+    if (isLegal && eventCost !== undefined)     episodeCost     += eventCost;
+    if (isLegal && eventDuration !== undefined) episodeDuration += eventDuration;
+
     rewardInput.action = action;
-    const { stepReward, baseMapped, noveltyDelta, progressDelta } =
-      computeStepReward(rewardInput, pendingBefore, executedInEpisode);
+    const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } =
+      computeStepReward(rewardInput, pendingBefore, executedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT);
 
     // Apply step penalty only for legal non-terminal actions.
     // baseMapped values from reward.ts:
@@ -158,6 +166,12 @@ app.post("/action", (req, res) => {
       baseMapped,
       noveltyDelta,
       progressDelta,
+      costPenalty,
+      durationPenalty,
+      eventCost:      eventCost ?? null,
+      eventDuration:  eventDuration ?? null,
+      episodeCost,
+      episodeDuration,
       pendingBefore,
       pendingAfter: countPendingIncluded(result.state),
       illegalTracesCount,
@@ -171,6 +185,37 @@ app.post("/action", (req, res) => {
     const actionMask = buildActionMask(events, validActions);
 
     res.json({ ok: true, result: augmentedResult, actionMask });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+app.post("/load", (req, res) => {
+  try {
+    const { xml } = req.body;
+    if (!xml || typeof xml !== "string") {
+      return res.status(400).json({ ok: false, error: "xml string required" });
+    }
+    graph = xmlToDCR(xml);
+    env = new RLDCREnvironment(graph);
+    episodeSteps = 0;
+    illegalTracesCount = 0;
+    episodeCost = 0;
+    episodeDuration = 0;
+    lastResult = null;
+    executedInEpisode.clear();
+
+    const eventsWithCost     = Object.keys(graph.costMap);
+    const eventsWithDuration = Object.keys(graph.durationMap);
+    console.log(`[/load] Graph loaded: ${graph.events.size} events, ${eventsWithCost.length} with cost, ${eventsWithDuration.length} with duration`);
+
+    res.json({
+      ok: true,
+      events: Array.from(graph.events),
+      labelMap: graph.labelMap,
+      costMap: graph.costMap,
+      durationMap: graph.durationMap,
+    });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
   }

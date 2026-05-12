@@ -35,6 +35,19 @@ def parse_seeds_from_env() -> list[int]:
 
 SEEDS = parse_seeds_from_env()
 
+# --- Pareto weight sweep ---
+# Each pair (alpha, beta) defines a scalarization: reward -= alpha*cost + beta*duration
+# alpha=0, beta=0 → original structural agent (baseline)
+# Vary the pairs to explore the cost-duration trade-off space
+PARETO_WEIGHTS = [
+    (0.0, 0.0),   # baseline: no cost/duration awareness
+    (1.0, 0.0),   # minimise cost only
+    (0.0, 1.0),   # minimise duration only
+    (0.5, 0.5),   # balanced
+    (2.0, 0.5),   # cost-heavy
+    (0.5, 2.0),   # duration-heavy
+]
+
 EXPERIMENTS = [
     # {
     #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Prescribe medicine.xml"),
@@ -166,11 +179,12 @@ def write_csv_rows(rows, out_path):
 
 
 # ---------- Main experiment runner ----------
-def run_experiment(exp, seed: int):
+def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: float = 0.0):
     xml = Path(exp["xml_file"]).expanduser().resolve()
     assert xml.exists(), f"XML not found: {xml}"
     base_exp_id = exp["exp_id"]
-    exp_id = f"{base_exp_id}_s{seed}"
+    weight_tag = f"a{cost_weight}_b{duration_weight}".replace(".", "p")
+    exp_id = f"{base_exp_id}_s{seed}_{weight_tag}"
     steps = int(exp["total_steps"])
     goal_label = str(exp.get("goal_label", ""))
     ent_coef = float(exp.get("ent_coef", 0.1))
@@ -181,7 +195,7 @@ def run_experiment(exp, seed: int):
 
     print(
         f"[RUN] {exp_id} -> {xml} | steps: {steps} | goal: {goal_label} "
-        f"| ent_coef: {ent_coef} | seed: {seed}"
+        f"| ent_coef: {ent_coef} | seed: {seed} | α={cost_weight} β={duration_weight}"
     )
     env = os.environ.copy()
     env["DCR_XML"] = str(xml)
@@ -191,6 +205,8 @@ def run_experiment(exp, seed: int):
     env["RESET_NOVELTY_ON_RESET"] = "0"
     env["STRICT_GOAL_TERMINATION"] = "0"
     env["MAX_EPISODE_STEPS"] = "300"
+    env["COST_WEIGHT"]     = str(cost_weight)
+    env["DURATION_WEIGHT"] = str(duration_weight)
 
     # Ensure previous adapter instance is not occupying the port.
     free_adapter_port(PORT)
@@ -295,8 +311,9 @@ def main():
 
     for exp in EXPERIMENTS:
         for seed in SEEDS:
-            run_experiment(exp, seed)
-            time.sleep(2)  # cooldown between experiments
+            for cost_w, dur_w in PARETO_WEIGHTS:
+                run_experiment(exp, seed, cost_weight=cost_w, duration_weight=dur_w)
+                time.sleep(2)
 
 
 if __name__ == "__main__":

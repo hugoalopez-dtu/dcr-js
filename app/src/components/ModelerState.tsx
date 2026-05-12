@@ -9,7 +9,7 @@ import { StateEnum, StateProps } from '../App';
 import FileUpload from '../utilComponents/FileUpload';
 import ModalMenu, { ModalMenuElement } from '../utilComponents/ModalMenu';
 
-import { BiAnalyse, BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidDashboard, BiTestTube } from 'react-icons/bi';
+import { BiAnalyse, BiBot, BiHome, BiLeftArrowCircle, BiPlus, BiSave, BiSolidDashboard, BiTestTube } from 'react-icons/bi';
 
 import Examples from './Examples';
 import { toast } from 'react-toastify';
@@ -133,6 +133,28 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
     const data = await modelerRef.current.saveSVG();
     const blob = new Blob([data.svg]);
     saveAs(blob, `${graphName}.svg`);
+  }
+
+  const sendToAgent = async () => {
+    if (!modelerRef.current) return;
+    try {
+      const data = await modelerRef.current.saveDCRXML();
+      const res = await fetch("http://localhost:5001/load", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ xml: data.xml }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        const costCount = Object.keys(json.costMap || {}).length;
+        const durCount  = Object.keys(json.durationMap || {}).length;
+        toast.success(`Graph sent to agent — ${json.events.length} events, ${costCount} with cost, ${durCount} with duration`);
+      } else {
+        toast.error(`Agent error: ${json.error}`);
+      }
+    } catch {
+      toast.error("Could not reach agent (is the node adapter running on port 5001?)");
+    }
   }
 
   const savedGraphElements = () => {
@@ -288,6 +310,7 @@ const ModelerState = ({ setState, savedGraphs, setSavedGraphs, lastSavedGraph }:
           }
           setTdmOpen(!tdmOpen)
         }} $clicked={tdmOpen} title="Open Test Driven Modeling Pane" />
+        <BiBot title="Send to Agent" onClick={sendToAgent} />
         <BiAnalyse title="Layout Graph" onClick={layout} />
         <FullScreenIcon />
         <BiHome onClick={() => { if (graphName) rawSave(); setState(StateEnum.Home) }} />

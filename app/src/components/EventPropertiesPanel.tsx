@@ -24,6 +24,14 @@ const Panel = styled.div`
   z-index: 100;
 `;
 
+const PanelTitle = styled.div`
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9b0000;
+`;
+
 const EventName = styled.div`
   font-weight: 600;
   font-size: 0.85rem;
@@ -33,30 +41,66 @@ const EventName = styled.div`
   word-break: break-word;
 `;
 
-const FieldLabel = styled.label`
-  font-size: 0.75rem;
-  color: #555;
+const FieldRow = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 `;
 
-const NumberInput = styled.input`
-  width: 100%;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  box-sizing: border-box;
-  &:focus {
-    outline: none;
-    border-color: #9b0000;
-  }
+const FieldHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 `;
 
-const UnitHint = styled.span`
-  font-size: 0.7rem;
-  color: #999;
+const FieldLabel = styled.label`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #444;
+`;
+
+const OptionalBadge = styled.span`
+  font-size: 0.65rem;
+  color: #aaa;
+  font-style: italic;
+`;
+
+const ClearButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 0.75rem;
+  padding: 0;
+  line-height: 1;
+  &:hover { color: #9b0000; }
+`;
+
+const InputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  &:focus-within { border-color: #9b0000; }
+`;
+
+const NumberInput = styled.input`
+  flex: 1;
+  padding: 0.3rem 0.4rem;
+  border: none;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  &:focus { outline: none; }
+`;
+
+
+const ParetoNote = styled.div`
+  font-size: 0.65rem;
+  color: #aaa;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 0.5rem;
+  line-height: 1.4;
 `;
 
 export default function EventPropertiesPanel({ modelerRef }: Props) {
@@ -92,37 +136,56 @@ export default function EventPropertiesPanel({ modelerRef }: Props) {
     modeling.updateProperties(selectedEl, { [key]: val });
   };
 
+  const clearField = (key: 'cost' | 'duration') => {
+    if (key === 'cost') setCost('');
+    else setDuration('');
+    updateProperty(key, '');
+  };
+
   if (!selectedEl) return null;
 
   const label = selectedEl.businessObject?.description || selectedEl.businessObject?.id || 'Event';
 
   return (
     <Panel>
+      <PanelTitle>Event Properties</PanelTitle>
       <EventName title={label}>{label}</EventName>
 
-      <FieldLabel>
-        Cost
-        <UnitHint>monetary units (≥ 0)</UnitHint>
-        <NumberInput
-          type="number"
-          min={0}
-          value={cost}
-          placeholder="e.g. 100"
-          onChange={e => { setCost(e.target.value); updateProperty('cost', e.target.value); }}
-        />
-      </FieldLabel>
+      <FieldRow>
+        <FieldHeader>
+          <FieldLabel>Cost <OptionalBadge>(optional)</OptionalBadge></FieldLabel>
+          {cost !== '' && <ClearButton onClick={() => clearField('cost')} title="Remove cost">×</ClearButton>}
+        </FieldHeader>
+        <InputWrapper>
+          <NumberInput
+            type="number"
+            min={0}
+            value={cost}
+            placeholder="not set"
+            onChange={e => { setCost(e.target.value); updateProperty('cost', e.target.value); }}
+          />
+        </InputWrapper>
+      </FieldRow>
 
-      <FieldLabel>
-        Duration
-        <UnitHint>time units (≥ 0)</UnitHint>
-        <NumberInput
-          type="number"
-          min={0}
-          value={duration}
-          placeholder="e.g. 20"
-          onChange={e => { setDuration(e.target.value); updateProperty('duration', e.target.value); }}
-        />
-      </FieldLabel>
+      <FieldRow>
+        <FieldHeader>
+          <FieldLabel>Duration <OptionalBadge>(optional)</OptionalBadge></FieldLabel>
+          {duration !== '' && <ClearButton onClick={() => clearField('duration')} title="Remove duration">×</ClearButton>}
+        </FieldHeader>
+        <InputWrapper>
+          <NumberInput
+            type="number"
+            min={0}
+            value={duration}
+            placeholder="not set"
+            onChange={e => { setDuration(e.target.value); updateProperty('duration', e.target.value); }}
+          />
+        </InputWrapper>
+      </FieldRow>
+
+      <ParetoNote>
+        Events without cost or duration are excluded from Pareto analysis.
+      </ParetoNote>
     </Panel>
   );
 }

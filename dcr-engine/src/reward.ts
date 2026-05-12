@@ -3,6 +3,8 @@ export type RewardResult = {
   baseMapped: number;
   noveltyDelta: number;
   progressDelta: number;
+  costPenalty: number;
+  durationPenalty: number;
 };
 
 /**
@@ -34,39 +36,45 @@ export type RewardResult = {
 export const computeStepReward = (
   result: any,
   pendingBefore: number,
-  executedInEpisode: Set<string>
+  executedInEpisode: Set<string>,
+  eventCost?: number,
+  eventDuration?: number,
+  costWeight: number = 0,
+  durationWeight: number = 0,
 ): RewardResult => {
 
-  // --- 1. Check if action was illegal (engine returns result.reward === -10) ---
+  // --- 1. Illegal action ---
   if (result.reward === -10) {
-    return { stepReward: -10, baseMapped: -10, noveltyDelta: 0, progressDelta: 0 };
+    return { stepReward: -10, baseMapped: -10, noveltyDelta: 0, progressDelta: 0, costPenalty: 0, durationPenalty: 0 };
   }
 
-  // --- 2. Check if action reaches acceptance (Pending ∩ Included = ∅) ---
+  // --- 2. Acceptance (Pending ∩ Included = ∅) ---
   const isAccepting = Boolean(result.accepting ?? result.done);
   if (isAccepting) {
-    return { stepReward: 100, baseMapped: 100, noveltyDelta: 0, progressDelta: 0 };
+    return { stepReward: 100, baseMapped: 100, noveltyDelta: 0, progressDelta: 0, costPenalty: 0, durationPenalty: 0 };
   }
 
-  // --- 3. Legal action, not yet accepting ---
+  // --- 3. Legal, non-terminal ---
   const baseMapped = 1;
 
   // --- 4. Progress signal ---
   const pendingAfter = countPendingIncluded(result.state);
   const progressDelta = Math.max(0, pendingBefore - pendingAfter) * 2.0;
 
-  // --- 5. Repetition penalty: -1 if this event was already chosen this episode ---
+  // --- 5. Repetition penalty ---
   const action: string | undefined = result.action;
   let noveltyDelta = 0;
   if (action !== undefined) {
-    if (executedInEpisode.has(action)) {
-      noveltyDelta = -1;
-    }
+    if (executedInEpisode.has(action)) noveltyDelta = -1;
     executedInEpisode.add(action);
   }
 
-  const stepReward = baseMapped + progressDelta + noveltyDelta;
-  return { stepReward, baseMapped, noveltyDelta, progressDelta };
+  // --- 6. Multi-objective cost/duration penalties (only when weights > 0 and value defined) ---
+  const costPenalty    = (costWeight > 0 && eventCost !== undefined)     ? costWeight * eventCost       : 0;
+  const durationPenalty = (durationWeight > 0 && eventDuration !== undefined) ? durationWeight * eventDuration : 0;
+
+  const stepReward = baseMapped + progressDelta + noveltyDelta - costPenalty - durationPenalty;
+  return { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty };
 };
 
 /**

@@ -65,22 +65,33 @@ class DCRGymEnv(gym.Env):
         r = self.node["reset"]()
         obs = self._state_to_obs(r["state"])
         self.label_map = r.get("labelMap", self.label_map)
-        # update action mask from server reset response
         self.action_mask = r.get("actionMask", state_to_mask(r.get("state", {}), self.event_list))
+        self.episode_cost = 0.0
+        self.episode_duration = 0.0
         return obs, {}
 
     def step(self, action):
         ev = self.event_list[action]
         r = self.node["send_action"](ev)
-        # server returns augmented result and possibly actionMask
         result = r.get("result", {})
         obs = self._state_to_obs(result.get("state", {}))
-        # prefer the pedagogical stepReward returned by server; fallback to engine reward
         reward = result.get("stepReward", result.get("reward", 0))
         done = bool(result.get("done", False))
-        # update action mask if server returned it, else recompute from state
         self.action_mask = r.get("actionMask") or state_to_mask(result.get("state", {}), self.event_list)
-        info = {"engine_result": result, "action_mask": self.action_mask}
+
+        # Accumulate episode cost/duration from server (server tracks the running total)
+        self.episode_cost     = result.get("episodeCost", self.episode_cost)
+        self.episode_duration = result.get("episodeDuration", self.episode_duration)
+
+        info = {
+            "engine_result":    result,
+            "action_mask":      self.action_mask,
+            "event_cost":       result.get("eventCost"),
+            "event_duration":   result.get("eventDuration"),
+            "episode_cost":     self.episode_cost,
+            "episode_duration": self.episode_duration,
+            "accepting":        result.get("accepting", False),
+        }
         return obs, reward, done, False, info
 
     def close(self):

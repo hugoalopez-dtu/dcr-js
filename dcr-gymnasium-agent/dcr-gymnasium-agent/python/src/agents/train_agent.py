@@ -61,10 +61,15 @@ class StepDebugCallback(BaseCallback):
                 "accepting",
                 "goal_reached",
                 "max_step_reached",
-                # Convergence analysis: illegal traces
+                # Convergence analysis
                 "illegal_traces_count",
                 "episode_steps",
                 "illegal_traces_ratio",
+                # Multi-objective metrics
+                "event_cost",
+                "event_duration",
+                "episode_cost",
+                "episode_duration",
                 "message",
             ],
         )
@@ -130,6 +135,10 @@ class StepDebugCallback(BaseCallback):
             "illegal_traces_count": illegal_traces_count,
             "episode_steps": episode_steps,
             "illegal_traces_ratio": round(illegal_traces_ratio, 2),
+            "event_cost":       info.get("event_cost", ""),
+            "event_duration":   info.get("event_duration", ""),
+            "episode_cost":     info.get("episode_cost", ""),
+            "episode_duration": info.get("episode_duration", ""),
             "message": engine_result.get("msg", ""),
         }
         self._writer.writerow(row)
@@ -150,12 +159,20 @@ class StepDebugCallback(BaseCallback):
                 if self.step_in_episode > 0
                 else 0
             )
-            # Register episode metrics to TensorBoard
             self.logger.record("train/ep_rew_sum", self._episode_reward_sum)
-            # Register convergence metric: illegal traces ratio at end of episode
             self.logger.record("train/illegal_traces_count", self._ep_illegal_count)
             self.logger.record("train/illegal_traces_ratio", illegal_traces_ratio)
             self.logger.record("train/episode_steps", episode_steps)
+
+            # Multi-objective: log cost/duration on accepting episodes
+            if info.get("accepting"):
+                ep_cost = info.get("episode_cost")
+                ep_dur  = info.get("episode_duration")
+                if ep_cost is not None:
+                    self.logger.record("pareto/episode_cost", ep_cost)
+                if ep_dur is not None:
+                    self.logger.record("pareto/episode_duration", ep_dur)
+
             self.logger.dump(self.num_timesteps)
             self.episode_idx += 1
             self.step_in_episode = 0

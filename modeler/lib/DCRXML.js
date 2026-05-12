@@ -140,6 +140,8 @@ function addEvent(dcr, parent, element, object) {
   handleRoles(object, element);
   handleStates(dcr, element);
   handleDimensions(object, element);
+  if (element.cost !== undefined && element.cost !== null) object.$.cost = element.cost;
+  if (element.duration !== undefined && element.duration !== null) object.$.duration = element.duration;
   parent.push(object);
 }
 

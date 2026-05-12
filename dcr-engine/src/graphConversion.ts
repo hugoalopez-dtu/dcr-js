@@ -112,7 +112,16 @@ export function xmlToDCR(xmlString: string): DCRGraphS {
       graph.labelMap[id] = label;
       if (!graph.labelMapInv[label]) graph.labelMapInv[label] = new Set();
       graph.labelMapInv[label].add(id);
-      
+
+      if (e.cost !== undefined && e.cost !== null && e.cost !== '') {
+        const c = Number(e.cost);
+        if (!isNaN(c)) graph.costMap[id] = c;
+      }
+      if (e.duration !== undefined && e.duration !== null && e.duration !== '') {
+        const d = Number(e.duration);
+        if (!isNaN(d)) graph.durationMap[id] = d;
+      }
+
       graph.conditionsFor[id] = new Set();
       graph.milestonesFor[id] = new Set();
       graph.responseTo[id] = new Set();
