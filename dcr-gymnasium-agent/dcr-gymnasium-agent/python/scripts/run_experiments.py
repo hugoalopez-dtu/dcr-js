@@ -18,6 +18,7 @@ MODELS_DIR = PYTHON_PROJECT_DIR / "models"
 LOGS_DIR = PYTHON_PROJECT_DIR / "scripts" / "logs"
 PORT = "5001"
 NODE_URL = f"http://localhost:{PORT}"
+STAGING_XML = ROOT / "node-adapter" / "staging" / "current_graph.xml"
 
 
 def parse_seeds_from_env() -> list[int]:
@@ -49,34 +50,27 @@ PARETO_WEIGHTS = [
 ]
 
 EXPERIMENTS = [
+    # --- Active experiment: xml_file omitted → uses staging/current_graph.xml sent from UI ---
+    # Set total_steps via env var DCR_STEPS (default 50000), e.g.: DCR_STEPS=100000 python scripts/run_experiments.py
+    {
+        "exp_id": "pareto_run",
+        "total_steps": int(os.environ.get("DCR_STEPS", 50000)),
+        "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
+    },
+
+    # --- Archive: uncomment to run a specific graph directly ---
     # {
     #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Prescribe medicine.xml"),
-    #     "exp_id": "Medicine_30k_v2",
-    #     "goal_label": "Give medicine",
+    #     "exp_id": "Medicine_30k",
     #     "total_steps": 30000,
     #     "ent_coef": 0.1,
     # },
-    #{
-    #    "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Legal Compliance by Design.xml"),
-    #    "exp_id": "Pension_30k_v2",
-    #    "goal_label": "Grant public pension",
-    #    "total_steps": 30000,
-    #    "ent_coef": 0.1,
-    #},
-
     # {
-    #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Pizza delivery process.xml"),
-    #     "exp_id": "Pizza_30k",
-    #     "goal_label": "Finalize order",
-    #     "total_steps": 30000,
+    #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Sepsis Cases - Event Log.xml"),
+    #     "exp_id": "Sepsis_200k",
+    #     "total_steps": 200000,
     #     "ent_coef": 0.1,
     # },
-    {
-          "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Sepsis Cases - Event Log.xml"),
-            "exp_id": "Sepsis_200k_v1",
-          "total_steps": 200000,
-             "ent_coef": 0.1,
- },
     # {
     #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Synthetic_event_logs_review_example_large.xml"),
     #     "exp_id": "SyntheticReview_200k_v1",
@@ -180,8 +174,10 @@ def write_csv_rows(rows, out_path):
 
 # ---------- Main experiment runner ----------
 def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: float = 0.0):
-    xml = Path(exp["xml_file"]).expanduser().resolve()
-    assert xml.exists(), f"XML not found: {xml}"
+    # Use staging XML if no xml_file specified in experiment config
+    xml_path = exp.get("xml_file") or str(STAGING_XML)
+    xml = Path(xml_path).expanduser().resolve()
+    assert xml.exists(), f"XML not found: {xml}\nHint: send a graph from the modeler UI first (robot button)."
     base_exp_id = exp["exp_id"]
     weight_tag = f"a{cost_weight}_b{duration_weight}".replace(".", "p")
     exp_id = f"{base_exp_id}_s{seed}_{weight_tag}"

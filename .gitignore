@@ -49,3 +49,4 @@ package-lock.json
 # Root-level temp event logs
 Event\ Log\ \(10\).xes
 Event\ Log\ \(11\).xes
+node-adapter/staging/

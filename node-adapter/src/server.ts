@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 
 // --- Graph loading ---
 const XML_PATH = process.env.DCR_XML || path.join(__dirname, "../../app/public/examples/diagrams/Prescribe medicine.xml");
+const STAGING_PATH = path.join(__dirname, "../staging/current_graph.xml");
 
 if (!fs.existsSync(XML_PATH)) {
   console.error(`XML file not found: ${XML_PATH}`);
@@ -205,9 +206,14 @@ app.post("/load", (req, res) => {
     lastResult = null;
     executedInEpisode.clear();
 
+    // Persist XML to disk so run_experiments.py can pick it up on the cluster
+    fs.mkdirSync(path.dirname(STAGING_PATH), { recursive: true });
+    fs.writeFileSync(STAGING_PATH, xml, "utf-8");
+
     const eventsWithCost     = Object.keys(graph.costMap);
     const eventsWithDuration = Object.keys(graph.durationMap);
     console.log(`[/load] Graph loaded: ${graph.events.size} events, ${eventsWithCost.length} with cost, ${eventsWithDuration.length} with duration`);
+    console.log(`[/load] XML saved to: ${STAGING_PATH}`);
 
     res.json({
       ok: true,
