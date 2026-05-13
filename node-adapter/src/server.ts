@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "10mb" }));
 
 // --- Graph loading ---
 const XML_PATH = process.env.DCR_XML || path.join(__dirname, "../../app/public/examples/diagrams/Prescribe medicine.xml");
