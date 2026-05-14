@@ -77,8 +77,8 @@ class DCRGymEnv(gym.Env):
         return obs, {}
 
     def step(self, action):
-        # Send numeric action index; server decodes it to (event, role)
-        r = self.node["send_action"](action)
+        # Send numeric action index as plain int (numpy int64 is not JSON serializable)
+        r = self.node["send_action"](int(action))
         result = r.get("result", {})
         obs = self._state_to_obs(result.get("state", {}))
         reward = result.get("stepReward", result.get("reward", 0))
