@@ -122,21 +122,6 @@ export function xmlToDCR(xmlString: string): DCRGraphS {
         if (!isNaN(d)) graph.durationMap[id] = d;
       }
 
-      // Parse multi-role options: <roleOptions><role name="Expert" cost="80" duration="5"/>...</roleOptions>
-      const rawRoles = e.roleOptions?.role;
-      if (rawRoles) {
-        const roleList = Array.isArray(rawRoles) ? rawRoles : [rawRoles];
-        roleList.forEach((r: any) => {
-          const name = String(r.name || r["@name"] || "");
-          const c = Number(r.cost ?? r["@cost"] ?? 0);
-          const d = Number(r.duration ?? r["@duration"] ?? 0);
-          if (name) {
-            if (!graph.roleOptionsMap[id]) graph.roleOptionsMap[id] = {};
-            graph.roleOptionsMap[id][name] = { cost: c, duration: d };
-          }
-        });
-      }
-
       graph.conditionsFor[id] = new Set();
       graph.milestonesFor[id] = new Set();
       graph.responseTo[id] = new Set();
@@ -144,7 +129,19 @@ export function xmlToDCR(xmlString: string): DCRGraphS {
       graph.excludesTo[id] = new Set();
     });
   
-    // 3. Constraints (The "Rules")
+    // 3. Global role multipliers: <roles><role name="Expert" costMultiplier="2.0" durationMultiplier="0.5"/></roles>
+    const rawRoleMultipliers = spec.resources?.roles?.role;
+    if (rawRoleMultipliers) {
+      const roleList = Array.isArray(rawRoleMultipliers) ? rawRoleMultipliers : [rawRoleMultipliers];
+      roleList.forEach((r: any) => {
+        const name = String(r.name || r["@name"] || "");
+        const cm = Number(r.costMultiplier ?? r["@costMultiplier"] ?? 1);
+        const dm = Number(r.durationMultiplier ?? r["@durationMultiplier"] ?? 1);
+        if (name) graph.roleMultipliers[name] = { costMultiplier: cm, durationMultiplier: dm };
+      });
+    }
+
+    // 4. Constraints (The "Rules")
     const constraints = spec.constraints;
     if (constraints) {
       const parseRel = (relData: any, targetMap: Record<string, Set<string>>, reverse: boolean = false) => {
@@ -297,7 +294,7 @@ function emptyGraph(): DCRGraphS {
     subProcessMap: {},
     costMap: {},
     durationMap: {},
-    roleOptionsMap: {},
+    roleMultipliers: {},
     conditionsFor: {},
     milestonesFor: {},
     responseTo: {},

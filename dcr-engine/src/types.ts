@@ -104,7 +104,7 @@ export type DCRGraphS = DCRGraph & Labelling & {
   roleMap: { [event: Event]: Role };
   costMap: { [event: Event]: number };
   durationMap: { [event: Event]: number };
-  roleOptionsMap: { [event: Event]: { [role: string]: { cost: number; duration: number } } };
+  roleMultipliers: { [role: string]: { costMultiplier: number; durationMultiplier: number } };
 }
 
 export interface SubProcess {

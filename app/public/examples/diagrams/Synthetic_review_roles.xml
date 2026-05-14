@@ -3,104 +3,20 @@
   <specification>
     <resources>
       <events>
-        <event id="Event_1">
-          <roleOptions>
-            <role name="Expert" cost="15" duration="3"/>
-            <role name="Junior" cost="10" duration="8"/>
-            <role name="System" cost="5"  duration="2"/>
-          </roleOptions>
-        </event>
-        <event id="Event_2">
-          <roleOptions>
-            <role name="Expert" cost="30" duration="20"/>
-            <role name="Junior" cost="0"  duration="60"/>
-            <role name="System" cost="0"  duration="45"/>
-          </roleOptions>
-        </event>
-        <event id="Event_3">
-          <roleOptions>
-            <role name="Expert" cost="80" duration="3"/>
-            <role name="Junior" cost="20" duration="30"/>
-            <role name="System" cost="0"  duration="50"/>
-          </roleOptions>
-        </event>
-        <event id="Event_4">
-          <roleOptions>
-            <role name="Expert" cost="8" duration="60"/>
-            <role name="Junior" cost="5" duration="90"/>
-            <role name="System" cost="5" duration="90"/>
-          </roleOptions>
-        </event>
-        <event id="Event_5">
-          <roleOptions>
-            <role name="Expert" cost="15" duration="5"/>
-            <role name="Junior" cost="10" duration="10"/>
-            <role name="System" cost="5"  duration="15"/>
-          </roleOptions>
-        </event>
-        <event id="Event_6">
-          <roleOptions>
-            <role name="Expert" cost="35" duration="8"/>
-            <role name="Junior" cost="20" duration="15"/>
-            <role name="System" cost="10" duration="25"/>
-          </roleOptions>
-        </event>
-        <event id="Event_7">
-          <roleOptions>
-            <role name="Expert" cost="15" duration="3"/>
-            <role name="Junior" cost="10" duration="8"/>
-            <role name="System" cost="5"  duration="2"/>
-          </roleOptions>
-        </event>
-        <event id="Event_8">
-          <roleOptions>
-            <role name="Expert" cost="25" duration="30"/>
-            <role name="Junior" cost="0"  duration="90"/>
-            <role name="System" cost="0"  duration="70"/>
-          </roleOptions>
-        </event>
-        <event id="Event_9">
-          <roleOptions>
-            <role name="Expert" cost="0" duration="3"/>
-            <role name="Junior" cost="0" duration="5"/>
-            <role name="System" cost="0" duration="2"/>
-          </roleOptions>
-        </event>
-        <event id="Event_10">
-          <roleOptions>
-            <role name="Expert" cost="8" duration="60"/>
-            <role name="Junior" cost="5" duration="90"/>
-            <role name="System" cost="5" duration="90"/>
-          </roleOptions>
-        </event>
-        <event id="Event_11">
-          <roleOptions>
-            <role name="Expert" cost="30" duration="20"/>
-            <role name="Junior" cost="0"  duration="60"/>
-            <role name="System" cost="0"  duration="45"/>
-          </roleOptions>
-        </event>
-        <event id="Event_12">
-          <roleOptions>
-            <role name="Expert" cost="8" duration="60"/>
-            <role name="Junior" cost="5" duration="90"/>
-            <role name="System" cost="5" duration="90"/>
-          </roleOptions>
-        </event>
-        <event id="Event_13">
-          <roleOptions>
-            <role name="Expert" cost="0" duration="3"/>
-            <role name="Junior" cost="0" duration="5"/>
-            <role name="System" cost="0" duration="2"/>
-          </roleOptions>
-        </event>
-        <event id="Event_14">
-          <roleOptions>
-            <role name="Expert" cost="8" duration="60"/>
-            <role name="Junior" cost="5" duration="90"/>
-            <role name="System" cost="5" duration="90"/>
-          </roleOptions>
-        </event>
+        <event id="Event_1">  <cost>10</cost>  <duration>5</duration>  </event>
+        <event id="Event_2">  <cost>0</cost>   <duration>60</duration> </event>
+        <event id="Event_3">  <cost>80</cost>  <duration>5</duration>  </event>
+        <event id="Event_4">  <cost>5</cost>   <duration>90</duration> </event>
+        <event id="Event_5">  <cost>10</cost>  <duration>10</duration> </event>
+        <event id="Event_6">  <cost>20</cost>  <duration>15</duration> </event>
+        <event id="Event_7">  <cost>10</cost>  <duration>5</duration>  </event>
+        <event id="Event_8">  <cost>0</cost>   <duration>90</duration> </event>
+        <event id="Event_9">  <cost>0</cost>   <duration>5</duration>  </event>
+        <event id="Event_10"> <cost>5</cost>   <duration>90</duration> </event>
+        <event id="Event_11"> <cost>0</cost>   <duration>60</duration> </event>
+        <event id="Event_12"> <cost>5</cost>   <duration>90</duration> </event>
+        <event id="Event_13"> <cost>0</cost>   <duration>5</duration>  </event>
+        <event id="Event_14"> <cost>5</cost>   <duration>90</duration> </event>
       </events>
       <subProcesses/>
       <labels>
@@ -135,6 +51,13 @@
         <labelMapping eventId="Event_13" labelId="accept"/>
         <labelMapping eventId="Event_14" labelId="time-out 3"/>
       </labelMappings>
+      <!-- Global role multipliers: effective_cost = base_cost × costMultiplier,
+                                    effective_duration = base_duration × durationMultiplier -->
+      <roles>
+        <role name="Expert" costMultiplier="2.0" durationMultiplier="0.5"/>
+        <role name="Junior" costMultiplier="0.7" durationMultiplier="2.0"/>
+        <role name="System" costMultiplier="1.2" durationMultiplier="0.8"/>
+      </roles>
       <variables/>
       <expressions/>
       <variableAccesses>
@@ -246,20 +169,11 @@
       <globalStore/>
       <executed/>
       <included>
-        <event id="Event_1"/>
-        <event id="Event_2"/>
-        <event id="Event_3"/>
-        <event id="Event_4"/>
-        <event id="Event_5"/>
-        <event id="Event_6"/>
-        <event id="Event_7"/>
-        <event id="Event_8"/>
-        <event id="Event_9"/>
-        <event id="Event_10"/>
-        <event id="Event_11"/>
-        <event id="Event_12"/>
-        <event id="Event_13"/>
-        <event id="Event_14"/>
+        <event id="Event_1"/>  <event id="Event_2"/>  <event id="Event_3"/>
+        <event id="Event_4"/>  <event id="Event_5"/>  <event id="Event_6"/>
+        <event id="Event_7"/>  <event id="Event_8"/>  <event id="Event_9"/>
+        <event id="Event_10"/> <event id="Event_11"/> <event id="Event_12"/>
+        <event id="Event_13"/> <event id="Event_14"/>
       </included>
       <pendingResponses>
         <event id="Event_1"/>

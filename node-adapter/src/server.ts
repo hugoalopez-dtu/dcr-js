@@ -47,14 +47,9 @@ let episodeDuration = 0;
 
 // --- Helpers ---
 
-// Returns sorted list of role names defined in the graph (consistent across events).
-const getRoles = (): string[] => {
-  const roleSet = new Set<string>();
-  for (const opts of Object.values(graph.roleOptionsMap || {})) {
-    for (const role of Object.keys(opts)) roleSet.add(role);
-  }
-  return roleSet.size > 0 ? Array.from(roleSet).sort() : [];
-};
+// Returns sorted list of role names from the graph's global roleMultipliers.
+const getRoles = (): string[] =>
+  Object.keys(graph.roleMultipliers || {}).sort();
 
 // Returns flat list of {event, role} pairs: all events × all roles (when roles exist),
 // or just events wrapped as {event, role:""} for backward compatibility.
@@ -171,10 +166,12 @@ app.post("/action", (req, res) => {
     // Ensure reward.ts uses the acceptance mode selected above.
     const rewardInput: any = { ...result, accepting, done: accepting };
 
-    // Look up cost/duration: prefer role-specific options, fall back to flat costMap
-    const roleOpts = chosenRole ? graph.roleOptionsMap?.[action]?.[chosenRole] : undefined;
-    const eventCost     = roleOpts !== undefined ? roleOpts.cost     : graph.costMap?.[action];
-    const eventDuration = roleOpts !== undefined ? roleOpts.duration : graph.durationMap?.[action];
+    // Compute effective cost/duration: base × role multiplier (falls back to flat values if no roles)
+    const baseCost     = graph.costMap?.[action] ?? 0;
+    const baseDuration = graph.durationMap?.[action] ?? 0;
+    const mult = chosenRole ? graph.roleMultipliers?.[chosenRole] : undefined;
+    const eventCost     = mult ? baseCost     * mult.costMultiplier     : graph.costMap?.[action];
+    const eventDuration = mult ? baseDuration * mult.durationMultiplier : graph.durationMap?.[action];
 
     const isLegal = result.reward !== -10;
 
@@ -261,8 +258,7 @@ app.post("/load", (req, res) => {
     const roles = getRoles();
     const pairs = getEventRolePairs();
     const eventsWithCost = Object.keys(graph.costMap);
-    const eventsWithRoleOptions = Object.keys(graph.roleOptionsMap || {});
-    console.log(`[/load] Graph loaded: ${graph.events.size} events, ${eventsWithCost.length} with flat cost, ${eventsWithRoleOptions.length} with role options, ${roles.length} roles (${roles.join(", ")})`);
+    console.log(`[/load] Graph loaded: ${graph.events.size} events, ${eventsWithCost.length} with base cost, ${roles.length} roles (${roles.join(", ")})`);
     console.log(`[/load] Action space: ${pairs.length} (${graph.events.size} events × ${roles.length || 1} roles)`);
     console.log(`[/load] XML saved to: ${STAGING_PATH}`);
 
@@ -272,7 +268,7 @@ app.post("/load", (req, res) => {
       labelMap: graph.labelMap,
       costMap: graph.costMap,
       durationMap: graph.durationMap,
-      roleOptionsMap: graph.roleOptionsMap,
+      roleMultipliers: graph.roleMultipliers,
       roles,
       nRoles: roles.length || 1,
       eventRolePairs: pairs,
