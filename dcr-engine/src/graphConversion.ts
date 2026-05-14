@@ -174,7 +174,7 @@ export function xmlToDCR(xmlString: string): DCRGraphS {
         items.forEach((i: any) => set.add(String(i.id || i)));
       };
       fillSet(marking.executed, graph.marking.executed);
-      fillSet(marking.pending, graph.marking.pending);
+      fillSet(marking.pendingResponses || marking.pending, graph.marking.pending);
       fillSet(marking.included, graph.marking.included);
     }
   
