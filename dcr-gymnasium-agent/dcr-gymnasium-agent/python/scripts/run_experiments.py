@@ -50,13 +50,21 @@ PARETO_WEIGHTS = [
 ]
 
 EXPERIMENTS = [
-    # --- Active experiment: xml_file omitted → uses staging/current_graph.xml sent from UI ---
-    # Set total_steps via env var DCR_STEPS (default 50000), e.g.: DCR_STEPS=100000 python scripts/run_experiments.py
+    # --- BPI2017 Loan Application (mined from BPIC 2017, 25 events) ---
     {
-        "exp_id": "pareto_run",
-        "total_steps": int(os.environ.get("DCR_STEPS", 50000)),
+        "xml_file": str(ROOT / "dcr-gymnasium-agent" / "dcr-gymnasium-agent" / "python" / "scripts" / "bpi2017_loan_graph.xml"),
+        "exp_id": "BPI2017_loan",
+        "total_steps": int(os.environ.get("DCR_STEPS", 150000)),
         "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
     },
+
+    # --- Active experiment: xml_file omitted → uses staging/current_graph.xml sent from UI ---
+    # Set total_steps via env var DCR_STEPS (default 50000), e.g.: DCR_STEPS=100000 python scripts/run_experiments.py
+    # {
+    #     "exp_id": "pareto_run",
+    #     "total_steps": int(os.environ.get("DCR_STEPS", 50000)),
+    #     "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
+    # },
 
     # --- Archive: uncomment to run a specific graph directly ---
     # {

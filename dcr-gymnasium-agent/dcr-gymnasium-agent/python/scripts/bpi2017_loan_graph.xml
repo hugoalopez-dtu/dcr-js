@@ -1,0 +1,318 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dcrgraph title="BPI2017 Loan Application">
+  <specification>
+    <resources>
+      <events>
+        <event id="A_Accepted">
+          <cost>0</cost>
+          <duration>5</duration>
+        </event>
+        <event id="A_Cancelled">
+          <cost>0</cost>
+          <duration>5</duration>
+        </event>
+        <event id="A_Complete">
+          <cost>0</cost>
+          <duration>5</duration>
+        </event>
+        <event id="A_Concept">
+          <cost>0</cost>
+          <duration>10</duration>
+        </event>
+        <event id="A_Create Application">
+          <cost>5</cost>
+          <duration>5</duration>
+        </event>
+        <event id="A_Denied">
+          <cost>0</cost>
+          <duration>5</duration>
+        </event>
+        <event id="A_Incomplete">
+          <cost>0</cost>
+          <duration>10</duration>
+        </event>
+        <event id="A_Pending">
+          <cost>0</cost>
+          <duration>10</duration>
+        </event>
+        <event id="A_Submitted">
+          <cost>0</cost>
+          <duration>5</duration>
+        </event>
+        <event id="A_Validating">
+          <cost>0</cost>
+          <duration>10</duration>
+        </event>
+        <event id="O_Accepted">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="O_Cancelled">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="O_Create Offer">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="O_Created">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="O_Refused">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="O_Returned">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="O_Sent (mail and online)">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="O_Sent (online only)">
+          <cost>40</cost>
+          <duration>5</duration>
+        </event>
+        <event id="W_Assess potential fraud">
+          <cost>0</cost>
+          <duration>60</duration>
+        </event>
+        <event id="W_Call after offers">
+          <cost>0</cost>
+          <duration>60</duration>
+        </event>
+        <event id="W_Call incomplete files">
+          <cost>0</cost>
+          <duration>60</duration>
+        </event>
+        <event id="W_Complete application">
+          <cost>0</cost>
+          <duration>60</duration>
+        </event>
+        <event id="W_Handle leads">
+          <cost>0</cost>
+          <duration>60</duration>
+        </event>
+        <event id="W_Shortened completion ">
+          <cost>0</cost>
+          <duration>60</duration>
+        </event>
+        <event id="W_Validate application">
+          <cost>0</cost>
+          <duration>60</duration>
+        </event>
+      </events>
+      <labels>
+        <label id="A_Accepted"/>
+        <label id="A_Cancelled"/>
+        <label id="A_Complete"/>
+        <label id="A_Concept"/>
+        <label id="A_Create Application"/>
+        <label id="A_Denied"/>
+        <label id="A_Incomplete"/>
+        <label id="A_Pending"/>
+        <label id="A_Submitted"/>
+        <label id="A_Validating"/>
+        <label id="O_Accepted"/>
+        <label id="O_Cancelled"/>
+        <label id="O_Create Offer"/>
+        <label id="O_Created"/>
+        <label id="O_Refused"/>
+        <label id="O_Returned"/>
+        <label id="O_Sent (mail and online)"/>
+        <label id="O_Sent (online only)"/>
+        <label id="W_Assess potential fraud"/>
+        <label id="W_Call after offers"/>
+        <label id="W_Call incomplete files"/>
+        <label id="W_Complete application"/>
+        <label id="W_Handle leads"/>
+        <label id="W_Shortened completion "/>
+        <label id="W_Validate application"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="A_Accepted" labelId="A_Accepted"/>
+        <labelMapping eventId="A_Cancelled" labelId="A_Cancelled"/>
+        <labelMapping eventId="A_Complete" labelId="A_Complete"/>
+        <labelMapping eventId="A_Concept" labelId="A_Concept"/>
+        <labelMapping eventId="A_Create Application" labelId="A_Create Application"/>
+        <labelMapping eventId="A_Denied" labelId="A_Denied"/>
+        <labelMapping eventId="A_Incomplete" labelId="A_Incomplete"/>
+        <labelMapping eventId="A_Pending" labelId="A_Pending"/>
+        <labelMapping eventId="A_Submitted" labelId="A_Submitted"/>
+        <labelMapping eventId="A_Validating" labelId="A_Validating"/>
+        <labelMapping eventId="O_Accepted" labelId="O_Accepted"/>
+        <labelMapping eventId="O_Cancelled" labelId="O_Cancelled"/>
+        <labelMapping eventId="O_Create Offer" labelId="O_Create Offer"/>
+        <labelMapping eventId="O_Created" labelId="O_Created"/>
+        <labelMapping eventId="O_Refused" labelId="O_Refused"/>
+        <labelMapping eventId="O_Returned" labelId="O_Returned"/>
+        <labelMapping eventId="O_Sent (mail and online)" labelId="O_Sent (mail and online)"/>
+        <labelMapping eventId="O_Sent (online only)" labelId="O_Sent (online only)"/>
+        <labelMapping eventId="W_Assess potential fraud" labelId="W_Assess potential fraud"/>
+        <labelMapping eventId="W_Call after offers" labelId="W_Call after offers"/>
+        <labelMapping eventId="W_Call incomplete files" labelId="W_Call incomplete files"/>
+        <labelMapping eventId="W_Complete application" labelId="W_Complete application"/>
+        <labelMapping eventId="W_Handle leads" labelId="W_Handle leads"/>
+        <labelMapping eventId="W_Shortened completion " labelId="W_Shortened completion "/>
+        <labelMapping eventId="W_Validate application" labelId="W_Validate application"/>
+      </labelMappings>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="A_Concept" targetId="A_Accepted"/>
+        <condition sourceId="W_Complete application" targetId="A_Accepted"/>
+        <condition sourceId="W_Handle leads" targetId="A_Accepted"/>
+        <condition sourceId="O_Created" targetId="A_Cancelled"/>
+        <condition sourceId="W_Call after offers" targetId="A_Complete"/>
+        <condition sourceId="A_Create Application" targetId="A_Concept"/>
+        <condition sourceId="O_Created" targetId="A_Denied"/>
+        <condition sourceId="W_Call incomplete files" targetId="A_Incomplete"/>
+        <condition sourceId="A_Complete" targetId="A_Pending"/>
+        <condition sourceId="O_Accepted" targetId="A_Pending"/>
+        <condition sourceId="O_Sent (mail and online)" targetId="A_Pending"/>
+        <condition sourceId="O_Sent (online only)" targetId="A_Pending"/>
+        <condition sourceId="W_Assess potential fraud" targetId="A_Pending"/>
+        <condition sourceId="W_Shortened completion " targetId="A_Pending"/>
+        <condition sourceId="A_Create Application" targetId="A_Submitted"/>
+        <condition sourceId="A_Accepted" targetId="A_Validating"/>
+        <condition sourceId="W_Shortened completion " targetId="A_Validating"/>
+        <condition sourceId="W_Validate application" targetId="A_Validating"/>
+        <condition sourceId="O_Returned" targetId="O_Accepted"/>
+        <condition sourceId="A_Accepted" targetId="O_Cancelled"/>
+        <condition sourceId="O_Created" targetId="O_Cancelled"/>
+        <condition sourceId="A_Accepted" targetId="O_Create Offer"/>
+        <condition sourceId="O_Create Offer" targetId="O_Created"/>
+        <condition sourceId="A_Denied" targetId="O_Refused"/>
+        <condition sourceId="O_Cancelled" targetId="O_Refused"/>
+        <condition sourceId="O_Returned" targetId="O_Refused"/>
+        <condition sourceId="O_Sent (mail and online)" targetId="O_Refused"/>
+        <condition sourceId="O_Sent (online only)" targetId="O_Refused"/>
+        <condition sourceId="A_Validating" targetId="O_Returned"/>
+        <condition sourceId="A_Accepted" targetId="O_Sent (mail and online)"/>
+        <condition sourceId="O_Created" targetId="O_Sent (mail and online)"/>
+        <condition sourceId="O_Created" targetId="O_Sent (online only)"/>
+        <condition sourceId="A_Create Application" targetId="W_Assess potential fraud"/>
+        <condition sourceId="O_Created" targetId="W_Call after offers"/>
+        <condition sourceId="A_Validating" targetId="W_Call incomplete files"/>
+        <condition sourceId="A_Create Application" targetId="W_Complete application"/>
+        <condition sourceId="A_Submitted" targetId="W_Handle leads"/>
+        <condition sourceId="A_Concept" targetId="W_Shortened completion "/>
+        <condition sourceId="W_Complete application" targetId="W_Shortened completion "/>
+        <condition sourceId="W_Handle leads" targetId="W_Shortened completion "/>
+        <condition sourceId="A_Complete" targetId="W_Validate application"/>
+        <condition sourceId="O_Created" targetId="W_Validate application"/>
+      </conditions>
+      <responses>
+        <response sourceId="A_Accepted" targetId="O_Create Offer"/>
+        <response sourceId="A_Accepted" targetId="W_Complete application"/>
+        <response sourceId="A_Complete" targetId="W_Call after offers"/>
+        <response sourceId="A_Concept" targetId="A_Accepted"/>
+        <response sourceId="A_Create Application" targetId="A_Concept"/>
+        <response sourceId="A_Incomplete" targetId="W_Call incomplete files"/>
+        <response sourceId="A_Submitted" targetId="W_Handle leads"/>
+        <response sourceId="A_Validating" targetId="W_Validate application"/>
+        <response sourceId="O_Accepted" targetId="A_Pending"/>
+        <response sourceId="O_Create Offer" targetId="O_Created"/>
+        <response sourceId="W_Handle leads" targetId="A_Concept"/>
+      </responses>
+      <excludes>
+        <exclude sourceId="A_Accepted" targetId="A_Accepted"/>
+        <exclude sourceId="A_Cancelled" targetId="A_Cancelled"/>
+        <exclude sourceId="A_Cancelled" targetId="A_Denied"/>
+        <exclude sourceId="A_Cancelled" targetId="A_Pending"/>
+        <exclude sourceId="A_Cancelled" targetId="O_Accepted"/>
+        <exclude sourceId="A_Cancelled" targetId="O_Create Offer"/>
+        <exclude sourceId="A_Cancelled" targetId="O_Refused"/>
+        <exclude sourceId="A_Cancelled" targetId="O_Returned"/>
+        <exclude sourceId="A_Cancelled" targetId="O_Sent (mail and online)"/>
+        <exclude sourceId="A_Cancelled" targetId="O_Sent (online only)"/>
+        <exclude sourceId="A_Cancelled" targetId="W_Assess potential fraud"/>
+        <exclude sourceId="A_Complete" targetId="A_Complete"/>
+        <exclude sourceId="A_Concept" targetId="A_Concept"/>
+        <exclude sourceId="A_Concept" targetId="W_Handle leads"/>
+        <exclude sourceId="A_Create Application" targetId="A_Create Application"/>
+        <exclude sourceId="A_Denied" targetId="A_Cancelled"/>
+        <exclude sourceId="A_Denied" targetId="A_Denied"/>
+        <exclude sourceId="A_Denied" targetId="A_Pending"/>
+        <exclude sourceId="A_Denied" targetId="O_Accepted"/>
+        <exclude sourceId="A_Denied" targetId="O_Cancelled"/>
+        <exclude sourceId="A_Denied" targetId="O_Create Offer"/>
+        <exclude sourceId="A_Denied" targetId="O_Returned"/>
+        <exclude sourceId="A_Denied" targetId="O_Sent (mail and online)"/>
+        <exclude sourceId="A_Denied" targetId="O_Sent (online only)"/>
+        <exclude sourceId="A_Denied" targetId="W_Shortened completion "/>
+        <exclude sourceId="A_Incomplete" targetId="A_Incomplete"/>
+        <exclude sourceId="A_Pending" targetId="A_Pending"/>
+        <exclude sourceId="A_Submitted" targetId="A_Submitted"/>
+        <exclude sourceId="A_Validating" targetId="A_Validating"/>
+        <exclude sourceId="O_Accepted" targetId="A_Cancelled"/>
+        <exclude sourceId="O_Accepted" targetId="A_Denied"/>
+        <exclude sourceId="O_Accepted" targetId="O_Accepted"/>
+        <exclude sourceId="O_Accepted" targetId="O_Create Offer"/>
+        <exclude sourceId="O_Accepted" targetId="O_Refused"/>
+        <exclude sourceId="O_Accepted" targetId="O_Returned"/>
+        <exclude sourceId="O_Accepted" targetId="O_Sent (mail and online)"/>
+        <exclude sourceId="O_Accepted" targetId="O_Sent (online only)"/>
+        <exclude sourceId="O_Accepted" targetId="W_Assess potential fraud"/>
+        <exclude sourceId="O_Created" targetId="O_Created"/>
+        <exclude sourceId="O_Sent (online only)" targetId="W_Shortened completion "/>
+        <exclude sourceId="W_Assess potential fraud" targetId="O_Returned"/>
+        <exclude sourceId="W_Assess potential fraud" targetId="O_Sent (online only)"/>
+        <exclude sourceId="W_Assess potential fraud" targetId="W_Shortened completion "/>
+        <exclude sourceId="W_Call after offers" targetId="W_Complete application"/>
+        <exclude sourceId="W_Complete application" targetId="W_Handle leads"/>
+        <exclude sourceId="W_Shortened completion " targetId="A_Denied"/>
+        <exclude sourceId="W_Shortened completion " targetId="O_Refused"/>
+        <exclude sourceId="W_Shortened completion " targetId="O_Sent (online only)"/>
+        <exclude sourceId="W_Shortened completion " targetId="W_Assess potential fraud"/>
+        <exclude sourceId="W_Validate application" targetId="W_Call after offers"/>
+        <exclude sourceId="W_Validate application" targetId="W_Shortened completion "/>
+      </excludes>
+      <includes>
+        <include sourceId="O_Create Offer" targetId="O_Created"/>
+        <include sourceId="W_Call incomplete files" targetId="A_Incomplete"/>
+        <include sourceId="W_Validate application" targetId="A_Validating"/>
+      </includes>
+      <milestones/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="A_Accepted"/>
+        <event id="A_Cancelled"/>
+        <event id="A_Complete"/>
+        <event id="A_Concept"/>
+        <event id="A_Create Application"/>
+        <event id="A_Denied"/>
+        <event id="A_Incomplete"/>
+        <event id="A_Pending"/>
+        <event id="A_Submitted"/>
+        <event id="A_Validating"/>
+        <event id="O_Accepted"/>
+        <event id="O_Cancelled"/>
+        <event id="O_Create Offer"/>
+        <event id="O_Created"/>
+        <event id="O_Refused"/>
+        <event id="O_Returned"/>
+        <event id="O_Sent (mail and online)"/>
+        <event id="O_Sent (online only)"/>
+        <event id="W_Assess potential fraud"/>
+        <event id="W_Call after offers"/>
+        <event id="W_Call incomplete files"/>
+        <event id="W_Complete application"/>
+        <event id="W_Handle leads"/>
+        <event id="W_Shortened completion "/>
+        <event id="W_Validate application"/>
+      </included>
+      <pendingResponses>
+        <event id="A_Create Application"/>
+        <event id="A_Complete"/>
+      </pendingResponses>
+    </marking>
+  </runtime>
+</dcrgraph>
