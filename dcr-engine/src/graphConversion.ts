@@ -122,6 +122,21 @@ export function xmlToDCR(xmlString: string): DCRGraphS {
         if (!isNaN(d)) graph.durationMap[id] = d;
       }
 
+      // Parse multi-role options: <roleOptions><role name="Expert" cost="80" duration="5"/>...</roleOptions>
+      const rawRoles = e.roleOptions?.role;
+      if (rawRoles) {
+        const roleList = Array.isArray(rawRoles) ? rawRoles : [rawRoles];
+        roleList.forEach((r: any) => {
+          const name = String(r.name || r["@name"] || "");
+          const c = Number(r.cost ?? r["@cost"] ?? 0);
+          const d = Number(r.duration ?? r["@duration"] ?? 0);
+          if (name) {
+            if (!graph.roleOptionsMap[id]) graph.roleOptionsMap[id] = {};
+            graph.roleOptionsMap[id][name] = { cost: c, duration: d };
+          }
+        });
+      }
+
       graph.conditionsFor[id] = new Set();
       graph.milestonesFor[id] = new Set();
       graph.responseTo[id] = new Set();
@@ -282,6 +297,7 @@ function emptyGraph(): DCRGraphS {
     subProcessMap: {},
     costMap: {},
     durationMap: {},
+    roleOptionsMap: {},
     conditionsFor: {},
     milestonesFor: {},
     responseTo: {},

@@ -46,9 +46,35 @@ let episodeCost = 0;
 let episodeDuration = 0;
 
 // --- Helpers ---
-const buildActionMask = (events: string[], validActions: string[]) => {
+
+// Returns sorted list of role names defined in the graph (consistent across events).
+const getRoles = (): string[] => {
+  const roleSet = new Set<string>();
+  for (const opts of Object.values(graph.roleOptionsMap || {})) {
+    for (const role of Object.keys(opts)) roleSet.add(role);
+  }
+  return roleSet.size > 0 ? Array.from(roleSet).sort() : [];
+};
+
+// Returns flat list of {event, role} pairs: all events × all roles (when roles exist),
+// or just events wrapped as {event, role:""} for backward compatibility.
+const getEventRolePairs = (): Array<{ event: string; role: string }> => {
+  const events = Array.from(graph.events).slice().sort() as string[];
+  const roles = getRoles();
+  if (roles.length === 0) return events.map(ev => ({ event: ev, role: "" }));
+  const pairs: Array<{ event: string; role: string }> = [];
+  for (const ev of events) {
+    for (const role of roles) {
+      pairs.push({ event: ev, role });
+    }
+  }
+  return pairs;
+};
+
+// Mask: 1 for every (event, role) pair where the event is a valid action.
+const buildActionMask = (pairs: Array<{ event: string; role: string }>, validActions: string[]) => {
   const set = new Set(validActions || []);
-  return events.map(ev => (set.has(ev) ? 1 : 0));
+  return pairs.map(p => (set.has(p.event) ? 1 : 0));
 };
 
 const getState = () =>
@@ -79,10 +105,13 @@ app.post("/reset", (_req, res) => {
 
     const state = getState();
     const events = getEvents();
+    const pairs  = getEventRolePairs();
+    const roles  = getRoles();
     const validActions = getValidActions();
-    const actionMask = buildActionMask(events, validActions);
+    const actionMask = buildActionMask(pairs, validActions);
 
-    res.json({ ok: true, state, events, labelMap: graph.labelMap, actionMask });
+    res.json({ ok: true, state, events, labelMap: graph.labelMap,
+               eventRolePairs: pairs, roles, nRoles: roles.length || 1, actionMask });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
   }
@@ -91,10 +120,12 @@ app.post("/reset", (_req, res) => {
 app.get("/state", (_req, res) => {
   try {
     const state = getState();
-    const events = getEvents();
+    const pairs  = getEventRolePairs();
+    const roles  = getRoles();
     const validActions = getValidActions();
-    const actionMask = buildActionMask(events, validActions);
-    res.json({ ok: true, state, validActions, lastResult, actionMask });
+    const actionMask = buildActionMask(pairs, validActions);
+    res.json({ ok: true, state, validActions, lastResult,
+               eventRolePairs: pairs, roles, nRoles: roles.length || 1, actionMask });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
   }
@@ -102,8 +133,24 @@ app.get("/state", (_req, res) => {
 
 app.post("/action", (req, res) => {
   try {
-    const { action } = req.body;
-    if (!action) return res.status(400).json({ ok: false, error: "action required" });
+    // action can be either an index (number) into eventRolePairs, or a plain event id string
+    const { action: rawAction } = req.body;
+    if (rawAction === undefined || rawAction === null) {
+      return res.status(400).json({ ok: false, error: "action required" });
+    }
+
+    // Decode action index → (eventId, role)
+    const pairs = getEventRolePairs();
+    let action: string;
+    let chosenRole: string = "";
+    if (typeof rawAction === "number") {
+      const pair = pairs[rawAction];
+      if (!pair) return res.status(400).json({ ok: false, error: `action index ${rawAction} out of range (${pairs.length} pairs)` });
+      action = pair.event;
+      chosenRole = pair.role;
+    } else {
+      action = String(rawAction);
+    }
 
     // Capture pending count BEFORE the step (needed for progress signal)
     const stateBefore = getState();
@@ -124,9 +171,10 @@ app.post("/action", (req, res) => {
     // Ensure reward.ts uses the acceptance mode selected above.
     const rewardInput: any = { ...result, accepting, done: accepting };
 
-    // Look up optional cost/duration for this event
-    const eventCost     = graph.costMap?.[action];
-    const eventDuration = graph.durationMap?.[action];
+    // Look up cost/duration: prefer role-specific options, fall back to flat costMap
+    const roleOpts = chosenRole ? graph.roleOptionsMap?.[action]?.[chosenRole] : undefined;
+    const eventCost     = roleOpts !== undefined ? roleOpts.cost     : graph.costMap?.[action];
+    const eventDuration = roleOpts !== undefined ? roleOpts.duration : graph.durationMap?.[action];
 
     const isLegal = result.reward !== -10;
 
@@ -179,13 +227,13 @@ app.post("/action", (req, res) => {
       episodeSteps,
     };
 
-    lastResult = augmentedResult;
+    lastResult = { ...augmentedResult, chosenRole };
 
-    const events = getEvents();
-    const validActions = getValidActions();
-    const actionMask = buildActionMask(events, validActions);
+    const pairs2 = getEventRolePairs();
+    const validActions2 = getValidActions();
+    const actionMask = buildActionMask(pairs2, validActions2);
 
-    res.json({ ok: true, result: augmentedResult, actionMask });
+    res.json({ ok: true, result: { ...augmentedResult, chosenRole }, actionMask });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
   }
@@ -210,9 +258,12 @@ app.post("/load", (req, res) => {
     fs.mkdirSync(path.dirname(STAGING_PATH), { recursive: true });
     fs.writeFileSync(STAGING_PATH, xml, "utf-8");
 
-    const eventsWithCost     = Object.keys(graph.costMap);
-    const eventsWithDuration = Object.keys(graph.durationMap);
-    console.log(`[/load] Graph loaded: ${graph.events.size} events, ${eventsWithCost.length} with cost, ${eventsWithDuration.length} with duration`);
+    const roles = getRoles();
+    const pairs = getEventRolePairs();
+    const eventsWithCost = Object.keys(graph.costMap);
+    const eventsWithRoleOptions = Object.keys(graph.roleOptionsMap || {});
+    console.log(`[/load] Graph loaded: ${graph.events.size} events, ${eventsWithCost.length} with flat cost, ${eventsWithRoleOptions.length} with role options, ${roles.length} roles (${roles.join(", ")})`);
+    console.log(`[/load] Action space: ${pairs.length} (${graph.events.size} events × ${roles.length || 1} roles)`);
     console.log(`[/load] XML saved to: ${STAGING_PATH}`);
 
     res.json({
@@ -221,6 +272,10 @@ app.post("/load", (req, res) => {
       labelMap: graph.labelMap,
       costMap: graph.costMap,
       durationMap: graph.durationMap,
+      roleOptionsMap: graph.roleOptionsMap,
+      roles,
+      nRoles: roles.length || 1,
+      eventRolePairs: pairs,
     });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });

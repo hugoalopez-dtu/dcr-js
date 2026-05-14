@@ -50,13 +50,28 @@ PARETO_WEIGHTS = [
 ]
 
 EXPERIMENTS = [
-    # --- Active experiment: xml_file omitted → uses staging/current_graph.xml sent from UI ---
-    # Set total_steps via env var DCR_STEPS (default 50000), e.g.: DCR_STEPS=100000 python scripts/run_experiments.py
+    # --- Synthetic Review with roles (Expert / Junior / System per event) ---
     {
-        "exp_id": "pareto_run",
-        "total_steps": int(os.environ.get("DCR_STEPS", 50000)),
+        "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Synthetic_review_roles.xml"),
+        "exp_id": "SynReview_roles",
+        "total_steps": int(os.environ.get("DCR_STEPS", 150000)),
         "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
     },
+
+    # --- Baseline: Synthetic Review without roles (original cost/duration) ---
+    # {
+    #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Synthetic_event_logs_review_example_large.xml"),
+    #     "exp_id": "SynReview_baseline",
+    #     "total_steps": int(os.environ.get("DCR_STEPS", 150000)),
+    #     "ent_coef": 0.1,
+    # },
+
+    # --- Active experiment: xml_file omitted → uses staging/current_graph.xml sent from UI ---
+    # {
+    #     "exp_id": "pareto_run",
+    #     "total_steps": int(os.environ.get("DCR_STEPS", 50000)),
+    #     "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
+    # },
 
     # --- Archive: uncomment to run a specific graph directly ---
     # {

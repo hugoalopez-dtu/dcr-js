@@ -47,6 +47,7 @@ class StepDebugCallback(BaseCallback):
                 "step_in_episode",
                 "action_idx",
                 "action_event",
+                "action_role",
                 "action_label",
                 "reward",
                 "ep_rew_sum",
@@ -91,11 +92,16 @@ class StepDebugCallback(BaseCallback):
         done = bool(dones[idx]) if dones is not None else False
 
         engine_result = info.get("engine_result", {})
-        action_event = (
-            self.env_ref.event_list[action_idx]
-            if 0 <= action_idx < len(self.env_ref.event_list)
-            else ""
-        )
+        pairs = getattr(self.env_ref, "event_role_pairs", None)
+        if pairs and 0 <= action_idx < len(pairs):
+            action_event = pairs[action_idx].get("event", "")
+            action_role  = pairs[action_idx].get("role", "")
+        elif 0 <= action_idx < len(self.env_ref.event_list):
+            action_event = self.env_ref.event_list[action_idx]
+            action_role  = info.get("action_role", "")
+        else:
+            action_event = ""
+            action_role  = ""
         action_label = self.env_ref.label_map.get(action_event, action_event)
 
         self.step_in_episode += 1
@@ -120,6 +126,7 @@ class StepDebugCallback(BaseCallback):
             "step_in_episode": self.step_in_episode,
             "action_idx": action_idx,
             "action_event": action_event,
+            "action_role": action_role,
             "action_label": action_label,
             "reward": reward,
             "ep_rew_sum": round(self._episode_reward_sum, 4),

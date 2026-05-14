@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph title="Synthetic Review — Roles">
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_1">
+          <roleOptions>
+            <role name="Expert" cost="15" duration="3"/>
+            <role name="Junior" cost="10" duration="8"/>
+            <role name="System" cost="5"  duration="2"/>
+          </roleOptions>
+        </event>
+        <event id="Event_2">
+          <roleOptions>
+            <role name="Expert" cost="30" duration="20"/>
+            <role name="Junior" cost="0"  duration="60"/>
+            <role name="System" cost="0"  duration="45"/>
+          </roleOptions>
+        </event>
+        <event id="Event_3">
+          <roleOptions>
+            <role name="Expert" cost="80" duration="3"/>
+            <role name="Junior" cost="20" duration="30"/>
+            <role name="System" cost="0"  duration="50"/>
+          </roleOptions>
+        </event>
+        <event id="Event_4">
+          <roleOptions>
+            <role name="Expert" cost="8" duration="60"/>
+            <role name="Junior" cost="5" duration="90"/>
+            <role name="System" cost="5" duration="90"/>
+          </roleOptions>
+        </event>
+        <event id="Event_5">
+          <roleOptions>
+            <role name="Expert" cost="15" duration="5"/>
+            <role name="Junior" cost="10" duration="10"/>
+            <role name="System" cost="5"  duration="15"/>
+          </roleOptions>
+        </event>
+        <event id="Event_6">
+          <roleOptions>
+            <role name="Expert" cost="35" duration="8"/>
+            <role name="Junior" cost="20" duration="15"/>
+            <role name="System" cost="10" duration="25"/>
+          </roleOptions>
+        </event>
+        <event id="Event_7">
+          <roleOptions>
+            <role name="Expert" cost="15" duration="3"/>
+            <role name="Junior" cost="10" duration="8"/>
+            <role name="System" cost="5"  duration="2"/>
+          </roleOptions>
+        </event>
+        <event id="Event_8">
+          <roleOptions>
+            <role name="Expert" cost="25" duration="30"/>
+            <role name="Junior" cost="0"  duration="90"/>
+            <role name="System" cost="0"  duration="70"/>
+          </roleOptions>
+        </event>
+        <event id="Event_9">
+          <roleOptions>
+            <role name="Expert" cost="0" duration="3"/>
+            <role name="Junior" cost="0" duration="5"/>
+            <role name="System" cost="0" duration="2"/>
+          </roleOptions>
+        </event>
+        <event id="Event_10">
+          <roleOptions>
+            <role name="Expert" cost="8" duration="60"/>
+            <role name="Junior" cost="5" duration="90"/>
+            <role name="System" cost="5" duration="90"/>
+          </roleOptions>
+        </event>
+        <event id="Event_11">
+          <roleOptions>
+            <role name="Expert" cost="30" duration="20"/>
+            <role name="Junior" cost="0"  duration="60"/>
+            <role name="System" cost="0"  duration="45"/>
+          </roleOptions>
+        </event>
+        <event id="Event_12">
+          <roleOptions>
+            <role name="Expert" cost="8" duration="60"/>
+            <role name="Junior" cost="5" duration="90"/>
+            <role name="System" cost="5" duration="90"/>
+          </roleOptions>
+        </event>
+        <event id="Event_13">
+          <roleOptions>
+            <role name="Expert" cost="0" duration="3"/>
+            <role name="Junior" cost="0" duration="5"/>
+            <role name="System" cost="0" duration="2"/>
+          </roleOptions>
+        </event>
+        <event id="Event_14">
+          <roleOptions>
+            <role name="Expert" cost="8" duration="60"/>
+            <role name="Junior" cost="5" duration="90"/>
+            <role name="System" cost="5" duration="90"/>
+          </roleOptions>
+        </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="invite reviewers"/>
+        <label id="get review 3"/>
+        <label id="get review 1"/>
+        <label id="time-out 2"/>
+        <label id="collect reviews"/>
+        <label id="decide"/>
+        <label id="invite additional reviewer"/>
+        <label id="get review X"/>
+        <label id="reject"/>
+        <label id="time-out 1"/>
+        <label id="get review 2"/>
+        <label id="time-out X"/>
+        <label id="accept"/>
+        <label id="time-out 3"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_1"  labelId="invite reviewers"/>
+        <labelMapping eventId="Event_2"  labelId="get review 3"/>
+        <labelMapping eventId="Event_3"  labelId="get review 1"/>
+        <labelMapping eventId="Event_4"  labelId="time-out 2"/>
+        <labelMapping eventId="Event_5"  labelId="collect reviews"/>
+        <labelMapping eventId="Event_6"  labelId="decide"/>
+        <labelMapping eventId="Event_7"  labelId="invite additional reviewer"/>
+        <labelMapping eventId="Event_8"  labelId="get review X"/>
+        <labelMapping eventId="Event_9"  labelId="reject"/>
+        <labelMapping eventId="Event_10" labelId="time-out 1"/>
+        <labelMapping eventId="Event_11" labelId="get review 2"/>
+        <labelMapping eventId="Event_12" labelId="time-out X"/>
+        <labelMapping eventId="Event_13" labelId="accept"/>
+        <labelMapping eventId="Event_14" labelId="time-out 3"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_1"  targetId="Event_2"/>
+        <condition sourceId="Event_1"  targetId="Event_3"/>
+        <condition sourceId="Event_1"  targetId="Event_4"/>
+        <condition sourceId="Event_2"  targetId="Event_5"/>
+        <condition sourceId="Event_3"  targetId="Event_5"/>
+        <condition sourceId="Event_4"  targetId="Event_5"/>
+        <condition sourceId="Event_14" targetId="Event_5"/>
+        <condition sourceId="Event_10" targetId="Event_5"/>
+        <condition sourceId="Event_11" targetId="Event_5"/>
+        <condition sourceId="Event_5"  targetId="Event_6"/>
+        <condition sourceId="Event_1"  targetId="Event_6"/>
+        <condition sourceId="Event_6"  targetId="Event_7"/>
+        <condition sourceId="Event_2"  targetId="Event_7"/>
+        <condition sourceId="Event_3"  targetId="Event_7"/>
+        <condition sourceId="Event_4"  targetId="Event_7"/>
+        <condition sourceId="Event_14" targetId="Event_7"/>
+        <condition sourceId="Event_10" targetId="Event_7"/>
+        <condition sourceId="Event_11" targetId="Event_7"/>
+        <condition sourceId="Event_7"  targetId="Event_8"/>
+        <condition sourceId="Event_1"  targetId="Event_8"/>
+        <condition sourceId="Event_5"  targetId="Event_8"/>
+        <condition sourceId="Event_6"  targetId="Event_9"/>
+        <condition sourceId="Event_2"  targetId="Event_9"/>
+        <condition sourceId="Event_3"  targetId="Event_9"/>
+        <condition sourceId="Event_4"  targetId="Event_9"/>
+        <condition sourceId="Event_14" targetId="Event_9"/>
+        <condition sourceId="Event_10" targetId="Event_9"/>
+        <condition sourceId="Event_11" targetId="Event_9"/>
+        <condition sourceId="Event_1"  targetId="Event_10"/>
+        <condition sourceId="Event_1"  targetId="Event_11"/>
+        <condition sourceId="Event_7"  targetId="Event_12"/>
+        <condition sourceId="Event_1"  targetId="Event_12"/>
+        <condition sourceId="Event_5"  targetId="Event_12"/>
+        <condition sourceId="Event_6"  targetId="Event_13"/>
+        <condition sourceId="Event_14" targetId="Event_13"/>
+        <condition sourceId="Event_4"  targetId="Event_13"/>
+        <condition sourceId="Event_3"  targetId="Event_13"/>
+        <condition sourceId="Event_11" targetId="Event_13"/>
+        <condition sourceId="Event_2"  targetId="Event_13"/>
+        <condition sourceId="Event_10" targetId="Event_13"/>
+        <condition sourceId="Event_1"  targetId="Event_14"/>
+      </conditions>
+      <responses>
+        <response sourceId="Event_1"  targetId="Event_5"/>
+        <response sourceId="Event_2"  targetId="Event_5"/>
+        <response sourceId="Event_3"  targetId="Event_5"/>
+        <response sourceId="Event_4"  targetId="Event_5"/>
+        <response sourceId="Event_5"  targetId="Event_6"/>
+        <response sourceId="Event_10" targetId="Event_5"/>
+        <response sourceId="Event_10" targetId="Event_7"/>
+        <response sourceId="Event_10" targetId="Event_8"/>
+        <response sourceId="Event_11" targetId="Event_5"/>
+        <response sourceId="Event_14" targetId="Event_5"/>
+        <response sourceId="Event_14" targetId="Event_7"/>
+        <response sourceId="Event_14" targetId="Event_8"/>
+      </responses>
+      <coresponces/>
+      <excludes>
+        <exclude sourceId="Event_2"  targetId="Event_2"/>
+        <exclude sourceId="Event_2"  targetId="Event_14"/>
+        <exclude sourceId="Event_2"  targetId="Event_1"/>
+        <exclude sourceId="Event_3"  targetId="Event_3"/>
+        <exclude sourceId="Event_3"  targetId="Event_10"/>
+        <exclude sourceId="Event_3"  targetId="Event_1"/>
+        <exclude sourceId="Event_4"  targetId="Event_4"/>
+        <exclude sourceId="Event_4"  targetId="Event_11"/>
+        <exclude sourceId="Event_4"  targetId="Event_1"/>
+        <exclude sourceId="Event_5"  targetId="Event_1"/>
+        <exclude sourceId="Event_6"  targetId="Event_5"/>
+        <exclude sourceId="Event_7"  targetId="Event_6"/>
+        <exclude sourceId="Event_8"  targetId="Event_8"/>
+        <exclude sourceId="Event_9"  targetId="Event_13"/>
+        <exclude sourceId="Event_9"  targetId="Event_6"/>
+        <exclude sourceId="Event_9"  targetId="Event_7"/>
+        <exclude sourceId="Event_10" targetId="Event_10"/>
+        <exclude sourceId="Event_10" targetId="Event_3"/>
+        <exclude sourceId="Event_10" targetId="Event_1"/>
+        <exclude sourceId="Event_11" targetId="Event_11"/>
+        <exclude sourceId="Event_11" targetId="Event_4"/>
+        <exclude sourceId="Event_11" targetId="Event_1"/>
+        <exclude sourceId="Event_12" targetId="Event_12"/>
+        <exclude sourceId="Event_13" targetId="Event_9"/>
+        <exclude sourceId="Event_13" targetId="Event_6"/>
+        <exclude sourceId="Event_13" targetId="Event_7"/>
+        <exclude sourceId="Event_14" targetId="Event_14"/>
+        <exclude sourceId="Event_14" targetId="Event_2"/>
+        <exclude sourceId="Event_14" targetId="Event_1"/>
+      </excludes>
+      <includes>
+        <include sourceId="Event_7" targetId="Event_8"/>
+        <include sourceId="Event_7" targetId="Event_12"/>
+      </includes>
+      <milestones/>
+      <updates/>
+      <spawns/>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="Event_1"/>
+        <event id="Event_2"/>
+        <event id="Event_3"/>
+        <event id="Event_4"/>
+        <event id="Event_5"/>
+        <event id="Event_6"/>
+        <event id="Event_7"/>
+        <event id="Event_8"/>
+        <event id="Event_9"/>
+        <event id="Event_10"/>
+        <event id="Event_11"/>
+        <event id="Event_12"/>
+        <event id="Event_13"/>
+        <event id="Event_14"/>
+      </included>
+      <pendingResponses>
+        <event id="Event_1"/>
+        <event id="Event_5"/>
+        <event id="Event_6"/>
+      </pendingResponses>
+    </marking>
+  </runtime>
+</dcrgraph>

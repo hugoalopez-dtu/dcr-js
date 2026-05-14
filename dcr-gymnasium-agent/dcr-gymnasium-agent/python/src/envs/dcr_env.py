@@ -40,15 +40,21 @@ class DCRGymEnv(gym.Env):
         events = init["events"]
         self.event_list = events
         self.label_map = init.get("labelMap", {}) if isinstance(init, dict) else {}
-        n = len(self.event_list)
-        obs_dim = n * 3
-        self.observation_space = spaces.Box(low=0, high=1, shape=(obs_dim,), dtype=np.int8)
-        self.action_space = spaces.Discrete(n)
 
-        # store action mask if server provided it
+        # Role-extended action space: server returns eventRolePairs when roles are defined.
+        # Each pair is {"event": str, "role": str}. Action index maps to a pair.
+        self.event_role_pairs = init.get("eventRolePairs") or [{"event": ev, "role": ""} for ev in events]
+        self.roles = init.get("roles", [])
+        self.n_roles = init.get("nRoles", 1)
+
+        n_events = len(self.event_list)
+        n_actions = len(self.event_role_pairs)
+        obs_dim = n_events * 3  # observation stays per-event: included/executed/pending
+        self.observation_space = spaces.Box(low=0, high=1, shape=(obs_dim,), dtype=np.int8)
+        self.action_space = spaces.Discrete(n_actions)
+
         self.action_mask = init.get("actionMask") if isinstance(init, dict) else None
         if self.action_mask is None:
-            # fallback: compute from initial state
             self.action_mask = state_to_mask(init.get("state", {}), self.event_list)
 
 
@@ -71,18 +77,18 @@ class DCRGymEnv(gym.Env):
         return obs, {}
 
     def step(self, action):
-        ev = self.event_list[action]
-        r = self.node["send_action"](ev)
+        # Send numeric action index; server decodes it to (event, role)
+        r = self.node["send_action"](action)
         result = r.get("result", {})
         obs = self._state_to_obs(result.get("state", {}))
         reward = result.get("stepReward", result.get("reward", 0))
         done = bool(result.get("done", False))
         self.action_mask = r.get("actionMask") or state_to_mask(result.get("state", {}), self.event_list)
 
-        # Accumulate episode cost/duration from server (server tracks the running total)
         self.episode_cost     = result.get("episodeCost", self.episode_cost)
         self.episode_duration = result.get("episodeDuration", self.episode_duration)
 
+        pair = self.event_role_pairs[action] if action < len(self.event_role_pairs) else {}
         info = {
             "engine_result":    result,
             "action_mask":      self.action_mask,
@@ -91,6 +97,8 @@ class DCRGymEnv(gym.Env):
             "episode_cost":     self.episode_cost,
             "episode_duration": self.episode_duration,
             "accepting":        result.get("accepting", False),
+            "action_event":     pair.get("event", ""),
+            "action_role":      pair.get("role", ""),
         }
         return obs, reward, done, False, info
 
