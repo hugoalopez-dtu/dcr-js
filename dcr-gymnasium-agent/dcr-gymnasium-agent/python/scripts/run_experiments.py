@@ -226,7 +226,7 @@ def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: fl
     with open(run_log, "ab") as lf:
         # Use bash to source nvm before running npx (required on HPC clusters)
         proc = subprocess.Popen(
-            ["bash", "-c", "source ~/.nvm/nvm.sh && nvm use 20 && node --experimental-specifier-resolution=node dist/node-adapter/src/server.js"],
+            ["bash", "-c", "source ~/.nvm/nvm.sh && nvm use 20 && node dist/server.mjs"],
             cwd=str(NODE_ADAPTER_DIR),
             env=env,
             stdout=lf,
