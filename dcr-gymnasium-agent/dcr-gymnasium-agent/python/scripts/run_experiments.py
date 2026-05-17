@@ -229,7 +229,7 @@ def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: fl
             ["bash", "-c", "source ~/.nvm/nvm.sh && nvm use 20 && node dist/server.mjs"],
             cwd=str(NODE_ADAPTER_DIR),
             env=env,
-            stdout=lf,
+            stdout=subprocess.DEVNULL,
             stderr=lf,
         )
         try:
@@ -265,7 +265,7 @@ def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: fl
                 train_cmd,
                 cwd=str(PYTHON_PROJECT_DIR),
                 env=env,
-                stdout=lf,
+                stdout=subprocess.DEVNULL,
                 stderr=lf,
             )
             if ret.returncode != 0:
