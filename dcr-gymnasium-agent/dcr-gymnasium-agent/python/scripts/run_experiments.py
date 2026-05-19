@@ -54,7 +54,7 @@ EXPERIMENTS = [
     {
         "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Expense_Report_Diaz.xml"),
         "exp_id": "ExpenseReport_Diaz",
-        "total_steps": int(os.environ.get("DCR_STEPS", 30000)),
+        "total_steps": int(os.environ.get("DCR_STEPS", 100000)),
         "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
     },
 
