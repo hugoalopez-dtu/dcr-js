@@ -37,6 +37,7 @@ export const computeStepReward = (
   result: any,
   pendingBefore: number,
   executedInEpisode: Set<string>,
+  firstResolvedInEpisode: Set<string>,
   eventCost?: number,
   eventDuration?: number,
   costWeight: number = 0,
@@ -59,9 +60,30 @@ export const computeStepReward = (
   // --- 3. Legal, non-terminal ---
   const baseMapped = 1;
 
-  // --- 4. Progress signal ---
+  // --- 4. Progress signal (first-visit only) ---
+  // Only reward the first time each pending event is resolved in this episode.
+  // This prevents reward hacking via response-relation loops (e.g. Reject→Approve cycles
+  // where the agent recreates pending states to harvest progress bonuses repeatedly).
   const pendingAfter = countPendingIncluded(result.state);
-  const progressDelta = Math.max(0, pendingBefore - pendingAfter) * 2.0;
+  const rawProgress = Math.max(0, pendingBefore - pendingAfter);
+  let newlyResolvedCount = 0;
+  if (rawProgress > 0 && result.state) {
+    const includedNow = new Set(result.state.included || []);
+    const pendingNow  = new Set(result.state.pending  || []);
+    // Find events that WERE pending before but are no longer pending+included.
+    // Count only those that have never been resolved before in this episode.
+    const pendingBeforeSet = new Set(result.stateBefore?.pending || []);
+    const includedBeforeSet = new Set(result.stateBefore?.included || []);
+    for (const ev of pendingBeforeSet) {
+      if (includedBeforeSet.has(ev) && !(pendingNow.has(ev) && includedNow.has(ev))) {
+        if (!firstResolvedInEpisode.has(ev)) {
+          firstResolvedInEpisode.add(ev);
+          newlyResolvedCount++;
+        }
+      }
+    }
+  }
+  const progressDelta = newlyResolvedCount * 2.0;
 
   // --- 5. Repetition penalty ---
   const action: string | undefined = result.action;

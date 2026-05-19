@@ -38,6 +38,10 @@ const COST_WEIGHT     = Number(process.env.COST_WEIGHT     || 0);
 const DURATION_WEIGHT = Number(process.env.DURATION_WEIGHT || 0);
 
 const executedInEpisode = new Set<string>();
+// Tracks which pending events have been resolved at least once this episode.
+// Prevents reward hacking via response-relation loops (e.g. Reject→Approve→Reject→Approve).
+// Progress bonus is only granted the FIRST time each pending is resolved.
+const firstResolvedInEpisode = new Set<string>();
 
 let lastResult: any = null;
 let episodeSteps = 0;
@@ -101,6 +105,7 @@ app.post("/reset", (_req, res) => {
     lastResult = null;
 
     executedInEpisode.clear();
+    firstResolvedInEpisode.clear();
 
     const state = getState();
     const events = getEvents();
@@ -168,7 +173,8 @@ app.post("/action", (req, res) => {
       : structuralAccepting;
 
     // Ensure reward.ts uses the acceptance mode selected above.
-    const rewardInput: any = { ...result, accepting, done: accepting };
+    // Pass stateBefore so the progress signal can identify which pendings were resolved.
+    const rewardInput: any = { ...result, accepting, done: accepting, stateBefore };
 
     // Compute effective cost/duration: base × role multiplier (falls back to flat values if no roles)
     const baseCost     = graph.costMap?.[action] ?? 0;
@@ -185,7 +191,7 @@ app.post("/action", (req, res) => {
 
     rewardInput.action = action;
     const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } =
-      computeStepReward(rewardInput, pendingBefore, executedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT, maxGraphCost, maxGraphDuration);
+      computeStepReward(rewardInput, pendingBefore, executedInEpisode, firstResolvedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT, maxGraphCost, maxGraphDuration);
 
     // Apply step penalty only for legal non-terminal actions.
     // baseMapped values from reward.ts:
@@ -254,6 +260,7 @@ app.post("/load", (req, res) => {
     episodeDuration = 0;
     lastResult = null;
     executedInEpisode.clear();
+    firstResolvedInEpisode.clear();
 
     // Persist XML to disk so run_experiments.py can pick it up on the cluster
     fs.mkdirSync(path.dirname(STAGING_PATH), { recursive: true });

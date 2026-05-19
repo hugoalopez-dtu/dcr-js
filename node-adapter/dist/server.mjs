@@ -25546,7 +25546,7 @@ var RLDCREnvironment = class {
 };
 
 // ../dcr-engine/src/reward.ts
-var computeStepReward = (result, pendingBefore, executedInEpisode2, eventCost, eventDuration, costWeight = 0, durationWeight = 0, maxCost = 1, maxDuration = 1) => {
+var computeStepReward = (result, pendingBefore, executedInEpisode2, firstResolvedInEpisode2, eventCost, eventDuration, costWeight = 0, durationWeight = 0, maxCost = 1, maxDuration = 1) => {
   if (result.reward === -10) {
     return { stepReward: -10, baseMapped: -10, noveltyDelta: 0, progressDelta: 0, costPenalty: 0, durationPenalty: 0 };
   }
@@ -25556,7 +25556,23 @@ var computeStepReward = (result, pendingBefore, executedInEpisode2, eventCost, e
   }
   const baseMapped = 1;
   const pendingAfter = countPendingIncluded(result.state);
-  const progressDelta = Math.max(0, pendingBefore - pendingAfter) * 2;
+  const rawProgress = Math.max(0, pendingBefore - pendingAfter);
+  let newlyResolvedCount = 0;
+  if (rawProgress > 0 && result.state) {
+    const includedNow = new Set(result.state.included || []);
+    const pendingNow = new Set(result.state.pending || []);
+    const pendingBeforeSet = new Set(result.stateBefore?.pending || []);
+    const includedBeforeSet = new Set(result.stateBefore?.included || []);
+    for (const ev of pendingBeforeSet) {
+      if (includedBeforeSet.has(ev) && !(pendingNow.has(ev) && includedNow.has(ev))) {
+        if (!firstResolvedInEpisode2.has(ev)) {
+          firstResolvedInEpisode2.add(ev);
+          newlyResolvedCount++;
+        }
+      }
+    }
+  }
+  const progressDelta = newlyResolvedCount * 2;
   const action = result.action;
   let noveltyDelta = 0;
   if (action !== void 0) {
@@ -25599,6 +25615,7 @@ var STRICT_GOAL_TERMINATION = process.env.STRICT_GOAL_TERMINATION === "1";
 var COST_WEIGHT = Number(process.env.COST_WEIGHT || 0);
 var DURATION_WEIGHT = Number(process.env.DURATION_WEIGHT || 0);
 var executedInEpisode = /* @__PURE__ */ new Set();
+var firstResolvedInEpisode = /* @__PURE__ */ new Set();
 var lastResult = null;
 var episodeSteps = 0;
 var illegalTracesCount = 0;
@@ -25640,6 +25657,7 @@ app.post("/reset", (_req, res) => {
     episodeDuration = 0;
     lastResult = null;
     executedInEpisode.clear();
+    firstResolvedInEpisode.clear();
     const state = getState();
     const events = getEvents();
     const pairs = getEventRolePairs();
@@ -25707,7 +25725,7 @@ app.post("/action", (req, res) => {
     const structuralAccepting = Boolean(result.done);
     const goalReached = GOAL_LABEL.length > 0 && label === GOAL_LABEL;
     const accepting = STRICT_GOAL_TERMINATION ? structuralAccepting && goalReached : structuralAccepting;
-    const rewardInput = { ...result, accepting, done: accepting };
+    const rewardInput = { ...result, accepting, done: accepting, stateBefore };
     const baseCost = graph.costMap?.[action] ?? 0;
     const baseDuration = graph.durationMap?.[action] ?? 0;
     const mult = chosenRole ? graph.roleMultipliers?.[chosenRole] : void 0;
@@ -25719,7 +25737,7 @@ app.post("/action", (req, res) => {
     if (isLegal && eventDuration !== void 0)
       episodeDuration += eventDuration;
     rewardInput.action = action;
-    const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } = computeStepReward(rewardInput, pendingBefore, executedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT, maxGraphCost, maxGraphDuration);
+    const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } = computeStepReward(rewardInput, pendingBefore, executedInEpisode, firstResolvedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT, maxGraphCost, maxGraphDuration);
     const isLegalNonTerminal = baseMapped === 1;
     const isIllegal = baseMapped === -10;
     if (isIllegal) {
@@ -25773,6 +25791,7 @@ app.post("/load", (req, res) => {
     episodeDuration = 0;
     lastResult = null;
     executedInEpisode.clear();
+    firstResolvedInEpisode.clear();
     fs.mkdirSync(path.dirname(STAGING_PATH), { recursive: true });
     fs.writeFileSync(STAGING_PATH, xml, "utf-8");
     const roles = getRoles();
