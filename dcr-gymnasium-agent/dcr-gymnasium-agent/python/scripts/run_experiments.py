@@ -234,6 +234,11 @@ def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: fl
     env["MAX_EPISODE_STEPS"] = "300"
     env["COST_WEIGHT"]     = str(cost_weight)
     env["DURATION_WEIGHT"] = str(duration_weight)
+    # Step penalty: must be negative enough so non-progress legal steps are negative.
+    # With baseMapped=+1 and normalised costs ≤ α+β, setting STEP_PENALTY=-1.5 ensures:
+    #   no-progress step: 1 - 1.5 = -0.5  (agent wants to terminate)
+    #   progress step:    1 + 2 - 1.5 = +1.5  (rewarded for resolving pending)
+    env["STEP_PENALTY"]    = str(exp.get("step_penalty", -1.5))
 
     # Ensure previous adapter instance is not occupying the port.
     free_adapter_port(PORT)
