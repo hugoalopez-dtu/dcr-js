@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Loan Application — Diaz et al. (DEC2H 2024, simplified)
+  Source: "Pareto-Optimal Trace Generation from Declarative Process Models"
+  7 events, costs and durations from slide 27.
+
+  Valid Pareto traces (verified):
+    ⟨provide doc, check conditions, reject loan⟩               cost=170, dur=400
+    ⟨provide doc, check conditions, external rating, grant loan⟩ cost=470, dur=520
+    ⟨provide doc, check conditions, extra info, provide doc,
+      check conditions, grant loan⟩                            cost=340, dur=1180
+-->
+<dcrgraph title="Loan Application (Diaz et al.)">
+  <specification>
+    <resources>
+      <events>
+        <event id="E_request">  <cost>0</cost>   <duration>0</duration>   </event>
+        <event id="E_provide">  <cost>0.1</cost>   <duration>60</duration>  </event>
+        <event id="E_check">    <cost>120</cost>  <duration>240</duration> </event>
+        <event id="E_external"> <cost>250</cost>  <duration>120</duration> </event>
+        <event id="E_extra">    <cost>0.1</cost>   <duration>480</duration> </event>
+        <event id="E_reject">   <cost>50</cost>   <duration>100</duration> </event>
+        <event id="E_grant">    <cost>100</cost>  <duration>100</duration> </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="request loan"/>
+        <label id="provide documentation"/>
+        <label id="check conditions"/>
+        <label id="provide external rating"/>
+        <label id="request extra documentation"/>
+        <label id="reject loan"/>
+        <label id="grant loan"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="E_request"  labelId="request loan"/>
+        <labelMapping eventId="E_provide"  labelId="provide documentation"/>
+        <labelMapping eventId="E_check"    labelId="check conditions"/>
+        <labelMapping eventId="E_external" labelId="provide external rating"/>
+        <labelMapping eventId="E_extra"    labelId="request extra documentation"/>
+        <labelMapping eventId="E_reject"   labelId="reject loan"/>
+        <labelMapping eventId="E_grant"    labelId="grant loan"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <!-- Must provide docs before checking -->
+        <condition sourceId="E_provide"  targetId="E_check"/>
+        <!-- Must check before deciding or requesting extra info -->
+        <condition sourceId="E_check"    targetId="E_reject"/>
+        <condition sourceId="E_check"    targetId="E_grant"/>
+        <condition sourceId="E_check"    targetId="E_extra"/>
+      </conditions>
+      <responses>
+        <!-- Requesting loan creates obligation to provide docs -->
+        <response sourceId="E_request"   targetId="E_provide"/>
+        <!-- Providing docs creates obligation to check conditions -->
+        <response sourceId="E_provide"   targetId="E_check"/>
+        <!-- Requesting extra info creates obligation to provide docs again -->
+        <response sourceId="E_extra"     targetId="E_provide"/>
+      </responses>
+      <excludes>
+        <!-- Grant and reject are mutually exclusive -->
+        <exclude sourceId="E_grant"      targetId="E_reject"/>
+        <exclude sourceId="E_reject"     targetId="E_grant"/>
+        <!-- After final decision, close remaining branches -->
+        <exclude sourceId="E_grant"      targetId="E_extra"/>
+        <exclude sourceId="E_reject"     targetId="E_extra"/>
+        <exclude sourceId="E_grant"      targetId="E_external"/>
+        <exclude sourceId="E_reject"     targetId="E_external"/>
+        <!-- Request loan self-excludes (already executed, do not repeat) -->
+        <exclude sourceId="E_request"    targetId="E_request"/>
+      </excludes>
+      <includes>
+        <!-- Checking conditions makes external rating available -->
+        <include sourceId="E_check"      targetId="E_external"/>
+      </includes>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed>
+        <!-- Request loan is already done at process start -->
+        <event id="E_request"/>
+      </executed>
+      <included>
+        <event id="E_provide"/>
+        <event id="E_check"/>
+        <event id="E_extra"/>
+        <event id="E_reject"/>
+        <event id="E_grant"/>
+        <!-- E_external is excluded initially; included by E_check -->
+      </included>
+      <pendingResponses>
+        <!-- provide doc is obligatory (triggered by request loan) -->
+        <event id="E_provide"/>
+        <!-- reject loan is pending by default; grant loan can satisfy it via exclusion -->
+        <event id="E_reject"/>
+      </pendingResponses>
+    </marking>
+  </runtime>
+</dcrgraph>

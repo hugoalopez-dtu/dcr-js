@@ -50,13 +50,21 @@ PARETO_WEIGHTS = [
 ]
 
 EXPERIMENTS = [
-    # --- Synthetic Review with roles (Expert / Junior / System per event) ---
+    # --- Loan Application — Diaz et al. (DEC2H 2024), no roles ---
     {
-        "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Synthetic_review_roles.xml"),
-        "exp_id": "SynReview_roles",
+        "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Loan_Application_Diaz.xml"),
+        "exp_id": "LoanApp_Diaz",
         "total_steps": int(os.environ.get("DCR_STEPS", 150000)),
         "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
     },
+
+    # --- Synthetic Review with roles (Expert / Junior / System per event) ---
+    # {
+    #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Synthetic_review_roles.xml"),
+    #     "exp_id": "SynReview_roles",
+    #     "total_steps": int(os.environ.get("DCR_STEPS", 150000)),
+    #     "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
+    # },
 
     # --- Baseline: Synthetic Review without roles (original cost/duration) ---
     # {
