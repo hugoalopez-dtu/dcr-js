@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Expense Report — Diaz et al. (DEC2H 2024)
+  Source: https://github.com/JuanK120/dcrGraph — DcrGraph_Ex2.dzn
+  5 events, costs and durations as published in their repository.
+
+  Pareto front to verify (2 objectives: min cost, min duration):
+    ⟨FillOut, Approve, PayOut⟩           cost=50,  dur=10500
+    ⟨FillOut, Withdraw⟩                  cost=710, dur=2700
+-->
+<dcrgraph title="Expense Report (Diaz et al. Ex2)">
+  <specification>
+    <resources>
+      <events>
+        <event id="E_fillout">  <cost>10</cost>  <duration>1500</duration> </event>
+        <event id="E_approve">  <cost>25</cost>  <duration>7200</duration> </event>
+        <event id="E_reject">   <cost>30</cost>  <duration>7200</duration> </event>
+        <event id="E_payout">   <cost>15</cost>  <duration>1800</duration> </event>
+        <event id="E_withdraw"> <cost>700</cost> <duration>1200</duration> </event>
+      </events>
+      <subProcesses/>
+      <labels>
+        <label id="FillOutExpenseReport"/>
+        <label id="Approve"/>
+        <label id="Reject"/>
+        <label id="PayOut"/>
+        <label id="WithdrawExpenseReport"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="E_fillout"  labelId="FillOutExpenseReport"/>
+        <labelMapping eventId="E_approve"  labelId="Approve"/>
+        <labelMapping eventId="E_reject"   labelId="Reject"/>
+        <labelMapping eventId="E_payout"   labelId="PayOut"/>
+        <labelMapping eventId="E_withdraw" labelId="WithdrawExpenseReport"/>
+      </labelMappings>
+      <variables/>
+      <expressions/>
+      <variableAccesses>
+        <readAccessess/>
+        <writeAccessess/>
+      </variableAccesses>
+    </resources>
+    <constraints>
+      <conditions>
+        <!-- FillOut must happen before any other activity -->
+        <condition sourceId="E_fillout" targetId="E_approve"/>
+        <condition sourceId="E_fillout" targetId="E_reject"/>
+        <condition sourceId="E_fillout" targetId="E_payout"/>
+        <condition sourceId="E_fillout" targetId="E_withdraw"/>
+        <!-- Approve must happen before PayOut -->
+        <condition sourceId="E_approve" targetId="E_payout"/>
+      </conditions>
+      <responses>
+        <!-- Filling out creates obligations for Approve and PayOut -->
+        <response sourceId="E_fillout" targetId="E_approve"/>
+        <response sourceId="E_fillout" targetId="E_payout"/>
+        <!-- Rejecting creates obligation to Approve again -->
+        <response sourceId="E_reject"  targetId="E_approve"/>
+      </responses>
+      <excludes>
+        <!-- PayOut ends the process — excludes everything -->
+        <exclude sourceId="E_payout"   targetId="E_fillout"/>
+        <exclude sourceId="E_payout"   targetId="E_approve"/>
+        <exclude sourceId="E_payout"   targetId="E_reject"/>
+        <exclude sourceId="E_payout"   targetId="E_payout"/>
+        <exclude sourceId="E_payout"   targetId="E_withdraw"/>
+        <!-- Withdraw ends the process — excludes everything -->
+        <exclude sourceId="E_withdraw" targetId="E_fillout"/>
+        <exclude sourceId="E_withdraw" targetId="E_approve"/>
+        <exclude sourceId="E_withdraw" targetId="E_reject"/>
+        <exclude sourceId="E_withdraw" targetId="E_payout"/>
+        <exclude sourceId="E_withdraw" targetId="E_withdraw"/>
+      </excludes>
+      <includes>
+        <!-- FillOut self-includes so it can be re-executed -->
+        <include sourceId="E_fillout" targetId="E_fillout"/>
+      </includes>
+    </constraints>
+  </specification>
+  <runtime>
+    <marking>
+      <globalStore/>
+      <executed/>
+      <included>
+        <event id="E_fillout"/>
+        <event id="E_approve"/>
+        <event id="E_reject"/>
+        <event id="E_payout"/>
+        <event id="E_withdraw"/>
+      </included>
+      <pendingResponses/>
+    </marking>
+  </runtime>
+</dcrgraph>
