@@ -41,6 +41,8 @@ export const computeStepReward = (
   eventDuration?: number,
   costWeight: number = 0,
   durationWeight: number = 0,
+  maxCost: number = 1,
+  maxDuration: number = 1,
 ): RewardResult => {
 
   // --- 1. Illegal action ---
@@ -69,9 +71,15 @@ export const computeStepReward = (
     executedInEpisode.add(action);
   }
 
-  // --- 6. Multi-objective cost/duration penalties (only when weights > 0 and value defined) ---
-  const costPenalty    = (costWeight > 0 && eventCost !== undefined)     ? costWeight * eventCost       : 0;
-  const durationPenalty = (durationWeight > 0 && eventDuration !== undefined) ? durationWeight * eventDuration : 0;
+  // --- 6. Multi-objective cost/duration penalties — normalised by graph maximum ---
+  // Normalisation ensures penalties are bounded to [0, weight], preventing them from
+  // overwhelming the illegal action penalty (-10) on graphs with large absolute values.
+  const costPenalty     = (costWeight > 0     && eventCost     !== undefined && maxCost     > 0)
+    ? costWeight     * (eventCost     / maxCost)
+    : 0;
+  const durationPenalty = (durationWeight > 0 && eventDuration !== undefined && maxDuration > 0)
+    ? durationWeight * (eventDuration / maxDuration)
+    : 0;
 
   const stepReward = baseMapped + progressDelta + noveltyDelta - costPenalty - durationPenalty;
   return { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty };

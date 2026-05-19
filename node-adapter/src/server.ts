@@ -45,6 +45,10 @@ let illegalTracesCount = 0;
 let episodeCost = 0;
 let episodeDuration = 0;
 
+// Normalisation constants — set when graph loads, used to bound cost/duration penalties.
+let maxGraphCost: number = 1;
+let maxGraphDuration: number = 1;
+
 // --- Helpers ---
 
 // Returns sorted list of role names from the graph's global roleMultipliers.
@@ -181,7 +185,7 @@ app.post("/action", (req, res) => {
 
     rewardInput.action = action;
     const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } =
-      computeStepReward(rewardInput, pendingBefore, executedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT);
+      computeStepReward(rewardInput, pendingBefore, executedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT, maxGraphCost, maxGraphDuration);
 
     // Apply step penalty only for legal non-terminal actions.
     // baseMapped values from reward.ts:
@@ -258,7 +262,13 @@ app.post("/load", (req, res) => {
     const roles = getRoles();
     const pairs = getEventRolePairs();
     const eventsWithCost = Object.keys(graph.costMap);
+    // Compute normalisation constants for reward shaping
+    const costVals     = Object.values(graph.costMap).filter((v): v is number => v > 0);
+    const durVals      = Object.values(graph.durationMap).filter((v): v is number => v > 0);
+    maxGraphCost     = costVals.length     > 0 ? Math.max(...costVals)     : 1;
+    maxGraphDuration = durVals.length      > 0 ? Math.max(...durVals)      : 1;
     console.log(`[/load] Graph loaded: ${graph.events.size} events, ${eventsWithCost.length} with base cost, ${roles.length} roles (${roles.join(", ")})`);
+    console.log(`[/load] Reward normalisation: maxCost=${maxGraphCost}, maxDuration=${maxGraphDuration}`);
     console.log(`[/load] Action space: ${pairs.length} (${graph.events.size} events × ${roles.length || 1} roles)`);
     console.log(`[/load] XML saved to: ${STAGING_PATH}`);
 
