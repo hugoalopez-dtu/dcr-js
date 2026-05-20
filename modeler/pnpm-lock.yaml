@@ -53,7 +53,7 @@ devDependencies:
     specifier: ^3.0.4
     version: 3.0.4
   '@types/lodash':
-    specifier: ^4.17.24
+    specifier: ^4.17.13
     version: 4.17.24
   '@vitest/browser':
     specifier: ^0.34.1
@@ -72,7 +72,7 @@ devDependencies:
     version: 6.2.0(webpack@5.107.0)
   happy-dom:
     specifier: ^20.8.9
-    version: 20.8.9
+    version: 20.9.0
   jsdom:
     specifier: ^22.1.0
     version: 22.1.0
@@ -83,11 +83,11 @@ devDependencies:
     specifier: ^2.0.12
     version: 2.0.12
   typescript:
-    specifier: ^5.9.3
+    specifier: ^5.6.3
     version: 5.9.3
   vitest:
     specifier: ^0.34.1
-    version: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.8.9)(jsdom@22.1.0)(webdriverio@8.14.3)
+    version: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.9.0)(jsdom@22.1.0)(webdriverio@8.14.3)
   webdriverio:
     specifier: ^8.14.3
     version: 8.14.3(typescript@5.9.3)
@@ -702,7 +702,7 @@ packages:
       magic-string: 0.30.2
       modern-node-polyfills: 0.1.3(rollup@2.80.0)
       sirv: 2.0.3
-      vitest: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.8.9)(jsdom@22.1.0)(webdriverio@8.14.3)
+      vitest: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.9.0)(jsdom@22.1.0)(webdriverio@8.14.3)
     transitivePeerDependencies:
       - rollup
     dev: true
@@ -723,7 +723,7 @@ packages:
       std-env: 3.3.3
       test-exclude: 6.0.0
       v8-to-istanbul: 9.1.0
-      vitest: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.8.9)(jsdom@22.1.0)(webdriverio@8.14.3)
+      vitest: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.9.0)(jsdom@22.1.0)(webdriverio@8.14.3)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -770,7 +770,7 @@ packages:
       pathe: 1.1.1
       picocolors: 1.0.0
       sirv: 2.0.3
-      vitest: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.8.9)(jsdom@22.1.0)(webdriverio@8.14.3)
+      vitest: 0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.9.0)(jsdom@22.1.0)(webdriverio@8.14.3)
     dev: true
 
   /@vitest/utils@0.34.1:
@@ -2539,8 +2539,8 @@ packages:
     engines: {node: '>=0.8.0'}
     dev: false
 
-  /happy-dom@20.8.9:
-    resolution: {integrity: sha512-Tz23LR9T9jOGVZm2x1EPdXqwA37G/owYMxRwU0E4miurAtFsPMQ1d2Jc2okUaSjZqAFz2oEn3FLXC5a0a+siyA==}
+  /happy-dom@20.9.0:
+    resolution: {integrity: sha512-GZZ9mKe8r646NUAf/zemnGbjYh4Bt8/MqASJY+pSm5ZDtc3YQox+4gsLI7yi1hba6o+eCsGxpHn5+iEVn31/FQ==}
     engines: {node: '>=20.0.0'}
     dependencies:
       '@types/node': 25.9.1
@@ -4403,7 +4403,7 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /vitest@0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.8.9)(jsdom@22.1.0)(webdriverio@8.14.3):
+  /vitest@0.34.1(@edge-runtime/vm@3.0.4)(@vitest/browser@0.34.1)(@vitest/ui@0.34.1)(happy-dom@20.9.0)(jsdom@22.1.0)(webdriverio@8.14.3):
     resolution: {integrity: sha512-G1PzuBEq9A75XSU88yO5G4vPT20UovbC/2osB2KEuV/FisSIIsw7m5y2xMdB7RsAGHAfg2lPmp2qKr3KWliVlQ==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -4450,7 +4450,7 @@ packages:
       cac: 6.7.14
       chai: 4.3.7
       debug: 4.3.4
-      happy-dom: 20.8.9
+      happy-dom: 20.9.0
       jsdom: 22.1.0
       local-pkg: 0.4.3
       magic-string: 0.30.2
