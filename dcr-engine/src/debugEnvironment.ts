@@ -45,6 +45,7 @@ const runStandardDebug = (xmlPath: string) => {
     const traceSequence: string[] = [];
     let isFinished = false;
     const executedInEpisode = new Set<string>();
+    const firstResolvedInEpisode = new Set<string>();
 
     for (let step = 1; step <= 20; step++) {
         const allEvents = Array.from(graph.events);
@@ -60,7 +61,7 @@ const runStandardDebug = (xmlPath: string) => {
         // No GOAL_LABEL — termination is structural (Pending ∩ Included = ∅)
         result.action = action;
         const { stepReward, baseMapped, noveltyDelta, progressDelta } =
-            computeStepReward(result, pendingBefore, executedInEpisode);
+            computeStepReward(result, pendingBefore, executedInEpisode, firstResolvedInEpisode);
 
         totalReward += stepReward;
         traceSequence.push(label);
