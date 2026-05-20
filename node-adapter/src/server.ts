@@ -29,15 +29,6 @@ const xmlContent = fs.readFileSync(XML_PATH, "utf-8");
 let graph = xmlToDCR(xmlContent);
 let env = new RLDCREnvironment(graph);
 
-// Compute normalisation constants at startup (used when graph is loaded via DCR_XML env var).
-// These are also recomputed in the /load endpoint when the graph is updated via the modeler UI.
-{
-  const costVals = Object.values(graph.costMap).filter((v): v is number => v > 0);
-  const durVals  = Object.values(graph.durationMap).filter((v): v is number => v > 0);
-  maxGraphCost     = costVals.length > 0 ? Math.max(...costVals) : 1;
-  maxGraphDuration = durVals.length  > 0 ? Math.max(...durVals)  : 1;
-}
-
 // --- Config ---
 const MAX_EPISODE_STEPS = Number(process.env.MAX_EPISODE_STEPS || 100);
 const STEP_PENALTY = Number(process.env.STEP_PENALTY || -0.1);
@@ -58,9 +49,12 @@ let illegalTracesCount = 0;
 let episodeCost = 0;
 let episodeDuration = 0;
 
-// Normalisation constants — set when graph loads, used to bound cost/duration penalties.
-let maxGraphCost: number = 1;
-let maxGraphDuration: number = 1;
+// Normalisation constants — computed from graph at startup and recomputed on /load.
+const _initCostVals = Object.values(graph.costMap).filter((v): v is number => v > 0);
+const _initDurVals  = Object.values(graph.durationMap).filter((v): v is number => v > 0);
+let maxGraphCost: number     = _initCostVals.length > 0 ? Math.max(..._initCostVals) : 1;
+let maxGraphDuration: number = _initDurVals.length  > 0 ? Math.max(..._initDurVals)  : 1;
+console.log(`[startup] Reward normalisation: maxCost=${maxGraphCost}, maxDuration=${maxGraphDuration}`);
 
 // --- Helpers ---
 

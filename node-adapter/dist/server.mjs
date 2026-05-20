@@ -25608,12 +25608,6 @@ if (!fs.existsSync(XML_PATH)) {
 var xmlContent = fs.readFileSync(XML_PATH, "utf-8");
 var graph = xmlToDCR(xmlContent);
 var env = new RLDCREnvironment(graph);
-{
-  const costVals = Object.values(graph.costMap).filter((v) => v > 0);
-  const durVals = Object.values(graph.durationMap).filter((v) => v > 0);
-  maxGraphCost = costVals.length > 0 ? Math.max(...costVals) : 1;
-  maxGraphDuration = durVals.length > 0 ? Math.max(...durVals) : 1;
-}
 var MAX_EPISODE_STEPS = Number(process.env.MAX_EPISODE_STEPS || 100);
 var STEP_PENALTY = Number(process.env.STEP_PENALTY || -0.1);
 var GOAL_LABEL = (process.env.GOAL_LABEL || "").trim();
@@ -25627,8 +25621,11 @@ var episodeSteps = 0;
 var illegalTracesCount = 0;
 var episodeCost = 0;
 var episodeDuration = 0;
-var maxGraphCost = 1;
-var maxGraphDuration = 1;
+var _initCostVals = Object.values(graph.costMap).filter((v) => v > 0);
+var _initDurVals = Object.values(graph.durationMap).filter((v) => v > 0);
+var maxGraphCost = _initCostVals.length > 0 ? Math.max(..._initCostVals) : 1;
+var maxGraphDuration = _initDurVals.length > 0 ? Math.max(..._initDurVals) : 1;
+console.log(`[startup] Reward normalisation: maxCost=${maxGraphCost}, maxDuration=${maxGraphDuration}`);
 var getRoles = () => Object.keys(graph.roleMultipliers || {}).sort();
 var getEventRolePairs = () => {
   const events = Array.from(graph.events).slice().sort();
