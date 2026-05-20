@@ -3,6 +3,8 @@ Prescribe medicine.xml
 Legal Compliance by Design.xml
 Nesting.xml
 Pizza delivery process.xml
-Prescribe medicine.xml
 Subprocess.xml
 Tax Calculation.xml
+Expense_Report_Diaz.xml
+Loan_Application_Diaz.xml
+LoanApp_junior_senior.xml

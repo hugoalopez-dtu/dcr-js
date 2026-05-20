@@ -51,12 +51,12 @@ PARETO_WEIGHTS = [
 
 EXPERIMENTS = [
     # --- Expense Report — Diaz et al. Ex2 (DEC2H 2024), for direct comparison ---
-    {
-        "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Expense_Report_Diaz.xml"),
-        "exp_id": "ExpenseReport_Diaz",
-        "total_steps": int(os.environ.get("DCR_STEPS", 100000)),
-        "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
-    },
+    # {
+    #     "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "Expense_Report_Diaz.xml"),
+    #     "exp_id": "ExpenseReport_Diaz",
+    #     "total_steps": int(os.environ.get("DCR_STEPS", 100000)),
+    #     "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
+    # },
 
     # --- Loan Application — Diaz et al. (DEC2H 2024), no roles ---
     # {
@@ -65,6 +65,14 @@ EXPERIMENTS = [
     #     "total_steps": int(os.environ.get("DCR_STEPS", 50000)),
     #     "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
     # },
+
+    # --- Loan Application — Kirchdorfer et al. (BPM 2026), Junior/Expert roles ---
+    {
+        "xml_file": str(ROOT / "app" / "public" / "examples" / "diagrams" / "LoanApp_junior_senior.xml"),
+        "exp_id": "LoanApp_roles",
+        "total_steps": int(os.environ.get("DCR_STEPS", 100000)),
+        "ent_coef": float(os.environ.get("DCR_ENT_COEF", 0.1)),
+    },
 
     # --- Synthetic Review with roles (Expert / Junior / System per event) ---
     # {
