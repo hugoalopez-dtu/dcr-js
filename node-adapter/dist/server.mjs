@@ -25608,6 +25608,12 @@ if (!fs.existsSync(XML_PATH)) {
 var xmlContent = fs.readFileSync(XML_PATH, "utf-8");
 var graph = xmlToDCR(xmlContent);
 var env = new RLDCREnvironment(graph);
+{
+  const costVals = Object.values(graph.costMap).filter((v) => v > 0);
+  const durVals = Object.values(graph.durationMap).filter((v) => v > 0);
+  maxGraphCost = costVals.length > 0 ? Math.max(...costVals) : 1;
+  maxGraphDuration = durVals.length > 0 ? Math.max(...durVals) : 1;
+}
 var MAX_EPISODE_STEPS = Number(process.env.MAX_EPISODE_STEPS || 100);
 var STEP_PENALTY = Number(process.env.STEP_PENALTY || -0.1);
 var GOAL_LABEL = (process.env.GOAL_LABEL || "").trim();

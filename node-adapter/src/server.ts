@@ -29,6 +29,15 @@ const xmlContent = fs.readFileSync(XML_PATH, "utf-8");
 let graph = xmlToDCR(xmlContent);
 let env = new RLDCREnvironment(graph);
 
+// Compute normalisation constants at startup (used when graph is loaded via DCR_XML env var).
+// These are also recomputed in the /load endpoint when the graph is updated via the modeler UI.
+{
+  const costVals = Object.values(graph.costMap).filter((v): v is number => v > 0);
+  const durVals  = Object.values(graph.durationMap).filter((v): v is number => v > 0);
+  maxGraphCost     = costVals.length > 0 ? Math.max(...costVals) : 1;
+  maxGraphDuration = durVals.length  > 0 ? Math.max(...durVals)  : 1;
+}
+
 // --- Config ---
 const MAX_EPISODE_STEPS = Number(process.env.MAX_EPISODE_STEPS || 100);
 const STEP_PENALTY = Number(process.env.STEP_PENALTY || -0.1);
