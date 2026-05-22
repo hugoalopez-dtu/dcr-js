@@ -1,4 +1,4 @@
-import parser, { j2xParser } from "fast-xml-parser";
+import { XMLParser, XMLBuilder } from "fast-xml-parser";
 import type {
   EventLog,
   Event,
@@ -10,9 +10,10 @@ import type {
   Trace,
 } from "./types";
 
+const arrayTags = new Set(["log", "classifier", "trace", "event", "string", "global"]);
+
 export const parserOptions = {
   attributeNamePrefix: "",
-  attrNodeName: "attr", //default is 'false'
   textNodeName: "#text",
   ignoreAttributes: false,
   ignoreNameSpace: false,
@@ -21,33 +22,28 @@ export const parserOptions = {
   parseAttributeValue: true,
   trimValues: true,
   parseTrueNumberOnly: false,
-  arrayMode: true, //"strict"
+  isArray: (tagName: string) => arrayTags.has(tagName),
   stopNodes: ["parse-me-as-string"],
 };
 
 const writingOptions = {
   attributeNamePrefix: "@",
-  //attrNodeName: "@", //default is false
-  //textNodeName: "#text",
   ignoreAttributes: false,
-  //cdataTagName: "__cdata", //default is false
-  //cdataPositionChar: "\\c",
   format: true,
-  arrayMode: false,
   indentBy: "  ",
-  supressEmptyNode: true,
+  suppressEmptyNode: true,
 };
 
 function* parseLogGenerator(
   data: string,
   classifierName: string = "Event Name",
 ) {
-  const logJson = parser.parse(data.toString(), parserOptions);
+  const logJson = new XMLParser(parserOptions).parse(data.toString());
 
   let keys = "";
   for (const i in logJson.log[0].classifier) {
-    if (logJson.log[0].classifier[i].attr.name === classifierName) {
-      keys = logJson.log[0].classifier[i].attr.keys;
+    if (logJson.log[0].classifier[i].name === classifierName) {
+      keys = logJson.log[0].classifier[i].keys;
     }
   }
 
@@ -74,15 +70,15 @@ function* parseLogGenerator(
 
     const xmlTrace = logJson.log[0].trace[i];
     for (const elem of xmlTrace.string) {
-      if (elem.attr.key === "concept:name") {
-        traceId = elem.attr.value;
+      if (elem.key === "concept:name") {
+        traceId = elem.value;
       }
 
       // This was part of original code, but not part of the XES standard,
       // but maybe it is common to use in practice with tools like ProM? It is
       // used for the binary log parsing
-      if (elem.attr.key === "label") {
-        traceLabel = elem.attr.value;
+      if (elem.key === "label") {
+        traceLabel = elem.value;
       }
     }
 
@@ -97,17 +93,17 @@ function* parseLogGenerator(
 
       for (const attr of elem.string) {
         // Original code used role instead of org:role, and so does this
-        if (attr.attr.key === "role") {
-          role = attr.attr.value;
+        if (attr.key === "role") {
+          role = attr.value;
         }
       }
 
       for (const clas of classifiers) {
         try {
           const event = elem.string.find(
-            (newElem: any) => newElem.attr.key === clas,
+            (newElem: any) => newElem.key === clas,
           );
-          nameArr.push(event.attr.value);
+          nameArr.push(event.value);
         } catch {
           throw new Error(
             "Couldn't discern Events with classifiers: " + classifiers,
@@ -215,8 +211,8 @@ export function writeEventLog(log: EventLog<RoleTrace>): string {
     xmlLog.log.trace.push(traceElem);
   }
 
-  const parser = new j2xParser(writingOptions);
-  const xml = parser.parse(xmlLog);
+  const builder = new XMLBuilder(writingOptions);
+  const xml = builder.build(xmlLog);
   return xml;
 }
 
