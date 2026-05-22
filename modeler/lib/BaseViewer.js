@@ -585,8 +585,8 @@ const updateViolations = (arg, modeling, elementReg) => {
   const allViolations = violations && Object.values(violations).flatMap(elem => Object.values(elem).flatMap(elem2 => Object.values(elem2)));
 
   const scale = violations && {
-    min: { value: Math.min(...allViolations), hue: 1 },
-    max: { value: Math.max(...allViolations), hue: 100 }
+    min: { value: 0, hue: 1 },
+    max: { value: allViolations.length ? Math.max(...allViolations) : 0, hue: 100 }
   }
 
   function valueToColor(temp) {
@@ -610,31 +610,31 @@ const updateViolations = (arg, modeling, elementReg) => {
         case "condition": {
           const source = busObject.targetRef.id;
           const target = busObject.sourceRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.conditionsFor[source][target]) : null, inactive: activations ? activations.conditionsFor[source][target] === 0 : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.conditionsFor[source]?.[target] ?? 0) : null, inactive: activations ? (activations.conditionsFor[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "milestone": {
           const source = busObject.targetRef.id;
           const target = busObject.sourceRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.milestonesFor[source][target]) : null, inactive: activations ? activations.milestonesFor[source][target] === 0 : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.milestonesFor[source]?.[target] ?? 0) : null, inactive: activations ? (activations.milestonesFor[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "response": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.responseTo[source][target]) : null, inactive: activations ? activations.responseTo[source][target] === 0 : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.responseTo[source]?.[target] ?? 0) : null, inactive: activations ? (activations.responseTo[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "exclude": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.excludesTo[source][target]) : null, inactive: activations ? activations.excludesTo[source][target] === 0 : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.excludesTo[source]?.[target] ?? 0) : null, inactive: activations ? (activations.excludesTo[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "include": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(0) : null, inactive: activations ? activations.includesTo[source][target] === 0 : null });
+          modeling.updateProperties(element, { violationColour: violations ? valueToColor(0) : null, inactive: activations ? (activations.includesTo[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         default: {

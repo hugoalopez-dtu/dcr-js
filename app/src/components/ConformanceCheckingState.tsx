@@ -216,6 +216,7 @@ const ConformanceCheckingState = ({
 
   const variantsDirectionRef = useRef<HTMLSelectElement>(null);
   const variantsPercentageRef = useRef<HTMLInputElement>(null);
+  const filteredVariantLogRef = useRef<VariantLog<RoleTrace> | null>(null);
 
   const resetAllResults = useCallback(() => {
     setReplayLogResults([]);
@@ -369,6 +370,7 @@ const ConformanceCheckingState = ({
         console.info("Finished variant filtering!");
         console.timeEnd("filter-variants");
         logMemory("After filtering variants");
+        filteredVariantLogRef.current = filteredVariantLog;
 
         console.info("Started replaying log...");
         console.time("replay-log");
@@ -424,50 +426,6 @@ const ConformanceCheckingState = ({
           logMemory("After quantifying violations");
         }
 
-        if (!(hasRole || hasSubProcess)) {
-          console.info("Started precomputing properties...");
-          console.time("precompute-properties");
-          performance.mark("precompute-properties-start");
-
-          const graphPP = graphToGraphPP(graph);
-
-          performance.mark("precompute-properties-end");
-          performance.measure(
-            "precompute-properties",
-            "precompute-properties-start",
-            "precompute-properties-end",
-          );
-          console.info("Started precomputing properties!");
-          console.timeEnd("precompute-properties");
-          logMemory("After precomputing properties");
-
-          console.info("Started aligning log...");
-          console.time("align-log");
-          performance.mark("align-log-start");
-
-          setAlignmentLogResults(
-            filteredVariantLog.variants.map(
-              ({ variantId, trace, count }, index) => ({
-                traceId: variantId,
-                traceName: `Trace Variant #${index + 1}`,
-                count,
-                frequency: count / variantLog.count, // relative to the original log
-                trace,
-                results: alignShowDesc(
-                  trace.map((event) => event.activity),
-                  graphPP,
-                ),
-              }),
-            ),
-          );
-
-          performance.mark("align-log-end");
-          performance.measure("align-log", "align-log-start", "align-log-end");
-          console.info("Finished aligning log!");
-          console.timeEnd("align-log");
-          logMemory("After aligning log");
-        }
-
         // Enable heatmap by default after conformance checking completes
         if (heatmapIsAllowed) {
           setHeatmapMode(true);
@@ -491,6 +449,38 @@ const ConformanceCheckingState = ({
     },
     [hasNesting, hasRole, hasSubProcess, heatmapIsAllowed, resetAllResults],
   );
+
+  const computeAlignment = useCallback(() => {
+    if (!currentDcrGraph || !filteredVariantLogRef.current || !variantLog) return;
+
+    try {
+      console.info("Started precomputing properties...");
+      const graphPP = graphToGraphPP(currentDcrGraph);
+      console.info("Started aligning log...");
+      console.time("align-log");
+
+      const fvl = filteredVariantLogRef.current;
+      setAlignmentLogResults(
+        fvl.variants.map(({ variantId, trace, count }, index) => ({
+          traceId: variantId,
+          traceName: `Trace Variant #${index + 1}`,
+          count,
+          frequency: count / variantLog.count,
+          trace,
+          results: alignShowDesc(
+            trace.map((event) => event.activity),
+            graphPP,
+          ),
+        })),
+      );
+
+      console.info("Finished aligning log!");
+      console.timeEnd("align-log");
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to compute alignments...");
+    }
+  }, [currentDcrGraph, variantLog]);
 
   const aggregatedViolationLogResults = useMemo<
     ConformanceCheckingSummary | undefined
@@ -976,6 +966,10 @@ const ConformanceCheckingState = ({
                 "Roles and subprocesses not supported for alignment...",
               );
               return;
+            }
+
+            if (alignmentLogResults.length === 0 && replayLogResults.length > 0) {
+              computeAlignment();
             }
 
             setAlignmentMode((alignmentMode) => !alignmentMode);

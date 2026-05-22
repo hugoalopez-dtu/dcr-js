@@ -124,20 +124,13 @@ function emptyEventMap(events: Set<Event>): EventMap {
 
 function computeActivations(
   executedEvent: Event,
-  events: Set<Event>,
   rel: EventMap
 ): FuzzyRelation {
   const retval: FuzzyRelation = {};
-  for (const event of events) {
-    retval[event] = {};
-    if (event === executedEvent && rel[event]) {
-      for (const event2 of events) {
-        retval[event][event2] = rel[event].has(event2) ? 1 : 0;
-      }
-    } else {
-      for (const event2 of events) {
-        retval[event][event2] = 0;
-      }
+  if (rel[executedEvent]?.size) {
+    retval[executedEvent] = {};
+    for (const event2 of rel[executedEvent]) {
+      retval[executedEvent][event2] = 1;
     }
   }
   return retval;
@@ -178,7 +171,7 @@ export function quantifyViolations(
       // For all pending events (that are included according to the initial graph), event, at the end of a trace, all relations
       // s.t. otherEvent *-> event, where otherEvent has been executed
       // after event was last executed covers the trace
-      const responseTo = emptyFuzzyRel(allEvents);
+      const responseTo: FuzzyRelation = {};
       let totalViolations = 0;
       for (const event of mutatingIntersect(
         new Set(graph.marking.pending),
@@ -188,24 +181,25 @@ export function quantifyViolations(
           new Set(responseFor[event]),
           exSinceEx[event]
         )) {
-          responseTo[otherEvent][event]++;
+          if (!responseTo[otherEvent]) responseTo[otherEvent] = {};
+          responseTo[otherEvent][event] = (responseTo[otherEvent][event] || 0) + 1;
           totalViolations++;
         }
       }
       return {
         totalViolations,
         violations: {
-          conditionsFor: emptyFuzzyRel(allEvents),
+          conditionsFor: {},
           responseTo,
-          excludesTo: emptyFuzzyRel(allEvents),
-          milestonesFor: emptyFuzzyRel(allEvents),
+          excludesTo: {},
+          milestonesFor: {},
         },
         activations: {
-          conditionsFor: emptyFuzzyRel(allEvents),
-          responseTo: emptyFuzzyRel(allEvents),
-          excludesTo: emptyFuzzyRel(allEvents),
-          milestonesFor: emptyFuzzyRel(allEvents),
-          includesTo: emptyFuzzyRel(allEvents),
+          conditionsFor: {},
+          responseTo: {},
+          excludesTo: {},
+          milestonesFor: {},
+          includesTo: {},
         },
       };
     }
@@ -234,26 +228,18 @@ export function quantifyViolations(
       const localExSinceEx = copyEventMap(exSinceEx);
       let localViolationCount = 0;
       const localViolations: RelationViolations = {
-        conditionsFor: emptyFuzzyRel(allEvents),
-        responseTo: emptyFuzzyRel(allEvents),
-        excludesTo: emptyFuzzyRel(allEvents),
-        milestonesFor: emptyFuzzyRel(allEvents),
+        conditionsFor: {},
+        responseTo: {},
+        excludesTo: {},
+        milestonesFor: {},
       };
 
       const localActivations: RelationActivations = {
-        conditionsFor: computeActivations(
-          event,
-          allEvents,
-          graph.conditionsFor
-        ),
-        responseTo: computeActivations(event, allEvents, graph.responseTo),
-        excludesTo: computeActivations(event, allEvents, graph.excludesTo),
-        milestonesFor: computeActivations(
-          event,
-          allEvents,
-          graph.milestonesFor
-        ),
-        includesTo: computeActivations(event, allEvents, graph.includesTo),
+        conditionsFor: computeActivations(event, graph.conditionsFor),
+        responseTo: computeActivations(event, graph.responseTo),
+        excludesTo: computeActivations(event, graph.excludesTo),
+        milestonesFor: computeActivations(event, graph.milestonesFor),
+        includesTo: computeActivations(event, graph.includesTo),
       };
 
       // Condition violations
@@ -292,7 +278,9 @@ export function quantifyViolations(
           new Set(localExSinceIn[event]),
           excludesFor[event]
         )) {
-          localViolations.excludesTo[otherEvent][event]++;
+          if (!localViolations.excludesTo[otherEvent])
+            localViolations.excludesTo[otherEvent] = {};
+          localViolations.excludesTo[otherEvent][event] = (localViolations.excludesTo[otherEvent][event] || 0) + 1;
           localViolationCount++;
         }
       }
