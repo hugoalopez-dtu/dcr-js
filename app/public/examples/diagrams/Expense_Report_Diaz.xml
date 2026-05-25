@@ -1,22 +1,58 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!--
-  Expense Report — Diaz et al. (DEC2H 2024)
-  Source: https://github.com/JuanK120/dcrGraph — DcrGraph_Ex2.dzn
-  5 events, costs and durations as published in their repository.
-
-  Pareto front to verify (2 objectives: min cost, min duration):
-    ⟨FillOut, Approve, PayOut⟩           cost=50,  dur=10500
-    ⟨FillOut, Withdraw⟩                  cost=710, dur=2700
--->
 <dcrgraph title="Expense Report (Diaz et al. Ex2)">
   <specification>
     <resources>
       <events>
-        <event id="E_fillout">  <cost>10</cost>  <duration>1500</duration> </event>
-        <event id="E_approve">  <cost>25</cost>  <duration>7200</duration> </event>
-        <event id="E_reject">   <cost>30</cost>  <duration>7200</duration> </event>
-        <event id="E_payout">   <cost>15</cost>  <duration>1800</duration> </event>
-        <event id="E_withdraw"> <cost>700</cost> <duration>1200</duration> </event>
+        <event id="E_fillout">
+          <cost>10</cost>
+          <duration>1500</duration>
+          <custom>
+            <visualization>
+              <location xLoc="270" yLoc="80"/>
+              <size width="180" height="80"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="E_approve">
+          <cost>25</cost>
+          <duration>7200</duration>
+          <custom>
+            <visualization>
+              <location xLoc="100" yLoc="260"/>
+              <size width="180" height="80"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="E_reject">
+          <cost>30</cost>
+          <duration>7200</duration>
+          <custom>
+            <visualization>
+              <location xLoc="440" yLoc="260"/>
+              <size width="180" height="80"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="E_payout">
+          <cost>15</cost>
+          <duration>1800</duration>
+          <custom>
+            <visualization>
+              <location xLoc="100" yLoc="440"/>
+              <size width="180" height="80"/>
+            </visualization>
+          </custom>
+        </event>
+        <event id="E_withdraw">
+          <cost>700</cost>
+          <duration>1200</duration>
+          <custom>
+            <visualization>
+              <location xLoc="440" yLoc="440"/>
+              <size width="180" height="80"/>
+            </visualization>
+          </custom>
+        </event>
       </events>
       <subProcesses/>
       <labels>
@@ -42,39 +78,198 @@
     </resources>
     <constraints>
       <conditions>
-        <!-- FillOut must happen before any other activity -->
-        <condition sourceId="E_fillout" targetId="E_approve"/>
-        <condition sourceId="E_fillout" targetId="E_reject"/>
-        <condition sourceId="E_fillout" targetId="E_payout"/>
-        <condition sourceId="E_fillout" targetId="E_withdraw"/>
-        <!-- Approve must happen before PayOut -->
-        <condition sourceId="E_approve" targetId="E_payout"/>
+        <condition sourceId="E_fillout" targetId="E_approve">
+          <custom>
+            <waypoints>
+              <waypoint x="310" y="160"/>
+              <waypoint x="190" y="260"/>
+            </waypoints>
+            <id id="Rel_cond_fo_ap"/>
+          </custom>
+        </condition>
+        <condition sourceId="E_fillout" targetId="E_reject">
+          <custom>
+            <waypoints>
+              <waypoint x="410" y="160"/>
+              <waypoint x="530" y="260"/>
+            </waypoints>
+            <id id="Rel_cond_fo_re"/>
+          </custom>
+        </condition>
+        <condition sourceId="E_fillout" targetId="E_payout">
+          <custom>
+            <waypoints>
+              <waypoint x="280" y="160"/>
+              <waypoint x="190" y="440"/>
+            </waypoints>
+            <id id="Rel_cond_fo_po"/>
+          </custom>
+        </condition>
+        <condition sourceId="E_fillout" targetId="E_withdraw">
+          <custom>
+            <waypoints>
+              <waypoint x="440" y="160"/>
+              <waypoint x="530" y="440"/>
+            </waypoints>
+            <id id="Rel_cond_fo_wi"/>
+          </custom>
+        </condition>
+        <condition sourceId="E_approve" targetId="E_payout">
+          <custom>
+            <waypoints>
+              <waypoint x="190" y="340"/>
+              <waypoint x="190" y="440"/>
+            </waypoints>
+            <id id="Rel_cond_ap_po"/>
+          </custom>
+        </condition>
       </conditions>
       <responses>
-        <!-- Filling out creates obligations for Approve and PayOut -->
-        <response sourceId="E_fillout" targetId="E_approve"/>
-        <response sourceId="E_fillout" targetId="E_payout"/>
-        <!-- Rejecting creates obligation to Approve again -->
-        <response sourceId="E_reject"  targetId="E_approve"/>
+        <response sourceId="E_fillout" targetId="E_approve">
+          <custom>
+            <waypoints>
+              <waypoint x="330" y="160"/>
+              <waypoint x="210" y="260"/>
+            </waypoints>
+            <id id="Rel_resp_fo_ap"/>
+          </custom>
+        </response>
+        <response sourceId="E_fillout" targetId="E_payout">
+          <custom>
+            <waypoints>
+              <waypoint x="300" y="160"/>
+              <waypoint x="170" y="440"/>
+            </waypoints>
+            <id id="Rel_resp_fo_po"/>
+          </custom>
+        </response>
+        <response sourceId="E_reject" targetId="E_approve">
+          <custom>
+            <waypoints>
+              <waypoint x="440" y="300"/>
+              <waypoint x="280" y="300"/>
+            </waypoints>
+            <id id="Rel_resp_re_ap"/>
+          </custom>
+        </response>
       </responses>
+      <coresponces/>
       <excludes>
-        <!-- PayOut ends the process — excludes everything -->
-        <exclude sourceId="E_payout"   targetId="E_fillout"/>
-        <exclude sourceId="E_payout"   targetId="E_approve"/>
-        <exclude sourceId="E_payout"   targetId="E_reject"/>
-        <exclude sourceId="E_payout"   targetId="E_payout"/>
-        <exclude sourceId="E_payout"   targetId="E_withdraw"/>
-        <!-- Withdraw ends the process — excludes everything -->
-        <exclude sourceId="E_withdraw" targetId="E_fillout"/>
-        <exclude sourceId="E_withdraw" targetId="E_approve"/>
-        <exclude sourceId="E_withdraw" targetId="E_reject"/>
-        <exclude sourceId="E_withdraw" targetId="E_payout"/>
-        <exclude sourceId="E_withdraw" targetId="E_withdraw"/>
+        <exclude sourceId="E_payout" targetId="E_fillout">
+          <custom>
+            <waypoints>
+              <waypoint x="150" y="440"/>
+              <waypoint x="150" y="200"/>
+              <waypoint x="270" y="160"/>
+            </waypoints>
+            <id id="Rel_excl_po_fo"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_payout" targetId="E_approve">
+          <custom>
+            <waypoints>
+              <waypoint x="160" y="440"/>
+              <waypoint x="160" y="340"/>
+            </waypoints>
+            <id id="Rel_excl_po_ap"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_payout" targetId="E_reject">
+          <custom>
+            <waypoints>
+              <waypoint x="280" y="480"/>
+              <waypoint x="530" y="340"/>
+            </waypoints>
+            <id id="Rel_excl_po_re"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_payout" targetId="E_payout">
+          <custom>
+            <waypoints>
+              <waypoint x="100" y="480"/>
+              <waypoint x="80" y="500"/>
+              <waypoint x="80" y="460"/>
+              <waypoint x="100" y="460"/>
+            </waypoints>
+            <id id="Rel_excl_po_po"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_payout" targetId="E_withdraw">
+          <custom>
+            <waypoints>
+              <waypoint x="280" y="500"/>
+              <waypoint x="440" y="500"/>
+            </waypoints>
+            <id id="Rel_excl_po_wi"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_withdraw" targetId="E_fillout">
+          <custom>
+            <waypoints>
+              <waypoint x="570" y="440"/>
+              <waypoint x="570" y="200"/>
+              <waypoint x="450" y="160"/>
+            </waypoints>
+            <id id="Rel_excl_wi_fo"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_withdraw" targetId="E_approve">
+          <custom>
+            <waypoints>
+              <waypoint x="440" y="480"/>
+              <waypoint x="280" y="480"/>
+            </waypoints>
+            <id id="Rel_excl_wi_ap"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_withdraw" targetId="E_reject">
+          <custom>
+            <waypoints>
+              <waypoint x="560" y="440"/>
+              <waypoint x="560" y="340"/>
+            </waypoints>
+            <id id="Rel_excl_wi_re"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_withdraw" targetId="E_payout">
+          <custom>
+            <waypoints>
+              <waypoint x="450" y="460"/>
+              <waypoint x="280" y="460"/>
+            </waypoints>
+            <id id="Rel_excl_wi_po"/>
+          </custom>
+        </exclude>
+        <exclude sourceId="E_withdraw" targetId="E_withdraw">
+          <custom>
+            <waypoints>
+              <waypoint x="620" y="480"/>
+              <waypoint x="640" y="500"/>
+              <waypoint x="640" y="460"/>
+              <waypoint x="620" y="460"/>
+            </waypoints>
+            <id id="Rel_excl_wi_wi"/>
+          </custom>
+        </exclude>
       </excludes>
       <includes>
-        <!-- FillOut self-includes so it can be re-executed -->
-        <include sourceId="E_fillout" targetId="E_fillout"/>
+        <include sourceId="E_fillout" targetId="E_fillout">
+          <custom>
+            <waypoints>
+              <waypoint x="270" y="120"/>
+              <waypoint x="250" y="80"/>
+              <waypoint x="290" y="60"/>
+              <waypoint x="360" y="60"/>
+              <waypoint x="400" y="80"/>
+              <waypoint x="450" y="120"/>
+            </waypoints>
+            <id id="Rel_incl_fo_fo"/>
+          </custom>
+        </include>
       </includes>
+      <milestones/>
+      <updates/>
+      <spawns/>
     </constraints>
   </specification>
   <runtime>
