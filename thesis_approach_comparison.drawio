@@ -1,0 +1,282 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="approach-comparison" name="Approach Comparison">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="530" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ══════════════════════════════════════════════════
+             ROW 1 — Doumeni (NSGA-II) Approach
+        ══════════════════════════════════════════════════ -->
+
+        <mxCell id="title1" parent="1"
+          style="text;html=1;align=center;verticalAlign=middle;
+                 strokeColor=none;fillColor=none;
+                 fontSize=14;fontStyle=1;fontColor=#1565C0;"
+          value="Doumeni (NSGA-II) Approach"
+          vertex="1">
+          <mxGeometry x="175" y="28" width="460" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- D1: Historical Event Logs (blue) -->
+        <mxCell id="d1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;Historical Event Logs&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;(Real executions)&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="30" y="73" width="148" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- D2: AgentSimulator (green) -->
+        <mxCell id="d2" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;AgentSimulator&lt;br/&gt;(Process Model)&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;Learned behaviour and&lt;br/&gt;
+                 transition probabilities from logs&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="223" y="73" width="168" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- D3: NSGA-II (yellow) -->
+        <mxCell id="d3" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;NSGA-II&lt;br/&gt;(Multi-objective GA)&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;Evolution of agent&lt;br/&gt;
+                 assignment policies&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="438" y="73" width="168" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- D4: Pareto Set of Policies (purple) -->
+        <mxCell id="d4" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;Pareto Set of Policies&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;Trade-off between&lt;br/&gt;
+                 cost and wait time&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="653" y="73" width="168" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows row 1 -->
+        <mxCell id="ad12" edge="1" source="d1" target="d2" parent="1"
+          style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#333333;
+                 exitX=1;exitY=0.5;exitDX=0;exitDY=0;
+                 entryX=0;entryY=0.5;entryDX=0;entryDY=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad23" edge="1" source="d2" target="d3" parent="1"
+          style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#333333;
+                 exitX=1;exitY=0.5;exitDX=0;exitDY=0;
+                 entryX=0;entryY=0.5;entryDX=0;entryDY=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad34" edge="1" source="d3" target="d4" parent="1"
+          style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#333333;
+                 exitX=1;exitY=0.5;exitDX=0;exitDY=0;
+                 entryX=0;entryY=0.5;entryDX=0;entryDY=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Compliance Banner Row 1 -->
+        <mxCell id="cb1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;
+                 dashed=1;dashPattern=8 4;strokeWidth=1.5;fontSize=11;"
+          value="&lt;b&gt;Compliance: Statistical&lt;/b&gt;
+                 (inherited from simulation fidelity and historical data)"
+          vertex="1">
+          <mxGeometry x="30" y="172" width="791" height="34" as="geometry" />
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════
+             ROW 2 — This Work (DCR + RL)
+        ══════════════════════════════════════════════════ -->
+
+        <mxCell id="title2" parent="1"
+          style="text;html=1;align=center;verticalAlign=middle;
+                 strokeColor=none;fillColor=none;
+                 fontSize=14;fontStyle=1;fontColor=#1565C0;"
+          value="This Work (DCR + RL)"
+          vertex="1">
+          <mxGeometry x="175" y="225" width="460" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- R1: DCR Model (blue) -->
+        <mxCell id="r1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;DCR Model&lt;br/&gt;(Normative Specification)&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;Declarative process&lt;br/&gt;
+                 constraints&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="30" y="270" width="148" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- R2: Shielded Environment (green) -->
+        <mxCell id="r2" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;Shielded Environment&lt;br/&gt;(DCR Semantics)&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;Actions filtered to enforce&lt;br/&gt;
+                 DCR constraints&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="223" y="270" width="168" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- R3: PPO (yellow) -->
+        <mxCell id="r3" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;PPO&lt;br/&gt;(Reinforcement Learning)&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;Learns policies to optimise&lt;br/&gt;
+                 cost–duration trade-off&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="438" y="270" width="168" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- R4: Family of Policies (purple) -->
+        <mxCell id="r4" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=2;
+                 fontSize=11;verticalAlign=middle;spacingTop=4;"
+          value="&lt;b&gt;Family of Policies&lt;br/&gt;(α, β Weights)&lt;/b&gt;&lt;br/&gt;
+                 &lt;font style=&apos;font-size:10px;&apos;&gt;Weight-conditioned&lt;br/&gt;
+                 policy solutions&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="653" y="270" width="168" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows row 2 -->
+        <mxCell id="ar12" edge="1" source="r1" target="r2" parent="1"
+          style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#333333;
+                 exitX=1;exitY=0.5;exitDX=0;exitDY=0;
+                 entryX=0;entryY=0.5;entryDX=0;entryDY=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ar23" edge="1" source="r2" target="r3" parent="1"
+          style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#333333;
+                 exitX=1;exitY=0.5;exitDX=0;exitDY=0;
+                 entryX=0;entryY=0.5;entryDX=0;entryDY=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ar34" edge="1" source="r3" target="r4" parent="1"
+          style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#333333;
+                 exitX=1;exitY=0.5;exitDX=0;exitDY=0;
+                 entryX=0;entryY=0.5;entryDX=0;entryDY=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Compliance Banner Row 2 -->
+        <mxCell id="cb2" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;
+                 dashed=1;dashPattern=8 4;strokeWidth=1.5;fontSize=11;"
+          value="&lt;b&gt;Compliance: By construction&lt;/b&gt;
+                 (guaranteed by DCR shielding at all times)"
+          vertex="1">
+          <mxGeometry x="30" y="368" width="791" height="34" as="geometry" />
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════════
+             LEGEND
+        ══════════════════════════════════════════════════ -->
+
+        <mxCell id="legbox" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#ffffff;strokeColor=#AAAAAA;strokeWidth=1;"
+          value=""
+          vertex="1">
+          <mxGeometry x="30" y="422" width="791" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- Input / Specification (blue) -->
+        <mxCell id="lc1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;"
+          value="" vertex="1">
+          <mxGeometry x="48" y="435" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="lt1" parent="1"
+          style="text;html=1;fontSize=10;align=left;verticalAlign=middle;
+                 strokeColor=none;fillColor=none;"
+          value="Input / Specification"
+          vertex="1">
+          <mxGeometry x="70" y="435" width="115" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Process Representation (green) -->
+        <mxCell id="lc2" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#D5E8D4;strokeColor=#82B366;strokeWidth=1.5;"
+          value="" vertex="1">
+          <mxGeometry x="210" y="435" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="lt2" parent="1"
+          style="text;html=1;fontSize=10;align=left;verticalAlign=middle;
+                 strokeColor=none;fillColor=none;"
+          value="Process Representation"
+          vertex="1">
+          <mxGeometry x="232" y="435" width="130" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Optimisation Method (yellow) -->
+        <mxCell id="lc3" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=1.5;"
+          value="" vertex="1">
+          <mxGeometry x="387" y="435" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="lt3" parent="1"
+          style="text;html=1;fontSize=10;align=left;verticalAlign=middle;
+                 strokeColor=none;fillColor=none;"
+          value="Optimisation Method"
+          vertex="1">
+          <mxGeometry x="409" y="435" width="125" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Output (purple) -->
+        <mxCell id="lc4" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#E1D5E7;strokeColor=#9673A6;strokeWidth=1.5;"
+          value="" vertex="1">
+          <mxGeometry x="556" y="435" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="lt4" parent="1"
+          style="text;html=1;fontSize=10;align=left;verticalAlign=middle;
+                 strokeColor=none;fillColor=none;"
+          value="Output"
+          vertex="1">
+          <mxGeometry x="578" y="435" width="60" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- Compliance Mechanism (dashed grey) -->
+        <mxCell id="lc5" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;
+                 fillColor=#f5f5f5;strokeColor=#666666;
+                 dashed=1;dashPattern=8 4;strokeWidth=1.5;"
+          value="" vertex="1">
+          <mxGeometry x="660" y="435" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="lt5" parent="1"
+          style="text;html=1;fontSize=10;align=left;verticalAlign=middle;
+                 strokeColor=none;fillColor=none;"
+          value="Compliance Mechanism"
+          vertex="1">
+          <mxGeometry x="682" y="435" width="130" height="16" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
