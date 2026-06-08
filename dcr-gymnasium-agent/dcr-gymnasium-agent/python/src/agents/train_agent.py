@@ -71,6 +71,8 @@ class StepDebugCallback(BaseCallback):
                 "event_duration",
                 "episode_cost",
                 "episode_duration",
+                # Ablation: DCR compliance regardless of shield state
+                "action_compliant",
                 "message",
             ],
         )
@@ -146,6 +148,7 @@ class StepDebugCallback(BaseCallback):
             "event_duration":   info.get("event_duration", ""),
             "episode_cost":     info.get("episode_cost", ""),
             "episode_duration": info.get("episode_duration", ""),
+            "action_compliant": engine_result.get("actionCompliant", True),
             "message": engine_result.get("msg", ""),
         }
         self._writer.writerow(row)

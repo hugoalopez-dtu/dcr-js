@@ -62,6 +62,7 @@ CSV_FIELDNAMES = [
     "accepting", "goal_reached", "max_step_reached",
     "illegal_traces_count", "episode_steps", "illegal_traces_ratio",
     "event_cost", "event_duration", "episode_cost", "episode_duration",
+    "action_compliant",
     "message",
 ]
 
@@ -258,6 +259,7 @@ def run_shield_only(n_episodes: int, seed: int):
                             "event_duration":       result.get("eventDuration", ""),
                             "episode_cost":         result.get("episodeCost", ""),
                             "episode_duration":     result.get("episodeDuration", ""),
+                            "action_compliant":     True,  # shield_only always picks valid actions
                             "message":              result.get("msg", ""),
                         })
                         if done:

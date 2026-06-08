@@ -234,7 +234,7 @@ class RLDCREnvironment {
 
         const accepting = isAcceptingS(this.graph, this.graph);
         // Reward: 100 if completed, -1 for each step taken (to optimize length)
-        const reward = accepting ? 100 : -1; 
+        const reward = accepting ? 100 : -1;
         const done = accepting || this.currentStep >= this.maxSteps;
 
         return {
@@ -242,8 +242,10 @@ class RLDCREnvironment {
             state: this.getState(),
             reward,
             done,
-            msg: `Compliant move: ${action}`,
-            info: { compliant: true, step: this.currentStep },
+            // isCompliant always reflects DCR validity, regardless of SHIELD_DISABLED.
+            // Needed to track illegal action rate in rl_only ablation logs.
+            msg: isCompliant ? `Compliant move: ${action}` : `Shield disabled — illegal move executed: ${action}`,
+            info: { compliant: isCompliant, step: this.currentStep },
         };
     }
 }

@@ -235,6 +235,7 @@ app.post("/action", (req, res) => {
       pendingAfter: countPendingIncluded(result.state),
       illegalTracesCount,
       episodeSteps,
+      actionCompliant: result.info?.compliant ?? true,
     };
 
     lastResult = { ...augmentedResult, chosenRole };
