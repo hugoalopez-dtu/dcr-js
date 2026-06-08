@@ -1,4 +1,4 @@
-import {DCRGraph, type Event, EventMap} from "./types";
+import {type DCRGraph, type Event, type EventMap} from "./types";
 import mentionPrompt from "./prompts/mentions";
 import relationsPrompt from "./prompts/relations";
 

@@ -72,6 +72,7 @@ export {
   type Nestings,
   type RelationViolations,
   type VariantLog,
+    ExtractionResult, ProcessDescription, Mention, Entity, Relation, ExtractionConfig,
   isSubProcess,
   execute,
   isAccepting,
