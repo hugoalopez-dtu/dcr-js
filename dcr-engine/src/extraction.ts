@@ -77,7 +77,7 @@ export default async function extractGraph(
                 break;
             }
             case "condition": {
-                addToEventMap(graph.conditionsFor, head.text, tail.text);
+                addToEventMap(graph.conditionsFor, tail.text, head.text);
                 break;
             }
             case "response": {
