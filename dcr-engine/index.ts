@@ -57,7 +57,7 @@ import { StringEventStreamParser } from "./src/parsers/StringEventStreamParser";
 import { RegexEventStreamParser } from "./src/parsers/RegexEventStreamParser";
 import { DOMEventStreamParser } from "./src/parsers/DOMEventStreamParser";
 import { SAXParser } from "./src/parsers/SAXParser";
-import extractGraph, {ExtractionResult, ProcessDescription, Mention, Entity, Relation, ExtractionConfig} from "./src/extraction";
+import extractGraph, {type ExtractionResult, type ProcessDescription, type Mention, type Entity, type Relation, type ExtractionConfig} from "./src/extraction";
 
 export {
   type DCRGraph,
