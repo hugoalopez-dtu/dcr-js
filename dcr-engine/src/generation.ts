@@ -217,7 +217,7 @@ class RLDCREnvironment {
         const shieldDisabled = process.env.SHIELD_DISABLED === "1";
 
         if (!isCompliant && !shieldDisabled) {
-            // OPTION B: Penalty for non-compliant action. State does NOT change.
+            // Safe RL: block action — state does NOT change, agent gets -10.
             return {
                 action,
                 state: this.getState(),
@@ -228,22 +228,23 @@ class RLDCREnvironment {
             };
         }
 
-        // Execute transition (compliant, or ablation: shield disabled).
+        // Execute transition.
+        // Safe RL:  only reached when isCompliant=true.
+        // RL-only:  reached for any action; non-compliant actions execute and corrupt state.
         executeS(action, this.graph);
         this.currentStep++;
 
         const accepting = isAcceptingS(this.graph, this.graph);
-        // Reward: 100 if completed, -1 for each step taken (to optimize length)
-        const reward = accepting ? 100 : -1;
         const done = accepting || this.currentStep >= this.maxSteps;
+        // Non-compliant actions still receive -10 in RL-only: same learning signal as Safe RL,
+        // but the state has already advanced — the agent can reach accepting states via illegal paths.
+        const reward = !isCompliant ? -10 : (accepting ? 100 : -1);
 
         return {
             action,
             state: this.getState(),
             reward,
             done,
-            // isCompliant always reflects DCR validity, regardless of SHIELD_DISABLED.
-            // Needed to track illegal action rate in rl_only ablation logs.
             msg: isCompliant ? `Compliant move: ${action}` : `Shield disabled — illegal move executed: ${action}`,
             info: { compliant: isCompliant, step: this.currentStep },
         };
