@@ -214,20 +214,21 @@ class RLDCREnvironment {
     } {
         const validActions = this.getValidActions();
         const isCompliant = validActions.includes(action);
+        const shieldDisabled = process.env.SHIELD_DISABLED === "1";
 
-        if (!isCompliant) {
+        if (!isCompliant && !shieldDisabled) {
             // OPTION B: Penalty for non-compliant action. State does NOT change.
             return {
                 action,
                 state: this.getState(),
-                reward: -10, 
+                reward: -10,
                 done: false,
                 msg: `Non-compliant move attempted: ${action}`,
                 info: { compliant: false, step: this.currentStep },
             };
         }
 
-        // Action is compliant: Execute transition
+        // Execute transition (compliant, or ablation: shield disabled).
         executeS(action, this.graph);
         this.currentStep++;
 
