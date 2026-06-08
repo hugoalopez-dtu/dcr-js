@@ -57,6 +57,7 @@ import { StringEventStreamParser } from "./src/parsers/StringEventStreamParser";
 import { RegexEventStreamParser } from "./src/parsers/RegexEventStreamParser";
 import { DOMEventStreamParser } from "./src/parsers/DOMEventStreamParser";
 import { SAXParser } from "./src/parsers/SAXParser";
+import extractGraph, {ExtractionResult, ProcessDescription, Mention, Entity, Relation, ExtractionConfig} from "./src/extraction";
 
 export {
   type DCRGraph,
@@ -82,6 +83,7 @@ export {
   parseBinaryLog,
   isAcceptingS,
   executeS,
+  extractGraph,
   isEnabledS,
   replayTraceS,
   writeEventLog,
