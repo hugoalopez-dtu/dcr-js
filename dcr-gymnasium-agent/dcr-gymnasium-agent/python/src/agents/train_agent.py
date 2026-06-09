@@ -246,7 +246,7 @@ def train(
         "MlpPolicy",
         vec_env,
         verbose=1,
-        tensorboard_log=str(tb_log_dir),
+        tensorboard_log=str(tb_log_dir) if tb_log_dir and str(tb_log_dir) else None,
         ent_coef=ent_coef,
         seed=seed,
     )

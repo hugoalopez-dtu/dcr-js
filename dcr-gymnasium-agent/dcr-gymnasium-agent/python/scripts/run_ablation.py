@@ -145,7 +145,7 @@ def run_ppo_condition(condition: str, cost_w: float, dur_w: float,
                 "--steps",      str(total_steps),
                 "--node-url",   NODE_URL,
                 "--out-dir",    str(MODELS_DIR),
-                "--tb-log-dir", str(MODELS_DIR / "tb"),
+                "--tb-log-dir", "",
                 "--ent-coef",   "0.1",
                 "--seed",       str(seed),
             ]
