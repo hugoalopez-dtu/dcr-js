@@ -288,15 +288,15 @@ var RLDCREnvironment = class {
     executeS(action, this.graph);
     this.currentStep++;
     const accepting = isAcceptingS(this.graph, this.graph);
-    const reward = accepting ? 100 : -1;
     const done = accepting || this.currentStep >= this.maxSteps;
+    const reward = !isCompliant ? -10 : accepting ? 100 : -1;
     return {
       action,
       state: this.getState(),
       reward,
       done,
-      msg: `Compliant move: ${action}`,
-      info: { compliant: true, step: this.currentStep }
+      msg: isCompliant ? `Compliant move: ${action}` : `Shield disabled \u2014 illegal move executed: ${action}`,
+      info: { compliant: isCompliant, step: this.currentStep }
     };
   }
 };
@@ -525,7 +525,8 @@ app.post("/action", (req, res) => {
       pendingBefore,
       pendingAfter: countPendingIncluded(result.state),
       illegalTracesCount,
-      episodeSteps
+      episodeSteps,
+      actionCompliant: result.info?.compliant ?? true
     };
     lastResult = { ...augmentedResult, chosenRole };
     const pairs2 = getEventRolePairs();
