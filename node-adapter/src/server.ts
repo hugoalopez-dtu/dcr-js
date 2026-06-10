@@ -188,9 +188,15 @@ app.post("/action", (req, res) => {
 
     const isLegal = result.reward !== -10;
 
-    // Accumulate episode totals only for legal actions
-    if (isLegal && eventCost !== undefined)     episodeCost     += eventCost;
-    if (isLegal && eventDuration !== undefined) episodeDuration += eventDuration;
+    // In RL-only mode (shield disabled), illegal actions still execute and
+    // change the DCR state, so their cost/duration must be counted too.
+    // In Safe RL, illegal actions are blocked (state unchanged) and must not.
+    const shieldDisabled = process.env.SHIELD_DISABLED === "1";
+    const actionExecuted = isLegal || shieldDisabled;
+
+    // Accumulate episode totals only for actions that actually executed
+    if (actionExecuted && eventCost !== undefined)     episodeCost     += eventCost;
+    if (actionExecuted && eventDuration !== undefined) episodeDuration += eventDuration;
 
     rewardInput.action = action;
     const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } =

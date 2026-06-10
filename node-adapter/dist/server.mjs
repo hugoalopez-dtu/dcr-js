@@ -491,9 +491,11 @@ app.post("/action", (req, res) => {
     const eventCost = mult ? baseCost * mult.costMultiplier : graph.costMap?.[action];
     const eventDuration = mult ? baseDuration * mult.durationMultiplier : graph.durationMap?.[action];
     const isLegal = result.reward !== -10;
-    if (isLegal && eventCost !== void 0)
+    const shieldDisabled = process.env.SHIELD_DISABLED === "1";
+    const actionExecuted = isLegal || shieldDisabled;
+    if (actionExecuted && eventCost !== void 0)
       episodeCost += eventCost;
-    if (isLegal && eventDuration !== void 0)
+    if (actionExecuted && eventDuration !== void 0)
       episodeDuration += eventDuration;
     rewardInput.action = action;
     const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } = computeStepReward(rewardInput, pendingBefore, executedInEpisode, firstResolvedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT, maxGraphCost, maxGraphDuration);
