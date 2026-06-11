@@ -5,7 +5,7 @@
 #BSUB -q hpc
 #BSUB -W 24:00
 #BSUB -n 4
-#BSUB -R "rusage[mem=4GB]"
+#BSUB -R "rusage[mem=8GB]"
 #BSUB -o gengap_%J.out
 #BSUB -e gengap_%J.err
 

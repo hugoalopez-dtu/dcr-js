@@ -134,6 +134,12 @@ def run_config(alpha, beta):
     GAP_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
+    calib_csv = GAP_DIR / f"eval_{exp_id}_calib.csv"
+    test_csv = GAP_DIR / f"eval_{exp_id}_test.csv"
+    if calib_csv.exists() and test_csv.exists():
+        print(f"\n=== Config alpha={alpha} beta={beta}: already done, skipping ===")
+        return
+
     print(f"\n=== Config alpha={alpha} beta={beta} ===")
 
     # --- 1. Train on calibration environment ---
