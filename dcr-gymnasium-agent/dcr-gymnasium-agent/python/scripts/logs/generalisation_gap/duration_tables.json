@@ -1,0 +1,62 @@
+{
+  "calibration": {
+    "mean": {
+      "AML check": 251.79204842918705,
+      "Applicant completes form": 490.4882988657971,
+      "Appraise property": 240.0345588594289,
+      "Approve application": 15.441988950276244,
+      "Approve loan offer": 183.35630998559242,
+      "Assess loan risk": 178.49783810833299,
+      "Cancel application": 13.364312267657992,
+      "Check application form completeness": 54.51584845957712,
+      "Check credit history": 83.158724843186,
+      "Design loan offer": 18.791329698344295,
+      "Reject application": 28.428571428571427,
+      "Return application back to applicant": 15.695652173913043
+    },
+    "median": {
+      "AML check": 31.08464662436667,
+      "Applicant completes form": 60.0,
+      "Appraise property": 33.99473022679167,
+      "Approve application": 5.0,
+      "Approve loan offer": 20.0,
+      "Assess loan risk": 40.0,
+      "Cancel application": 5.0,
+      "Check application form completeness": 29.394566978666667,
+      "Check credit history": 46.67220778100834,
+      "Design loan offer": 15.648085039175001,
+      "Reject application": 10.0,
+      "Return application back to applicant": 20.0
+    }
+  },
+  "test": {
+    "mean": {
+      "AML check": 284.83250630544995,
+      "Applicant completes form": 437.6535303823529,
+      "Appraise property": 259.5465074854071,
+      "Approve application": 13.6,
+      "Approve loan offer": 186.91431996975294,
+      "Assess loan risk": 163.04112146274977,
+      "Cancel application": 14.310344827586206,
+      "Check application form completeness": 54.224523542447294,
+      "Check credit history": 86.23503939101509,
+      "Design loan offer": 21.127656517679164,
+      "Reject application": 29.782608695652176,
+      "Return application back to applicant": 14.411764705882353
+    },
+    "median": {
+      "AML check": 32.745998882775,
+      "Applicant completes form": 60.0,
+      "Appraise property": 32.53323279289167,
+      "Approve application": 5.0,
+      "Approve loan offer": 20.0,
+      "Assess loan risk": 40.0,
+      "Cancel application": 5.0,
+      "Check application form completeness": 25.404357266625,
+      "Check credit history": 56.15078535438333,
+      "Design loan offer": 18.791810969958334,
+      "Reject application": 25.0,
+      "Return application back to applicant": 5.0
+    }
+  }
+}

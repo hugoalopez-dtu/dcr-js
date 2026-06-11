@@ -1,0 +1,53 @@
+{
+  "nTraces": 1000,
+  "pctZeroIllegal": 93.6,
+  "pctAccepting": 100,
+  "offendingActivityPositionPairs": [
+    {
+      "activity": "Design loan offer",
+      "position": 8,
+      "count": 52
+    },
+    {
+      "activity": "Approve loan offer",
+      "position": 9,
+      "count": 52
+    },
+    {
+      "activity": "Cancel application",
+      "position": 10,
+      "count": 30
+    },
+    {
+      "activity": "Approve application",
+      "position": 10,
+      "count": 22
+    },
+    {
+      "activity": "Design loan offer",
+      "position": 11,
+      "count": 12
+    },
+    {
+      "activity": "Approve loan offer",
+      "position": 12,
+      "count": 12
+    },
+    {
+      "activity": "Cancel application",
+      "position": 13,
+      "count": 10
+    },
+    {
+      "activity": "Approve application",
+      "position": 13,
+      "count": 2
+    }
+  ],
+  "cancelApplicationPositionDistribution": {
+    "7": 287,
+    "10": 30,
+    "13": 10
+  },
+  "cancelApplicationOccurrencesAtPosition0": 0
+}
