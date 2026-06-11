@@ -204,9 +204,22 @@ def main():
         "Run generate_generalisation_xmls.py first to produce calibration/test XML variants."
     )
     TENSORBOARD_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Process only the first not-yet-done config and exit. This keeps each
+    # invocation short (~1 config, ~12-15 min) so it stays under whatever
+    # external runtime limit is killing longer jobs (see submit_gengap.sh,
+    # which resubmits itself until all configs are done).
     for alpha, beta in PARETO_WEIGHTS:
+        tag = weight_tag(alpha, beta)
+        exp_id = f"GenGap_s{SEED}_{tag}"
+        calib_csv = GAP_DIR / f"eval_{exp_id}_calib.csv"
+        test_csv = GAP_DIR / f"eval_{exp_id}_test.csv"
+        if calib_csv.exists() and test_csv.exists():
+            continue
         run_config(alpha, beta)
-        time.sleep(2)
+        return
+
+    print("[ALL DONE] All configs already evaluated.")
 
 
 if __name__ == "__main__":
