@@ -50,6 +50,13 @@ PARETO_WEIGHTS = [
     (0.5, 2.0),
 ]
 
+# DCR_CONFIGS: comma-separated indices into PARETO_WEIGHTS, for smoke-testing
+# a subset before launching the full sweep (e.g. DCR_CONFIGS=0).
+_configs_env = os.environ.get("DCR_CONFIGS", "").strip()
+if _configs_env:
+    _idxs = [int(i) for i in _configs_env.split(",") if i.strip() != ""]
+    PARETO_WEIGHTS = [PARETO_WEIGHTS[i] for i in _idxs]
+
 
 def wait_for_adapter(url, timeout=30):
     deadline = time.time() + timeout
