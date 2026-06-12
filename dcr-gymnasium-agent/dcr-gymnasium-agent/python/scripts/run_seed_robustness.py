@@ -66,16 +66,17 @@ def free_adapter_port():
     time.sleep(1)
 
 
-def wait_for_adapter(timeout=60):
-    for _ in range(timeout):
+def wait_for_adapter(url, timeout=30):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
         try:
-            r = requests.get(f"{NODE_URL}/health", timeout=1)
-            if r.status_code == 200:
-                return
-        except requests.exceptions.RequestException:
+            r = requests.post(f"{url}/reset", timeout=2)
+            if r.ok:
+                return True
+        except Exception:
             pass
-        time.sleep(1)
-    raise RuntimeError("node-adapter did not become healthy in time")
+        time.sleep(0.5)
+    return False
 
 
 def start_adapter(xml_path, alpha, beta, run_log: Path):
@@ -92,7 +93,11 @@ def start_adapter(xml_path, alpha, beta, run_log: Path):
         ["node", "dist/server.mjs"],
         cwd=str(NODE_ADAPTER_DIR), env=env, stdout=lf, stderr=subprocess.STDOUT,
     )
-    wait_for_adapter()
+    if not wait_for_adapter(NODE_URL):
+        proc.kill()
+        proc.wait()
+        lf.close()
+        raise RuntimeError("node-adapter did not become healthy in time")
     return proc, lf
 
 
