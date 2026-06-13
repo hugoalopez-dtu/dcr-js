@@ -11,7 +11,7 @@
 ### wall-clock time caused a resubmit storm).
 #BSUB -J seedrob
 #BSUB -q hpc
-#BSUB -W 24:00
+#BSUB -W 1:00
 #BSUB -n 4
 #BSUB -R "rusage[mem=8GB] span[hosts=1]"
 #BSUB -o seedrob_%J.out
