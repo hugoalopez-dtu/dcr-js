@@ -144,10 +144,18 @@ def run_config(seed, alpha, beta):
     print(f"[DONE] {exp_id}")
 
 
+MIN_COMPLETE_LINES = 90000  # full run = TOTAL_STEPS rows + header, ~100353 for 100k steps
+
+
 def is_done(seed, alpha, beta):
     tag = weight_tag(alpha, beta)
     exp_id = f"Seed_s{seed}_{tag}"
-    return any(TRAIN_LOGS_DIR.glob(f"train_trace_exp_{exp_id}_*.csv"))
+    for f in TRAIN_LOGS_DIR.glob(f"train_trace_exp_{exp_id}_*.csv"):
+        with open(f) as fh:
+            n_lines = sum(1 for _ in fh)
+        if n_lines >= MIN_COMPLETE_LINES:
+            return True
+    return False
 
 
 def main():
