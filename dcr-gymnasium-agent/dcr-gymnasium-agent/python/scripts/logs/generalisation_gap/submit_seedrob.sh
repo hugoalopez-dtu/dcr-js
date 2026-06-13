@@ -38,7 +38,9 @@ for seed in $SEEDS; do
   done
 done
 
-if [ "$ALL_DONE" -eq 0 ]; then
+OTHER_JOBS=$(bjobs -J seedrob -noheader 2>/dev/null | awk -v me="$LSB_JOBID" '$1 != me' | wc -l)
+
+if [ "$ALL_DONE" -eq 0 ] && [ "$OTHER_JOBS" -eq 0 ]; then
   bsub < "$GAP_DIR/submit_seedrob.sh"
 fi
 
