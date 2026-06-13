@@ -17,7 +17,8 @@
 #BSUB -o seedrob_%J.out
 #BSUB -e seedrob_%J.err
 
-set -e
+set -ex
+export PYTHONUNBUFFERED=1
 cd ~/dcr-js
 source ~/.nvm/nvm.sh && nvm use 20
 cd node-adapter && npm run bundle && cd ..
@@ -25,3 +26,4 @@ cd node-adapter && npm run bundle && cd ..
 cd dcr-gymnasium-agent/dcr-gymnasium-agent/python
 source .venv/bin/activate
 python scripts/run_seed_robustness.py
+echo "[submit_seedrob.sh] python exited with code $?"
