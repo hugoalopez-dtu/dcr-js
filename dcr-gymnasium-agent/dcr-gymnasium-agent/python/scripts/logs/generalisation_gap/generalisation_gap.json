@@ -1,0 +1,212 @@
+{
+  "alpha=0.0,beta=0.0": {
+    "calibration": {
+      "mean_cost": 2307.9000000000065,
+      "mean_duration": 914.5,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 2307.8999999999996,
+          "duration": 914.5
+        }
+      ]
+    },
+    "test": {
+      "mean_cost": 2307.9000000000065,
+      "mean_duration": 987.5,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 2307.8999999999996,
+          "duration": 987.5
+        }
+      ]
+    },
+    "gap": {
+      "mean_cost": 0.0,
+      "mean_duration": 0.07982504100601422,
+      "acceptance_rate": 0.0,
+      "n_pareto_points": 0.0
+    }
+  },
+  "alpha=1.0,beta=0.0": {
+    "calibration": {
+      "mean_cost": 1106.7000000000053,
+      "mean_duration": 1648.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 1106.6999999999998,
+          "duration": 1648.0
+        }
+      ]
+    },
+    "test": {
+      "mean_cost": 1106.7000000000053,
+      "mean_duration": 1724.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 1106.6999999999998,
+          "duration": 1724.0
+        }
+      ]
+    },
+    "gap": {
+      "mean_cost": 0.0,
+      "mean_duration": 0.04611650485436893,
+      "acceptance_rate": 0.0,
+      "n_pareto_points": 0.0
+    }
+  },
+  "alpha=0.0,beta=1.0": {
+    "calibration": {
+      "mean_cost": 3162.0,
+      "mean_duration": 412.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 3162.0,
+          "duration": 412.0
+        }
+      ]
+    },
+    "test": {
+      "mean_cost": 3162.0,
+      "mean_duration": 431.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 3162.0,
+          "duration": 431.0
+        }
+      ]
+    },
+    "gap": {
+      "mean_cost": 0.0,
+      "mean_duration": 0.04611650485436893,
+      "acceptance_rate": 0.0,
+      "n_pareto_points": 0.0
+    }
+  },
+  "alpha=0.5,beta=0.5": {
+    "calibration": {
+      "mean_cost": 1133.9999999999998,
+      "mean_duration": 1624.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 1133.9999999999998,
+          "duration": 1624.0
+        }
+      ]
+    },
+    "test": {
+      "mean_cost": 1133.9999999999998,
+      "mean_duration": 1703.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 1133.9999999999998,
+          "duration": 1703.0
+        }
+      ]
+    },
+    "gap": {
+      "mean_cost": 0.0,
+      "mean_duration": 0.04864532019704434,
+      "acceptance_rate": 0.0,
+      "n_pareto_points": 0.0
+    }
+  },
+  "alpha=2.0,beta=0.5": {
+    "calibration": {
+      "mean_cost": 1106.7000000000053,
+      "mean_duration": 1648.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 1106.6999999999998,
+          "duration": 1648.0
+        }
+      ]
+    },
+    "test": {
+      "mean_cost": 1106.7000000000053,
+      "mean_duration": 1724.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 1106.6999999999998,
+          "duration": 1724.0
+        }
+      ]
+    },
+    "gap": {
+      "mean_cost": 0.0,
+      "mean_duration": 0.04611650485436893,
+      "acceptance_rate": 0.0,
+      "n_pareto_points": 0.0
+    }
+  },
+  "alpha=0.5,beta=2.0": {
+    "calibration": {
+      "mean_cost": 3162.0,
+      "mean_duration": 412.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 3162.0,
+          "duration": 412.0
+        }
+      ]
+    },
+    "test": {
+      "mean_cost": 3162.0,
+      "mean_duration": 431.0,
+      "acceptance_rate": 1.0,
+      "pareto_points": [
+        {
+          "cost": 3162.0,
+          "duration": 431.0
+        }
+      ]
+    },
+    "gap": {
+      "mean_cost": 0.0,
+      "mean_duration": 0.04611650485436893,
+      "acceptance_rate": 0.0,
+      "n_pareto_points": 0.0
+    }
+  },
+  "pooled": {
+    "calibration_pareto_points": [
+      {
+        "cost": 1106.6999999999998,
+        "duration": 1648.0
+      },
+      {
+        "cost": 1133.9999999999998,
+        "duration": 1624.0
+      },
+      {
+        "cost": 3162.0,
+        "duration": 412.0
+      }
+    ],
+    "test_pareto_points": [
+      {
+        "cost": 1106.6999999999998,
+        "duration": 1724.0
+      },
+      {
+        "cost": 1133.9999999999998,
+        "duration": 1703.0
+      },
+      {
+        "cost": 3162.0,
+        "duration": 431.0
+      }
+    ]
+  }
+}
