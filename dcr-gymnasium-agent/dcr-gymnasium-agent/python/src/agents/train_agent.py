@@ -33,6 +33,7 @@ class StepDebugCallback(BaseCallback):
         self.step_in_episode = 0
         self._episode_reward_sum = 0.0
         self._ep_illegal_count = 0
+        self._ep_budget_block_count = 0
         self._csv_file = None
         self._writer = None
 
@@ -74,6 +75,9 @@ class StepDebugCallback(BaseCallback):
                 # Ablation: DCR compliance regardless of shield state
                 "action_compliant",
                 "message",
+                "intercepted_reason",
+                "expert_budget_remaining",
+                "expert_budget_initial",
             ],
         )
         self._writer.writeheader()
@@ -110,8 +114,12 @@ class StepDebugCallback(BaseCallback):
         self._episode_reward_sum += reward
 
         base_mapped = engine_result.get("baseMapped", None)
-        if base_mapped == -10:
+        intercepted_reason = engine_result.get("interceptedReason", "")
+        # dcr_illegal and budget_block both have baseMapped==-10; keep the two counts separate.
+        if base_mapped == -10 and intercepted_reason != "budget_block":
             self._ep_illegal_count += 1
+        if intercepted_reason == "budget_block":
+            self._ep_budget_block_count += 1
         
         # Get illegal traces count and episode steps from server
         illegal_traces_count = engine_result.get("illegalTracesCount", 0)
@@ -148,8 +156,11 @@ class StepDebugCallback(BaseCallback):
             "event_duration":   info.get("event_duration", ""),
             "episode_cost":     info.get("episode_cost", ""),
             "episode_duration": info.get("episode_duration", ""),
-            "action_compliant": engine_result.get("actionCompliant", True),
-            "message": engine_result.get("msg", ""),
+            "action_compliant":        engine_result.get("actionCompliant", True),
+            "message":                 engine_result.get("msg", ""),
+            "intercepted_reason":      intercepted_reason,
+            "expert_budget_remaining": engine_result.get("expertBudgetRemaining", ""),
+            "expert_budget_initial":   engine_result.get("expertBudgetInitial", ""),
         }
         self._writer.writerow(row)
 
@@ -171,6 +182,7 @@ class StepDebugCallback(BaseCallback):
             )
             self.logger.record("train/ep_rew_sum", self._episode_reward_sum)
             self.logger.record("train/illegal_traces_count", self._ep_illegal_count)
+            self.logger.record("train/budget_block_count", self._ep_budget_block_count)
             self.logger.record("train/illegal_traces_ratio", illegal_traces_ratio)
             self.logger.record("train/episode_steps", episode_steps)
 
@@ -188,6 +200,7 @@ class StepDebugCallback(BaseCallback):
             self.step_in_episode = 0
             self._episode_reward_sum = 0.0
             self._ep_illegal_count = 0
+            self._ep_budget_block_count = 0
 
         return True
 

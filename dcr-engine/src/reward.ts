@@ -72,8 +72,8 @@ export const computeStepReward = (
     const pendingNow  = new Set(result.state.pending  || []);
     // Find events that WERE pending before but are no longer pending+included.
     // Count only those that have never been resolved before in this episode.
-    const pendingBeforeSet = new Set(result.stateBefore?.pending || []);
-    const includedBeforeSet = new Set(result.stateBefore?.included || []);
+    const pendingBeforeSet = new Set<string>(result.stateBefore?.pending || []);
+    const includedBeforeSet = new Set<string>(result.stateBefore?.included || []);
     for (const ev of pendingBeforeSet) {
       if (includedBeforeSet.has(ev) && !(pendingNow.has(ev) && includedNow.has(ev))) {
         if (!firstResolvedInEpisode.has(ev)) {

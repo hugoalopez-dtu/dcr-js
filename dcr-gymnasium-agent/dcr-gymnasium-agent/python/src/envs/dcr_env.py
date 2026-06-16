@@ -49,8 +49,12 @@ class DCRGymEnv(gym.Env):
 
         n_events = len(self.event_list)
         n_actions = len(self.event_role_pairs)
-        obs_dim = n_events * 3  # observation stays per-event: included/executed/pending
-        self.observation_space = spaces.Box(low=0, high=1, shape=(obs_dim,), dtype=np.int8)
+        # Budget dim appended only when k is finite; k=None → 36 dims, byte-identical to today.
+        self.expert_budget_k = init.get("expertBudgetK")         # None when EXPERT_BUDGET_K unset
+        self.expert_budget_remaining = init.get("expertBudgetRemaining")
+        obs_dim = n_events * 3 + (1 if self.expert_budget_k is not None else 0)
+        obs_dtype = np.float32 if self.expert_budget_k is not None else np.int8
+        self.observation_space = spaces.Box(low=0, high=1, shape=(obs_dim,), dtype=obs_dtype)
         self.action_space = spaces.Discrete(n_actions)
 
         self.action_mask = init.get("actionMask") if isinstance(init, dict) else None
@@ -58,18 +62,22 @@ class DCRGymEnv(gym.Env):
             self.action_mask = state_to_mask(init.get("state", {}), self.event_list)
 
 
-    def _state_to_obs(self, state):
+    def _state_to_obs(self, state, expert_budget_remaining=None):
         arr = []
         for ev in self.event_list:
             included = 1 if ev in state.get("included", []) else 0
             executed = 1 if ev in state.get("executed", []) else 0
             pending = 1 if ev in state.get("pending", []) else 0
             arr.extend([included, executed, pending])
-        return np.array(arr, dtype=np.int8)
+        if self.expert_budget_k is not None:
+            frac = float(expert_budget_remaining or 0) / self.expert_budget_k
+            arr.append(min(1.0, max(0.0, frac)))
+        return np.array(arr, dtype=np.float32 if self.expert_budget_k is not None else np.int8)
 
     def reset(self, seed=None, options=None):
         r = self.node["reset"]()
-        obs = self._state_to_obs(r["state"])
+        self.expert_budget_remaining = r.get("expertBudgetRemaining")
+        obs = self._state_to_obs(r["state"], self.expert_budget_remaining)
         self.label_map = r.get("labelMap", self.label_map)
         self.action_mask = r.get("actionMask", state_to_mask(r.get("state", {}), self.event_list))
         self.episode_cost = 0.0
@@ -80,7 +88,8 @@ class DCRGymEnv(gym.Env):
         # Send numeric action index as plain int (numpy int64 is not JSON serializable)
         r = self.node["send_action"](int(action))
         result = r.get("result", {})
-        obs = self._state_to_obs(result.get("state", {}))
+        self.expert_budget_remaining = result.get("expertBudgetRemaining", self.expert_budget_remaining)
+        obs = self._state_to_obs(result.get("state", {}), self.expert_budget_remaining)
         reward = result.get("stepReward", result.get("reward", 0))
         done = bool(result.get("done", False))
         self.action_mask = r.get("actionMask") or state_to_mask(result.get("state", {}), self.event_list)
@@ -96,9 +105,13 @@ class DCRGymEnv(gym.Env):
             "event_duration":   result.get("eventDuration"),
             "episode_cost":     self.episode_cost,
             "episode_duration": self.episode_duration,
-            "accepting":        result.get("accepting", False),
-            "action_event":     pair.get("event", ""),
-            "action_role":      pair.get("role", ""),
+            "accepting":               result.get("accepting", False),
+            "action_event":            pair.get("event", ""),
+            "action_role":             pair.get("role", ""),
+            "intercepted_reason":      result.get("interceptedReason"),
+            "expert_budget_remaining": result.get("expertBudgetRemaining"),
+            "expert_budget_initial":   result.get("expertBudgetInitial"),
+            "num_budget_blocks":       result.get("numBudgetBlocks"),
         }
         return obs, reward, done, False, info
 

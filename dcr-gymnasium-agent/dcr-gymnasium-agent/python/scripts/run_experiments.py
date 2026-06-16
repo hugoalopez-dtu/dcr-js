@@ -49,6 +49,10 @@ PARETO_WEIGHTS = [
     (0.5, 2.0),   # duration-heavy
 ]
 
+# Cluster sweep over binding k values only. k=None (unlimited) is the existing
+# baseline already run; reuse those results as the k=∞ row instead of re-running.
+CLUSTER_BUDGET_K_VALUES = [1, 2, 3]
+
 EXPERIMENTS = [
     # --- Expense Report — Diaz et al. Ex2 (DEC2H 2024), for direct comparison ---
     # {
@@ -212,14 +216,16 @@ def write_csv_rows(rows, out_path):
 
 
 # ---------- Main experiment runner ----------
-def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: float = 0.0):
+def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: float = 0.0,
+                   expert_budget_k=None):
     # Use staging XML if no xml_file specified in experiment config
     xml_path = exp.get("xml_file") or str(STAGING_XML)
     xml = Path(xml_path).expanduser().resolve()
     assert xml.exists(), f"XML not found: {xml}\nHint: send a graph from the modeler UI first (robot button)."
     base_exp_id = exp["exp_id"]
     weight_tag = f"a{cost_weight}_b{duration_weight}".replace(".", "p")
-    exp_id = f"{base_exp_id}_s{seed}_{weight_tag}"
+    k_tag = "kunlim" if expert_budget_k is None else f"k{expert_budget_k}"
+    exp_id = f"{base_exp_id}_s{seed}_{weight_tag}_{k_tag}"
     steps = int(exp["total_steps"])
     goal_label = str(exp.get("goal_label", ""))
     ent_coef = float(exp.get("ent_coef", 0.1))
@@ -242,6 +248,7 @@ def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: fl
     env["MAX_EPISODE_STEPS"] = "300"
     env["COST_WEIGHT"]     = str(cost_weight)
     env["DURATION_WEIGHT"] = str(duration_weight)
+    env["EXPERT_BUDGET_K"] = "none" if expert_budget_k is None else str(expert_budget_k)
     # Step penalty: must be negative enough so non-progress legal steps are negative.
     # With baseMapped=+1 and normalised costs ≤ α+β, setting STEP_PENALTY=-1.5 ensures:
     #   no-progress step: 1 - 1.5 = -0.5  (agent wants to terminate)
@@ -342,18 +349,56 @@ def run_experiment(exp, seed: int, cost_weight: float = 0.0, duration_weight: fl
                 proc.wait()
 
 
+def emit_manifest(out_path: Path = LOGS_DIR / "sweep_manifest.csv"):
+    """Write all (k, alpha, beta, seed) cluster run configs without running training."""
+    rows = []
+    for exp in EXPERIMENTS:
+        for seed in SEEDS:
+            for k in CLUSTER_BUDGET_K_VALUES:
+                for cost_w, dur_w in PARETO_WEIGHTS:
+                    k_tag = f"k{k}"
+                    weight_tag = f"a{cost_w}_b{dur_w}".replace(".", "p")
+                    exp_id = f"{exp['exp_id']}_s{seed}_{weight_tag}_{k_tag}"
+                    rows.append({
+                        "exp_id":          exp_id,
+                        "xml_file":        exp.get("xml_file", str(STAGING_XML)),
+                        "seed":            seed,
+                        "alpha":           cost_w,
+                        "beta":            dur_w,
+                        "expert_budget_k": k,
+                        "total_steps":     exp["total_steps"],
+                        "ent_coef":        exp.get("ent_coef", 0.1),
+                    })
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"Manifest: {out_path}  ({len(rows)} runs)")
+    return rows
+
+
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest-only", action="store_true",
+                        help="Emit sweep manifest CSV and exit without training")
+    args, _ = parser.parse_known_args()
+
     print(f"Repository root: {ROOT}")
-    # backup / clean existing tensorboard logs to avoid mixing runs
-    #rotate_tensorboard_backup()
-    # ensure fresh TB dir exists
     TENSORBOARD_DIR.mkdir(parents=True, exist_ok=True)
+
+    if args.manifest_only:
+        emit_manifest()
+        return
 
     for exp in EXPERIMENTS:
         for seed in SEEDS:
-            for cost_w, dur_w in PARETO_WEIGHTS:
-                run_experiment(exp, seed, cost_weight=cost_w, duration_weight=dur_w)
-                time.sleep(2)
+            for k in CLUSTER_BUDGET_K_VALUES:
+                for cost_w, dur_w in PARETO_WEIGHTS:
+                    run_experiment(exp, seed, cost_weight=cost_w,
+                                   duration_weight=dur_w, expert_budget_k=k)
+                    time.sleep(2)
 
 
 if __name__ == "__main__":

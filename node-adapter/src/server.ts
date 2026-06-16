@@ -37,6 +37,10 @@ const STRICT_GOAL_TERMINATION = process.env.STRICT_GOAL_TERMINATION === "1";
 const COST_WEIGHT     = Number(process.env.COST_WEIGHT     || 0);
 const DURATION_WEIGHT = Number(process.env.DURATION_WEIGHT || 0);
 
+const _kRaw = process.env.EXPERT_BUDGET_K;
+const EXPERT_BUDGET_K: number | null =
+  !_kRaw || _kRaw === "none" ? null : Number(_kRaw);
+
 const executedInEpisode = new Set<string>();
 // Tracks which pending events have been resolved at least once this episode.
 // Prevents reward hacking via response-relation loops (e.g. Reject→Approve→Reject→Approve).
@@ -48,6 +52,8 @@ let episodeSteps = 0;
 let illegalTracesCount = 0;
 let episodeCost = 0;
 let episodeDuration = 0;
+let expertBudgetRemaining: number | null = EXPERT_BUDGET_K;
+let numBudgetBlocks = 0;
 
 // Normalisation constants — computed from graph at startup and recomputed on /load.
 const _initCostVals = Object.values(graph.costMap).filter((v): v is number => v > 0);
@@ -105,6 +111,8 @@ app.post("/reset", (_req, res) => {
     illegalTracesCount = 0;
     episodeCost = 0;
     episodeDuration = 0;
+    expertBudgetRemaining = EXPERT_BUDGET_K;
+    numBudgetBlocks = 0;
     lastResult = null;
 
     executedInEpisode.clear();
@@ -117,8 +125,15 @@ app.post("/reset", (_req, res) => {
     const validActions = getValidActions();
     const actionMask = buildActionMask(pairs, validActions);
 
-    res.json({ ok: true, state, events, labelMap: graph.labelMap,
-               eventRolePairs: pairs, roles, nRoles: roles.length || 1, actionMask });
+    res.json({
+      ok: true, state, events, labelMap: graph.labelMap,
+      eventRolePairs: pairs, roles, nRoles: roles.length || 1, actionMask,
+      expertBudgetK: EXPERT_BUDGET_K,
+      expertBudgetRemaining,
+      costMap: graph.costMap,
+      durationMap: graph.durationMap,
+      roleMultipliers: graph.roleMultipliers,
+    });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
   }
@@ -163,8 +178,58 @@ app.post("/action", (req, res) => {
     const stateBefore = getState();
     const pendingBefore = countPendingIncluded(stateBefore);
 
-    const result = env.step(action);
+    // Step counter runs on ALL paths: legal, DCR-illegal, and budget-block.
+    // Must be here so MAX_EPISODE_STEPS truncation applies equally to all three.
     episodeSteps += 1;
+
+    // ── BUDGET GATE ─────────────────────────────────────────────────────────
+    // Only fires when the event IS DCR-enabled AND Expert budget is exhausted.
+    // Non-enabled Expert actions fall through to env.step() → tagged dcr_illegal.
+    // actionMask is NOT updated here: the policy must learn not to attempt Expert
+    // when budget=0, conditioned on the obs budget dim.
+    const validEvents = new Set(getValidActions());
+    const isDCREnabled = validEvents.has(action);
+    if (chosenRole === "Expert" && EXPERT_BUDGET_K !== null && expertBudgetRemaining === 0 && isDCREnabled) {
+      numBudgetBlocks += 1;
+      const maxStepReachedBudget = episodeSteps >= MAX_EPISODE_STEPS;
+      const pairsBudget = getEventRolePairs();
+      const budgetBlockMask = buildActionMask(pairsBudget, Array.from(validEvents));
+      return res.json({
+        ok: true,
+        result: {
+          state: getState(),
+          done: maxStepReachedBudget,
+          accepting: false,
+          structuralAccepting: false,
+          goalReached: false,
+          maxStepReached: maxStepReachedBudget,
+          stepReward: -10,
+          baseMapped: -10,
+          noveltyDelta: 0,
+          progressDelta: 0,
+          costPenalty: 0,
+          durationPenalty: 0,
+          eventCost: null,
+          eventDuration: null,
+          episodeCost,
+          episodeDuration,
+          pendingBefore,
+          pendingAfter: pendingBefore,   // state unchanged
+          illegalTracesCount,            // dcr_illegal count not touched
+          episodeSteps,
+          actionCompliant: true,         // DCR-enabled; budget-blocked only
+          interceptedReason: "budget_block",
+          expertBudgetRemaining,
+          expertBudgetInitial: EXPERT_BUDGET_K,
+          numBudgetBlocks,
+          chosenRole,
+        },
+        actionMask: budgetBlockMask,
+      });
+    }
+    // ── END BUDGET GATE ──────────────────────────────────────────────────────
+
+    const result = env.step(action);
 
     const label = graph.labelMap[action] || action;
 
@@ -188,6 +253,11 @@ app.post("/action", (req, res) => {
 
     const isLegal = result.reward !== -10;
 
+    // Decrement Expert budget on a legally executed Expert action.
+    if (isLegal && chosenRole === "Expert" && EXPERT_BUDGET_K !== null && expertBudgetRemaining !== null) {
+      expertBudgetRemaining = Math.max(0, expertBudgetRemaining - 1);
+    }
+
     // In RL-only mode (shield disabled), illegal actions still execute and
     // change the DCR state, so their cost/duration must be counted too.
     // In Safe RL, illegal actions are blocked (state unchanged) and must not.
@@ -207,8 +277,10 @@ app.post("/action", (req, res) => {
     //  -10: illegal, 100: accepting terminal, 1: legal non-terminal
     const isLegalNonTerminal = baseMapped === 1;
     const isIllegal = baseMapped === -10;
-    
-    // Track illegal traces for convergence analysis
+    // budget_block never reaches this path, so isIllegal here always means dcr_illegal.
+    const interceptedReason = isLegal ? null : "dcr_illegal";
+
+    // Track illegal traces for convergence analysis (dcr_illegal only, not budget_block)
     if (isIllegal) {
       illegalTracesCount += 1;
     }
@@ -242,6 +314,10 @@ app.post("/action", (req, res) => {
       illegalTracesCount,
       episodeSteps,
       actionCompliant: result.info?.compliant ?? true,
+      interceptedReason,
+      expertBudgetRemaining,
+      expertBudgetInitial: EXPERT_BUDGET_K,
+      numBudgetBlocks,
     };
 
     lastResult = { ...augmentedResult, chosenRole };
