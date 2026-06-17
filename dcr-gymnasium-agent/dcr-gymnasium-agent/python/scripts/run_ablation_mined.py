@@ -78,7 +78,7 @@ def free_port(port):
 def build_env(xml_file, port, condition, cost_w, dur_w):
     env = os.environ.copy()
     env.update({
-        "DCR_XML": str(xml_file),
+        "DCR_XML": str(Path(xml_file).resolve()),
         "PORT": str(port),
         "GOAL_LABEL": "",
         "MAX_EPISODE_STEPS": str(MAX_EPISODE_STEPS),
@@ -106,7 +106,7 @@ def start_adapter(xml_file, port, condition, cost_w, dur_w, log_path):
     lf = open(log_path, "ab")
     proc = subprocess.Popen(["node", "dist/server.mjs"], cwd=str(NODE_ADAPTER_DIR), env=env,
                              stdout=subprocess.DEVNULL, stderr=lf)
-    if not wait_for_adapter(f"http://localhost:{port}", timeout=25):
+    if not wait_for_adapter(f"http://localhost:{port}", timeout=40):
         proc.terminate()
         proc.wait(timeout=5)
         lf.close()
