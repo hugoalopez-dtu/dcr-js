@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph title="Mined 03 - BPI Challenge 2020 RFP">
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_1"><cost>50</cost><duration>64</duration></event>
+        <event id="Event_2"><cost>77</cost><duration>115</duration></event>
+        <event id="Event_3"><cost>8</cost><duration>21</duration></event>
+        <event id="Event_4"><cost>84</cost><duration>115</duration></event>
+        <event id="Event_5"><cost>28</cost><duration>41</duration></event>
+        <event id="Event_6"><cost>88</cost><duration>54</duration></event>
+        <event id="Event_7"><cost>31</cost><duration>101</duration></event>
+        <event id="Event_8"><cost>29</cost><duration>52</duration></event>
+        <event id="Event_9"><cost>66</cost><duration>68</duration></event>
+        <event id="Event_10"><cost>13</cost><duration>8</duration></event>
+        <event id="Event_11"><cost>88</cost><duration>92</duration></event>
+        <event id="Event_12"><cost>85</cost><duration>67</duration></event>
+        <event id="Event_13"><cost>83</cost><duration>43</duration></event>
+        <event id="Event_14"><cost>48</cost><duration>96</duration></event>
+        <event id="Event_15"><cost>16</cost><duration>40</duration></event>
+        <event id="Event_16"><cost>16</cost><duration>57</duration></event>
+        <event id="Event_17"><cost>98</cost><duration>20</duration></event>
+        <event id="Event_18"><cost>41</cost><duration>51</duration></event>
+        <event id="Event_19"><cost>91</cost><duration>28</duration></event>
+      </events>
+      <labels>
+        <label id="Request For Payment SUBMITTED by EMPLOYEE"/>
+        <label id="Request For Payment FINAL_APPROVED by SUPERVISOR"/>
+        <label id="Request For Payment REJECTED by MISSING"/>
+        <label id="Request For Payment APPROVED by PRE_APPROVER"/>
+        <label id="Request Payment"/>
+        <label id="Payment Handled"/>
+        <label id="Request For Payment REJECTED by SUPERVISOR"/>
+        <label id="Request For Payment REJECTED by EMPLOYEE"/>
+        <label id="Request For Payment APPROVED by SUPERVISOR"/>
+        <label id="Request For Payment FINAL_APPROVED by DIRECTOR"/>
+        <label id="Request For Payment REJECTED by PRE_APPROVER"/>
+        <label id="Request For Payment SAVED by EMPLOYEE"/>
+        <label id="Request For Payment REJECTED by ADMINISTRATION"/>
+        <label id="Request For Payment APPROVED by ADMINISTRATION"/>
+        <label id="Request For Payment APPROVED by BUDGET OWNER"/>
+        <label id="Request For Payment REJECTED by BUDGET OWNER"/>
+        <label id="Request For Payment FOR_APPROVAL by ADMINISTRATION"/>
+        <label id="Request For Payment FINAL_APPROVED by BUDGET OWNER"/>
+        <label id="Request For Payment FOR_APPROVAL by SUPERVISOR"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_1" labelId="Request For Payment SUBMITTED by EMPLOYEE"/>
+        <labelMapping eventId="Event_2" labelId="Request For Payment FINAL_APPROVED by SUPERVISOR"/>
+        <labelMapping eventId="Event_3" labelId="Request For Payment REJECTED by MISSING"/>
+        <labelMapping eventId="Event_4" labelId="Request For Payment APPROVED by PRE_APPROVER"/>
+        <labelMapping eventId="Event_5" labelId="Request Payment"/>
+        <labelMapping eventId="Event_6" labelId="Payment Handled"/>
+        <labelMapping eventId="Event_7" labelId="Request For Payment REJECTED by SUPERVISOR"/>
+        <labelMapping eventId="Event_8" labelId="Request For Payment REJECTED by EMPLOYEE"/>
+        <labelMapping eventId="Event_9" labelId="Request For Payment APPROVED by SUPERVISOR"/>
+        <labelMapping eventId="Event_10" labelId="Request For Payment FINAL_APPROVED by DIRECTOR"/>
+        <labelMapping eventId="Event_11" labelId="Request For Payment REJECTED by PRE_APPROVER"/>
+        <labelMapping eventId="Event_12" labelId="Request For Payment SAVED by EMPLOYEE"/>
+        <labelMapping eventId="Event_13" labelId="Request For Payment REJECTED by ADMINISTRATION"/>
+        <labelMapping eventId="Event_14" labelId="Request For Payment APPROVED by ADMINISTRATION"/>
+        <labelMapping eventId="Event_15" labelId="Request For Payment APPROVED by BUDGET OWNER"/>
+        <labelMapping eventId="Event_16" labelId="Request For Payment REJECTED by BUDGET OWNER"/>
+        <labelMapping eventId="Event_17" labelId="Request For Payment FOR_APPROVAL by ADMINISTRATION"/>
+        <labelMapping eventId="Event_18" labelId="Request For Payment FINAL_APPROVED by BUDGET OWNER"/>
+        <labelMapping eventId="Event_19" labelId="Request For Payment FOR_APPROVAL by SUPERVISOR"/>
+      </labelMappings>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_1" targetId="Event_2"/>
+        <condition sourceId="Event_2" targetId="Event_3"/>
+        <condition sourceId="Event_1" targetId="Event_4"/>
+        <condition sourceId="Event_2" targetId="Event_5"/>
+        <condition sourceId="Event_7" targetId="Event_5"/>
+        <condition sourceId="Event_9" targetId="Event_5"/>
+        <condition sourceId="Event_10" targetId="Event_5"/>
+        <condition sourceId="Event_2" targetId="Event_6"/>
+        <condition sourceId="Event_7" targetId="Event_6"/>
+        <condition sourceId="Event_9" targetId="Event_6"/>
+        <condition sourceId="Event_10" targetId="Event_6"/>
+        <condition sourceId="Event_18" targetId="Event_6"/>
+        <condition sourceId="Event_1" targetId="Event_7"/>
+        <condition sourceId="Event_1" targetId="Event_8"/>
+        <condition sourceId="Event_1" targetId="Event_9"/>
+        <condition sourceId="Event_1" targetId="Event_10"/>
+        <condition sourceId="Event_1" targetId="Event_11"/>
+        <condition sourceId="Event_1" targetId="Event_13"/>
+        <condition sourceId="Event_1" targetId="Event_14"/>
+        <condition sourceId="Event_14" targetId="Event_15"/>
+        <condition sourceId="Event_14" targetId="Event_16"/>
+        <condition sourceId="Event_8" targetId="Event_17"/>
+        <condition sourceId="Event_13" targetId="Event_17"/>
+        <condition sourceId="Event_14" targetId="Event_18"/>
+        <condition sourceId="Event_8" targetId="Event_19"/>
+        <condition sourceId="Event_13" targetId="Event_19"/>
+        <condition sourceId="Event_14" targetId="Event_19"/>
+      </conditions>
+      <responses>
+        <response sourceId="Event_11" targetId="Event_8"/>
+        <response sourceId="Event_16" targetId="Event_8"/>
+        <response sourceId="Event_17" targetId="Event_1"/>
+        <response sourceId="Event_17" targetId="Event_2"/>
+        <response sourceId="Event_17" targetId="Event_5"/>
+        <response sourceId="Event_17" targetId="Event_6"/>
+        <response sourceId="Event_17" targetId="Event_14"/>
+        <response sourceId="Event_17" targetId="Event_15"/>
+        <response sourceId="Event_18" targetId="Event_6"/>
+      </responses>
+      <excludes>
+        <exclude sourceId="Event_2" targetId="Event_9"/>
+        <exclude sourceId="Event_2" targetId="Event_10"/>
+        <exclude sourceId="Event_2" targetId="Event_12"/>
+        <exclude sourceId="Event_2" targetId="Event_18"/>
+        <exclude sourceId="Event_2" targetId="Event_19"/>
+        <exclude sourceId="Event_2" targetId="Event_7"/>
+        <exclude sourceId="Event_3" targetId="Event_13"/>
+        <exclude sourceId="Event_3" targetId="Event_14"/>
+        <exclude sourceId="Event_3" targetId="Event_15"/>
+        <exclude sourceId="Event_3" targetId="Event_16"/>
+        <exclude sourceId="Event_3" targetId="Event_17"/>
+        <exclude sourceId="Event_4" targetId="Event_4"/>
+        <exclude sourceId="Event_4" targetId="Event_12"/>
+        <exclude sourceId="Event_4" targetId="Event_13"/>
+        <exclude sourceId="Event_4" targetId="Event_14"/>
+        <exclude sourceId="Event_4" targetId="Event_15"/>
+        <exclude sourceId="Event_4" targetId="Event_16"/>
+        <exclude sourceId="Event_4" targetId="Event_17"/>
+        <exclude sourceId="Event_4" targetId="Event_18"/>
+        <exclude sourceId="Event_4" targetId="Event_19"/>
+        <exclude sourceId="Event_5" targetId="Event_5"/>
+        <exclude sourceId="Event_5" targetId="Event_12"/>
+        <exclude sourceId="Event_5" targetId="Event_18"/>
+        <exclude sourceId="Event_5" targetId="Event_19"/>
+        <exclude sourceId="Event_5" targetId="Event_1"/>
+        <exclude sourceId="Event_5" targetId="Event_2"/>
+        <exclude sourceId="Event_5" targetId="Event_7"/>
+        <exclude sourceId="Event_5" targetId="Event_8"/>
+        <exclude sourceId="Event_6" targetId="Event_6"/>
+        <exclude sourceId="Event_6" targetId="Event_12"/>
+        <exclude sourceId="Event_6" targetId="Event_19"/>
+        <exclude sourceId="Event_6" targetId="Event_1"/>
+        <exclude sourceId="Event_6" targetId="Event_2"/>
+        <exclude sourceId="Event_6" targetId="Event_3"/>
+        <exclude sourceId="Event_6" targetId="Event_7"/>
+        <exclude sourceId="Event_6" targetId="Event_8"/>
+        <exclude sourceId="Event_7" targetId="Event_3"/>
+        <exclude sourceId="Event_7" targetId="Event_11"/>
+        <exclude sourceId="Event_7" targetId="Event_12"/>
+        <exclude sourceId="Event_7" targetId="Event_16"/>
+        <exclude sourceId="Event_7" targetId="Event_17"/>
+        <exclude sourceId="Event_7" targetId="Event_18"/>
+        <exclude sourceId="Event_7" targetId="Event_19"/>
+        <exclude sourceId="Event_8" targetId="Event_18"/>
+        <exclude sourceId="Event_9" targetId="Event_9"/>
+        <exclude sourceId="Event_9" targetId="Event_2"/>
+        <exclude sourceId="Event_9" targetId="Event_3"/>
+        <exclude sourceId="Event_9" targetId="Event_11"/>
+        <exclude sourceId="Event_9" targetId="Event_12"/>
+        <exclude sourceId="Event_9" targetId="Event_16"/>
+        <exclude sourceId="Event_9" targetId="Event_17"/>
+        <exclude sourceId="Event_9" targetId="Event_18"/>
+        <exclude sourceId="Event_9" targetId="Event_19"/>
+        <exclude sourceId="Event_9" targetId="Event_1"/>
+        <exclude sourceId="Event_9" targetId="Event_7"/>
+        <exclude sourceId="Event_9" targetId="Event_8"/>
+        <exclude sourceId="Event_10" targetId="Event_10"/>
+        <exclude sourceId="Event_10" targetId="Event_2"/>
+        <exclude sourceId="Event_10" targetId="Event_3"/>
+        <exclude sourceId="Event_10" targetId="Event_11"/>
+        <exclude sourceId="Event_10" targetId="Event_12"/>
+        <exclude sourceId="Event_10" targetId="Event_16"/>
+        <exclude sourceId="Event_10" targetId="Event_17"/>
+        <exclude sourceId="Event_10" targetId="Event_18"/>
+        <exclude sourceId="Event_10" targetId="Event_19"/>
+        <exclude sourceId="Event_10" targetId="Event_1"/>
+        <exclude sourceId="Event_10" targetId="Event_7"/>
+        <exclude sourceId="Event_10" targetId="Event_8"/>
+        <exclude sourceId="Event_11" targetId="Event_11"/>
+        <exclude sourceId="Event_11" targetId="Event_7"/>
+        <exclude sourceId="Event_11" targetId="Event_9"/>
+        <exclude sourceId="Event_11" targetId="Event_10"/>
+        <exclude sourceId="Event_11" targetId="Event_12"/>
+        <exclude sourceId="Event_11" targetId="Event_13"/>
+        <exclude sourceId="Event_11" targetId="Event_14"/>
+        <exclude sourceId="Event_11" targetId="Event_15"/>
+        <exclude sourceId="Event_11" targetId="Event_16"/>
+        <exclude sourceId="Event_11" targetId="Event_17"/>
+        <exclude sourceId="Event_11" targetId="Event_18"/>
+        <exclude sourceId="Event_11" targetId="Event_19"/>
+        <exclude sourceId="Event_12" targetId="Event_12"/>
+        <exclude sourceId="Event_12" targetId="Event_2"/>
+        <exclude sourceId="Event_12" targetId="Event_3"/>
+        <exclude sourceId="Event_12" targetId="Event_4"/>
+        <exclude sourceId="Event_12" targetId="Event_5"/>
+        <exclude sourceId="Event_12" targetId="Event_6"/>
+        <exclude sourceId="Event_12" targetId="Event_7"/>
+        <exclude sourceId="Event_12" targetId="Event_9"/>
+        <exclude sourceId="Event_12" targetId="Event_10"/>
+        <exclude sourceId="Event_12" targetId="Event_11"/>
+        <exclude sourceId="Event_12" targetId="Event_14"/>
+        <exclude sourceId="Event_12" targetId="Event_15"/>
+        <exclude sourceId="Event_12" targetId="Event_16"/>
+        <exclude sourceId="Event_12" targetId="Event_17"/>
+        <exclude sourceId="Event_12" targetId="Event_18"/>
+        <exclude sourceId="Event_12" targetId="Event_19"/>
+        <exclude sourceId="Event_12" targetId="Event_1"/>
+        <exclude sourceId="Event_12" targetId="Event_8"/>
+        <exclude sourceId="Event_13" targetId="Event_13"/>
+        <exclude sourceId="Event_13" targetId="Event_3"/>
+        <exclude sourceId="Event_13" targetId="Event_4"/>
+        <exclude sourceId="Event_13" targetId="Event_11"/>
+        <exclude sourceId="Event_13" targetId="Event_18"/>
+        <exclude sourceId="Event_14" targetId="Event_14"/>
+        <exclude sourceId="Event_14" targetId="Event_3"/>
+        <exclude sourceId="Event_14" targetId="Event_4"/>
+        <exclude sourceId="Event_14" targetId="Event_11"/>
+        <exclude sourceId="Event_14" targetId="Event_12"/>
+        <exclude sourceId="Event_15" targetId="Event_15"/>
+        <exclude sourceId="Event_15" targetId="Event_18"/>
+        <exclude sourceId="Event_15" targetId="Event_19"/>
+        <exclude sourceId="Event_16" targetId="Event_16"/>
+        <exclude sourceId="Event_16" targetId="Event_7"/>
+        <exclude sourceId="Event_16" targetId="Event_9"/>
+        <exclude sourceId="Event_16" targetId="Event_10"/>
+        <exclude sourceId="Event_16" targetId="Event_17"/>
+        <exclude sourceId="Event_16" targetId="Event_18"/>
+        <exclude sourceId="Event_16" targetId="Event_19"/>
+        <exclude sourceId="Event_17" targetId="Event_17"/>
+        <exclude sourceId="Event_17" targetId="Event_7"/>
+        <exclude sourceId="Event_17" targetId="Event_9"/>
+        <exclude sourceId="Event_17" targetId="Event_10"/>
+        <exclude sourceId="Event_17" targetId="Event_12"/>
+        <exclude sourceId="Event_17" targetId="Event_16"/>
+        <exclude sourceId="Event_17" targetId="Event_19"/>
+        <exclude sourceId="Event_17" targetId="Event_8"/>
+        <exclude sourceId="Event_18" targetId="Event_18"/>
+        <exclude sourceId="Event_18" targetId="Event_2"/>
+        <exclude sourceId="Event_18" targetId="Event_5"/>
+        <exclude sourceId="Event_18" targetId="Event_7"/>
+        <exclude sourceId="Event_18" targetId="Event_8"/>
+        <exclude sourceId="Event_18" targetId="Event_9"/>
+        <exclude sourceId="Event_18" targetId="Event_10"/>
+        <exclude sourceId="Event_18" targetId="Event_13"/>
+        <exclude sourceId="Event_18" targetId="Event_15"/>
+        <exclude sourceId="Event_18" targetId="Event_16"/>
+        <exclude sourceId="Event_18" targetId="Event_17"/>
+        <exclude sourceId="Event_18" targetId="Event_19"/>
+        <exclude sourceId="Event_18" targetId="Event_1"/>
+        <exclude sourceId="Event_19" targetId="Event_19"/>
+        <exclude sourceId="Event_19" targetId="Event_2"/>
+        <exclude sourceId="Event_19" targetId="Event_5"/>
+        <exclude sourceId="Event_19" targetId="Event_6"/>
+        <exclude sourceId="Event_19" targetId="Event_7"/>
+        <exclude sourceId="Event_19" targetId="Event_9"/>
+        <exclude sourceId="Event_19" targetId="Event_10"/>
+        <exclude sourceId="Event_19" targetId="Event_15"/>
+        <exclude sourceId="Event_19" targetId="Event_16"/>
+        <exclude sourceId="Event_19" targetId="Event_17"/>
+        <exclude sourceId="Event_19" targetId="Event_1"/>
+        <exclude sourceId="Event_19" targetId="Event_8"/>
+      </excludes>
+      <includes>
+        <include sourceId="Event_1" targetId="Event_4"/>
+        <include sourceId="Event_1" targetId="Event_11"/>
+        <include sourceId="Event_1" targetId="Event_13"/>
+        <include sourceId="Event_1" targetId="Event_14"/>
+        <include sourceId="Event_1" targetId="Event_17"/>
+        <include sourceId="Event_14" targetId="Event_15"/>
+        <include sourceId="Event_14" targetId="Event_16"/>
+        <include sourceId="Event_14" targetId="Event_18"/>
+        <include sourceId="Event_14" targetId="Event_19"/>
+      </includes>
+    </constraints>
+  </specification>
+</dcrgraph>

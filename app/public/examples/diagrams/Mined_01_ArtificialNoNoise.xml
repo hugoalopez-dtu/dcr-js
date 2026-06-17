@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph title="Mined 01 - Artificial Event Log 0 Noise">
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_1"><cost>50</cost><duration>64</duration></event>
+        <event id="Event_2"><cost>77</cost><duration>115</duration></event>
+        <event id="Event_3"><cost>8</cost><duration>21</duration></event>
+        <event id="Event_4"><cost>84</cost><duration>115</duration></event>
+        <event id="Event_5"><cost>28</cost><duration>41</duration></event>
+        <event id="Event_6"><cost>88</cost><duration>54</duration></event>
+        <event id="Event_7"><cost>31</cost><duration>101</duration></event>
+        <event id="Event_8"><cost>29</cost><duration>52</duration></event>
+      </events>
+      <labels>
+        <label id="Triage"/>
+        <label id="Register"/>
+        <label id="Check"/>
+        <label id="X-Ray"/>
+        <label id="Visit"/>
+        <label id="Final Visit"/>
+        <label id="Prepare"/>
+        <label id="Organize Ambulance"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_1" labelId="Triage"/>
+        <labelMapping eventId="Event_2" labelId="Register"/>
+        <labelMapping eventId="Event_3" labelId="Check"/>
+        <labelMapping eventId="Event_4" labelId="X-Ray"/>
+        <labelMapping eventId="Event_5" labelId="Visit"/>
+        <labelMapping eventId="Event_6" labelId="Final Visit"/>
+        <labelMapping eventId="Event_7" labelId="Prepare"/>
+        <labelMapping eventId="Event_8" labelId="Organize Ambulance"/>
+      </labelMappings>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_1" targetId="Event_8"/>
+        <condition sourceId="Event_2" targetId="Event_8"/>
+        <condition sourceId="Event_3" targetId="Event_8"/>
+        <condition sourceId="Event_4" targetId="Event_8"/>
+      </conditions>
+      <responses>
+
+      </responses>
+      <excludes>
+        <exclude sourceId="Event_1" targetId="Event_1"/>
+        <exclude sourceId="Event_2" targetId="Event_2"/>
+        <exclude sourceId="Event_4" targetId="Event_4"/>
+        <exclude sourceId="Event_5" targetId="Event_5"/>
+        <exclude sourceId="Event_6" targetId="Event_6"/>
+        <exclude sourceId="Event_7" targetId="Event_7"/>
+        <exclude sourceId="Event_8" targetId="Event_8"/>
+      </excludes>
+      <includes>
+
+      </includes>
+    </constraints>
+  </specification>
+</dcrgraph>

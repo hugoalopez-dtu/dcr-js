@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<dcrgraph title="Mined 04 - BPI Challenge 2013 Incidents">
+  <specification>
+    <resources>
+      <events>
+        <event id="Event_1"><cost>50</cost><duration>64</duration></event>
+        <event id="Event_2"><cost>77</cost><duration>115</duration></event>
+        <event id="Event_3"><cost>8</cost><duration>21</duration></event>
+        <event id="Event_4"><cost>84</cost><duration>115</duration></event>
+      </events>
+      <labels>
+        <label id="Accepted"/>
+        <label id="Queued"/>
+        <label id="Completed"/>
+        <label id="Unmatched"/>
+      </labels>
+      <labelMappings>
+        <labelMapping eventId="Event_1" labelId="Accepted"/>
+        <labelMapping eventId="Event_2" labelId="Queued"/>
+        <labelMapping eventId="Event_3" labelId="Completed"/>
+        <labelMapping eventId="Event_4" labelId="Unmatched"/>
+      </labelMappings>
+    </resources>
+    <constraints>
+      <conditions>
+        <condition sourceId="Event_1" targetId="Event_4"/>
+        <condition sourceId="Event_3" targetId="Event_4"/>
+      </conditions>
+      <responses>
+        <response sourceId="Event_4" targetId="Event_1"/>
+        <response sourceId="Event_4" targetId="Event_3"/>
+      </responses>
+      <excludes>
+        <exclude sourceId="Event_4" targetId="Event_4"/>
+        <exclude sourceId="Event_4" targetId="Event_2"/>
+      </excludes>
+      <includes>
+        <include sourceId="Event_3" targetId="Event_4"/>
+      </includes>
+    </constraints>
+  </specification>
+</dcrgraph>
