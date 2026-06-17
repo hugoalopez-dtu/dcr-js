@@ -172,7 +172,7 @@ def _http_step(url, action_idx):
     return r.json()
 
 
-def run_shield_only(xml_file, exp_base, n_episodes, seed, port):
+def run_shield_only(xml_file, exp_base, n_episodes, seed, port, max_steps=None):
     condition = "shield_only"
     out_dir = logs_dir_for(exp_base, condition)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -180,7 +180,8 @@ def run_shield_only(xml_file, exp_base, n_episodes, seed, port):
     csv_path = out_dir / f"train_trace_exp_{exp_base}_{condition}_s{seed}_a0p0_b0p0_{ts}.csv"
     run_log = out_dir / f"run_{condition}_{int(time.time())}.log"
 
-    print(f"[SHIELD_ONLY] {exp_base} | {n_episodes} episodes | seed={seed}")
+    print(f"[SHIELD_ONLY] {exp_base} | up to {n_episodes} episodes "
+          f"(step budget cap={max_steps}) | seed={seed}")
     proc, lf = start_adapter(xml_file, port, condition, 0.0, 0.0, run_log)
     random.seed(seed)
     node_url = f"http://localhost:{port}"
@@ -190,6 +191,9 @@ def run_shield_only(xml_file, exp_base, n_episodes, seed, port):
             writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
             writer.writeheader()
             for ep in range(1, n_episodes + 1):
+                if max_steps is not None and global_t >= max_steps:
+                    print(f"  stopping at ep {ep}: reached step budget cap ({global_t} steps)")
+                    break
                 init = _http_reset(node_url)
                 action_mask = init.get("actionMask", [])
                 pairs = init.get("eventRolePairs", [])
@@ -246,7 +250,11 @@ def main():
     ap.add_argument("--exp-base", required=True)
     ap.add_argument("--condition", required=True, choices=["saferl", "rl_only", "shield_only"])
     ap.add_argument("--steps", type=int, default=100000)
-    ap.add_argument("--episodes", type=int, default=2000)
+    ap.add_argument("--episodes", type=int, default=14500)
+    ap.add_argument("--max-steps", type=int, default=None,
+                    help="cap total env steps for shield_only, so a graph with long "
+                         "non-accepting episodes (e.g. the 51-step graph 09) can't balloon "
+                         "to 14500 x 300 steps -- defaults to None (episode count only)")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--ent-coef", type=float, default=0.1)
     ap.add_argument("--port", type=int, default=5220)
@@ -257,7 +265,8 @@ def main():
     print(f"XML: {args.graph}")
 
     if args.condition == "shield_only":
-        run_shield_only(args.graph, args.exp_base, args.episodes, args.seed, args.port)
+        run_shield_only(args.graph, args.exp_base, args.episodes, args.seed, args.port,
+                         max_steps=args.max_steps)
     else:
         for cost_w, dur_w in PARETO_WEIGHTS:
             run_ppo_condition(args.graph, args.exp_base, args.condition, cost_w, dur_w,
