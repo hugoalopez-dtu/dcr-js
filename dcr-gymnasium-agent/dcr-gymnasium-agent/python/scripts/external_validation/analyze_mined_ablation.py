@@ -228,6 +228,18 @@ def main():
                 ax.annotate(cond.replace("_", " "), (x, r), textcoords="offset points",
                             xytext=(0, 8 if cond == "saferl" else (-14 if cond == "shield_only" else 14)),
                             fontsize=6, color=CONDITION_COLORS[cond], ha="center")
+        # Mark explicitly-skipped runs (e.g. rl_only on graph 09 -- already
+        # known to fail at least as badly as saferl, not worth ~3h of
+        # cluster time to confirm) so a missing point reads as "not run by
+        # design", not as a plotting gap.
+        for x, size, graph in zip(xs, sizes, GRAPH_ORDER):
+            eps = data[(graph, cond)]
+            if eps is None:
+                ax.scatter([x], [0.5], marker="x", s=70, color=CONDITION_COLORS[cond],
+                           alpha=0.5, zorder=1)
+                ax.annotate(f"{cond.replace('_', ' ')}\nnot run", (x, 0.5),
+                            textcoords="offset points", xytext=(0, -4), fontsize=6,
+                            color=CONDITION_COLORS[cond], ha="center", alpha=0.7, style="italic")
     ax.set_xscale("log")
     ax.set_xticks(sizes)
     ax.set_xticklabels([f"{s}\n({g.replace('Mined','')})" for s, g in zip(sizes, GRAPH_ORDER)])
