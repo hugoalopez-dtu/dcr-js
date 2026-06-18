@@ -207,13 +207,20 @@ def run(heuristic, alpha, beta, budget_k, episodes, seed, port):
     print(f"[{heuristic.upper()}] {exp_id} | alpha={alpha} beta={beta} k={budget_k} | episodes={episodes}")
     proc, lf = start_adapter(port, alpha, beta, budget_k, run_log)
     node_url = f"http://localhost:{port}"
+    # A persistent Session reuses the underlying TCP connection (HTTP
+    # keep-alive) instead of opening a new socket per request. Without
+    # this, a few thousand episodes x up to 300 steps each exhausts the
+    # local ephemeral port pool on macOS (OSError 49: Can't assign
+    # requested address), since each bare requests.post() call opens a
+    # fresh connection that lingers in TIME_WAIT.
+    session = requests.Session()
     try:
         global_t = 0
         with open(csv_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
             writer.writeheader()
             for ep in range(1, episodes + 1):
-                init = requests.post(f"{node_url}/reset", timeout=5).json()
+                init = session.post(f"{node_url}/reset", timeout=5).json()
                 action_mask = init.get("actionMask", [])
                 pairs = init.get("eventRolePairs", [])
                 ep_rew_sum = 0.0
@@ -222,7 +229,7 @@ def run(heuristic, alpha, beta, budget_k, episodes, seed, port):
                     action_idx = choose_action(heuristic, pairs, action_mask, rng, costs, role_mults, alpha, beta)
                     if action_idx is None:
                         break
-                    resp = requests.post(f"{node_url}/action", json={"action": action_idx}, timeout=5).json()
+                    resp = session.post(f"{node_url}/action", json={"action": action_idx}, timeout=5).json()
                     result = resp.get("result", {})
                     reward = result.get("stepReward", result.get("reward", 0))
                     done = bool(result.get("done", False))
@@ -254,6 +261,7 @@ def run(heuristic, alpha, beta, budget_k, episodes, seed, port):
                     print(f"  ep {ep}/{episodes} | t={global_t}")
         print(f"[OK] {csv_path}")
     finally:
+        session.close()
         stop_adapter(proc, lf, port)
 
 
