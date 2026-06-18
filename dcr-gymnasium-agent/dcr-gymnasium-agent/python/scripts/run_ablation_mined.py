@@ -132,6 +132,11 @@ def run_ppo_condition(xml_file, exp_base, condition, cost_w, dur_w, total_steps,
     out_dir.mkdir(parents=True, exist_ok=True)
     models_dir = PYTHON_PROJECT_DIR / f"models_ablation_{exp_base}"
     models_dir.mkdir(parents=True, exist_ok=True)
+
+    if list(out_dir.glob(f"train_trace_exp_{exp_id}_*.csv")):
+        print(f"[SKIP] {exp_id} already has a completed CSV in {out_dir}")
+        return
+
     run_log = out_dir / f"run_{exp_id}_{int(time.time())}.log"
 
     print(f"[{condition.upper()}] {exp_id} | a={cost_w} b={dur_w} | steps={total_steps}")
@@ -258,6 +263,9 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--ent-coef", type=float, default=0.1)
     ap.add_argument("--port", type=int, default=5220)
+    ap.add_argument("--max-weight-pairs", type=int, default=None,
+                    help="only run the first N of the 6 (alpha,beta) pairs -- for control "
+                         "graphs where the full sweep adds no signal beyond the first couple")
     args = ap.parse_args()
 
     assert args.graph.exists(), f"Graph XML not found: {args.graph}"
@@ -268,7 +276,8 @@ def main():
         run_shield_only(args.graph, args.exp_base, args.episodes, args.seed, args.port,
                          max_steps=args.max_steps)
     else:
-        for cost_w, dur_w in PARETO_WEIGHTS:
+        weights = PARETO_WEIGHTS[:args.max_weight_pairs] if args.max_weight_pairs else PARETO_WEIGHTS
+        for cost_w, dur_w in weights:
             run_ppo_condition(args.graph, args.exp_base, args.condition, cost_w, dur_w,
                                args.steps, args.seed, args.ent_coef, args.port)
             time.sleep(2)
