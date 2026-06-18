@@ -143,6 +143,15 @@ def unique_accepted_points(eps):
     return pts
 
 
+def pareto_filter(points):
+    """Non-dominated subset for 2D minimisation (cost, duration)."""
+    pts = list(points)
+    return {p for p in pts if not any(
+        q != p and q[0] <= p[0] and q[1] <= p[1] and (q[0] < p[0] or q[1] < p[1])
+        for q in pts
+    )}
+
+
 def hypervolume_2d(points, ref_point):
     """Hypervolume for a 2D minimisation front: area dominated by the front,
     bounded above-right by ref_point. Points assumed non-dominated (we filter)."""
@@ -269,9 +278,18 @@ def main():
         if eps is not None:
             pts = unique_accepted_points(last20_per_file(eps))
             if pts:
-                xs, ys = zip(*pts)
-                ax.scatter(xs, ys, color=CONDITION_COLORS["saferl"], label="saferl",
-                           alpha=0.7, s=40, edgecolors="white", linewidths=0.4, zorder=5)
+                front = pareto_filter(pts)
+                dominated = pts - front
+                if dominated:
+                    dx, dy = zip(*dominated)
+                    ax.scatter(dx, dy, color="#bbbbbb", label="saferl (dominated)",
+                               alpha=0.5, s=18, zorder=3)
+                if front:
+                    fx, fy = zip(*sorted(front))
+                    ax.plot(fx, fy, color=CONDITION_COLORS["saferl"], linewidth=1.2,
+                            linestyle="-", alpha=0.8, zorder=4)
+                    ax.scatter(fx, fy, color=CONDITION_COLORS["saferl"], label="saferl (non-dominated)",
+                               alpha=0.95, s=70, edgecolors="white", linewidths=0.6, zorder=5)
         ax.set_title(meta["label"], fontsize=9)
         ax.set_xlabel("cost")
         ax.set_ylabel("duration")
