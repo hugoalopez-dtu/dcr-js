@@ -1,0 +1,19 @@
+graph,label,num_events,size_cat,density,density_cat,type,cop_status,condition,accept_rate_last20,illegal_rate_final_decile,n_episodes,hypervolume,hypervolume_cop
+Mined04,04 (BPI13 Incidents),4,small,1.75,sparse,mixed,solved,saferl,1.0,0.18448293532848212,195140.0,42.0,42.0
+Mined04,04 (BPI13 Incidents),4,small,1.75,sparse,mixed,solved,rl_only,1.0,0.1277918720378373,46962.0,42.0,42.0
+Mined04,04 (BPI13 Incidents),4,small,1.75,sparse,mixed,solved,shield_only,1.0,0.0,5000.0,42.0,42.0
+Mined01,01 (Artificial 0-noise),8,small,1.6,sparse,exclusion-heavy,solved,saferl,1.0,0.11613815390830136,198044.0,42.0,42.0
+Mined01,01 (Artificial 0-noise),8,small,1.6,sparse,exclusion-heavy,solved,rl_only,1.0,0.3005259203606311,53248.0,42.0,42.0
+Mined01,01 (Artificial 0-noise),8,small,1.6,sparse,exclusion-heavy,solved,shield_only,1.0,0.0,5000.0,42.0,42.0
+Mined05,05 (Synthetic Review Lg),14,medium,6.0,moderate,condition-heavy,solved,saferl,1.0,1.7659724776246188,75669.0,34655.5,34655.5
+Mined05,05 (Synthetic Review Lg),14,medium,6.0,moderate,condition-heavy,solved,rl_only,1.0,50.667817382120994,249195.0,239070.5,34655.5
+Mined05,05 (Synthetic Review Lg),14,medium,6.0,moderate,condition-heavy,solved,shield_only,1.0,0.0,9789.0,34655.5,34655.5
+Mined03,03 (BPI20 RFP),19,medium,10.32,dense,mixed,solved,saferl,1.0,3.7571814092953524,173428.0,800.0,800.0
+Mined03,03 (BPI20 RFP),19,medium,10.32,dense,mixed,solved,rl_only,1.0,2.685369381183138,43096.0,4585.0,800.0
+Mined03,03 (BPI20 RFP),19,medium,10.32,dense,mixed,solved,shield_only,1.0,0.0,5000.0,800.0,800.0
+Mined11,11 (BPI19),42,large,14.52,dense,exclusion-heavy,solved,saferl,0.9999757045675413,1.6767217926337956,205804.0,348.25,348.25
+Mined11,11 (BPI19),42,large,14.52,dense,exclusion-heavy,solved,rl_only,1.0,5.490197711320624,35260.0,1392.25,348.25
+Mined11,11 (BPI19),42,large,14.52,dense,exclusion-heavy,solved,shield_only,1.0,0.0,3665.0,348.25,348.25
+Mined09,09 (Large Bank Txn),113,large,12.17,dense,exclusion-heavy,timeout,saferl,0.0,98.40181818181819,1670.0,,
+Mined09,09 (Large Bank Txn),113,large,12.17,dense,exclusion-heavy,timeout,rl_only,,,,,
+Mined09,09 (Large Bank Txn),113,large,12.17,dense,exclusion-heavy,timeout,shield_only,1.0,0.0,1230.0,,

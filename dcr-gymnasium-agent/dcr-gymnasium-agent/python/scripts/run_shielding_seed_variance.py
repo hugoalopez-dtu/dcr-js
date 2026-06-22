@@ -348,6 +348,29 @@ def write_outputs(result, out_json, out_md):
 
     stats = result["aggregate"]
     stable = result["front_extremes_stable"]
+    per_seed = result["per_seed"]
+
+    table_lines = [
+        "| Seed | Accepting episodes | Pareto points | Cost range | Duration range | Min cost | Min duration |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for row in per_seed:
+        cost_range = row["cost_range"] or ["", ""]
+        duration_range = row["duration_range"] or ["", ""]
+        table_lines.append(
+            "| {seed} | {accepting} | {pareto} | {c0:.1f}-{c1:.1f} | {d0:.1f}-{d1:.1f} | {min_cost:.1f} | {min_duration:.1f} |".format(
+                seed=row["seed"],
+                accepting=row["accepting_episodes"],
+                pareto=row["pareto_points"],
+                c0=cost_range[0],
+                c1=cost_range[1],
+                d0=duration_range[0],
+                d1=duration_range[1],
+                min_cost=row["front_extremes"]["min_cost"],
+                min_duration=row["front_extremes"]["min_duration"],
+            )
+        )
+
     summary = (
         f"Shielding-only over seeds {result['seeds']} recovered "
         f"{stats['pareto_points']['mean']:.1f} +/- {stats['pareto_points']['std']:.1f} "
@@ -356,8 +379,153 @@ def write_outputs(result, out_json, out_md):
         f"Front extremes were {'stable' if stable['both'] else 'not fully stable'} "
         f"across seeds: min cost values {stable['min_cost_values']}, "
         f"min duration values {stable['min_duration_values']}.\n"
+        "\n"
+        + "\n".join(table_lines)
+        + "\n"
     )
     out_md.write_text(summary)
+
+    out_csv = out_json.with_name(out_json.stem + "_table.csv")
+    with open(out_csv, "w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "seed",
+                "accepting_episodes",
+                "pareto_points",
+                "cost_min",
+                "cost_max",
+                "duration_min",
+                "duration_max",
+                "min_cost",
+                "min_duration",
+            ],
+        )
+        writer.writeheader()
+        for row in per_seed:
+            cost_range = row["cost_range"] or [None, None]
+            duration_range = row["duration_range"] or [None, None]
+            writer.writerow({
+                "seed": row["seed"],
+                "accepting_episodes": row["accepting_episodes"],
+                "pareto_points": row["pareto_points"],
+                "cost_min": cost_range[0],
+                "cost_max": cost_range[1],
+                "duration_min": duration_range[0],
+                "duration_max": duration_range[1],
+                "min_cost": row["front_extremes"]["min_cost"],
+                "min_duration": row["front_extremes"]["min_duration"],
+            })
+
+    out_png = out_json.with_name(out_json.stem + "_pareto_overlay.png")
+    try:
+        plot_pareto_overlay(result, out_png)
+    except Exception as exc:
+        print(f"Plot skipped: {exc}")
+
+
+def plot_pareto_overlay(result, out_png):
+    from PIL import Image, ImageDraw, ImageFont
+
+    colors = ["#4C72B0", "#DD8452", "#55A868", "#C44E52"]
+    fronts = [row["pareto_front"] for row in result["per_seed"] if row["pareto_front"]]
+    if not fronts:
+        return
+
+    all_points = [p for front in fronts for p in front]
+    min_cost = min(p["cost"] for p in all_points)
+    max_cost = max(p["cost"] for p in all_points)
+    min_duration = min(p["duration"] for p in all_points)
+    max_duration = max(p["duration"] for p in all_points)
+
+    scale = 2
+    width, height = 860, 560
+    left, right, top, bottom = 78, 32, 58, 74
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+
+    def sx(cost):
+        if max_cost == min_cost:
+            return left + plot_w / 2
+        return left + (cost - min_cost) / (max_cost - min_cost) * plot_w
+
+    def sy(duration):
+        if max_duration == min_duration:
+            return top + plot_h / 2
+        return top + (max_duration - duration) / (max_duration - min_duration) * plot_h
+
+    def font(size, bold=False):
+        name = "Arial Bold.ttf" if bold else "Arial.ttf"
+        path = Path("/System/Library/Fonts/Supplemental") / name
+        try:
+            return ImageFont.truetype(str(path), size * scale)
+        except OSError:
+            return ImageFont.load_default()
+
+    def pt(value):
+        return int(round(value * scale))
+
+    def text_center(draw, xy, text, font_obj, fill):
+        bbox = draw.textbbox((0, 0), text, font=font_obj)
+        x, y = xy
+        draw.text((pt(x) - (bbox[2] - bbox[0]) / 2, pt(y)), text, font=font_obj, fill=fill)
+
+    image = Image.new("RGB", (width * scale, height * scale), "white")
+    draw = ImageDraw.Draw(image)
+    title_font = font(18, bold=True)
+    label_font = font(13)
+    tick_font = font(11)
+    legend_font = font(12)
+
+    draw.text((pt(78), pt(12)), "Shielding-only baseline: Pareto fronts across random seeds", font=title_font, fill="#111111")
+    draw.line((pt(left), pt(top), pt(left), pt(top + plot_h)), fill="#333333", width=pt(1))
+    draw.line((pt(left), pt(top + plot_h), pt(left + plot_w), pt(top + plot_h)), fill="#333333", width=pt(1))
+    text_center(draw, (left + plot_w / 2, height - 44), "Cost", label_font, "#111111")
+
+    y_label = Image.new("RGBA", (pt(110), pt(26)), (255, 255, 255, 0))
+    y_draw = ImageDraw.Draw(y_label)
+    y_draw.text((0, 0), "Duration", font=label_font, fill="#111111")
+    y_label = y_label.rotate(90, expand=True)
+    image.paste(y_label, (pt(8), pt(top + plot_h / 2 - 55)), y_label)
+
+    for t in range(5):
+        frac = t / 4
+        x = left + frac * plot_w
+        y = top + frac * plot_h
+        cost_label = min_cost + frac * (max_cost - min_cost)
+        dur_label = max_duration - frac * (max_duration - min_duration)
+        draw.line((pt(x), pt(top), pt(x), pt(top + plot_h)), fill="#e5e5e5", width=pt(1))
+        draw.line((pt(left), pt(y), pt(left + plot_w), pt(y)), fill="#e5e5e5", width=pt(1))
+        text_center(draw, (x, top + plot_h + 8), f"{cost_label:.0f}", tick_font, "#555555")
+        dur_text = f"{dur_label:.0f}"
+        dur_bbox = draw.textbbox((0, 0), dur_text, font=tick_font)
+        draw.text((pt(left - 10) - (dur_bbox[2] - dur_bbox[0]), pt(y - 6)), dur_text, font=tick_font, fill="#555555")
+
+    for i, row in enumerate(result["per_seed"]):
+        front = row["pareto_front"]
+        if not front:
+            continue
+        color = colors[i % len(colors)]
+        for p in front:
+            x = sx(p["cost"])
+            y = sy(p["duration"])
+            radius = 4.3
+            draw.ellipse(
+                (pt(x - radius), pt(y - radius), pt(x + radius), pt(y + radius)),
+                fill=color,
+                outline=color,
+            )
+        legend_x = left + plot_w - 110
+        legend_y = top + 18 + i * 22
+        draw.ellipse(
+            (pt(legend_x - 5), pt(legend_y - 5), pt(legend_x + 5), pt(legend_y + 5)),
+            fill=color,
+            outline=color,
+        )
+        draw.text((pt(legend_x + 12), pt(legend_y - 7)), f"seed {row['seed']}", font=legend_font, fill="#111111")
+
+    image = image.resize((width, height), Image.Resampling.LANCZOS)
+    image.save(out_png)
 
 
 def main():

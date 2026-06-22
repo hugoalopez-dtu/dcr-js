@@ -26,6 +26,7 @@ yarn-error.log*
 *.log
 tmp_cluster_logs/
 dcr_tensorboard*/
+train_trace_exp_*.csv
 
 # Compiled output (regenerate with npm build)
 node-adapter/dist/
@@ -34,6 +35,9 @@ node-adapter/dist/
 dcr-gymnasium-agent/dcr-gymnasium-agent/python/models/
 dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcr_ppo/
 dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcr_ppo.zip
+
+# Third-party repo accidentally cloned in-tree (not a real submodule)
+dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcrGraph/
 
 # IDE
 .vscode/

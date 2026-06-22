@@ -1,0 +1,5 @@
+k,learned_pareto_points,learned_cost_range,learned_dur_range,greedy_pareto_points,greedy_cost_range,greedy_dur_range,always_expert_accept_rate,always_expert_point_median,always_junior_accept_rate,always_junior_point_median
+k=inf,26,1092-3120,408-1632,5,1228-3120,408-1910,100%,"(8932, 1171)",100%,"(3126, 4683)"
+k=1,6,1092-1793,1245-1632,2,1092-1191,1550-1632,100%,"(3248, 4566)",100%,"(3126, 4683)"
+k=2,14,1092-2454,879-1632,5,1092-1892,1162-1632,100%,"(3541, 4380)",100%,"(3126, 4683)"
+k=3,21,1092-2868,616-1632,7,1092-2553,796-1632,100%,"(3996, 4200)",100%,"(3126, 4683)"

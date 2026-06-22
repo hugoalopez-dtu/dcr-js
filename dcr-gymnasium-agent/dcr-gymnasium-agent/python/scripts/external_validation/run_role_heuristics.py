@@ -146,12 +146,27 @@ def stop_adapter(proc, lf, port):
     free_port(port)
 
 
-def choose_action(heuristic, pairs, action_mask, rng, costs, role_mults, alpha, beta):
+def choose_action(heuristic, pairs, action_mask, rng, costs, role_mults, alpha, beta,
+                   expert_remaining=None):
     """pairs[i] = {"event": ..., "role": ...}; action_mask[i] in {0,1}.
-    Returns the chosen action index."""
+    Returns the chosen action index.
+
+    expert_remaining: current Expert budget left this episode, or None if
+    unlimited. The server's action_mask does NOT reflect budget exhaustion
+    by design (the learning agent is meant to discover the block via the
+    -10 budget_block penalty, not via the mask) -- so a fixed heuristic
+    that only reads action_mask will keep proposing Expert forever once the
+    budget hits 0, get blocked every step, and never fall back to Junior.
+    Filtering Expert out here when expert_remaining == 0 fixes that for the
+    non-learning heuristics, which have no way to "learn" from the penalty.
+    """
     legal = [i for i, m in enumerate(action_mask) if m == 1]
     if not legal:
         return None
+    if expert_remaining == 0:
+        legal = [i for i in legal if pairs[i]["role"] != "Expert"]
+        if not legal:
+            return None
     by_event = {}
     for i in legal:
         by_event.setdefault(pairs[i]["event"], []).append(i)
@@ -223,10 +238,12 @@ def run(heuristic, alpha, beta, budget_k, episodes, seed, port):
                 init = session.post(f"{node_url}/reset", timeout=5).json()
                 action_mask = init.get("actionMask", [])
                 pairs = init.get("eventRolePairs", [])
+                expert_remaining = init.get("expertBudgetRemaining")
                 ep_rew_sum = 0.0
                 step_in_ep = 0
                 for _ in range(MAX_EPISODE_STEPS):
-                    action_idx = choose_action(heuristic, pairs, action_mask, rng, costs, role_mults, alpha, beta)
+                    action_idx = choose_action(heuristic, pairs, action_mask, rng, costs, role_mults, alpha, beta,
+                                                expert_remaining=expert_remaining)
                     if action_idx is None:
                         break
                     resp = session.post(f"{node_url}/action", json={"action": action_idx}, timeout=5).json()
@@ -235,6 +252,7 @@ def run(heuristic, alpha, beta, budget_k, episodes, seed, port):
                     done = bool(result.get("done", False))
                     action_mask = resp.get("actionMask", [])
                     pairs = resp.get("eventRolePairs", pairs)
+                    expert_remaining = result.get("expertBudgetRemaining", expert_remaining)
                     global_t += 1
                     step_in_ep += 1
                     ep_rew_sum += reward

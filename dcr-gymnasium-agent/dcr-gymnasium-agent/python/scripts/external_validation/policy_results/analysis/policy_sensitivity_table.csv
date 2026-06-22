@@ -1,0 +1,4 @@
+policy,n_episodes,accept_rate_last20,illegal_rate_final_decile,pareto_points,cost_min,cost_max,dur_min,dur_max
+random,74187,1.0,3.526741998877308,1,371.0,371.0,350.0,350.0
+linear,73880,1.0,4.828010351793087,1,295.0,295.0,350.0,350.0
+inverse,74601,1.0,2.783004790510274,2,327.0,335.0,350.0,360.0

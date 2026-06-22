@@ -370,6 +370,8 @@ var GOAL_LABEL = (process.env.GOAL_LABEL || "").trim();
 var STRICT_GOAL_TERMINATION = process.env.STRICT_GOAL_TERMINATION === "1";
 var COST_WEIGHT = Number(process.env.COST_WEIGHT || 0);
 var DURATION_WEIGHT = Number(process.env.DURATION_WEIGHT || 0);
+var _kRaw = process.env.EXPERT_BUDGET_K;
+var EXPERT_BUDGET_K = !_kRaw || _kRaw === "none" ? null : Number(_kRaw);
 var executedInEpisode = /* @__PURE__ */ new Set();
 var firstResolvedInEpisode = /* @__PURE__ */ new Set();
 var lastResult = null;
@@ -377,6 +379,8 @@ var episodeSteps = 0;
 var illegalTracesCount = 0;
 var episodeCost = 0;
 var episodeDuration = 0;
+var expertBudgetRemaining = EXPERT_BUDGET_K;
+var numBudgetBlocks = 0;
 var _initCostVals = Object.values(graph.costMap).filter((v) => v > 0);
 var _initDurVals = Object.values(graph.durationMap).filter((v) => v > 0);
 var maxGraphCost = _initCostVals.length > 0 ? Math.max(..._initCostVals) : 1;
@@ -414,6 +418,8 @@ app.post("/reset", (_req, res) => {
     illegalTracesCount = 0;
     episodeCost = 0;
     episodeDuration = 0;
+    expertBudgetRemaining = EXPERT_BUDGET_K;
+    numBudgetBlocks = 0;
     lastResult = null;
     executedInEpisode.clear();
     firstResolvedInEpisode.clear();
@@ -431,7 +437,12 @@ app.post("/reset", (_req, res) => {
       eventRolePairs: pairs,
       roles,
       nRoles: roles.length || 1,
-      actionMask
+      actionMask,
+      expertBudgetK: EXPERT_BUDGET_K,
+      expertBudgetRemaining,
+      costMap: graph.costMap,
+      durationMap: graph.durationMap,
+      roleMultipliers: graph.roleMultipliers
     });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
@@ -478,8 +489,51 @@ app.post("/action", (req, res) => {
     }
     const stateBefore = getState();
     const pendingBefore = countPendingIncluded(stateBefore);
-    const result = env.step(action);
     episodeSteps += 1;
+    const validEvents = new Set(getValidActions());
+    const isDCREnabled = validEvents.has(action);
+    if (chosenRole === "Expert" && EXPERT_BUDGET_K !== null && expertBudgetRemaining === 0 && isDCREnabled) {
+      numBudgetBlocks += 1;
+      const maxStepReachedBudget = episodeSteps >= MAX_EPISODE_STEPS;
+      const pairsBudget = getEventRolePairs();
+      const budgetBlockMask = buildActionMask(pairsBudget, Array.from(validEvents));
+      return res.json({
+        ok: true,
+        result: {
+          state: getState(),
+          done: maxStepReachedBudget,
+          accepting: false,
+          structuralAccepting: false,
+          goalReached: false,
+          maxStepReached: maxStepReachedBudget,
+          stepReward: -10,
+          baseMapped: -10,
+          noveltyDelta: 0,
+          progressDelta: 0,
+          costPenalty: 0,
+          durationPenalty: 0,
+          eventCost: null,
+          eventDuration: null,
+          episodeCost,
+          episodeDuration,
+          pendingBefore,
+          pendingAfter: pendingBefore,
+          // state unchanged
+          illegalTracesCount,
+          // dcr_illegal count not touched
+          episodeSteps,
+          actionCompliant: true,
+          // DCR-enabled; budget-blocked only
+          interceptedReason: "budget_block",
+          expertBudgetRemaining,
+          expertBudgetInitial: EXPERT_BUDGET_K,
+          numBudgetBlocks,
+          chosenRole
+        },
+        actionMask: budgetBlockMask
+      });
+    }
+    const result = env.step(action);
     const label = graph.labelMap[action] || action;
     const structuralAccepting = Boolean(result.done);
     const goalReached = GOAL_LABEL.length > 0 && label === GOAL_LABEL;
@@ -491,6 +545,9 @@ app.post("/action", (req, res) => {
     const eventCost = mult ? baseCost * mult.costMultiplier : graph.costMap?.[action];
     const eventDuration = mult ? baseDuration * mult.durationMultiplier : graph.durationMap?.[action];
     const isLegal = result.reward !== -10;
+    if (isLegal && chosenRole === "Expert" && EXPERT_BUDGET_K !== null && expertBudgetRemaining !== null) {
+      expertBudgetRemaining = Math.max(0, expertBudgetRemaining - 1);
+    }
     const shieldDisabled = process.env.SHIELD_DISABLED === "1";
     const actionExecuted = isLegal || shieldDisabled;
     if (actionExecuted && eventCost !== void 0)
@@ -501,6 +558,7 @@ app.post("/action", (req, res) => {
     const { stepReward, baseMapped, noveltyDelta, progressDelta, costPenalty, durationPenalty } = computeStepReward(rewardInput, pendingBefore, executedInEpisode, firstResolvedInEpisode, eventCost, eventDuration, COST_WEIGHT, DURATION_WEIGHT, maxGraphCost, maxGraphDuration);
     const isLegalNonTerminal = baseMapped === 1;
     const isIllegal = baseMapped === -10;
+    const interceptedReason = isLegal ? null : "dcr_illegal";
     if (isIllegal) {
       illegalTracesCount += 1;
     }
@@ -528,7 +586,11 @@ app.post("/action", (req, res) => {
       pendingAfter: countPendingIncluded(result.state),
       illegalTracesCount,
       episodeSteps,
-      actionCompliant: result.info?.compliant ?? true
+      actionCompliant: result.info?.compliant ?? true,
+      interceptedReason,
+      expertBudgetRemaining,
+      expertBudgetInitial: EXPERT_BUDGET_K,
+      numBudgetBlocks
     };
     lastResult = { ...augmentedResult, chosenRole };
     const pairs2 = getEventRolePairs();

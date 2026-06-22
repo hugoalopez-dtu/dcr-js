@@ -1,0 +1,7 @@
+graph,recovered_points,cop_points,GD (recovered->COP),IGD (COP->recovered),AHD,Purity,Delta,note
+04 (BPI13 Incidents),1.0,1.0,0.0,0.0,0.0,1.0,--,
+01 (Artificial 0-noise),1.0,1.0,0.0,0.0,0.0,1.0,--,
+05 (Synthetic Review Lg),2.0,2.0,0.0,0.0,0.0,1.0,0.0,
+03 (BPI20 RFP),1.0,1.0,0.0,0.0,0.0,1.0,--,
+11 (BPI19),2.0,2.0,0.0,0.0,0.0,1.0,0.0,
+09 (Large Bank Txn),,,,,,,,no COP ground truth (timeout)
