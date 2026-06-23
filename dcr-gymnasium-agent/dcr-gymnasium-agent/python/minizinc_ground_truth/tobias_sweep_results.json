@@ -1,0 +1,146 @@
+[
+  {
+    "graph": "04 BPI Challenge 2013 - Incidents.xml",
+    "wall_s": 1.2,
+    "num_events": 4,
+    "num_relations": 7,
+    "num_activities": 4,
+    "K": 4,
+    "elapsed_s": 0.9395952224731445,
+    "has_solution": true,
+    "num_pareto_points": 1,
+    "minizinc_solve_s": 0.002693,
+    "explored_nodes": 15,
+    "status": "solved",
+    "pareto_front": [
+      {
+        "cost": 8,
+        "duration": 21,
+        "trace": [
+          "Completed"
+        ]
+      }
+    ]
+  },
+  {
+    "graph": "01 Data-Driven Process Discover - Artificial Event Log - 0 Noise.xml",
+    "wall_s": 1.1,
+    "num_events": 8,
+    "num_relations": 11,
+    "num_activities": 8,
+    "K": 8,
+    "elapsed_s": 1.0225040912628174,
+    "has_solution": true,
+    "num_pareto_points": 1,
+    "minizinc_solve_s": 0.000485,
+    "explored_nodes": 12,
+    "status": "solved",
+    "pareto_front": [
+      {
+        "cost": 8,
+        "duration": 21,
+        "trace": [
+          "Check"
+        ]
+      }
+    ]
+  },
+  {
+    "graph": "05 Synthetic Event Logs - Review Example Large.xml",
+    "wall_s": 1.5,
+    "num_events": 14,
+    "num_relations": 84,
+    "num_activities": 14,
+    "K": 14,
+    "elapsed_s": 1.3861610889434814,
+    "has_solution": true,
+    "num_pareto_points": 2,
+    "minizinc_solve_s": 0.007471,
+    "explored_nodes": 156,
+    "status": "solved",
+    "pareto_front": [
+      {
+        "cost": 335,
+        "duration": 410,
+        "trace": [
+          "invite_reviewers",
+          "time_out_2",
+          "get_review_3",
+          "get_review_1",
+          "collect_reviews",
+          "decide"
+        ]
+      },
+      {
+        "cost": 339,
+        "duration": 387,
+        "trace": [
+          "invite_reviewers",
+          "get_review_2",
+          "get_review_3",
+          "get_review_1",
+          "collect_reviews",
+          "decide"
+        ]
+      }
+    ]
+  },
+  {
+    "graph": "03 BPI Challenge 2020 - Request For Payment.xml",
+    "wall_s": 2.5,
+    "num_events": 19,
+    "num_relations": 196,
+    "num_activities": 19,
+    "K": 19,
+    "elapsed_s": 2.3386270999908447,
+    "has_solution": true,
+    "num_pareto_points": 1,
+    "minizinc_solve_s": 0.001713,
+    "explored_nodes": 5,
+    "status": "solved",
+    "pareto_front": [
+      {
+        "cost": 50,
+        "duration": 64,
+        "trace": [
+          "Request_For_Payment_SUBMITTED_by_EMPLOYEE"
+        ]
+      }
+    ]
+  },
+  {
+    "graph": "11 BPI Challenge 2019.xml",
+    "wall_s": 21.4,
+    "num_events": 42,
+    "num_relations": 610,
+    "num_activities": 42,
+    "K": 42,
+    "elapsed_s": 21.305203914642334,
+    "has_solution": true,
+    "num_pareto_points": 2,
+    "minizinc_solve_s": 0.031377999999999996,
+    "explored_nodes": 10,
+    "status": "solved",
+    "pareto_front": [
+      {
+        "cost": 29,
+        "duration": 52,
+        "trace": [
+          "Create_Purchase_Order_Item"
+        ]
+      },
+      {
+        "cost": 16,
+        "duration": 57,
+        "trace": [
+          "Vendor_creates_debit_memo"
+        ]
+      }
+    ]
+  },
+  {
+    "graph": "09 Large Bank Transaction Process - All Without Noise.xml",
+    "status": "timeout",
+    "wall_s": 300.0
+  }
+]

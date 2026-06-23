@@ -1,0 +1,25 @@
+{
+  "graph": "LoanApp_junior_senior.xml",
+  "num_events": 12,
+  "num_relations": 61,
+  "K": 12,
+  "hasSolution": true,
+  "hitDeadline": false,
+  "provenOptimal": true,
+  "iterations": 2,
+  "candidatesFound": 1,
+  "elapsed_s": 5.5677361488342285,
+  "pareto_front": [
+    {
+      "cost": 1560,
+      "duration": 816,
+      "trace": [
+        "Check_application_form_completeness",
+        "Appraise_property",
+        "Check_credit_history",
+        "AML_check",
+        "Assess_loan_risk"
+      ]
+    }
+  ]
+}

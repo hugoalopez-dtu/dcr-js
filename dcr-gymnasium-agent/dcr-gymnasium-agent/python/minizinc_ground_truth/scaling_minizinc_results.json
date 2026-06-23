@@ -1,0 +1,41 @@
+[
+  {
+    "num_events": 20,
+    "wall_s": 86.0,
+    "num_relations": 78,
+    "K": 20,
+    "elapsed_s": 85.77519679069519,
+    "has_solution": true,
+    "num_pareto_points": 1,
+    "minizinc_solve_s": 0.005079,
+    "explored_nodes": 55,
+    "status": "solved"
+  },
+  {
+    "num_events": 40,
+    "wall_s": 29.7,
+    "num_relations": 158,
+    "K": 40,
+    "elapsed_s": 29.544381141662598,
+    "has_solution": true,
+    "num_pareto_points": 1,
+    "minizinc_solve_s": 0.014829,
+    "explored_nodes": 34,
+    "status": "solved"
+  },
+  {
+    "num_events": 60,
+    "status": "timeout",
+    "wall_s": 300.0
+  },
+  {
+    "num_events": 80,
+    "status": "timeout",
+    "wall_s": 300.0
+  },
+  {
+    "num_events": 100,
+    "status": "timeout",
+    "wall_s": 300.0
+  }
+]
