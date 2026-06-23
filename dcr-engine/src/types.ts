@@ -79,6 +79,20 @@ export interface Labelling {
   labelMapInv: { [label: Label]: Set<Event> };
 }
 
+export type VariableType = string | number | boolean;
+
+export interface Variable<T extends VariableType> {
+  name: string;
+  type: string;
+  value: T;
+  default?: T;
+}
+
+export interface Guard<T extends VariableType> {
+  expression: string;
+  boundTo: Variable<T>;
+}
+
 export interface Optimizations {
   conditions: Set<Event>;
   includesFor: EventMap;
@@ -86,6 +100,15 @@ export interface Optimizations {
 }
 
 export type LabelDCR = DCRGraph & Labelling;
+
+export type DataDCR = DCRGraph & {
+  guards: {
+      [startEvent: Event]: {[endEvent: Event]: Guard<VariableType>}
+  };
+  data: {
+      [event: Event]: Variable<VariableType>
+  };
+};
 
 export type LabelDCRPP = DCRGraph & Labelling & Optimizations;
 
