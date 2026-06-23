@@ -36,12 +36,12 @@ train_trace_exp_*.csv
 node-adapter/dist/
 
 # Trained model artifacts (regenerate by re-running training)
-dcr-gymnasium-agent/dcr-gymnasium-agent/python/models/
-dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcr_ppo/
-dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcr_ppo.zip
+dcr-gymnasium-agent/python/models/
+dcr-gymnasium-agent/python/dcr_ppo/
+dcr-gymnasium-agent/python/dcr_ppo.zip
 
 # Third-party repo accidentally cloned in-tree (not a real submodule)
-dcr-gymnasium-agent/dcr-gymnasium-agent/python/dcrGraph/
+dcr-gymnasium-agent/python/dcrGraph/
 
 # IDE
 .vscode/

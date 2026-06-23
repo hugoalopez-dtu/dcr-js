@@ -1,0 +1,45 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Declarative process models such as Dynamic Condition Response (DCR)
+graphs specify the constraints an execution must satisfy rather than a
+fixed control flow, allowing flexible, compliant behaviour. This
+flexibility comes at a cost: the resulting \emph{flat conformance
+space} treats every compliant trace as equally valid, leaving no
+mechanism to identify which executions are operationally
+preferable in terms of cost, duration, or resource usage. Existing
+solutions to this problem are either exact but unscalable (constraint
+and satisfiability-based optimisers) or scalable but uncompliant
+(standard reinforcement learning, which optimises reward without
+regard for the process specification).
+
+This thesis proposes a compliance-aware, multi-objective reinforcement
+learning framework that closes this gap. A Proximal Policy Optimisation
+(PPO) agent is trained inside a DCR execution engine whose shield
+intercepts any action that is not currently enabled, leaving the
+process marking unchanged; every trace generated during training is
+therefore valid by construction, independently of reward design or
+training budget. A normalised reward scalarises cost and duration under
+configurable weights $(\alpha,\beta)$, so that training independent
+agents across a small weight grid and pooling their accepting traces
+approximates the Pareto front of compliant executions. The framework is
+further extended to a role-conditioned action space, in which each
+event can be executed by one of several resource roles with
+differentiated cost--duration profiles, and to a capacity-constrained
+variant that couples per-event role choices into a genuine
+opportunity-cost allocation problem.
+
+The framework is evaluated on two benchmark processes and externally
+validated on a suite of independently mined DCR graphs never used
+during development. On the Expense Report benchmark it recovers the
+exact Pareto front identified by a CSP+COP exact solver; on the larger
+Loan Application benchmark it discovers a well-populated, seed-stable
+front of 26 non-dominated points while maintaining full compliance
+throughout training, and the role-conditioned extension shows the agent
+learning event-level resource specialisation consistent with the
+underlying cost--duration economics. Across all experiments, structural
+compliance never depends on convergence: invalid transitions are
+structurally impossible from the first training episode. These results
+indicate that compliance-by-construction and scalable multi-objective
+optimisation are not competing requirements but can be jointly achieved
+within a single reinforcement learning pipeline.

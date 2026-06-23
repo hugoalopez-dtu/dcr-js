@@ -67,7 +67,7 @@ Baseline (α=0,β=0) is not Pareto-optimal: dominated by both points.
 
 ## Analysis Notebook
 
-`dcr-gymnasium-agent/dcr-gymnasium-agent/python/scripts/analysis.ipynb`
+`dcr-gymnasium-agent/python/scripts/analysis.ipynb`
 
 | Cell | ID | Content |
 |---|---|---|

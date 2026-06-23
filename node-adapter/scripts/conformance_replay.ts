@@ -109,7 +109,7 @@ const report = {
   cancelApplicationOccurrencesAtPosition0: cancelPosDist["0"] || 0,
 };
 
-const outDir = path.join(__dirname, "../../dcr-gymnasium-agent/dcr-gymnasium-agent/python/scripts/logs");
+const outDir = path.join(__dirname, "../../dcr-gymnasium-agent/python/scripts/logs");
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, "conformance_report.json"), JSON.stringify(report, null, 2));
 

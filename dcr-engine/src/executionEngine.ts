@@ -116,12 +116,8 @@ const formatEmpty = (label: string, title: string): string => {
 }
 
 export const isEnabledS = (event: Event, graph: DCRGraphS, group: SubProcess | DCRGraph): { enabled: boolean, msg: string } => {
-  console.log(`Checking if event is enabled in subprocess: ${event}`);
-  console.log(`Graph state before evaluation: Included: ${[...graph.marking.included]}, Executed: ${[...graph.marking.executed]}, Pending: ${[...graph.marking.pending]}`);
-
   if (!graph.marking.included.has(event)) {
     const msg = `${formatEmpty(graph.labelMap[event], "Subprocess")} is not included...`;
-    console.log(msg);
     return { enabled: false, msg };
   }
   if (isSubProcess(group)) {
@@ -136,7 +132,6 @@ export const isEnabledS = (event: Event, graph: DCRGraphS, group: SubProcess | D
       !graph.marking.executed.has(cEvent)
     ) {
       const msg = `At minimum, ${formatEmpty(graph.labelMap[cEvent], "Event")} is conditioning for ${formatEmpty(graph.labelMap[event], "Event")}...`;
-      console.log(msg);
       return { enabled: false, msg };
     }
   }
@@ -146,11 +141,9 @@ export const isEnabledS = (event: Event, graph: DCRGraphS, group: SubProcess | D
       graph.marking.pending.has(mEvent)
     ) {
       const msg = `At minimum, ${formatEmpty(graph.labelMap[mEvent], "Event")} is a milestone for ${formatEmpty(graph.labelMap[event], "Event")}...`;
-      console.log(msg);
       return { enabled: false, msg };
     }
   }
-  console.log(`Event ${event} is enabled in subprocess.`);
   return { enabled: true, msg: "" };
 };
 

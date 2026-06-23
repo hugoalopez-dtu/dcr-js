@@ -1,0 +1,626 @@
+{
+  "per_seed": {
+    "1": {
+      "per_config": {
+        "alpha=0.0,beta=0.0": {
+          "final_illegal_rate": 2.2458310439560427,
+          "mean_cost_last20": 2281.4854395604416,
+          "mean_duration_last20": 1134.1339285714287,
+          "n_accepting_last20": 2912
+        },
+        "alpha=1.0,beta=0.0": {
+          "final_illegal_rate": 1.1254900616860855,
+          "mean_cost_last20": 1552.0468471555887,
+          "mean_duration_last20": 1552.3231665524331,
+          "n_accepting_last20": 2918
+        },
+        "alpha=0.0,beta=1.0": {
+          "final_illegal_rate": 0.33885049365303255,
+          "mean_cost_last20": 2888.7641170249776,
+          "mean_duration_last20": 603.9178709904829,
+          "n_accepting_last20": 2837
+        },
+        "alpha=0.5,beta=0.5": {
+          "final_illegal_rate": 0.7523904109589034,
+          "mean_cost_last20": 2017.5212401507338,
+          "mean_duration_last20": 1115.3941418293937,
+          "n_accepting_last20": 2919
+        },
+        "alpha=2.0,beta=0.5": {
+          "final_illegal_rate": 0.7487835926449781,
+          "mean_cost_last20": 1436.1472418670498,
+          "mean_duration_last20": 1450.6863507779349,
+          "n_accepting_last20": 2828
+        },
+        "alpha=0.5,beta=2.0": {
+          "final_illegal_rate": 0.9437873523280044,
+          "mean_cost_last20": 2892.5435371785666,
+          "mean_duration_last20": 625.4669909659485,
+          "n_accepting_last20": 2878
+        }
+      },
+      "final_illegal_rate_pooled": 1.025855492537841,
+      "pareto_points": [
+        {
+          "cost": 1091.9999999999998,
+          "duration": 1632.0
+        },
+        {
+          "cost": 1190.8,
+          "duration": 1549.5
+        },
+        {
+          "cost": 1245.3999999999999,
+          "duration": 1506.0
+        },
+        {
+          "cost": 1344.1999999999998,
+          "duration": 1423.5
+        },
+        {
+          "cost": 1505.3999999999999,
+          "duration": 1369.5
+        },
+        {
+          "cost": 1604.1999999999998,
+          "duration": 1287.0
+        },
+        {
+          "cost": 1658.8,
+          "duration": 1243.5
+        },
+        {
+          "cost": 1757.6,
+          "duration": 1161.0
+        },
+        {
+          "cost": 1907.1,
+          "duration": 1140.0
+        },
+        {
+          "cost": 1946.1,
+          "duration": 1119.0
+        },
+        {
+          "cost": 2005.8999999999999,
+          "duration": 1057.5
+        },
+        {
+          "cost": 2044.8999999999999,
+          "duration": 1036.5
+        },
+        {
+          "cost": 2167.1,
+          "duration": 1003.5
+        },
+        {
+          "cost": 2206.1,
+          "duration": 982.5
+        },
+        {
+          "cost": 2265.8999999999996,
+          "duration": 921.0
+        },
+        {
+          "cost": 2304.8999999999996,
+          "duration": 900.0
+        },
+        {
+          "cost": 2320.5,
+          "duration": 877.5
+        },
+        {
+          "cost": 2359.5,
+          "duration": 856.5
+        },
+        {
+          "cost": 2419.3,
+          "duration": 795.0
+        },
+        {
+          "cost": 2458.3,
+          "duration": 774.0
+        },
+        {
+          "cost": 2607.7999999999997,
+          "duration": 753.0
+        },
+        {
+          "cost": 2706.6,
+          "duration": 670.5
+        },
+        {
+          "cost": 2867.8,
+          "duration": 616.5
+        },
+        {
+          "cost": 2966.6,
+          "duration": 534.0
+        },
+        {
+          "cost": 3021.2,
+          "duration": 490.5
+        },
+        {
+          "cost": 3120.0,
+          "duration": 408.0
+        }
+      ],
+      "n_pareto_points": 26,
+      "mean_cost_a1b0": 1552.0468471555887,
+      "mean_duration_a0b1": 603.9178709904829
+    },
+    "2": {
+      "per_config": {
+        "alpha=0.0,beta=0.0": {
+          "final_illegal_rate": 1.0533427163969022,
+          "mean_cost_last20": 2093.448469926134,
+          "mean_duration_last20": 1084.1916989096026,
+          "n_accepting_last20": 2843
+        },
+        "alpha=1.0,beta=0.0": {
+          "final_illegal_rate": 4.913793347487611,
+          "mean_cost_last20": 1519.1763185840737,
+          "mean_duration_last20": 1513.1132743362832,
+          "n_accepting_last20": 2825
+        },
+        "alpha=0.0,beta=1.0": {
+          "final_illegal_rate": 1.6184804630969591,
+          "mean_cost_last20": 3107.2053203039986,
+          "mean_duration_last20": 720.0441549040897,
+          "n_accepting_last20": 2763
+        },
+        "alpha=0.5,beta=0.5": {
+          "final_illegal_rate": 0.4508970792767733,
+          "mean_cost_last20": 2021.1966260869483,
+          "mean_duration_last20": 1111.433043478261,
+          "n_accepting_last20": 2875
+        },
+        "alpha=2.0,beta=0.5": {
+          "final_illegal_rate": 1.0894492131616584,
+          "mean_cost_last20": 1500.594599427763,
+          "mean_duration_last20": 1413.043991416309,
+          "n_accepting_last20": 2796
+        },
+        "alpha=0.5,beta=2.0": {
+          "final_illegal_rate": 0.701791666666666,
+          "mean_cost_last20": 2887.9386458333197,
+          "mean_duration_last20": 609.8920138888889,
+          "n_accepting_last20": 2880
+        }
+      },
+      "final_illegal_rate_pooled": 1.6379590810144287,
+      "pareto_points": [
+        {
+          "cost": 1092.0,
+          "duration": 1632.0
+        },
+        {
+          "cost": 1190.8,
+          "duration": 1549.5
+        },
+        {
+          "cost": 1245.3999999999999,
+          "duration": 1506.0
+        },
+        {
+          "cost": 1344.1999999999998,
+          "duration": 1423.5
+        },
+        {
+          "cost": 1505.3999999999999,
+          "duration": 1369.5
+        },
+        {
+          "cost": 1604.1999999999998,
+          "duration": 1287.0
+        },
+        {
+          "cost": 1658.8,
+          "duration": 1243.5
+        },
+        {
+          "cost": 1757.6,
+          "duration": 1161.0
+        },
+        {
+          "cost": 1949.1,
+          "duration": 1147.5
+        },
+        {
+          "cost": 1988.1,
+          "duration": 1126.5
+        },
+        {
+          "cost": 2005.8999999999999,
+          "duration": 1057.5
+        },
+        {
+          "cost": 2044.8999999999999,
+          "duration": 1036.5
+        },
+        {
+          "cost": 2167.1,
+          "duration": 1003.5
+        },
+        {
+          "cost": 2206.1,
+          "duration": 982.5
+        },
+        {
+          "cost": 2265.9,
+          "duration": 921.0
+        },
+        {
+          "cost": 2304.8999999999996,
+          "duration": 900.0
+        },
+        {
+          "cost": 2320.5,
+          "duration": 877.5
+        },
+        {
+          "cost": 2359.5,
+          "duration": 856.5
+        },
+        {
+          "cost": 2419.3,
+          "duration": 795.0
+        },
+        {
+          "cost": 2458.3,
+          "duration": 774.0
+        },
+        {
+          "cost": 2607.7999999999997,
+          "duration": 753.0
+        },
+        {
+          "cost": 2706.6,
+          "duration": 670.5
+        },
+        {
+          "cost": 2867.8,
+          "duration": 616.5
+        },
+        {
+          "cost": 2966.6,
+          "duration": 534.0
+        },
+        {
+          "cost": 3021.2,
+          "duration": 490.5
+        },
+        {
+          "cost": 3120.0,
+          "duration": 408.0
+        }
+      ],
+      "n_pareto_points": 26,
+      "mean_cost_a1b0": 1519.1763185840737,
+      "mean_duration_a0b1": 720.0441549040897
+    },
+    "3": {
+      "per_config": {
+        "alpha=0.0,beta=0.0": {
+          "final_illegal_rate": 0.40674220963172814,
+          "mean_cost_last20": 2132.6384342897513,
+          "mean_duration_last20": 1053.6429330499468,
+          "n_accepting_last20": 2823
+        },
+        "alpha=1.0,beta=0.0": {
+          "final_illegal_rate": 2.946368089573124,
+          "mean_cost_last20": 1407.7649755073585,
+          "mean_duration_last20": 1474.8855843247027,
+          "n_accepting_last20": 2858
+        },
+        "alpha=0.0,beta=1.0": {
+          "final_illegal_rate": 0.5790492957746476,
+          "mean_cost_last20": 2844.5201760563186,
+          "mean_duration_last20": 644.7535211267606,
+          "n_accepting_last20": 2840
+        },
+        "alpha=0.5,beta=0.5": {
+          "final_illegal_rate": 0.8194440583738698,
+          "mean_cost_last20": 2027.2897115050393,
+          "mean_duration_last20": 1119.20385818561,
+          "n_accepting_last20": 2877
+        },
+        "alpha=2.0,beta=0.5": {
+          "final_illegal_rate": 0.7934057971014485,
+          "mean_cost_last20": 1433.4234867705704,
+          "mean_duration_last20": 1456.4494382022472,
+          "n_accepting_last20": 2759
+        },
+        "alpha=0.5,beta=2.0": {
+          "final_illegal_rate": 0.40238396624472583,
+          "mean_cost_last20": 2920.7086528314644,
+          "mean_duration_last20": 583.6085121350686,
+          "n_accepting_last20": 2843
+        }
+      },
+      "final_illegal_rate_pooled": 0.9912322361165907,
+      "pareto_points": [
+        {
+          "cost": 1091.9999999999998,
+          "duration": 1632.0
+        },
+        {
+          "cost": 1190.8,
+          "duration": 1549.5
+        },
+        {
+          "cost": 1245.3999999999999,
+          "duration": 1506.0
+        },
+        {
+          "cost": 1344.1999999999998,
+          "duration": 1423.5
+        },
+        {
+          "cost": 1505.3999999999999,
+          "duration": 1369.5
+        },
+        {
+          "cost": 1604.1999999999998,
+          "duration": 1287.0
+        },
+        {
+          "cost": 1658.8,
+          "duration": 1243.5
+        },
+        {
+          "cost": 1757.6,
+          "duration": 1161.0
+        },
+        {
+          "cost": 1907.1,
+          "duration": 1140.0
+        },
+        {
+          "cost": 1946.1,
+          "duration": 1119.0
+        },
+        {
+          "cost": 2005.8999999999999,
+          "duration": 1057.5
+        },
+        {
+          "cost": 2044.8999999999999,
+          "duration": 1036.5
+        },
+        {
+          "cost": 2167.1,
+          "duration": 1003.5
+        },
+        {
+          "cost": 2206.1,
+          "duration": 982.5
+        },
+        {
+          "cost": 2265.9,
+          "duration": 921.0
+        },
+        {
+          "cost": 2304.8999999999996,
+          "duration": 900.0
+        },
+        {
+          "cost": 2320.5,
+          "duration": 877.5
+        },
+        {
+          "cost": 2359.5,
+          "duration": 856.5
+        },
+        {
+          "cost": 2419.3,
+          "duration": 795.0
+        },
+        {
+          "cost": 2458.3,
+          "duration": 774.0
+        },
+        {
+          "cost": 2607.7999999999997,
+          "duration": 753.0
+        },
+        {
+          "cost": 2706.6,
+          "duration": 670.5
+        },
+        {
+          "cost": 2867.8,
+          "duration": 616.5
+        },
+        {
+          "cost": 2966.6,
+          "duration": 534.0
+        },
+        {
+          "cost": 3021.2,
+          "duration": 490.5
+        },
+        {
+          "cost": 3120.0,
+          "duration": 408.0
+        }
+      ],
+      "n_pareto_points": 26,
+      "mean_cost_a1b0": 1407.7649755073585,
+      "mean_duration_a0b1": 644.7535211267606
+    },
+    "4": {
+      "per_config": {
+        "alpha=0.0,beta=0.0": {
+          "final_illegal_rate": 0.5580390788555477,
+          "mean_cost_last20": 2066.2107778165323,
+          "mean_duration_last20": 1113.1817230554586,
+          "n_accepting_last20": 2867
+        },
+        "alpha=1.0,beta=0.0": {
+          "final_illegal_rate": 1.1831416549789606,
+          "mean_cost_last20": 1533.426867765688,
+          "mean_duration_last20": 1431.1434584356366,
+          "n_accepting_last20": 2851
+        },
+        "alpha=0.0,beta=1.0": {
+          "final_illegal_rate": 0.4859874389392881,
+          "mean_cost_last20": 2872.7117934403213,
+          "mean_duration_last20": 660.5884508025122,
+          "n_accepting_last20": 2866
+        },
+        "alpha=0.5,beta=0.5": {
+          "final_illegal_rate": 1.8700574300071777,
+          "mean_cost_last20": 2153.1603516325795,
+          "mean_duration_last20": 1390.5312163616793,
+          "n_accepting_last20": 2787
+        },
+        "alpha=2.0,beta=0.5": {
+          "final_illegal_rate": 0.6306671204901289,
+          "mean_cost_last20": 1408.5332425995373,
+          "mean_duration_last20": 1504.6054780537597,
+          "n_accepting_last20": 2939
+        },
+        "alpha=0.5,beta=2.0": {
+          "final_illegal_rate": 0.5296597222222219,
+          "mean_cost_last20": 2917.058388329244,
+          "mean_duration_last20": 602.5713789510247,
+          "n_accepting_last20": 2879
+        }
+      },
+      "final_illegal_rate_pooled": 0.8762587409155542,
+      "pareto_points": [
+        {
+          "cost": 1091.9999999999998,
+          "duration": 1632.0
+        },
+        {
+          "cost": 1190.8,
+          "duration": 1549.5
+        },
+        {
+          "cost": 1245.3999999999999,
+          "duration": 1506.0
+        },
+        {
+          "cost": 1344.1999999999998,
+          "duration": 1423.5
+        },
+        {
+          "cost": 1505.4,
+          "duration": 1369.5
+        },
+        {
+          "cost": 1604.1999999999998,
+          "duration": 1287.0
+        },
+        {
+          "cost": 1658.8,
+          "duration": 1243.5
+        },
+        {
+          "cost": 1757.6,
+          "duration": 1161.0
+        },
+        {
+          "cost": 1907.1,
+          "duration": 1140.0
+        },
+        {
+          "cost": 1946.1,
+          "duration": 1119.0
+        },
+        {
+          "cost": 2005.8999999999999,
+          "duration": 1057.5
+        },
+        {
+          "cost": 2044.8999999999999,
+          "duration": 1036.5
+        },
+        {
+          "cost": 2167.1,
+          "duration": 1003.5
+        },
+        {
+          "cost": 2206.1,
+          "duration": 982.5
+        },
+        {
+          "cost": 2265.8999999999996,
+          "duration": 921.0
+        },
+        {
+          "cost": 2304.9,
+          "duration": 900.0
+        },
+        {
+          "cost": 2320.5,
+          "duration": 877.5
+        },
+        {
+          "cost": 2359.5,
+          "duration": 856.5
+        },
+        {
+          "cost": 2419.3,
+          "duration": 795.0
+        },
+        {
+          "cost": 2458.3,
+          "duration": 774.0
+        },
+        {
+          "cost": 2607.7999999999997,
+          "duration": 753.0
+        },
+        {
+          "cost": 2706.6,
+          "duration": 670.5
+        },
+        {
+          "cost": 2867.7999999999997,
+          "duration": 616.5
+        },
+        {
+          "cost": 2966.6,
+          "duration": 534.0
+        },
+        {
+          "cost": 3035.9,
+          "duration": 520.5
+        },
+        {
+          "cost": 3063.2,
+          "duration": 498.0
+        },
+        {
+          "cost": 3120.0,
+          "duration": 408.0
+        }
+      ],
+      "n_pareto_points": 27,
+      "mean_cost_a1b0": 1533.426867765688,
+      "mean_duration_a0b1": 660.5884508025122
+    }
+  },
+  "summary_across_seeds": {
+    "final_illegal_rate": {
+      "mean": 1.1328263876461035,
+      "std": 0.34277187331421843
+    },
+    "n_pareto_points": {
+      "mean": 26.25,
+      "std": 0.5
+    },
+    "mean_cost_a1b0": {
+      "mean": 1503.1037522531772,
+      "std": 64.96852471995359
+    },
+    "mean_duration_a0b1": {
+      "mean": 657.3259994559613,
+      "std": 48.14805641327411
+    }
+  }
+}

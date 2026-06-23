@@ -59,7 +59,7 @@ illegal_traces_ratio (%) = (illegal_traces_count / episode_steps) * 100
 ### 1. Visibilizar en TensorBoard
 
 ```bash
-cd dcr-gymnasium-agent/dcr-gymnasium-agent/python
+cd dcr-gymnasium-agent/python
 tensorboard --logdir=./dcr_tensorboard
 ```
 

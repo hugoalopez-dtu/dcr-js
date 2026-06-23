@@ -210,11 +210,8 @@ var formatEmpty = (label, title) => {
   return label === "" ? `Unnamed ${title}` : label;
 };
 var isEnabledS = (event, graph2, group) => {
-  console.log(`Checking if event is enabled in subprocess: ${event}`);
-  console.log(`Graph state before evaluation: Included: ${[...graph2.marking.included]}, Executed: ${[...graph2.marking.executed]}, Pending: ${[...graph2.marking.pending]}`);
   if (!graph2.marking.included.has(event)) {
     const msg = `${formatEmpty(graph2.labelMap[event], "Subprocess")} is not included...`;
-    console.log(msg);
     return { enabled: false, msg };
   }
   if (isSubProcess(group)) {
@@ -226,18 +223,15 @@ var isEnabledS = (event, graph2, group) => {
   for (const cEvent of graph2.conditionsFor[event]) {
     if (graph2.marking.included.has(cEvent) && !graph2.marking.executed.has(cEvent)) {
       const msg = `At minimum, ${formatEmpty(graph2.labelMap[cEvent], "Event")} is conditioning for ${formatEmpty(graph2.labelMap[event], "Event")}...`;
-      console.log(msg);
       return { enabled: false, msg };
     }
   }
   for (const mEvent of graph2.milestonesFor[event]) {
     if (graph2.marking.included.has(mEvent) && graph2.marking.pending.has(mEvent)) {
       const msg = `At minimum, ${formatEmpty(graph2.labelMap[mEvent], "Event")} is a milestone for ${formatEmpty(graph2.labelMap[event], "Event")}...`;
-      console.log(msg);
       return { enabled: false, msg };
     }
   }
-  console.log(`Event ${event} is enabled in subprocess.`);
   return { enabled: true, msg: "" };
 };
 

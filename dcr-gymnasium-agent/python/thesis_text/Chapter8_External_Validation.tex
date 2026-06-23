@@ -1,0 +1,605 @@
+% ============================================================
+% CHAPTER 8 — External Validation
+% ============================================================
+
+\chapter{External Validation}
+\label{chap:external_validation}
+
+Chapter~\ref{chap:internal_validation} established that the proposed
+framework's behaviour is attributable to the combination of \ac{PPO}
+and \ac{DCR} shielding, on the Loan Application benchmark used
+throughout its development. That chapter, together with
+Chapter~\ref{chap:results}, answers whether the method is internally
+correct: whether it does what it is designed to do, on the benchmarks
+used to design it. This chapter asks a different question: whether
+that correctness generalises to process structures that played no role
+in shaping the method, that is, whether the findings of
+Chapters~\ref{chap:results} and~\ref{chap:internal_validation} hold
+under genuine external validity rather than only on the benchmarks
+where the reward function, the shield, and the training
+hyperparameters were calibrated.
+
+Section~\ref{sec:external_benchmark_grid} introduces the benchmark
+suite used for this purpose and the criteria for its selection.
+Section~\ref{sec:external_design} describes the experimental design,
+in particular the four conditions compared and the rationale for
+allocating training budget unevenly across the suite.
+Section~\ref{sec:external_results} reports the results: a replication
+of the compliance finding of contribution~C1 on graphs never seen
+during development, and a scalability frontier that neither the exact
+solver nor the unmasked learning agent can cross, but that shielding
+alone can. Section~\ref{sec:external_policy} reports a secondary
+analysis of the sensitivity of training convergence to the
+cost/duration assignment policy. Section~\ref{sec:external_discussion}
+discusses the scope of these conclusions.
+
+% ============================================================
+\section{Benchmark Selection: Mined DCR Graphs}
+\label{sec:external_benchmark_grid}
+
+External validity requires a benchmark suite that satisfies two
+conditions that none of the graphs used so far in this thesis satisfy
+simultaneously. First, the process structure must be of independent
+provenance, not authored or curated for this thesis. Second, no
+parameter of the method, the reward shaping, the shield, the
+entropy coefficient, the step penalty, may have been adjusted in
+response to observed behaviour on that structure. The Loan Application
+benchmark, while derived from a real event log, fails the second
+condition: it was part of the same development cycle in which the
+shield and the reward formulation were calibrated
+(Chapter~\ref{chap:internal_validation}), and its cost values were
+assigned by hand rather than by a fixed, reproducible procedure.
+
+The benchmark suite used in this chapter is drawn from a set of \ac{DCR}
+graphs mined by an independent thesis~\cite{TobiasDCRDiscover} from
+real-world event logs via \ac{DCR}-discover, spanning processes such as
+BPI Challenge incidents, loan applications, and bank transactions. The
+discovered models are published directly under \texttt{datasets/models}
+of that thesis's benchmarking repository,\footnote{Benchmark source and
+discovered models: \url{https://github.com/s205358/dcr-js/tree/s205358/bench};
+the exact modifications relative to the baseline DCR-js architecture can
+be reviewed via \url{https://github.com/s205358/dcr-js/compare/s205358/refactor...s205358/bench}.}
+which also provides a script for downloading the corresponding raw
+event logs, with execution instructions in that repository's README.
+None of these graphs were inspected before the present chapter, and the
+cost/duration value assigned to each activity is produced by a fixed,
+seeded random procedure (Section~\ref{sec:external_policy}),
+removing manual judgement from the benchmark construction.
+
+\paragraph{Selection grid.}
+Six graphs were selected to span the size, density, and constraint-type
+dimensions along which a declarative process model can vary. Size
+follows the small (1--10 activities), medium (11--30), and large (30+)
+categories associated with cognitive-overload thresholds in the
+process-modelling literature. Density follows the formal definition of
+Abbad-Andaloussi et al.~\cite{AbbadAndaloussi2023Complexity}: for a
+graph $G$ with weakly-connected components $\mathrm{Comp}(G)$, each
+with activity set $A_c$ and constraint set $C_c$,
+\[
+  \mathrm{Density}(G) = \max_{c \,\in\, \mathrm{Comp}(G)} \frac{|C_c|}{|A_c|},
+\]
+rather than a flat ratio of constraints to activities over the whole
+graph, which would understate the density of any graph with
+disconnected fragments. Table~\ref{tab:external_grid} reports the
+resulting grid.
+
+\begin{table}[H]
+\centering
+\caption{Benchmark suite for external validation: mined \ac{DCR}
+graphs spanning the size/density/constraint-type grid. Density follows
+Abbad-Andaloussi et al.~\cite{AbbadAndaloussi2023Complexity}. COP status
+reports whether the exact CSP+COP solver of Diaz et
+al.~\cite{Diaz2024Pareto-OptimalModels} converges within a 300\,s
+timeout.}
+\label{tab:external_grid}
+\begin{tabular}{lrrlll}
+\toprule
+\textbf{Graph} & \textbf{Activities} & \textbf{Density} &
+\textbf{Size} & \textbf{Dominant type} & \textbf{COP (300\,s)} \\
+\midrule
+04 (BPI13 Incidents)     & 4   & 1.75  & small  & mixed           & solved \\
+01 (Artificial 0-noise)  & 8   & 1.60  & small  & exclusion-heavy & solved \\
+05 (Synthetic Review Lg) & 14  & 6.00  & medium & condition-heavy & solved (2 points) \\
+03 (BPI20 RFP)           & 19  & 10.32 & medium & mixed           & solved \\
+11 (BPI19)               & 42  & 14.52 & large  & exclusion-heavy & solved (2 points) \\
+09 (Large Bank Txn)      & 113 & 12.17 & large  & exclusion-heavy & \textbf{timeout} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A structural Breadth-First-Search analysis of the \ac{DCR} marking
+semantics, mirroring exactly the acceptance condition of the CSP+COP
+model, shows that all six graphs accept the empty trace
+($\mathit{Pending} \cap \mathit{Included} = \emptyset$ at the initial
+marking): they are mined from event logs whose discovered pending-set
+structure is trivially satisfied. This matches a risk already
+identified in earlier benchmark selection
+(Section~\ref{sec:graph_selection_criterion}): graphs mined directly
+from event logs frequently lack the non-trivial response structure
+that makes multi-objective optimisation meaningful. Forcing at least
+one real transition, exactly as the CSP+COP model does by construction
+since it cannot represent the empty trace, four of the six graphs (04,
+01, 03, 11) admit a trivial one-step accepting continuation: any
+legal first action already satisfies acceptance. These four are
+retained as \emph{controls} rather than as headline results: they
+confirm that the framework behaves correctly when the optimisation
+problem is degenerate, but do not exercise the shielding mechanism
+under a genuine multi-step trade-off. Graph 05 is the only one of the
+six whose non-trivial minimum accepting trace requires a multi-step
+chain (six steps) while still admitting an exact CSP+COP solution, and
+is therefore treated as the anchor result of this chapter. Graph 09's
+non-trivial minimum accepting trace requires 51 sequential steps,
+found by the structural BFS in 0.31\,s, while the CSP+COP solver does
+not converge within 300\,s; it is the scale case of this chapter. No
+partial or incumbent solution is available for comparison on this
+graph either: the solver's enumeration procedure (which iteratively
+finds an improving feasible trace, then branches to require a further
+improvement) was re-run with the same 300\,s budget while instrumented
+to retain whatever candidate traces had been found if the deadline was
+reached mid-enumeration, rather than discarding them on a hard kill as
+the main sweep does. Even the very first feasible trace, prior to any
+optimisation step, did not return within several minutes beyond the
+budget; the solver does not reach the search depth required even to
+begin enumerating candidates on this graph, so there is no incumbent
+front to report, exact or partial.
+
+This outcome is not unexpected given the scale of the graph relative to
+where the exact method itself is known to degrade: Diaz et
+al.~\cite{Diaz2024Pareto-OptimalModels} report that their CSP+COP
+approach begins to fail in practice at approximately 45 activities,
+and graph 09's non-trivial minimum accepting trace, at 51 sequential
+steps, already exceeds that range before any optimisation is
+attempted. As a purely structural reference point, not a claim of
+optimality, this 51-step trace (found by the BFS reachability search,
+independently of MiniZinc) costs 2877 and has a duration of 3212 under
+the cost/duration assignment of
+Section~\ref{sec:external_policy}; it is reported here only
+to give a concrete sense of scale to the otherwise empty CSP+COP
+column for this graph, and is excluded from any Pareto or hypervolume
+comparison in the remainder of this chapter.
+
+% ============================================================
+\section{Experimental Design}
+\label{sec:external_design}
+
+Four conditions are compared on each graph, extending the ablation of
+Section~\ref{sec:shield_contribution} from a single internal benchmark
+to the full grid.
+
+\begin{description}
+    \item[COP.] The exact CSP+COP solver, reported where it converges
+    within the 300\,s budget (Table~\ref{tab:external_grid}). Serves as
+    ground truth.
+    \item[\textnormal{\texttt{saferl}}.] \ac{PPO} with \ac{DCR}
+    shielding, the full framework, identical configuration to
+    Chapters~\ref{chap:results} and~\ref{chap:internal_validation}.
+    \item[\textnormal{\texttt{shield\_only}}.] The non-learning random
+    valid-action baseline of Section~\ref{sec:shield_contribution},
+    isolating how much of the result is attributable to structural
+    restriction alone.
+    \item[\textnormal{\texttt{rl\_only}}.] \ac{PPO} with the shield
+    disabled, the same ablation arm as in
+    Section~\ref{sec:shield_contribution}.
+\end{description}
+
+\paragraph{Budget allocation.}
+Training budget was allocated unevenly across the grid, in proportion
+to how much signal each graph can provide. The four control graphs
+(04, 01, 03, 11) were trained for two representative
+$(\alpha,\beta)$ pairs at 25\,000 steps; local pilot runs showed the
+full compliance pattern emerges within a few thousand steps on these
+small action spaces, so the full six-pair, 100\,000-step protocol used
+elsewhere in this thesis would add wall-clock cost without additional
+signal. Graph 05, the anchor result, received the full protocol: six
+weight pairs, 100\,000 steps per pair, for \texttt{saferl} and
+\texttt{rl\_only}, plus a \texttt{shield\_only} run capped at the same
+100\,000-step budget. Graph 09 was trained only under
+\texttt{shield\_only}: a preliminary diagnostic run of \texttt{saferl}
+at 50\,000 steps showed a 0\,\% acceptance rate with the illegal-action
+ratio plateaued at 98--100\,\% with no improving trend, attributable to
+the size of the action space rather than to the length of the
+required trace (Section~\ref{sec:external_discussion}); repeating this
+at the full budget would not be expected to change the qualitative
+outcome and was not pursued. \texttt{rl\_only} was likewise not run on
+graph 09, for the same reason.
+
+\paragraph{Consistency with the COP ground truth.}
+Cost and duration values are assigned per activity by a fixed,
+seeded procedure (uniform sampling within the same ranges used for the
+internal benchmarks), so that the \ac{RL} environment and the CSP+COP
+model optimise over identical numerical values, an apples-to-apples
+comparison that the synthetic and hand-assigned costs of the internal
+benchmarks do not by themselves guarantee.
+
+\paragraph{Empty-trace consistency.}
+Because all six graphs structurally accept the empty trace
+(Section~\ref{sec:external_benchmark_grid}), and the CSP+COP model
+cannot represent it, the \ac{RL} environment must enforce the same
+restriction for the comparison to be valid. This is already the case
+by construction: episode termination is evaluated only inside the
+environment's step function, never at reset, so the agent cannot
+receive an accepting signal without having executed at least one
+action. No change to the environment was required to establish this
+consistency.
+
+% ============================================================
+\section{Results}
+\label{sec:external_results}
+
+\subsection{Scalability Frontier}
+\label{sec:external_scalability}
+
+Figure~\ref{fig:external_accept_vs_size} reports the accept rate in the
+final 20\,\% of training (or evaluation, for \texttt{shield\_only}) for
+each condition, as a function of graph size.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{fig2_accept_rate_vs_size.png}
+    \caption{Accept rate (final 20\,\% of episodes) versus graph size,
+    by condition, across the six-graph benchmark grid. Markers,
+    linestyles, and a small horizontal jitter distinguish the three
+    conditions even where they coincide at 1.0. \texttt{rl\_only} was
+    not run on graph 09 (marked explicitly), since the diagnostic run
+    already indicated it would fail at least as severely as
+    \texttt{saferl}.}
+    \label{fig:external_accept_vs_size}
+\end{figure}
+
+\texttt{shield\_only} sustains 100\,\% acceptance across the entire
+grid, including the 113-activity graph where the exact solver times
+out. \texttt{saferl} also sustains 100\,\% acceptance up to 42
+activities, but collapses to 0\,\% at 113 activities, approximately the
+same scale at which the CSP+COP solver stops converging. The
+non-learning, structurally restricted baseline is therefore the only
+condition in this study that scales to where exact enumeration becomes
+infeasible; the learning component adds value only within the range
+where it can still compete with the size of the action space (up to 42
+activities in this study), not beyond it.
+
+The six-graph grid, however, has no test point between 42 and 113
+activities, so it can only establish that both methods fail somewhere
+within that 71-activity gap, not that they fail at a shared threshold.
+
+\subsection{Controlled Scaling Diagnostic}
+\label{sec:external_scaling_diagnostic}
+
+To localise the crossover more precisely, both methods were additionally
+run on a series of controlled, synthetically generated chain-plus-noise
+\ac{DCR} graphs at five intermediate sizes (20, 40, 60, 80, and 100
+events), generated with the same seed and generator for both methods so
+that each pair of runs sees an identical graph. Unlike the mined-graph
+grid of Table~\ref{tab:external_grid}, these graphs are not drawn from
+real event logs and therefore carry no claim to external validity; their
+purpose is resolution, not generalisation, complementing the mined grid
+rather than replacing it. The \ac{RL} side was trained at a reduced,
+diagnostic step budget (20,000 steps, baseline weights $\alpha=\beta=0$)
+rather than the full per-configuration budget used elsewhere in this
+thesis, since the goal is to locate the wall, not to characterise
+optimisation quality near it.
+
+\begin{table}[H]
+\centering
+\caption{Controlled scaling diagnostic: CSP+COP convergence and
+\ac{PPO}-with-shield accept rate (final 20\,\% of episodes) on synthetic
+chain-plus-noise graphs of increasing size. CSP+COP times out at the
+same 300\,s budget used in Table~\ref{tab:external_grid}.}
+\label{tab:scaling_diagnostic}
+\begin{tabular}{rrrl}
+\toprule
+\textbf{Events} & \textbf{CSP+COP} & \textbf{PPO accept rate} & \textbf{CSP+COP solve time} \\
+\midrule
+20  & solved  & 100\,\%  & 0.005\,s \\
+40  & solved  & 100\,\%  & 0.015\,s \\
+60  & timeout & 7.7\,\%  & --- \\
+80  & timeout & 0\,\%    & --- \\
+100 & timeout & 0\,\%    & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both methods succeed at 40 events and both fail by 60, narrowing the
+shared crossover from the 71-activity gap of the mined grid to a
+20-activity window. The fact that this pattern holds on a graph family
+unrelated to the one mined-graph grid, generated independently and
+evaluated under a reduced training budget, is itself evidence that the
+shared failure point is not an artefact of the specific six mined
+graphs: the exact solver's constraint-explosion wall and the unmasked
+policy's action-space wall sit in the same narrow region regardless of
+which graph family is used to probe it. This finer-grained result should
+be read as a diagnostic complement to Section~\ref{sec:external_scalability},
+not as a substitute for it: it narrows \emph{where} the shared wall is,
+while the mined-graph grid establishes that the underlying findings of
+this chapter hold on graphs with genuine external provenance.
+
+\subsection{Replication of the Compliance Finding (C1)}
+\label{sec:external_compliance_replication}
+
+Figure~\ref{fig:external_illegal_deciles} reports the illegal-action
+rate per training decile for \texttt{saferl} and \texttt{rl\_only},
+pooled across weight configurations, on each of the six graphs.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{fig1_illegal_rate_deciles.png}
+    \caption{Illegal-action rate per training decile, \texttt{saferl}
+    versus \texttt{rl\_only}, across the six-graph benchmark grid.}
+    \label{fig:external_illegal_deciles}
+\end{figure}
+
+On the four control graphs, the gap between conditions is small: with
+4--19 activities and a trivially satisfiable acceptance condition,
+random action choice already has a reasonable probability of being
+legal, so the shield has comparatively little work to do. On graph 05,
+the only control-free graph with a genuine multi-step trade-off and a
+14-activity action space, the gap is large and closely replicates the
+pattern observed internally on the Loan Application benchmark
+(Table~\ref{tab:external_replication}).
+
+\begin{table}[H]
+\centering
+\caption{Replication of the compliance finding of
+Section~\ref{sec:rl_vs_safe_rl} on an external benchmark (graph 05,
+final training decile).}
+\label{tab:external_replication}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Loan Application (internal)} & \textbf{Graph 05 (external)} \\
+\midrule
+\texttt{saferl} illegal rate  & 1.0\,\%  & 1.77\,\% \\
+\texttt{rl\_only} illegal rate & 35.8\,\% & 50.7\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The replication of this gap on a graph never inspected during the
+development of the shield or the reward formulation is the central
+external-validity evidence for contribution~C1: a flat penalty signal
+is not sufficient to obtain compliant behaviour, and the gap is not an
+artefact specific to the Loan Application benchmark.
+
+\subsection{Pareto Recovery Against the Exact Solver}
+\label{sec:external_pareto}
+
+Figure~\ref{fig:external_pareto} compares, for the five graphs where
+the CSP+COP solver converges, the non-dominated subset of
+\texttt{saferl}'s accepting episodes in the final 20\,\% of training
+against the exact Pareto front.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{fig3_pareto_vs_cop.png}
+    \caption{Non-dominated front recovered by \texttt{saferl} (green,
+    connected) against the exact CSP+COP front (hollow stars, drawn
+    behind so a coincident point remains visible), for the five graphs
+    with a converged exact solution. Dominated accepting episodes are
+    shown in light grey for reference.}
+    \label{fig:external_pareto}
+\end{figure}
+
+In all five graphs, the non-dominated subset of \texttt{saferl}'s
+accepting episodes coincides exactly with the CSP+COP front. This is
+verified explicitly rather than read off the figure alone: on graph
+05, where the exact front has two points, $\{(335,410),(339,387)\}$,
+the non-dominated subset of \texttt{saferl}'s accepting episodes is
+exactly this set, no more and no fewer points. On the remaining four
+graphs, where the exact front is a single point, the same holds.
+
+Table~\ref{tab:external_front_quality} reports this agreement using
+four standard multi-objective quality indicators, rather than only the
+hypervolume already given in Table~\ref{tab:external_master}: the
+Averaged Hausdorff Distance (AHD) between the recovered and exact
+fronts, the Purity of the recovered front (the fraction of its points
+that remain non-dominated once pooled with the exact front), and the
+Delta spacing metric (how evenly the recovered points populate the
+front). Objectives are min--max normalised to $[0,1]$ per graph before
+computing distances, so cost and duration contribute on comparable
+scales despite their very different absolute magnitudes across graphs.
+
+\begin{table}[H]
+\centering
+\caption{Front-quality indicators of \texttt{saferl}'s recovered front
+against the exact CSP+COP front, for the five graphs where the solver
+converges. AHD$=0$ and Purity$=1$ throughout confirm the exact-match
+claim quantitatively. Delta is undefined ("--") for single-point
+fronts.}
+\label{tab:external_front_quality}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Graph} & \textbf{Points} & \textbf{AHD} & \textbf{Purity} & \textbf{Delta} \\
+\midrule
+04 & 1 & 0.0 & 1.0 & -- \\
+01 & 1 & 0.0 & 1.0 & -- \\
+05 & 2 & 0.0 & 1.0 & 0.0 \\
+03 & 1 & 0.0 & 1.0 & -- \\
+11 & 2 & 0.0 & 1.0 & 0.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{An apparent anomaly in \texttt{rl\_only}.}
+The hypervolume of \texttt{rl\_only}'s accepted episodes, computed
+against the same reference point as the exact front, is larger than
+the CSP+COP hypervolume on graphs 05 and 11 (239{,}070 versus 34{,}655,
+and 1{,}392 versus 348, respectively), which would suggest, taken at
+face value, that the unshielded agent finds a better front than the
+exact solver, an impossibility if the solver's front is truly optimal.
+Inspection of the underlying episodes resolves the apparent
+contradiction: these are single- or few-step episodes reaching
+artificially low cost and duration through illegal transitions that
+corrupt the marking, the same phenomenon, here on a different graph,
+identified as the \texttt{Event\_10} exploit in
+Section~\ref{sec:shield_contribution}. They are not better solutions;
+they are not solutions to the modelled process at all. This
+reinforces, on an independent benchmark, that hypervolume alone is an
+insufficient quality measure for an unshielded agent, and that
+executed-trace validity must be reported alongside it.
+
+\subsection{Summary}
+\label{sec:external_summary}
+
+Table~\ref{tab:external_master} consolidates the results of this
+section.
+
+\begin{table}[H]
+\centering
+\caption{Summary of external-validation results across the six-graph
+benchmark grid. Illegal rate is reported for the final training decile.
+Hypervolume is computed against a fixed reference point per graph;
+\texttt{rl\_only}'s hypervolume on graphs 05 and 11 reflects invalid
+episodes, not superior solutions (Section~\ref{sec:external_pareto}).}
+\label{tab:external_master}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Graph} & \textbf{\texttt{saferl} accept} & \textbf{\texttt{rl\_only} accept}
+& \textbf{\texttt{shield\_only} accept} & \textbf{\texttt{saferl} illegal\,\%}
+& \textbf{\texttt{rl\_only} illegal\,\%} \\
+\midrule
+04 & 100\,\%   & 100\,\% & 100\,\% & 0.18 & 0.13 \\
+01 & 100\,\%   & 100\,\% & 100\,\% & 0.12 & 0.30 \\
+05 & 100\,\%   & 100\,\% & 100\,\% & 1.77 & 50.7 \\
+03 & 100\,\%   & 100\,\% & 100\,\% & 3.76 & 2.69 \\
+11 & 99.98\,\% & 100\,\% & 100\,\% & 1.68 & 5.49 \\
+09 & \textbf{0\,\%} & not run & \textbf{100\,\%} & 98.4 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Cost/Duration Assignment Policy Sensitivity}
+\label{sec:external_policy}
+
+A secondary question, raised independently during the design of this
+benchmark suite, is whether the procedure used to assign synthetic
+cost and duration values to each activity, here a fixed, seeded
+random draw, affects training convergence or the geometry of the
+recovered front. Two structured alternatives were compared against the
+random assignment on graph 05, holding the duration draw identical
+across all three (only the cost value differs, as a function of
+duration):
+
+\begin{description}
+    \item[Linear.] Cost increases with duration (a process in which
+    spending more time also costs more, e.g.\ billed by the hour).
+    \item[Inverse.] Cost decreases with duration (a process in which
+    paying more buys a faster execution, e.g.\ an expedited service).
+\end{description}
+
+\begin{table}[H]
+\centering
+\caption{Effect of the cost/duration assignment policy on training
+convergence and recovered front, graph 05, \texttt{saferl}. All three
+policies share an identical duration draw; only the cost mapping
+differs. Accept rate and illegal rate are measured over the final
+20\,\% / final decile of training, pooled across the six weight pairs.}
+\label{tab:external_policy}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Policy} & \textbf{Accept rate} & \textbf{Illegal rate (final decile)} & \textbf{Pareto points} & \textbf{Cost range} & \textbf{Duration range} \\
+\midrule
+Random  & 100\,\% & 3.53\,\% & 1 & 371--371 & 350--350 \\
+Linear  & 100\,\% & 4.83\,\% & 1 & 295--295 & 350--350 \\
+Inverse & 100\,\% & 2.78\,\% & 2 & 327--335 & 350--360 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{Pictures/policy_convergence.png}
+  \caption{Illegal-action rate per training decile under the three
+  cost/duration assignment policies, graph 05, \texttt{saferl}, pooled
+  across the six weight pairs. The three curves are visually
+  indistinguishable throughout training.}
+  \label{fig:policy_convergence}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{Pictures/policy_front_geometry.png}
+  \caption{Recovered front and dominated episode cloud under the three
+  cost/duration assignment policies, graph 05, \texttt{saferl}, final
+  20\,\% of training. The dominated cloud reflects the cost--duration
+  correlation imposed by each policy (ascending diagonal under Linear,
+  descending under Inverse, no pattern under Random); the recovered
+  front itself lands in a similar region under all three.}
+  \label{fig:policy_front_geometry}
+\end{figure}
+
+Convergence speed and final compliance are stable across the three
+policies: the illegal-rate curves in
+Figure~\ref{fig:policy_convergence} are visually indistinguishable
+throughout training, and the final illegal rate stays within a narrow
+band (2.78--4.83\,\%) regardless of assignment policy. The recovered
+front also lands in a comparable cost--duration region under all three
+(Figure~\ref{fig:policy_front_geometry}), though it is a single point
+under Random and Linear and two points under Inverse --- a difference
+of degree, not of qualitative behaviour, given the narrow ranges
+involved. What does change visibly is the geometry of the
+\emph{dominated} episode cloud, which traces an ascending diagonal under
+Linear, a descending diagonal under Inverse, and no discernible pattern
+under Random: this is the direct, expected consequence of each policy's
+per-activity cost--duration correlation, not evidence that one policy
+makes the optimisation problem harder. Taken together, these results
+support the conclusion that the choice of cost/duration assignment
+procedure is a property of the benchmark's difficulty surface, not of
+the learning dynamics: it shapes which trade-offs exist for the agent to
+find, but not how quickly or reliably the agent finds them.
+
+% ============================================================
+\section{Discussion and Scope}
+\label{sec:external_discussion}
+
+This chapter establishes that the two central findings of
+Chapters~\ref{chap:results} and~\ref{chap:internal_validation}, exact
+Pareto recovery and the necessity of shielding for compliant behaviour,
+generalise to process structures of independent provenance, never
+inspected during the development of the method. It additionally
+exposes a scalability frontier that the internal benchmarks, all under
+20 events, could not reveal: the learning component's contribution is
+bounded by the size of the action space it must search without
+guidance, and beyond that bound the simplest possible compliant
+baseline, a shield with no learning at all, is the only condition in
+this study that continues to produce valid executions where the exact
+solver and the unmasked learning agent both fail.
+
+This finding refines, rather than weakens, the practical claim of
+shielding. The version supported by this chapter's evidence is not
+that the shielded \ac{RL} framework outscales exact constraint solving,
+the results of Section~\ref{sec:external_scalability} do not support
+that claim beyond 42 activities in this study, but that shielding by
+itself, independent of whether it is paired with a learning component,
+is sufficient to keep producing structurally valid traces in exactly
+the regime where exact enumeration becomes computationally infeasible.
+Recovering the learning component's advantage at that scale, that is,
+not merely valid but optimised traces beyond a few dozen activities,
+would require restricting the policy's action sampling to the
+currently enabled events directly (action masking), rather than relying
+on the shield to intercept illegal samples after the fact; this is left
+as future work and is not evaluated here, since it would constitute a
+change to the learning method itself rather than to its validation.
+
+Two further scope limitations apply. First, the comparison against
+Kirchdorfer et al.'s evaluation design
+(Section~\ref{sec:loanapp_capacity}) is not part of this chapter's
+external-validity claim: it is run on the same Loan Application
+benchmark used internally, and is best understood as a methodological
+replication, not as evidence of generalisation to unseen structure. An
+exhaustive search of the literature (Section~\ref{sec:related_work})
+found no published benchmark combining reinforcement learning with
+\ac{DCR} graphs against which the role-conditioned, capacity-constrained
+extension of this thesis could be externally compared; the closest
+related work, Agarwal et al.~\cite{Agarwal2022GoalOriented}, addresses
+a related but distinct problem (goal-oriented activity recommendation
+under a directly-follows process model, not a declarative one) and
+independently confirms, via its use of action masking, that the same
+action-space bottleneck identified in
+Section~\ref{sec:external_scalability} is a recognised issue in this
+family of problems generally, not one specific to this thesis's
+implementation. Second, the four control graphs (04, 01, 03, 11) are
+retained in this chapter for completeness and transparency, since
+discarding them silently would understate how much of the mined-graph
+benchmark population is structurally trivial, but they do not, by
+construction, exercise the framework under genuine multi-step
+optimisation, and the headline claims of this chapter rest on graphs
+05 and 09 alone.
