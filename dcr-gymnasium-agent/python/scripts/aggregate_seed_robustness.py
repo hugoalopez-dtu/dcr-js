@@ -43,10 +43,15 @@ def weight_tag(alpha, beta):
 
 
 def find_trace(exp_id):
-    matches = sorted(TRAIN_LOGS_DIR.glob(f"train_trace_exp_{exp_id}_*.csv"))
+    matches = list(TRAIN_LOGS_DIR.glob(f"train_trace_exp_{exp_id}_*.csv"))
     if not matches:
         raise FileNotFoundError(f"No train_trace CSV found for {exp_id} in {TRAIN_LOGS_DIR}")
-    return matches[-1]
+    # When a run was retried (e.g. an earlier attempt got interrupted), several
+    # timestamped files can exist for the same exp_id. The most recent
+    # timestamp is not necessarily the most complete: pick by file size, which
+    # for this fixed-column-count CSV format is a direct proxy for episode
+    # count and therefore training completeness.
+    return max(matches, key=lambda p: p.stat().st_size)
 
 
 def seed_exp_id(seed, alpha, beta):

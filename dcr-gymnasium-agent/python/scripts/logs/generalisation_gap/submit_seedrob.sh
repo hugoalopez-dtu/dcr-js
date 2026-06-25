@@ -19,6 +19,7 @@
 
 set -ex
 export PYTHONUNBUFFERED=1
+export DCR_SEEDS=4
 cd ~/dcr-js
 source ~/.nvm/nvm.sh && nvm use 20
 cd node-adapter && npm run bundle && cd ..
