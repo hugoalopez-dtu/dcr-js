@@ -1,16 +1,16 @@
 import type {
-  EventMap,
-  RelationType,
-  Event,
-  DCRGraph,
-  Nestings,
   DataDCR,
+  DCRGraph,
+  Event,
+  EventMap,
+  Expression,
+  Nestings,
+  RelationType,
   Variable,
   VariableType,
-  Guard,
 } from "./types";
 
-import ELK, { type ElkExtendedEdge, type ElkNode } from "elkjs";
+import ELK, {type ElkExtendedEdge, type ElkNode} from "elkjs";
 
 interface AbstractNode extends ElkNode {
   id: Event;
@@ -28,7 +28,7 @@ interface AbstractEdge extends ElkExtendedEdge {
   type: RelationType;
   source: Event;
   target: Event;
-  guard?: Guard<VariableType>;
+  expression?: Expression;
 }
 
 type AbstractGraph = {
@@ -98,8 +98,8 @@ function createXML(
 
   let id = 0;
   nodesAndEdges.edges.forEach((edge) => {
-    if(edge.guard) {
-      xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${descToId(edge.source)}" targetRef="${descToId(edge.target)}" guard="${edge.guard.expression}"/>\n`;
+    if(edge.expression) {
+      xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${descToId(edge.source)}" targetRef="${descToId(edge.target)}" guard="${edge.expression.text}"/>\n`;
     } else {
       xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${descToId(edge.source)}" targetRef="${descToId(edge.target)}"/>\n`;
     }
@@ -226,11 +226,12 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
   let nodes: Array<AbstractNode> = [];
   const edges: Array<AbstractEdge> = [];
 
-  const loadEdge = (rel: EventMap, type: RelationType, guards?: DataDCR["guards"]) => {
+  const loadEdge = (rel: EventMap, type: RelationType, guards?: DataDCR["expressions"]) => {
     if (type == "condition" || type == "milestone") {
       Object.keys(rel).forEach((target) => {
         rel[target].forEach((source) => {
-          const guard = guards?.[source]?.[target];
+          const expression = guards?.[source]?.[target];
+          console.log(`Using guard: ${expression} for relation ${source}-${target}-${type}`);
           edges.push({
             id: `${source}-${target}-${type}`,
             source,
@@ -238,14 +239,15 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
             sources: [source],
             targets: [target],
             type,
-            guard,
+            expression,
           });
         });
       });
     } else {
       Object.keys(rel).forEach((source) => {
         rel[source].forEach((target) => {
-          const guard = guards?.[source]?.[target];
+          const expression = guards?.[source]?.[target];
+          console.log(`Using guard: ${expression} for relation ${source}-${target}-${type}`);
           edges.push({
             id: `${source}-${target}-${type}`,
             source,
@@ -253,7 +255,7 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
             sources: [source],
             targets: [target],
             type,
-            guard,
+            expression,
           });
         });
       });
@@ -283,7 +285,7 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
     });
   }
 
-  const guards = "guards" in graph ? graph["guards"] : undefined;
+  const guards = "expressions" in graph ? graph["expressions"] : undefined;
 
   loadEdge(graph.conditionsFor, "condition", guards);
   loadEdge(graph.milestonesFor, "milestone", guards);

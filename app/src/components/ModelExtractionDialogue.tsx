@@ -193,6 +193,12 @@ const ModelExtractionDialogue = (props: Props) => {
                         ...props.config,
                         relationDescription: e.target.value,
                     })}/>
+
+                    <div style={{fontSize: ".85em"}}>Data and Time</div>
+                    <TextArea value={props.config.dataDescription} onChange={e => props.onChange({
+                        ...props.config,
+                        dataDescription: e.target.value,
+                    })}/>
                     {renderSubmit()}
                 </FormContainer>
             </div>

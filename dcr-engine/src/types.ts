@@ -84,13 +84,12 @@ export type VariableType = string | number | boolean;
 export interface Variable<T extends VariableType> {
   name: string;
   type: string;
-  value: T;
+  value?: T;
   default?: T;
 }
 
-export interface Guard<T extends VariableType> {
-  expression: string;
-  boundTo: Variable<T>;
+export interface Expression {
+  text: string;
 }
 
 export interface Optimizations {
@@ -102,8 +101,8 @@ export interface Optimizations {
 export type LabelDCR = DCRGraph & Labelling;
 
 export type DataDCR = DCRGraph & {
-  guards: {
-      [startEvent: Event]: {[endEvent: Event]: Guard<VariableType>}
+  expressions: {
+      [startEvent: Event]: {[endEvent: Event]: Expression}
   };
   data: {
       [event: Event]: Variable<VariableType>

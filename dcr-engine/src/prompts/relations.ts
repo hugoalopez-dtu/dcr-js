@@ -1,7 +1,7 @@
 const relationsPrompt = `
 # Task
 
-You are a business process modelling expert, tasked with identifying the flow between business process relevant entities in textual descriptions of business processes.
+You are a business process modelling expert, tasked with identifying relations between business process relevant entities in textual descriptions of business processes.
 These entities have a type and are marked in the given text by xml-style tags, which includes an id, you can use to refer to it.
 
 # Definition

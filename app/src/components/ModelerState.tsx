@@ -82,6 +82,9 @@ const defaultRelationsDescription = `**executes**: Focus on actors. Extract a re
 const defaultMentionsDescription = `**Event**: These are events, preconditions or outcomes relevant to law and regulation. Events can be immaterial, e.g., providing support, help or compensation. Beyond that events can also be inputs, that is data that is relevant to the law (e.g. numbers, strings).
 **Actor**: Nouns and pronouns, that describe a person, system, or company that is responsible for executing an event in the process.`;
 
+const defaultDataDescription = `**Variable**: Data that is relevant to the process, e.g., by changing rules or outcomes. Examples are the age of process participants, distances, weights, number of units, etc. Time does not need to be extracted separately and will always be a variable available by default.
+**Expression**: Rules that change behaviour and constraints, e.g., if a response is only valid if some variable is below a certain threshold. Such expressions are called Guards. If the expression uses the time variable, they are called Deadlines (for responses) and Timeouts (for conditions). Expressions always shall be extracted in the FEEL notation, deadlines and timeouts use the time period format, e.g., PT2h for a period of 2 hours.`;
+
 const initGraphName = "DCR-JS Graph";
 
 const ModelerState = ({
@@ -102,7 +105,8 @@ const ModelerState = ({
     const [extractConfig, setExtractConfig] = useState<ExtractionConfig>({
         modelName: "", apiKey: "", text: "",
         relationDescription: defaultRelationsDescription,
-        mentionDescription: defaultMentionsDescription
+        mentionDescription: defaultMentionsDescription,
+        dataDescription: defaultDataDescription
     });
     const [extractionResult, setExtractionResult] = useState<ExtractionResult | undefined>();
 
@@ -511,13 +515,21 @@ const ModelerState = ({
                     if(!modeler) return;
 
                     setIsExtractingModel(true);
-                    const res = await extractGraph(config);
-                    setExtractionResult(res)
-                    const xml = await layoutGraph(res.graph);
-                    await modeler.importXML(xml);
-                    setModelExtractionOpen(false);
-                    setIsExtractingModel(false);
-                    setTextOpen(true);
+                    try {
+                        const res = await extractGraph(config);
+                        setExtractionResult(res)
+                        const xml = await layoutGraph(res.graph);
+                        console.log(xml);
+                        await modeler.importXML(xml);
+                    } catch (e) {
+                        console.log(e);
+                    } finally {
+                        setModelExtractionOpen(false);
+                        setIsExtractingModel(false);
+                        setTextOpen(true);
+                    }
+
+
                 }}
                 busy={isExtractingModel}
             />
