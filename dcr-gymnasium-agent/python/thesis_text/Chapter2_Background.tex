@@ -1,0 +1,405 @@
+% ============================================================
+% CHAPTER 2 — Background and Theoretical Foundations (REVISED v2)
+% ============================================================
+
+\chapter{Background and Theoretical Foundations}
+\label{chap:background}
+
+This chapter provides the conceptual and formal foundations upon which the
+thesis is built.  Section~\ref{sec:bpm} introduces Business Process Management
+and its lifecycle.  Section~\ref{sec:declarative} surveys declarative process
+modelling and presents the formal definition of DCR Graphs used throughout this
+work.  Section~\ref{sec:rl} establishes the reinforcement-learning framework,
+covering Markov Decision Processes, Proximal Policy Optimisation, and safe
+reinforcement learning via shielding.
+Section~\ref{sec:moopt} introduces multi-objective optimisation, Pareto
+dominance, and linear scalarisation as a strategy for approximating the Pareto
+front.  Finally, Section~\ref{sec:resources} discusses resource allocation in
+BPM and its role in performance optimisation.
+
+% ============================================================
+\section{Business Process Management}
+\label{sec:bpm}
+% ============================================================
+
+A \emph{business process} is a collection of events, activities, and decision
+points that involve a number of actors and objects, collectively leading to an
+outcome that has value to at least one
+customer~\cite{Dumas2018FundamentalsManagement}.  \ac{BPM} is the discipline of discovering, analysing, redesigning, and
+continuously monitoring such processes in order to achieve organisational
+goals~\cite{Dumas2018FundamentalsManagement}.  Rather than optimising isolated
+tasks, BPM is concerned with the end-to-end \emph{chain of events} that
+constitutes a process instance, with common performance objectives including
+cost reduction, shorter cycle times, and lower error
+rates~\cite{Huang2011ReinforcementManagement}.
+
+The management of business processes follows a continuous lifecycle comprising
+process identification, discovery, analysis, redesign, implementation, and
+monitoring~\cite{Dumas2018FundamentalsManagement}.  The present thesis is
+primarily located in the \emph{analysis} and \emph{redesign} phases: it
+provides an automated mechanism for identifying which among all compliant
+process executions are most efficient with respect to cost and duration,
+thereby supporting evidence-based redesign decisions.
+
+Process models in BPM are classically divided into two paradigms.
+\emph{Imperative} models, such as BPMN or Petri nets, prescribe an explicit
+control flow specifying exactly how a process should proceed.  They excel at
+describing rigid, well-structured workflows but struggle to represent flexible
+or knowledge-intensive processes where rules may apply but sequencing is
+discretionary~\cite{Groefsema2024SupportingFamilies}.  \emph{Declarative}
+models, by contrast, specify only the constraints that must be respected,
+allowing any execution that does not violate them; they are discussed in depth
+in the next section.
+
+% ============================================================
+\section{Declarative Process Modelling}
+\label{sec:declarative}
+% ============================================================
+
+\acp{DPM} represent the control flow of a process implicitly: they define a
+set of constraints governing the execution of activities and allow any
+execution that does not violate those
+constraints~\cite{Trinh2024OnOfConstraints}.  This \emph{open-world assumption}
+makes declarative models particularly well suited to knowledge-intensive
+processes, where the sequence of activities depends on the context and expertise
+of the actors involved~\cite{Groefsema2024SupportingFamilies}.
+
+Among declarative notations, \emph{\ac{DCR}},
+introduced by Hildebrandt and
+Mukkamala~\cite{Hildebrandt2011DeclarativeGraphs}, have gained significant
+traction in academia and in industrial practice,
+notably through adoption in Danish public-sector case
+management~\cite{Slaats2013Business2013} and the DCR Solutions
+toolchain~\cite{Marquard2015Business2015,Christfort2025DCR-JS:Mining}.
+
+\subsection{Formal Definition}
+
+\begin{definition}[DCR Graph~{\cite{Diaz2024Pareto-OptimalModels}}]
+\label{def:dcr}
+A \emph{Dynamic Condition Response Graph} is a tuple
+$G = \langle E, M, \mathit{Act}, \rightarrow\!\bullet,\; \bullet\!\rightarrow,\;
+\pm,\; l \rangle$, where:
+\begin{enumerate}
+  \item $E$ is a finite set of \emph{events};
+  \item $M \in \mathcal{M}(G) = \mathcal{P}(E) \times \mathcal{P}(E) \times
+    \mathcal{P}(E)$ is a \emph{marking}, and $\mathcal{M}(G)$ is the set of
+    all markings;
+  \item $\mathit{Act}$ is the set of \emph{actions};
+  \item $\rightarrow\!\bullet \subseteq E \times E$ is the \emph{condition}
+    relation;
+  \item $\bullet\!\rightarrow \subseteq E \times E$ is the \emph{response}
+    relation;
+  \item $\pm : E \times E \rightharpoonup \{+, \%\}$ defines dynamic
+    \emph{inclusion} ($\rightarrow^+$) and \emph{exclusion}
+    ($\rightarrow^\%$) relations;
+  \item $l : E \rightarrow \mathit{Act}$ is a labelling function.
+\end{enumerate}
+\end{definition}
+
+The marking $M = (\mathit{Ex}, \mathit{Re}, \mathit{In})$ encodes three sets of
+events: \emph{executed} events~($\mathit{Ex}$), \emph{pending} responses
+($\mathit{Re}$) that must eventually occur or be excluded, and currently
+\emph{included} events~($\mathit{In}$).  An event~$e$ is \emph{enabled} in
+marking~$M$ if (i)~$e \in \mathit{In}$ and (ii)~all its included condition
+predecessors have been executed, i.e.,
+$\{f \in \mathit{In} \mid f \rightarrow\!\bullet\, e\} \subseteq
+\mathit{Ex}$~\cite{Diaz2024Pareto-OptimalModels}.
+
+\subsection{Execution Semantics}
+
+The execution semantics of a DCR graph is defined as a \emph{\ac{LTS}}~\cite{Diaz2024Pareto-OptimalModels}:
+
+\begin{definition}[Transitions~{\cite{Diaz2024Pareto-OptimalModels}}]
+\label{def:dcr_transitions}
+For a DCR graph~$G$, the corresponding \ac{LTS} $\mathcal{T}(G)$ has transitions
+$M' \xrightarrow{(e,a)} M''$ where:
+\begin{enumerate}
+  \item $M' = (\mathit{Ex}', \mathit{Re}', \mathit{In}')$ is the marking
+    before the transition;
+  \item $M'' = (\mathit{Ex}' \cup \{e\},\; \mathit{Re}'',\; \mathit{In}'')$
+    is the marking after;
+  \item $e \in \mathit{In}'$ and $l(e) = a$ (event is included and labelled
+    $a$);
+  \item $\{e' \in \mathit{In}' \mid e' \rightarrow\!\bullet\, e\} \subseteq
+    \mathit{Ex}'$ (all conditions satisfied);
+  \item $\mathit{In}'' = (\mathit{In}' \cup \{e' \mid e
+    \rightarrow^+ e'\}) \setminus \{e' \mid e \rightarrow^\% e'\}$;
+  \item $\mathit{Re}'' = (\mathit{Re}' \setminus \{e\}) \cup \{e' \mid e
+    \bullet\!\rightarrow e'\}$.
+\end{enumerate}
+\end{definition}
+
+A trace $t = (e_0,a_0),(e_1,a_1),\ldots$ is \emph{accepting} if no event
+remains simultaneously included and pending without having been
+executed~\cite{Diaz2024Pareto-OptimalModels}.  This acceptance condition
+defines the set of valid, complete process executions.
+
+\subsection{The Flat Conformance Space}
+\label{sec:flat_conformance}
+
+The open-world semantics of DCR graphs ensures that every accepting trace is
+formally compliant by construction.  However, this property reveals a critical
+limitation for optimisation: all accepting traces are treated as \emph{equally
+valid}, regardless of their cost, duration, or business utility.  Burattin
+et al.~\cite{AndreaBurattin2021Exploring_Conformance_Space} characterise this
+as the \emph{flat conformance space}, noting that purely declarative compliance
+checking provides no mechanism to rank or differentiate valid executions.  The
+present thesis addresses this gap directly by learning a policy that
+\emph{un-flattens} the conformance space --- identifying the Pareto-optimal
+subset of accepting traces with respect to competing business objectives.
+
+% ============================================================
+\section{Reinforcement Learning}
+\label{sec:rl}
+% ============================================================
+
+\ac{RL} is a computational framework in which an agent
+learns to make sequential decisions by interacting with an environment and
+optimising a cumulative reward
+signal~\cite{Sutton2018ReinforcementIntroduction}.  In contrast to supervised
+learning, the agent receives no labelled examples; it discovers effective
+behaviour through trial and error, guided only by delayed feedback from the
+environment.
+
+\subsection{Markov Decision Processes}
+\label{sec:mdp}
+
+The standard formal model for RL is the \emph{Markov Decision
+Process}~(MDP)~\cite{Huang2011ReinforcementManagement,Alshiekh2017SafeShielding}:
+
+\begin{definition}[\ac{MDP}]
+\label{def:mdp}
+An MDP is a tuple $\mathcal{M} = (S, A, P, R, \gamma)$, where:
+\begin{itemize}
+  \item $S$ is a finite set of \emph{states};
+  \item $A$ is a finite set of \emph{actions};
+  \item $P : S \times A \times S \to [0,1]$ is a \emph{transition function},
+    where $P(s' \mid s,a)$ is the probability of reaching state~$s'$ from
+    state~$s$ by taking action~$a$;
+  \item $R : S \times A \times S \to \mathbb{R}$ is a \emph{reward function};
+  \item $\gamma \in [0,1)$ is a \emph{discount factor} controlling the
+    influence of future rewards.
+\end{itemize}
+\end{definition}
+
+The \emph{Markov property} states that the transition distribution depends only
+on the current state and action, not on the history.  A \emph{policy}
+$\pi : S \to \mathcal{P}(A)$ maps states to distributions over actions.  The
+\emph{value function}
+$V^\pi(s) = \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty} \gamma^t r_t \mid
+s_0=s\right]$
+measures the expected discounted return from state~$s$ under policy~$\pi$.  The
+optimal policy~$\pi^*$ maximises~$V^\pi$ for all states
+simultaneously~\cite{Sutton2018ReinforcementIntroduction}.
+
+The reward function is the sole specification of the agent's objective, and its design strongly influences both convergence speed and the behaviour ultimately learned~\cite{Sutton2018ReinforcementIntroduction}. Beyond the task reward, it is common practice to add auxiliary shaping terms that encode intermediate progress or discourage undesirable behaviour~\cite{Mataric1994RewardLearning,NgPolicyShaping}. The reward used in this thesis follows this practice; its exact form is given in Section~\ref{sec:reward}.
+
+\subsection{Proximal Policy Optimisation}
+\label{sec:ppo}
+
+Policy gradient methods directly optimise a parameterised policy $\pi_\theta$
+by ascending the gradient of the expected return.  A key challenge is that
+large gradient steps can destabilise training by moving the policy into
+poorly-explored regions.  \emph{Trust Region Policy Optimisation}~(TRPO)~\cite{Schulman2015TrustOptimization}
+addresses this by constraining the KL divergence between successive policies,
+but requires expensive second-order optimisation.
+
+\emph{\ac{PPO}}, introduced by Schulman et
+al.~\cite{Schulman2017ProximalAlgorithms}, achieves similar stability
+guarantees using only first-order gradient updates.  PPO defines a
+\emph{clipped surrogate objective}:
+
+\begin{equation}
+\label{eq:ppo}
+L^{\mathrm{CLIP}}(\theta) = \hat{\mathbb{E}}_t\!\left[
+  \min\!\left(r_t(\theta)\,\hat{A}_t,\;
+  \mathrm{clip}\!\left(r_t(\theta),\, 1-\varepsilon,\, 1+\varepsilon\right)
+  \hat{A}_t\right)\right],
+\end{equation}
+
+where $r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\theta_{\mathrm{old}}}
+(a_t \mid s_t)$ is the probability ratio between the updated and old policy,
+$\hat{A}_t$ is the \emph{Generalised Advantage Estimate}(GAE)~\cite{Schulman2016High-DimensionalEstimation}, and
+$\varepsilon$ is a clipping hyperparameter (typically $0.2$).  The clipping
+removes the incentive for the ratio to move outside
+$[1-\varepsilon, 1+\varepsilon]$, acting as a conservative trust region
+without requiring constrained
+optimisation~\cite{Schulman2017ProximalAlgorithms}.
+
+PPO alternates between collecting rollouts with the current policy and
+performing $K$~epochs of minibatch gradient ascent on $L^{\mathrm{CLIP}}$.
+Its combination of sample efficiency, simplicity, and robustness has made it
+a widely adopted on-policy algorithm in applied deep
+RL~\cite{Schulman2017ProximalAlgorithms,Towers2025Gymnasium:Environments}.
+
+PPO is selected as the primary learning algorithm of this thesis; the
+concrete rationale, tied to the discrete role-conditioned action space
+and the shielding mechanism, is given in
+Section~\ref{sec:ppo_algorithm}.
+
+
+Alternative algorithms considered include Soft Actor-Critic~(SAC) and
+Constrained Policy Optimisation~(CPO).  SAC is an off-policy algorithm
+designed primarily for continuous action
+spaces \cite{Haarnoja2018SoftActor};
+CPO handles constraints natively but requires second-order optimisation and
+enforces compliance through the optimisation criterion rather than the
+structural, environment-level mechanism adopted in this thesis.  PPO is
+therefore the most direct fit for the discrete, shielded environment of this
+framework.
+
+\subsection{Safe Reinforcement Learning and Shielding}
+\label{sec:shielding_background}
+
+Standard RL algorithms maximise cumulative reward without regard for safety
+constraints.  \emph{Safe reinforcement learning} addresses this limitation by
+incorporating safety considerations into the learning
+process~\cite{Garcia2015ALearning}.  Two broad families of
+approaches can be distinguished: methods that modify the \emph{optimisation
+criterion}, such as constrained MDPs~\cite{AltmanCONSTRAINEDPROCESSES} and Lagrangian
+relaxation~\cite{Achiam2017ConstrainedOptimization}, and methods that
+modify the agent's \emph{exploration behaviour} by incorporating external
+knowledge~\cite{Garcia2015ALearning}.
+
+\emph{Shielded reinforcement learning}, introduced by Alshiekh et
+al.~\cite{Alshiekh2017SafeShielding}, belongs to the second family.  A \emph{shield} is a
+reactive component, synthesised from a safety specification and an abstraction
+of the environment dynamics, that restricts the agent's action space at every
+time step so that only safe actions remain available.  The shield satisfies a
+\emph{minimum interference} property: it restricts the agent only when an
+unrestricted action would violate the safety
+specification~\cite{Alshiekh2017SafeShielding}.
+
+Two placement strategies are distinguished.  In \emph{preemptive} shielding,
+the shield is placed before the agent and provides the set of safe actions from
+which the agent must choose.  In \emph{post-posed} shielding, the shield
+monitors the agent's selected action and substitutes it with a safe alternative
+only when necessary~\cite{Alshiekh2017SafeShielding}.  Formally, preemptive shielding
+transforms the original MDP~$\mathcal{M}$ into a restricted
+MDP~$\mathcal{M}'$ in which, for each state~$s$, the available action set is
+reduced to $A'_s \subseteq A_s$ by removing all actions that could lead to a
+violation of the safety specification.
+
+This thesis adopts a post-posed shielding architecture, derived directly from
+the DCR graph semantics, in which the agent samples over the full action
+space rather than a restricted one; the concrete mechanism and design
+rationale are presented in Chapter~\ref{chap:method}.
+
+% ============================================================
+\section{Multi-objective Optimisation}
+\label{sec:moopt}
+
+Many real-world problems involve more than one objective that must be optimised
+simultaneously, and these objectives frequently conflict.  In BPM, cost and
+execution duration are prototypical examples: assigning more experienced (and
+expensive) resources reduces duration but increases cost.  \emph{Multi-objective
+optimisation}~(MOO) provides a principled framework for reasoning about such
+trade-offs~\cite{ArtemisDoumeniParetoAgentSimulator}.
+
+\subsection{Pareto Dominance and the Pareto Front}
+
+\begin{definition}[Pareto Dominance]
+\label{def:pareto}
+Let $\mathbf{f}(x) = (f_1(x), \ldots, f_k(x))$ be a vector of $k$ objective
+functions to be minimised.  A solution $x$ \emph{dominates} $x'$, written
+$x \prec x'$, if
+\[
+  \forall\, i \in \{1,\ldots,k\}:\; f_i(x) \le f_i(x')
+  \quad \wedge \quad
+  \exists\, j :\; f_j(x) < f_j(x').
+\]
+A solution $x^*$ is \emph{Pareto-optimal} if no feasible solution dominates
+it.  The collection of all Pareto-optimal solutions is the \emph{Pareto
+front}~$\mathcal{P}^*$.
+\end{definition}
+
+The Pareto front represents a set of optimal trade-offs: improving any
+objective from a Pareto-optimal solution necessarily degrades at least one
+other
+objective~\cite{ArtemisDoumeniParetoAgentSimulator,KirchdorferLukasFromPolicies}.
+Rather than yielding a single best answer, it provides decision-makers with a
+\emph{menu} of non-dominated options from which to select according to their
+operational priorities.
+
+\subsection{Linear Scalarisation}
+\label{sec:lit_scalarisation}
+
+Linear scalarisation is the most widely used technique for reducing a
+multi-objective optimisation problem to a sequence of single-objective
+sub-problems.  Given a weight vector $\mathbf{w} = (\alpha, \beta)$ with
+$\alpha, \beta \ge 0$, the scalarised reward is defined as
+\begin{equation}
+\label{eq:scalar}
+r_{\mathbf{w}} = \alpha \cdot f_1 + \beta \cdot f_2,
+\end{equation}
+where $f_1$ and $f_2$ are the objective functions to be optimised.  By
+training independent policies under different weight vectors and aggregating
+the resulting solutions, it is possible to approximate the Pareto front of a
+multi-objective problem~\cite{Roijers2013ADecision-Making}.
+
+The theoretical foundations and limitations of this approach are well
+established.  Roijers et al.~\cite{Roijers2013ADecision-Making} formalise the
+\emph{multi-objective MDP}~(MOMDP) and show that linear scalarisation can
+recover only policies that lie on the \emph{convex hull} of the Pareto front
+--- the \emph{Convex Coverage Set}~(CCS) --- and provably fails to recover
+solutions in non-convex (concave) regions.  This limitation, first
+demonstrated empirically in RL by Vamplew et
+al.~\cite{Vamplew2008OnFronts}, has been confirmed across multiple domains
+and architectures~\cite{Hayes2022APlanning}.
+
+Despite this limitation, linear scalarisation remains the dominant baseline in
+multi-objective RL for two reasons.  First, it is computationally tractable:
+each weight configuration reduces to a standard single-objective RL problem,
+so any existing algorithm (Q-learning, PPO, \ac{A3C}) can be applied without
+modification.  Second, for processes with \emph{convex} Pareto fronts ---
+which includes many practical resource allocation and scheduling problems ---
+it recovers the full front exactly.  Hayes et al.~\cite{Hayes2022APlanning}
+provide a practical guide to identifying when linear scalarisation is
+sufficient and when non-linear alternatives such as Chebyshev scalarisation
+are required.
+
+The selection of weight vectors is itself a non-trivial design problem.  Das
+and Dennis~\cite{DasDr.Das-NBIPaper-1998} propose the \emph{simplex-lattice
+design}, which generates $\binom{H+m-1}{m-1}$ evenly-spaced weight vectors
+for $m$ objectives and $H$ divisions per axis; for two objectives this yields
+$H+1$ vectors from $(1,0)$ to $(0,1)$ in steps of $1/H$.  This construction
+ensures even coverage of the weight simplex but does not guarantee even
+coverage of objective space, since the mapping from weights to Pareto points
+is generally non-isomorphic~\cite{Vamplew2008OnFronts}.
+
+In this thesis, linear scalarisation with a simplex-lattice weight grid is
+adopted as the primary strategy for Pareto front approximation.  The choice is
+justified by the structure of the problem: cost and duration objectives in a
+DCR process are bounded and exhibit a convex trade-off frontier, as confirmed
+empirically in Chapter~\ref{chap:results}.
+
+% ============================================================
+\section{Resource Allocation in BPM}
+\label{sec:resources}
+% ============================================================
+
+In a BPM context, a \emph{resource} is any actor or agent that carries out
+process activities, typically a human worker, but potentially also a machine
+or software system~\cite{Huang2011ReinforcementManagement}.  \emph{Resource
+allocation} refers to the assignment of resources to work items at runtime, and
+it is recognised as one of the principal levers for improving process
+performance~\cite{Huang2011ReinforcementManagement}.
+
+Resources may differ along two key dimensions: \emph{cost} and
+\emph{capability}.  A more experienced (Expert) resource typically completes
+an activity faster but at higher cost, while a junior resource incurs lower
+cost at the price of longer execution time.  This cost--duration trade-off is
+the primary source of multi-objective tension in this thesis and motivates the
+design of role-conditioned action spaces in the proposed framework
+(Chapter~\ref{chap:method}).
+
+Resource allocation decisions can be modelled at different levels of
+abstraction.  At the \emph{global} level, a centralised policy decides, for
+each arriving work item, which available resource to assign, optimising an
+aggregate objective such as total throughput or average cycle
+time~\cite{Huang2011ReinforcementManagement}.  At the \emph{event} level ---
+the granularity adopted in this thesis --- the decision is made for each
+individual activity within a specific process instance, and both the process
+state (DCR marking) and the resource profile are part of the decision context.
+The relationship between these approaches and prior work is discussed in
+Section~\ref{sec:lit_resources}.

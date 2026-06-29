@@ -1,0 +1,261 @@
+% ============================================================
+% CHAPTER 1 — Introduction (REVISED v2)
+% ============================================================
+
+\chapter{Introduction}
+\label{chap:introduction}
+
+\ac{BPM} systems are increasingly required to operate in dynamic and
+flexible environments where processes cannot always be represented as
+rigid execution flows \cite{Reichert2012EnablingTechnologies}.
+Declarative process modelling approaches address this challenge by
+specifying the constraints that process executions must satisfy, instead
+of prescribing a single fixed sequence of activities \cite{PesicDECLARE:Processes}.
+Among these approaches, \ac{DCR} graphs have gained attention due to
+their formal semantics and their ability to represent flexible yet
+compliant business processes \cite{Hildebrandt2011DeclarativeGraphs}.
+
+While \ac{DCR} graphs guarantee that process executions satisfy the
+specified constraints, they provide limited support for identifying
+which compliant executions are operationally preferable, a problem
+characterised in the literature as the exploration of a flat conformance
+space \cite{AndreaBurattin2021Exploring_Conformance_Space}.
+
+In practice, a process may contain many valid traces with very different
+characteristics in terms of execution cost, duration, or resource
+consumption \cite{Diaz2024Pareto-OptimalModels}.
+Optimising process execution within this large conformance space
+therefore becomes an important challenge.
+
+\ac{RL} offers a promising approach for process optimisation because
+agents can learn execution strategies directly through interaction with
+an environment \cite{Sutton2018ReinforcementIntroduction}.
+However, standard \ac{RL} approaches do not inherently guarantee process
+compliance. An agent may learn behaviours that maximise reward while
+violating critical business constraints
+\cite{Garcia2015ALearning}, which makes purely neural
+optimisation problematic for compliance-sensitive domains.
+
+This thesis proposes a compliance-aware multi-objective optimisation
+framework that combines \ac{RL} with \ac{DCR} graphs.
+The approach models \ac{DCR} execution as a sequential decision-making
+problem where the agent learns to optimise process execution while
+respecting the semantics of the underlying declarative model.
+Compliance is enforced through a shielding mechanism
+\cite{Alshiekh2017SafeShielding} that prevents invalid actions during both training
+and execution, while a multi-objective reward function guides the agent
+towards Pareto-optimal traces according to business objectives such as
+cost and duration.
+The objectives and research questions guiding this investigation are
+stated in Section~\ref{sec:research_questions}, and the specific
+contributions of this work are presented in
+Section~\ref{sec:contributions}.
+
+% ----------------------------------------------------------------
+\section{Problem Overview}
+\label{sec:problem_overview}
+
+The flexibility of declarative process models comes at the cost of a
+large and weakly differentiated conformance space, in which existing
+\ac{DCR}-based systems can verify that traces are valid but cannot rank
+them by operational quality.
+Current optimisation approaches present complementary limitations.
+Exact symbolic techniques guarantee correctness and optimality, but
+their underlying decision problems scale poorly as process complexity increases \cite{Diaz2024Pareto-OptimalModels, Felli2023Data-awareSMT}.
+
+Neural approaches such as \ac{RL} are more scalable and adaptive, but
+they may generate traces that violate process constraints
+\cite{Garcia2015ALearning}.
+
+Consequently, there is currently a gap between:
+\begin{itemize}
+    \item optimisation approaches that guarantee compliance but struggle
+    with scalability,
+    \item and scalable learning-based approaches that lack formal
+    compliance guarantees.
+\end{itemize}
+
+This gap, substantiated through a systematic comparison of related work
+in Section~\ref{sec:research_gap},
+motivates the central proposal of this thesis, an architecture in which
+a learning agent explores the conformance space freely while a symbolic
+shield derived from the \ac{DCR} semantics makes constraint violations
+structurally impossible.
+
+% ----------------------------------------------------------------
+\section{Objectives and Research Questions}
+\label{sec:research_questions}
+
+The main objective of this thesis is to develop and evaluate a
+compliance-aware \ac{RL} framework for multi-objective optimisation of
+declarative business processes.
+This involves modelling \ac{DCR} execution as a sequential
+decision-making problem, designing a reward structure that captures
+multiple business objectives simultaneously, enforcing compliance
+through symbolic shielding, and evaluating both the external performance
+of the resulting framework against exact and heuristic baselines and the
+internal contribution of each of its components.
+
+\paragraph{Main Research Question (MRQ)}
+How can \ac{RL} optimise declarative business-process execution while
+guaranteeing compliance with \ac{DCR} constraints?
+
+\paragraph{Sub-Research Questions (SRQs)}
+\begin{enumerate}
+    \item How can \ac{DCR} graph semantics be represented within an
+    \ac{RL} environment?
+
+    \item To what extent can \ac{PPO}-based agents discover
+    Pareto-optimal traces in declarative process models?
+
+    \item How does reward design influence convergence and compliant
+    agent behaviour?
+
+    \item Can the framework learn resource-allocation strategies through
+    role-conditioned action spaces?
+\end{enumerate}
+
+These research questions are formulated at the level of knowledge
+claims. Chapter~\ref{chap:experimental_setup} operationalises them as
+five concrete, measurable evaluation questions (EQ1 through EQ5) and
+makes the mapping between research questions, evaluation questions,
+contributions, and evidence chapters explicit.
+
+% ----------------------------------------------------------------
+\section{Scope and Limitations}
+\label{sec:scope}
+
+This thesis focuses on compliance-aware, multi-objective optimisation of
+declarative business processes represented as \ac{DCR} graphs, covering
+the optimisation of cost and duration objectives and resource-aware
+execution through role-conditioned actions.
+
+To maintain a feasible scope, several aspects are excluded or
+simplified:
+\begin{itemize}
+    \item The framework focuses exclusively on \ac{DCR} graphs and does
+    not address other declarative languages in detail,
+    \item The \ac{RL} implementation is limited to \ac{PPO}-based agents,
+    \item The Pareto front is approximated through sampling rather than
+    formally guaranteed,
+    \item The empirical validation is limited to benchmark processes,
+    two used for development (Expense Report and Loan Application) and a
+    suite of independently mined \ac{DCR} graphs used for external
+    validation (Chapter~\ref{chap:external_validation}), rather than a
+    deployment in a live production environment,
+    \item Large-scale industrial deployment and distributed execution are
+    outside the scope,
+    \item Partial observability, online learning, and
+    continuous-time process execution are not considered.
+\end{itemize}
+
+% ----------------------------------------------------------------
+\section{Contributions}
+\label{sec:contributions}
+
+This thesis makes three primary contributions to the field of
+compliance-aware business process optimisation.
+
+\textbf{C1.\label{cont:c1} A DCR-shielded reinforcement learning environment.}
+A reinforcement learning environment is introduced that tightly couples
+\ac{DCR} graph semantics with a shielding mechanism intrinsic to the
+\ac{DCR} execution engine.
+In contrast to approaches that discourage non-compliant behaviour
+through penalty terms or Lagrangian relaxation
+\cite{AltmanCONSTRAINEDPROCESSES, Achiam2017ConstrainedOptimization}, where
+constraint violations still occur during training, the agent here
+samples over the full action space and any non-enabled action is
+intercepted by the engine before it can take effect, leaving the
+process state entirely unchanged.
+Compliance is therefore a hard structural property of every trace
+generated throughout training, rather than a statistical tendency that
+emerges only after convergence.
+To the best of our knowledge, this constitutes the first application of
+shielded reinforcement learning \cite{Alshiekh2017SafeShielding} to \ac{DCR} graph
+semantics.
+
+\textbf{C2.\label{cont:c2} A multi-objective scalarised reward framework for Pareto-optimal trace generation.}
+A normalised reward function is proposed that decomposes into
+structural, cost, and duration components, enabling independent \ac{PPO}
+agents trained under different scalarisation weights $(\alpha, \beta)$
+\cite{DasDr.Das-NBIPaper-1998}
+to approximate the Pareto front of valid process executions.
+On the Expense Report benchmark, the framework recovers the exact Pareto
+front identified by a CSP+COP exact solver \cite{Diaz2024Pareto-OptimalModels}.
+On the Loan Application benchmark, it produces a well-populated front of
+26 non-dominated points while maintaining full compliance throughout
+training.
+
+\textbf{C3.\label{cont:c3} A role-conditioned extension of \ac{EDCR} for
+resource-aware optimisation.}
+The base framework is extended to $(\text{event}, \text{role})$ action
+pairs, so the agent optimises cost and duration at the level of
+individual activities by choosing which resource role executes each
+event. Per-role cost and duration multipliers, structured after the
+resource profiles of Kirchdorfer et
+al.~\cite{KirchdorferLukasFromPolicies}, are encoded directly in the
+\ac{DCR} XML specification, preserving compatibility with existing
+\ac{EDCR} graphs. Under unlimited role availability this choice is
+separable across events; to turn it into a genuine allocation decision,
+the framework is further extended with a per-case \emph{Expert capacity
+budget}, enforced by the same shield, which couples the per-event
+choices into an opportunity-cost allocation problem. Experiments on the Loan Application process show that, under unlimited role availability, the policy recovers the closed-form optimal role assignment, a separable pattern that distinguishes objective-sensitive
+from role-indifferent activities and is consistent with the cost--duration trade-off structure independently identified by evolutionary and simulation-based
+approaches~\cite{KirchdorferLukasFromPolicies,
+ArtemisDoumeniParetoAgentSimulator}. Under the Expert capacity budget, where the per-event choices are no longer separable, the agent learns a genuine allocation policy that outperforms standard allocation
+heuristics under scarcity.
+
+Taken together, C1--C3 constitute the first unified framework combining
+declarative \ac{DCR} semantics, compliance-by-construction shielding,
+multi-objective optimisation, and resource-aware decision-making within
+a single reinforcement learning pipeline.
+While prior work addresses subsets of these properties in isolation, no
+existing approach provides formal compliance guarantees, Pareto-optimal
+trace generation, and event-level role-conditioned optimisation simultaneously
+over a declarative process model.
+
+% ----------------------------------------------------------------
+\section{Structure of the Thesis}
+\label{sec:structure_thesis}
+
+The remainder of this thesis is organised as follows.
+
+Chapter~\ref{chap:background} introduces the theoretical foundations
+underlying the work, including declarative process modelling, \ac{DCR}
+graphs, \ac{RL}, and multi-objective optimisation.
+
+Chapter~\ref{chap:literarture} reviews related work on process
+optimisation, compliance-aware \ac{RL}, declarative process execution,
+and resource-aware optimisation, and derives the research gap addressed
+by this thesis.
+
+Chapter~\ref{chap:method} presents the proposed system architecture and
+methodology, including the \ac{DCR} \ac{RL} environment, reward
+formulation, shielding mechanism, \ac{PPO} training setup, and
+role-conditioned extension.
+
+Chapter~\ref{chap:experimental_setup} describes the experimental setup,
+stating the evaluation questions, benchmarks, training protocol,
+baselines, evaluation metrics, and reproducibility information.
+
+Chapter~\ref{chap:results} presents the experimental results on both
+benchmarks: the validation of Pareto-optimal trace discovery, the effect
+of reward weighting, and the role-conditioned optimisation experiments.
+
+Chapter~\ref{chap:internal_validation} provides an internal validation
+of the methodology, isolating the individual contribution of the shield
+and the learning agent through an ablation, and assessing the
+generalisation of the learned policies across seeds and a temporal
+holdout.
+
+Chapter~\ref{chap:external_validation} tests external validity,
+re-training the framework from scratch on a suite of independently mined
+\ac{DCR} graphs never used during its development, and reports the
+resulting compliance replication and scalability frontier.
+
+Chapter~\ref{chap:discussion} discusses the implications, limitations,
+and scalability considerations of the proposed framework, positions it
+against prior approaches, and revisits the research questions.
+
+Chapter~\ref{chap:conclusion} summarises the contributions, answers the
+main research question, and outlines directions for future work.

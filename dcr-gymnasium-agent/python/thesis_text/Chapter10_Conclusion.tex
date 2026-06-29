@@ -1,0 +1,119 @@
+% ============================================================
+% CHAPTER 10 — Conclusion and Future Work
+% ============================================================
+
+\chapter{Conclusion and Future Work}
+\label{chap:conclusion}
+
+This chapter closes the thesis. Section~\ref{sec:conclusion_summary} briefly recaps what was built. Section~\ref{sec:eq_revisited} answers each sub-research question stated in Section~\ref{sec:research_questions} and synthesises the answer to the main research question, completing the traceability chain introduced in Table~\ref{tab:rq_traceability}. Section~\ref{sec:contributions} restates the thesis's contributions in full. Section~\ref{sec:future_work} turns the limitations identified in Section~\ref{sec:limitations} into concrete directions for future work.
+
+% ------------------------------------------------------------
+\section{Summary}
+\label{sec:conclusion_summary}
+
+This thesis set out to answer whether reinforcement learning can optimise declarative business-process execution while guaranteeing compliance with \ac{DCR} constraints. The proposed framework models \ac{DCR} execution as a shielded sequential decision problem, scalarises competing cost and duration objectives into a single reward signal, and extends the action space to joint event--role decisions for resource allocation. The remainder of this chapter answers each research question against this framework in turn (Section~\ref{sec:eq_revisited}), states its contributions formally (Section~\ref{sec:contributions}), and turns its limitations into future work (Section~\ref{sec:future_work}).
+
+% ------------------------------------------------------------
+\section{Revisiting the Research Questions}
+\label{sec:eq_revisited}
+
+\paragraph{SRQ1 --- How can \ac{DCR} graph semantics be represented within a \ac{RL} environment?} The answer is constructive. \ac{DCR} execution is modelled as a sequential decision-making problem in which states encode the marking of the graph, actions correspond to event (or event--role) executions, and the \ac{DCR} engine itself acts as the transition function (Sections~\ref{sec:compliance}, \ref{sec:ppo}). The fidelity of this representation is verified empirically through EQ2: the 100\,\% acceptance rate observed (Section~\ref{sec:expense_compliance}; Appendix~\ref{app:loanapp_diagnostics} for the Loan Application benchmark) confirms that the environment exposes exactly the reachable state space of the underlying model, no more and no less.
+
+\paragraph{SRQ2 --- To what extent can \ac{PPO}-based agents discover Pareto-optimal traces in declarative process models?} On the Expense Report benchmark, the agent recovers the exact two-point Pareto front identified by the CSP+COP ground truth (Section~\ref{sec:pareto_recovery}), answering EQ1 affirmatively. On the larger Loan Application benchmark, where no ground truth exists, the weight sweep produces a 26-point front whose structure is consistent with independent approaches (Section~\ref{sec:loanapp_pareto}). The extent of discovery is bounded by the training budget, the convexity limitation of linear scalarisation (Section~\ref{sec:limitations}), and, at larger scale, by the action-space ceiling established in Chapter~\ref{chap:external_validation}: exact recovery is confirmed up to 42 actions, and the unmasked policy does not discover any accepting trace beyond that range, even though a valid one is known to exist (Section~\ref{sec:external_scalability}). The ablation of Section~\ref{sec:shield_contribution} further shows that this discovery is attributable to the combination of shielding and learning specifically: the random shielded baseline alone recovers a comparable but less stable and non-steerable front, and the unshielded learner recovers no valid front at all.
+
+\paragraph{SRQ3 --- How does reward design influence convergence and compliant agent behaviour?} Reward design proved decisive for convergence. The step penalty competes with the terminal acceptance bonus ($+100$) at every step, and that imbalance, not any explicit cost or duration term, is what structures the trade-off: it makes shorter traces cheaper to execute in reward terms regardless of objective weights, which is why the duration-focused configuration recovers both Expense Report Pareto points while the cost-focused one, receiving no comparable pressure on episode length, does not (Section~\ref{sec:discussion_tradeoff}). The objective weights then steer \emph{which} short trace is preferred, and the balanced configuration acts as an implicit diversity mechanism on top of this, contributing 15 of the 26 Pareto points on the Loan Application. Regarding compliant behaviour, compliance itself is structural rather than learned; what the reward shapes is the agent's reliance on the shield, measured as the illegal-action ratio, which falls below 50\,\% within the first 1\,\% of the training budget (Table~\ref{tab:compliance_milestones}), and the same gap between shielded and unshielded reliance on the reward signal replicates on an external benchmark never used to design the reward (Section~\ref{sec:external_compliance_replication}).
+
+\paragraph{SRQ4 --- Can the framework learn resource-allocation strategies through role-conditioned action spaces?} Yes, within the scale tested, and the strongest evidence is the capacity-constrained case rather than the unlimited-capacity one. Under unlimited Expert availability, role selection is separable across events and the per-event choice is a closed-form argmin rather than a learned allocation decision; the role-conditioned extension does, however, learn event-level specialisation patterns that respond systematically to the objective weights (Section~\ref{sec:loanapp_roles}), exposing three behavioural categories, high-sensitivity, moderate-response, and role-indifferent events (Section~\ref{sec:discussion_roles}). The genuine allocation strategy emerges once the Expert role is made scarce: at every tested budget $k$, the learned policy recovers a strictly larger Pareto front than the greedy per-event heuristic and dominates both Always-Junior and Always-Expert by a wide margin, showing that the agent learns \emph{where} to spend a limited resource rather than applying a fixed or myopic rule (Section~\ref{sec:loanapp_capacity}). This granularity is unavailable to pool-level approaches and constitutes the empirical basis of contribution~C3. Whether either result extends to allocation problems with substantially larger action spaces is constrained by the same ceiling identified under SRQ2.
+
+Table~\ref{tab:mrq_answers} summarises how each component of the answer above maps onto the \ac{MRQ}. The framework does not replicate the exactness guarantees of symbolic solvers, and the learning component's advantage over structural restriction alone is bounded by the size of the action space it must search without guidance; within that range, it provides a scalable alternative that preserves formal compliance throughout training, generalises to process structures never seen during development, and extends naturally to resource-aware optimisation.
+
+
+\begin{table}[H]
+\centering
+\caption{Summary of how each thesis component answers the main research question (MRQ).}
+\label{tab:mrq_answers}
+{\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\linewidth}{p{3.4cm} X p{2.6cm}}
+\toprule
+\textbf{Component} & \textbf{How it answers the MRQ} & \textbf{Evidence} \\
+\midrule
+
+Shielded \ac{DCR} environment &
+Compliance is guaranteed by construction, not learned: invalid actions are blocked before execution, so every generated trace satisfies the \ac{DCR} constraints throughout training, not only at convergence. &
+Ch.~\ref{chap:results}, \ref{chap:discussion} \\
+\addlinespace
+
+Scalarised multi-objective reward &
+A single weight sweep over $(\alpha,\beta)$ produces a full family of policies covering the cost--duration trade-off, recovering the exact Pareto front where a ground truth exists. &
+Ch.~\ref{chap:results} \\
+\addlinespace
+
+Role-conditioned action space &
+Extending actions to event--role pairs exposes resource-allocation strategies at event-level granularity, unavailable to pool-level approaches. &
+Ch.~\ref{chap:results}, \ref{chap:discussion} \\
+\addlinespace
+
+Component necessity (ablation) &
+Isolates the contribution of shielding and learning, showing that the combination outperforms either component alone and that the observed optimisation quality is attributable to \ac{PPO} rather than to the restriction of the action space. &
+Ch.~\ref{chap:internal_validation} \\
+\addlinespace
+
+External validity &
+The compliance gap and the exact Pareto recovery both replicate on six mined \ac{DCR} graphs of independent provenance, never used to design the method; the same benchmark grid also exposes the scale at which this combination's advantage over a non-learning shielded baseline disappears. &
+Ch.~\ref{chap:external_validation} \\
+
+\bottomrule
+\end{tabularx}}
+\end{table}
+
+\paragraph{Main research question.} The main research question posed in Section~\ref{sec:research_questions} was:
+
+\begin{quote}
+\emph{How can \ac{RL} optimise declarative business-process execution while guaranteeing compliance with \ac{DCR} constraints?}
+\end{quote}
+
+
+% ------------------------------------------------------------
+\section{Contributions}
+\label{sec:contributions}
+
+Section~\ref{sec:discussion_prior_work} showed that the cost--duration trade-off recovered in this thesis is not specific to reinforcement learning: it reappears, in the same qualitative direction, across three independent approaches that share no data, algorithm, or process formalism. What distinguishes the present work is not the trade-off itself, but three properties of how it is obtained:
+
+\begin{description}
+
+    \item[C1 --- Formal compliance guarantee.] Compliance is a hard structural property rather than a statistical outcome. Huang et al.\ operate on imperative models where the process graph itself prevents invalid transitions; Kirchdorfer et al.\ enforce compliance statistically through simulation fidelity. The present framework is the only one of the three that operates on a \emph{declarative} model, where the valid trace space is a non-trivial subset of all possible executions, and still guarantees that every generated trace is formally compliant with \ac{DCR} constraints throughout training, not only at convergence (Section~\ref{sec:discussion_compliance}).
+
+    \item[C2 --- Native multi-objective optimisation.] Huang et al.\ require a separate training run per objective. The scalarised reward produces a full family of policies from a single weight sweep, allowing any point on the trade-off surface to be reached by adjusting $(\alpha, \beta)$ without redesigning the reward function or retraining from a different objective formulation.
+
+    \item[C3 --- Event-level optimisation granularity.] The optimisation operates at the level of individual events rather than resource pools. This exposes the role-sensitivity structure discussed in Section~\ref{sec:discussion_roles}, identifying which specific activities drive the cost--duration trade-off and which are role-indifferent, an insight that pool-level approaches cannot produce.
+
+\end{description}
+
+These three contributions are evaluated internally against ablated variants of the same method (Chapter~\ref{chap:internal_validation}) and externally against six \ac{DCR} graphs never used to design it (Chapter~\ref{chap:external_validation}), establishing both that the components are individually necessary and that the resulting behaviour generalises beyond the two benchmarks used to develop the approach.
+
+% ------------------------------------------------------------
+\section{Future Work}
+\label{sec:future_work}
+
+The limitations identified in Section~\ref{sec:limitations} point to concrete directions for extending this work.
+
+\paragraph{Action masking for large action spaces.} The limitation with the most direct fix is the action-space ceiling identified in Chapter~\ref{chap:external_validation}: beyond approximately 42 activities, the unmasked policy's accept rate collapses because it keeps sampling actions the shield blocks rather than only the currently enabled subset. Restricting the policy's sampling distribution directly, a well-understood technique in the action-masking literature, was out of scope here only for time reasons. Re-running the external validation grid with masking enabled would test whether the learning component's advantage over the shielding-only baseline extends past the current ceiling.
+
+\paragraph{Reward design refinements.} Three related limitations concern the reward function and could be addressed together in follow-up work. First, linear scalarisation cannot recover Pareto points in non-convex regions of the objective space; both benchmarks here happen to be convex, but hypervolume-indicator-based shaping or population-based multi-objective RL would generalise further and reduce the need to retrain per $(\alpha,\beta)$ pair. Second, the unconditional step penalty introduces a brevity bias toward shorter traces (Section~\ref{sec:discussion_tradeoff}); scaling it by the graph's known minimum trace length, rather than a fixed value, would test whether this bias can be removed without weakening the dense per-step signal. Third, all shaping magnitudes (step penalty, progress bonus, repetition penalty, terminal bonus) were fixed empirically rather than searched (Section~\ref{sec:limitations}); an ablation varying each independently would quantify how sensitive the reported fronts are to these specific values.
+
+\paragraph{Algorithmic comparison.} All experiments use \ac{PPO} as the sole learning algorithm. Repeating the headline weight sweep with other policy-gradient or value-based methods would clarify whether the brevity bias, convergence speed, and Pareto coverage reported here are properties of the environment and reward design, or specific to \ac{PPO}.
+
+\paragraph{Stochastic, continuous-time, and concurrent process models.} Of all the directions listed here, this has the most direct bearing on industrial applicability. Duration is a per-event deterministic scalar and costs are synthetic; real processes exhibit resource contention, waiting times, concurrency, and stochastic costs that the present framework does not represent. Integrating a stochastic or continuous-time simulation layer, similar in spirit to Doumeni's AgentSimulator (Section~\ref{sec:discussion_doumeni}), while retaining the \ac{DCR} shield, would test whether a policy learned under deterministic assumptions degrades gracefully once durations and costs vary at execution time.
+
+\paragraph{Tighter verification and robustness on larger benchmarks.} Two related gaps concern how thoroughly the Loan Application results are verified. The 26-point front is approximated from sampled episodes rather than checked against an exact reference; extending the CSP+COP methodology to its larger action space would establish whether it is close to exhaustive. Separately, the $n=4$ seed study (Section~\ref{sec:policy_generalisation}) was run only on Loan Application, not on Expense Report ($s=1$ only), and hyperparameters were shared across benchmarks rather than tuned per benchmark; closing both gaps would tighten the confidence interval around the reported fronts.
+
+\paragraph{Proper truncation handling.} Episodes that exhaust the step limit are reported to the learner as an ordinary termination rather than a truncation, foregoing the value bootstrapping the distinction would normally call for (Section~\ref{sec:limitations}). Distinguishing the two, as supported natively by Gymnasium and Stable Baselines~3, would matter most on a benchmark where acceptance is not already near 100\,\%.
+
+\paragraph{Generalisation beyond the benchmarks studied.} Chapter~\ref{chap:external_validation} already tests generalisation across six mined \ac{DCR} graphs, but all evaluation remains within the DCR-js ecosystem and synthetic or mined cost/duration assignments. Applying the framework to a real industrial event log with measured resource costs, and to declarative formalisms other than \ac{DCR}, would be the strongest test of whether the contributions of Section~\ref{sec:contributions} generalise beyond this thesis's specific modelling choices.
+
+
+% ------------------------------------------------------------
+\section{Closing Remark}
+\label{sec:closing_remark}
+
+The central finding of this thesis is that compliance and optimisation do not have to compete for the same learning signal. By enforcing \ac{DCR} constraints structurally, through a shield, rather than statistically, through penalties the agent must learn to avoid, reinforcement learning is left free to focus entirely on the cost--duration trade-off. The same architecture also makes its own limits legible: the action-space ceiling in Chapter~\ref{chap:external_validation} is not a failure of the method so much as a precise description of where its current implementation needs an additional mechanism, action masking, to keep working. That combination, a guarantee that holds unconditionally and a boundary that is known rather than assumed, is what this thesis offers as a foundation for compliance-aware process optimisation going forward.

@@ -1,0 +1,353 @@
+\chapter{Appendix A - Loan Application DCR Graph}
+\label{app:loanapp_graph}
+
+This appendix presents the process model discovered from the Loan
+Application event log introduced in Section~\ref{sec:loan_dataset},
+using Disco's Fuzzy Miner algorithm. The model captures the
+observed control-flow structure in terms of activity frequencies and
+transitions, with node size reflecting activity frequency and arc
+thickness representing transition frequency. The resulting model is
+shown in Figure~\ref{app:loanapp_disco}.
+
+Table~\ref{tab:loanapp_relations} complements this view by providing
+a full explicit enumeration of the DCR relation set used in the
+formal model presented in the main text.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Pictures/LoanApp-Disco.png}
+    \caption{Process model discovered by Disco (Fuzzy Miner) from the
+             Kirchdorfer et al.\ log. Node size encodes activity
+             frequency; arc thickness encodes transition frequency.}
+    \label{app:loanapp_disco}
+\end{figure}
+
+\begin{longtable}{p{5.5cm} p{5.5cm} p{2cm}}
+\caption{Complete relation set of the Loan Application \ac{DCR} graph:
+23 conditions, 11 responses, and 27 exclusions (61 relations in total).
+There are no include, milestone, or co-response relations.}
+\label{tab:loanapp_relations}\\
+
+\toprule
+\textbf{Source} & \textbf{Target} & \textbf{Relation} \\
+\midrule
+\endfirsthead
+
+\multicolumn{3}{c}{\tablename\ \thetable\ -- continued from previous page} \\
+\toprule
+\textbf{Source} & \textbf{Target} & \textbf{Relation} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{Continued on next page} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+\multicolumn{3}{l}{\textit{Conditions (23)}} \\
+\midrule
+Check application form completeness & Appraise property & Condition \\
+Check application form completeness & Check credit history & Condition \\
+Check application form completeness & AML check & Condition \\
+Appraise property & Assess loan risk & Condition \\
+Check credit history & Assess loan risk & Condition \\
+AML check & Assess loan risk & Condition \\
+Applicant completes form & Assess loan risk & Condition \\
+Assess loan risk & Design loan offer & Condition \\
+Check application form completeness & Design loan offer & Condition \\
+Design loan offer & Approve loan offer & Condition \\
+Appraise property & Approve loan offer & Condition \\
+Check credit history & Approve loan offer & Condition \\
+AML check & Approve loan offer & Condition \\
+Approve loan offer & Approve application & Condition \\
+Check application form completeness & Approve application & Condition \\
+Assess loan risk & Approve application & Condition \\
+Assess loan risk & Reject application & Condition \\
+Return application to applicant & Reject application & Condition \\
+Approve loan offer & Cancel application & Condition \\
+Check application form completeness & Cancel application & Condition \\
+Assess loan risk & Cancel application & Condition \\
+Check application form completeness & Return application to applicant & Condition \\
+Return application to applicant & Applicant completes form & Condition \\
+
+\addlinespace
+\multicolumn{3}{l}{\textit{Responses (11)}} \\
+\midrule
+Check application form completeness & Appraise property & Response \\
+Check application form completeness & Check credit history & Response \\
+Check application form completeness & AML check & Response \\
+Appraise property & Assess loan risk & Response \\
+Check credit history & Assess loan risk & Response \\
+AML check & Assess loan risk & Response \\
+Design loan offer & Approve loan offer & Response \\
+Return application to applicant & Applicant completes form & Response \\
+Applicant completes form & Check application form completeness & Response \\
+Applicant completes form & Assess loan risk & Response \\
+Applicant completes form & Reject application & Response \\
+
+\addlinespace
+\multicolumn{3}{l}{\textit{Exclusions (27)}} \\
+\midrule
+Appraise property & Return application to applicant & Exclusion \\
+Appraise property & Applicant completes form & Exclusion \\
+Check credit history & Return application to applicant & Exclusion \\
+Check credit history & Applicant completes form & Exclusion \\
+AML check & Return application to applicant & Exclusion \\
+AML check & Applicant completes form & Exclusion \\
+Assess loan risk & Check application form completeness & Exclusion \\
+Design loan offer & Reject application & Exclusion \\
+Design loan offer & Appraise property & Exclusion \\
+Design loan offer & Check credit history & Exclusion \\
+Design loan offer & AML check & Exclusion \\
+Approve loan offer & Assess loan risk & Exclusion \\
+Approve application & Cancel application & Exclusion \\
+Approve application & Design loan offer & Exclusion \\
+Reject application & Design loan offer & Exclusion \\
+Reject application & Approve loan offer & Exclusion \\
+Reject application & Approve application & Exclusion \\
+Reject application & Cancel application & Exclusion \\
+Reject application & Check credit history & Exclusion \\
+Reject application & Appraise property & Exclusion \\
+Reject application & AML check & Exclusion \\
+Cancel application & Approve application & Exclusion \\
+Cancel application & Design loan offer & Exclusion \\
+Return application to applicant & Design loan offer & Exclusion \\
+Return application to applicant & Approve loan offer & Exclusion \\
+Return application to applicant & Approve application & Exclusion \\
+Return application to applicant & Cancel application & Exclusion \\
+\end{longtable}
+
+
+\chapter{Appendix B - Role Extension XML Schema}
+\label{app:roleoptions_xml}
+
+Section~\ref{sec:roles} introduces the \texttt{roleOptions} extension
+to the \ac{DCR}-JS XML schema, used to attach per-role cost and
+duration multipliers to an event. Listing~\ref{lst:roleoptions_xml}
+shows the exact schema used in the Loan Application experiment
+(Table~\ref{tab:role_multipliers}).
+
+\begin{lstlisting}[language=XML, caption={\texttt{roleOptions} XML extension, Loan Application Junior/Expert profiles.}, label={lst:roleoptions_xml}]
+<roleOptions>
+  <role name="Junior"
+        costMultiplier="0.7"
+        durationMultiplier="2.0"/>
+  <role name="Expert"
+        costMultiplier="2.0"
+        durationMultiplier="0.5"/>
+</roleOptions>
+\end{lstlisting}
+
+
+\chapter{Appendix C - Step Reward Computation for the Expense Report Pareto Traces}
+\label{app:expense_step_reward}
+
+The step rewards reported in the \textbf{Step reward} column of
+Table~\ref{tab:pareto_traces} follow directly from the normalised
+reward of Equation~\ref{eq:reward_total} (Section~\ref{sec:reward_normalised}),
+computed under $\alpha=0.0$, $\beta=1.0$, with $d_{\max}=7{,}200$\,min
+(the duration of \texttt{Approve}, the longest event in this benchmark):
+
+\medskip
+\noindent
+\begin{tabular}{@{}ll@{}}
+\texttt{FillOut} (intermediate): &
+  $1 - 1.0 \times \frac{1{,}500}{7{,}200}
+  = 1 - 0.208 = +0.79$ \\[4pt]
+\texttt{Approve} (intermediate): &
+  $1 - 1.0 \times \frac{7{,}200}{7{,}200}
+  = 1 - 1.0 = \phantom{+}0.00$ \\[4pt]
+\texttt{PayOut} (accepting): &
+  $1 - 1.0 \times \frac{1{,}800}{7{,}200} + 100
+  = 0.75 + 100 = +100.75$ \\[4pt]
+\texttt{Withdraw} (accepting): &
+  $1 - 1.0 \times \frac{1{,}200}{7{,}200} + 100
+  = 0.833 + 100 = +100.83$ \\
+\end{tabular}
+
+\medskip
+\noindent
+The step rewards illustrate the normalised reward function operating
+as intended: \texttt{FillOutExpenseReport} incurs a duration penalty
+in both traces, while the accepting event delivers the terminal bonus
+regardless of the path taken. P2 reaches acceptance in two steps at a
+higher monetary cost, while P1 takes three steps at lower cost but
+longer duration --- precisely the trade-off the Pareto front captures.
+
+\section{Per-Decile Reward Convergence}
+\label{app:expense_reward_deciles}
+
+Section~\ref{sec:expense_baseline} states that the mean per-episode
+reward rises sharply during the first decile of training and then
+stays within a narrow band for the remainder, placing the final
+20\,\% evaluation window (Section~\ref{sec:training_pipeline}) well
+inside the converged regime. Table~\ref{tab:expense_reward_deciles}
+reports the underlying mean reward per training decile, for all six
+weight configurations, supporting that claim with the exact values.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Mean per-episode reward by training decile, Expense Report
+benchmark, all six weight configurations. Decile 1 is the first
+10\,\% of training; decile 10 is the last (the final two deciles
+together form the 20\,\% evaluation window used throughout
+Chapter~\ref{chap:results}).}
+\label{tab:expense_reward_deciles}
+{\renewcommand{\arraystretch}{1.4}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+\textbf{$(\alpha,\beta)$} & \textbf{D1} & \textbf{D2} & \textbf{D3} & \textbf{D4} & \textbf{D5} & \textbf{D6} & \textbf{D7} & \textbf{D8} & \textbf{D9} & \textbf{D10} \\
+\midrule
+$(0.0, 0.0)$ & 89.2 & 98.1 & 99.1 & 99.6 & 99.9 & 100.3 & 100.9 & 100.5 & 100.8 & 100.7 \\
+$(1.0, 0.0)$ & 89.0 & 98.0 & 99.0 & 99.4 & 99.8 & 100.6 & 100.2 & 100.9 & 98.4  & 97.3  \\
+$(0.0, 1.0)$ & 89.6 & 98.2 & 97.6 & 96.4 & 98.8 & 98.9  & 99.2  & 99.2  & 96.9  & 96.9  \\
+$(0.5, 0.5)$ & 89.9 & 98.3 & 99.1 & 97.4 & 99.3 & 99.4  & 99.6  & 99.4  & 98.0  & 99.4  \\
+$(2.0, 0.5)$ & 90.0 & 98.3 & 99.1 & 99.3 & 99.1 & 99.4  & 99.3  & 96.1  & 99.1  & 98.3  \\
+$(0.5, 2.0)$ & 88.4 & 97.9 & 96.8 & 94.5 & 98.6 & 98.8  & 97.4  & 96.8  & 98.7  & 98.6  \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+
+\chapter{Appendix D - Loan Application Results}
+\label{app:loanapp_results}
+
+This appendix collects three complementary results for the
+role-conditioned Loan Application experiment of
+Section~\ref{sec:results_loanapp}: additional training diagnostics,
+the complete recovered Pareto-optimal set, and the role choice along a
+representative trace under each Expert capacity budget.
+
+\section{Training Diagnostics}
+\label{app:loanapp_diagnostics}
+
+These figures are omitted from Section~\ref{sec:results_loanapp}
+because compliance and shielding behaviour are analysed in
+Chapter~\ref{chap:internal_validation}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Pictures/loanapp_reward_convergence.png}
+  \caption{Reward convergence on the role-conditioned Loan Application
+  benchmark across scalarisation weight pairs.}
+  \label{fig:app_loanapp_reward}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Pictures/loanapp_accept_rate.png}
+  \caption{Accept rate over training on the role-conditioned Loan
+  Application benchmark.}
+  \label{fig:app_loanapp_accept}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Pictures/loanapp_shielding_activity.png}
+  \caption{Shielding activity over training, measured as the percentage
+  of steps that were illegal action attempts.}
+  \label{fig:app_loanapp_shielding}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{Pictures/loanapp_clean_episodes.png}
+  \caption{Percentage of accepting episodes with zero illegal action
+  attempts on the role-conditioned Loan Application benchmark.}
+  \label{fig:app_loanapp_clean}
+\end{figure}
+
+\section{Complete Pareto-Optimal Set}
+\label{app:loanapp_pareto_points}
+
+Table~\ref{tab:app_loanapp_pareto_points} reports the complete
+Pareto-optimal set recovered by the full framework on the
+role-conditioned Loan Application benchmark.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{14pt}
+\caption{Complete 26-point Pareto-optimal set recovered on the
+role-conditioned Loan Application benchmark (unlimited capacity, seed
+$s=1$), pooled across the five non-baseline weight configurations,
+last 20\,\% of training. Underlies the summary in
+Table~\ref{tab:loanapp_pareto_summary} and
+Figure~\ref{fig:loanapp_pareto_balanced}.}
+\label{tab:app_loanapp_pareto_points}
+\begin{tabular}{rrrl}
+\toprule
+\textbf{\#} & \textbf{Cost} & \textbf{Duration} & \textbf{Configuration} \\
+\midrule
+1  & 1\,092.0 & 1\,632.0 & $\alpha=1.0,\ \beta=0.0$ \\
+2  & 1\,190.8 & 1\,549.5 & $\alpha=0.5,\ \beta=0.5$ \\
+3  & 1\,245.4 & 1\,506.0 & $\alpha=0.5,\ \beta=0.5$ \\
+4  & 1\,344.2 & 1\,423.5 & $\alpha=0.5,\ \beta=0.5$ \\
+5  & 1\,505.4 & 1\,369.5 & $\alpha=0.5,\ \beta=0.5$ \\
+6  & 1\,604.2 & 1\,287.0 & $\alpha=0.5,\ \beta=0.5$ \\
+7  & 1\,658.8 & 1\,243.5 & $\alpha=0.5,\ \beta=0.5$ \\
+8  & 1\,757.6 & 1\,161.0 & $\alpha=0.5,\ \beta=0.5$ \\
+9  & 1\,907.1 & 1\,140.0 & $\alpha=0.5,\ \beta=0.5$ \\
+10 & 1\,946.1 & 1\,119.0 & $\alpha=0.5,\ \beta=2.0$ \\
+11 & 2\,005.9 & 1\,057.5 & $\alpha=0.5,\ \beta=0.5$ \\
+12 & 2\,044.9 & 1\,036.5 & $\alpha=0.5,\ \beta=0.5$ \\
+13 & 2\,167.1 & 1\,003.5 & $\alpha=0.5,\ \beta=0.5$ \\
+14 & 2\,206.1 &   982.5  & $\alpha=0.5,\ \beta=0.5$ \\
+15 & 2\,265.9 &   921.0  & $\alpha=0.0,\ \beta=1.0$ \\
+16 & 2\,304.9 &   900.0  & $\alpha=0.5,\ \beta=0.5$ \\
+17 & 2\,320.5 &   877.5  & $\alpha=0.5,\ \beta=0.5$ \\
+18 & 2\,359.5 &   856.5  & $\alpha=0.5,\ \beta=2.0$ \\
+19 & 2\,419.3 &   795.0  & $\alpha=0.5,\ \beta=2.0$ \\
+20 & 2\,458.3 &   774.0  & $\alpha=0.0,\ \beta=1.0$ \\
+21 & 2\,607.8 &   753.0  & $\alpha=0.5,\ \beta=0.5$ \\
+22 & 2\,706.6 &   670.5  & $\alpha=0.0,\ \beta=1.0$ \\
+23 & 2\,867.8 &   616.5  & $\alpha=0.0,\ \beta=1.0$ \\
+24 & 2\,966.6 &   534.0  & $\alpha=0.0,\ \beta=1.0$ \\
+25 & 3\,021.2 &   490.5  & $\alpha=0.0,\ \beta=1.0$ \\
+26 & 3\,120.0 &   408.0  & $\alpha=0.0,\ \beta=1.0$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Role Choice Along a Single Trace, by Expert Capacity Budget}
+\label{app:loanapp_capacity_trace}
+
+Figure~\ref{fig:loanapp_capacity_allocation} (Section~\ref{sec:loanapp_capacity})
+reports the Expert-budget allocation pattern pooled over many episodes.
+Figure~\ref{fig:loanapp_capacity_trace} shows the same mechanism at the
+level of a single trace, comparing the most-balanced accepting episode
+at each budget $k$ (the point closest to the ideal cost--duration
+corner after min-max normalisation, the same criterion used for
+Table~\ref{tab:loanapp_pareto_summary}). The Expert budget is a single
+pool shared across the whole episode, depleted by one each time it is
+chosen, regardless of which event consumes it.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{Pictures/LoanApp_capacity_trace.png}
+  \caption{Role choice along the most-balanced accepting trace, by Expert capacity budget $k$.}
+  \label{fig:loanapp_capacity_trace}
+\end{figure}
+
+At $k=1$ and $k=2$ the trace spends the entire budget on the
+highest-sensitivity events identified in Section~\ref{sec:loanapp_roles}
+(Check application form completeness, then Check credit history),
+leaving the rest of the trace on Junior. At $k=\infty$, the event order
+itself changes (Appraise property and Check credit history swap
+position), showing that removing the budget constraint affects not
+only role choice but also the sequencing the policy prefers.
+
+At $k=3$, the most-balanced trace uses only 2 of the 3 available
+Expert assignments. This is not under-utilisation: across the
+recovered front, episodes using all 3 Expert assignments reach lower
+minimum duration (616 vs.\ 879) but their cost and duration ranges
+overlap substantially with those using only 2, since duration also
+depends on event order. The balanced point's distance-to-ideal
+criterion selects the configuration with the best joint trade-off, not
+the one that maximises Expert usage; the agent treats the scarce
+budget as a resource to allocate selectively rather than a quota to
+exhaust.

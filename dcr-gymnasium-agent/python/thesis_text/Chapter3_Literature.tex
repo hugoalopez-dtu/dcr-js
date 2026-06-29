@@ -1,0 +1,339 @@
+% ============================================================
+% CHAPTER 3 — Literature Review (REVISED v3)
+% ============================================================
+
+\chapter{Literature Review}
+\label{chap:literarture}
+
+This chapter surveys the work relevant to this thesis across four
+dimensions: the application of \ac{RL} to process
+optimisation~(\S\ref{sec:lit_rl_bpm}), compliance-aware
+optimisation~(\S\ref{sec:lit_compliance}), multi-objective optimisation
+in \ac{BPM}~(\S\ref{sec:lit_moopt}), and resource-aware
+optimisation~(\S\ref{sec:lit_resources}). It closes with a synthesis
+table and a precise formulation of the research
+gap~(\S\ref{sec:research_gap}).
+
+\section{Process Optimisation using RL}
+\label{sec:lit_rl_bpm}
+Reinforcement learning has entered business process management mainly as
+operational decision support: selecting the next activity to execute,
+allocating resources to tasks, or recommending interventions that steer
+a running case toward a desired outcome. This section traces that work
+from early value-based formulations to more recent deep and
+reward-driven methods. Two features recur across it. The underlying
+process model is almost always imperative or simulation-based rather
+than declarative, and compliance is treated as a statistical tendency
+the agent is expected to learn rather than a property the environment
+guarantees.
+
+\subsection{RL in Business Process Management}
+
+The earliest systematic application of \ac{RL} to \ac{BPM} is due to
+Huang et al.~\cite{Huang2011ReinforcementManagement}, who model the
+resource allocation problem as an \ac{MDP} and solve it with
+Q-learning. Their framework observes the current process state, given by
+pending work items and resource availability, and learns a policy that
+minimises total execution cost over time, outperforming heuristics such
+as round-robin and shortest-processing-time scheduling.
+
+This work establishes two principles that remain influential: framing
+process execution as a sequential decision problem amenable to \ac{RL},
+and using the process state as the \ac{MDP} state representation.
+However, it operates on an imperative process model, optimises a single
+objective, and provides no compliance guarantee beyond what the model
+implicitly enforces. These three limitations define the space that the
+present thesis addresses.
+
+\subsection{Reward-driven and Deep RL Approaches}
+
+More recent work has adopted deep \ac{RL} for resource allocation.
+Meneghello et al.~\cite{Meneghello2024OptimizingLearning} combine hybrid
+process simulation with deep \ac{RL}, handling the stochastic dynamics
+of real-world processes. Middelhuis et
+al.~\cite{Middelhuis2025LearningProcesses} develop rollout-based
+algorithms with engineered reward functions, showing that reward design
+has a first-order effect on convergence and solution quality. Both,
+however, focus on global task--resource assignment over imperative
+models, optimise a single objective, and do not enforce compliance;
+neither addresses declarative semantics or multi-objective trade-offs.
+
+\section{Compliance-aware Process Optimisation}
+\label{sec:lit_compliance}
+% ------------------------------------------------------------
+
+Compliance, the requirement that executions respect a formal
+specification, has been studied extensively in process mining, but
+predominantly as a \emph{verification} task rather than an
+\emph{optimisation} objective.
+
+\ac{SMT}-based conformance checking, developed by Felli et
+al.~\cite{Felli2023Data-awareSMT, Felli2023Multi-perspectiveApproach},
+provides the most rigorous treatment of compliance: alignments between
+observed traces and normative models are computed by automated reasoning
+over satisfiability modulo theories, with formal correctness guarantees
+for data- and time-aware models. Their limitation is scalability: the
+underlying problem is NP-hard, and execution times grow rapidly with
+process complexity, making them unsuitable for runtime decision-making
+or large-scale exploration of the solution space. SAT-based conformance
+checking~\cite{Boltenhagen2021OptimizedArtefacts} faces the same
+ceiling. Both are best understood as \emph{verification oracles} rather
+than optimisation engines.
+
+The observation motivating this thesis follows directly: \ac{SMT} and
+\ac{SAT} methods can \emph{verify} whether a trace is compliant, but
+they cannot \emph{learn} policies that generate compliant traces
+efficiently at scale, while existing \ac{RL} approaches can learn
+efficient policies but offer no formal compliance guarantee.
+
+\section{Multi-objective Process Optimisation}
+\label{sec:lit_moopt}
+Optimising a business process rarely reduces to improving a single
+quantity: cost, cycle time, resource effort, and quality typically trade
+off against one another. This section reviews how prior work discovers
+Pareto-optimal process configurations under such competing objectives,
+spanning evolutionary search, prescriptive process monitoring, exact
+constraint-based solving, and reward scalarisation. Each approach is
+examined for two things: how it represents the cost--duration trade-off,
+and whether the configurations it returns are guaranteed to remain valid
+executions of the underlying model.
+
+\subsection{Evolutionary and Simulation-based Approaches}
+
+The dominant paradigm for multi-objective optimisation in \ac{BPM} is
+the combination of agent-based simulation with evolutionary algorithms,
+specifically \ac{NSGA}~II~\cite{Deb2002ANSGA-II}. Kirchdorfer et
+al.~\cite{KirchdorferLukasFromPolicies} extend the AgentSimulator
+framework with \ac{NSGA}~II to discover Pareto-optimal resource handover
+policies, reporting average cost and waiting-time reductions of 37\,\%
+and 58\,\% over the as-is process.
+Doumeni~\cite{ArtemisDoumeniParetoAgentSimulator} develops this line
+further, using \ac{NSGA}~II to generate Pareto-optimal traces from
+agent-based simulations and evaluating front quality via hypervolume and
+Hausdorff distance.
+
+These approaches share a common architecture: a population of candidate
+policies is iteratively evaluated by running full simulations, and
+evolutionary operators drive the search. This yields diverse Pareto
+fronts but at significant computational cost, since each fitness
+evaluation requires one or more complete simulations and population
+sizes of hundreds of individuals accumulate substantial wall-clock time.
+
+\subsection{Prediction-based Prescriptive Analytics}
+\label{sec:lit_prpa}
+
+A distinct and very recent line approaches multi-objective optimisation
+through prescriptive process analytics rather than evolutionary search.
+Le et al.~\cite{Le2026BalancingAnalytics} recommend the next
+\texttt{(activity, resource)} step of a running case to balance
+conflicting KPIs, combining a linearly scalarised utility function over
+user-defined weights with a predictive model and a genetic search over
+the recommendation space. Their setting is the closest in spirit to the
+present work, as both navigate an explicit cost--quality trade-off
+through weighted scalarisation, and both observe that intermediate
+weights yield balanced improvements between the extremes. Two
+differences are central. First, their feasibility module restricts
+recommendations to \texttt{(activity, resource)} pairs that were
+\emph{empirically observed} in the log, mined as a transition system
+over abstracted prefixes; compliance is therefore approximate and
+data-dependent, in contrast to the formal, model-derived guarantee
+pursued here. The consequence is concrete: to prevent the agent from
+recommending a premature \emph{Cancel application}, which shortens time
+but voids the outcome, they must exclude that activity from the
+prescribable set by hand, whereas a declarative shield rules out the
+same action structurally. Second, their output is a per-KPI improvement
+curve over the weight, rather than a two-dimensional front of
+non-dominated solutions.
+
+\subsection{Pareto-optimal Trace Generation from Declarative Models}
+
+Diaz et al.~\cite{Diaz2024Pareto-OptimalModels} address Pareto-optimal
+trace generation directly from declarative models, framing it as a
+\ac{COP} over an Extended \ac{DCR} graph. Their Branch-and-Bound
+approach produces provably optimal solutions and serves as the exact
+baseline for EQ1 in this thesis. It shows that declarative models are a
+natural fit for multi-objective trace optimisation, but faces the same
+scalability limit as other symbolic methods: it does not scale to large
+graphs or long traces.
+
+\subsection{Scalarisation Methods}
+\label{sec:lit_scalarisation_methods}
+
+The linear scalarisation strategy used in this thesis, its convex-hull
+limitation, and the simplex-lattice construction of the weight grid are
+presented in Section~\ref{sec:lit_scalarisation}. The point relevant to
+positioning against prior work concerns normalisation. Le et
+al.~\cite{Le2026BalancingAnalytics} adopt a more elaborate scheme, mapping
+KPIs of different scales to a common range through z-normalisation, a
+sigmoid, and min-max scaling; the direct normalisation by per-graph maxima
+used in this thesis (Section~\ref{sec:reward_normalised}) is a simpler
+alternative suited to the bounded cost and duration values of the benchmarks.
+
+\section{Resource-aware Optimisation}
+\label{sec:lit_resources}
+% ------------------------------------------------------------
+
+Resource-aware optimisation encompasses approaches that explicitly model
+the cost and capability of individual resources within the optimisation
+objective. At the scheduling level, classical operations-research
+methods treat resource assignment as a variant of job-shop scheduling,
+optimising makespan or throughput under capacity constraints; these
+scale well but assume a fixed process model and a single objective.
+
+At the \ac{RL} level, resource allocation has most often been addressed
+at the \emph{global} or \emph{pool} level: a centralised policy decides,
+for each arriving work item, which available resource from a shared pool
+to assign. Huang et al.~\cite{Huang2011ReinforcementManagement} encode
+resource availability directly in the \ac{MDP} state; Middelhuis et
+al.~\cite{Middelhuis2025LearningProcesses} and Meneghello et
+al.~\cite{Meneghello2024OptimizingLearning}, discussed in
+Section~\ref{sec:lit_rl_bpm}, target the same pool-level assignment
+problem. All three operate over imperative or simulation-based process
+models, optimise a single objective such as cost or cycle time, and do
+not enforce compliance architecturally; none encodes resource profiles
+as part of a declarative process specification.
+
+Closer to the granularity adopted in this thesis, Kirchdorfer et
+al.~\cite{KirchdorferLukasFromPolicies} model individual resource agents
+with differentiated cost and duration profiles and discover
+Pareto-optimal handover policies via \ac{NSGA}~II, enabling
+\emph{event-level} resource specialisation rather than pool-level
+assignment. This is the closest prior work to contribution~C3, but it is
+evolutionary rather than learning-based, operates on a simulation model
+rather than a declarative one, and provides no compliance guarantee.
+
+The present thesis introduces role-conditioned action spaces within a
+declarative \ac{DCR} environment, where each action executes an event
+under a specific resource role with differentiated cost and duration
+multipliers encoded directly in the process specification. Under
+unlimited role availability this choice is separable across events; the
+capacity-constrained variant
+(Section~\ref{sec:loanapp_capacity}, Chapter~\ref{chap:results}) couples
+the per-event role choices into a genuine allocation problem and is shown
+to outperform standard allocation heuristics under scarcity, closing the
+separability gap left open by an unlimited role budget. No prior work
+combines event-level, resource-aware multi-objective optimisation with
+architectural compliance enforcement over declarative process models;
+this gap is formalised in Section~\ref{sec:research_gap}.
+
+% ------------------------------------------------------------
+\section{Research Gap}
+\label{sec:research_gap}
+% ------------------------------------------------------------
+
+Table~\ref{tab:lit_comparison} positions the most relevant work across
+the dimensions that matter for this thesis: declarative semantics,
+multi-objective optimisation (MO), formal compliance, resource-awareness
+(Res), use of reinforcement learning (RL), a safety or compliance
+guarantee \emph{during learning} (Safe), Pareto-front recovery (Pareto),
+and scalability to larger problems.
+
+
+The comparison shows that prior work occupies largely disjoint regions
+of this design space. Reinforcement-learning approaches over business
+processes~\cite{Huang2011ReinforcementManagement,
+Meneghello2024OptimizingLearning, Middelhuis2025LearningProcesses} are
+scalable and adaptive, but are defined over imperative models, optimise
+a single objective, and give no formal guarantee that generated traces
+satisfy process constraints.
+
+\begin{sidewaystable}[p]
+\centering
+\caption{Comparison of related work across key dimensions.
+$\checkmark$ = fully addressed, $\circ$ = partially addressed,
+$\times$ = not addressed. Scalability refers to the computational
+scalability of the method itself, not to the size of the processes
+evaluated.}
+\label{tab:lit_comparison}
+\normalsize
+\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}l c l *{8}{c}@{}}
+\toprule
+\textbf{Work} & \textbf{Year} & \textbf{Method}
+& \textbf{Declarative} & \textbf{MO}
+& \textbf{Compliance} & \textbf{Res.}
+& \textbf{RL} & \textbf{Safe}
+& \textbf{Pareto} & \textbf{Scalability}     \\
+\midrule
+Huang et al.~\cite{Huang2011ReinforcementManagement}      & 2011 & Q-learning BPM        & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\circ$ \\
+Meneghello et al.~\cite{Meneghello2024OptimizingLearning} & 2024 & Deep RL + Simulation  & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ \\
+Middelhuis et al.~\cite{Middelhuis2025LearningProcesses}  & 2025 & Rollout-based RL      & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ \\
+\addlinespace
+Le et al.~\cite{Le2026BalancingAnalytics}                 & 2026 & Multi-KPI PrPA        & $\times$ & $\checkmark$ & $\circ$ & $\checkmark$ & $\times$ & $\times$ & $\circ$ & $\checkmark$ \\
+Kirchdorfer et al.~\cite{KirchdorferLukasFromPolicies}    & 2025 & NSGA-II + Simulation  & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ & $\circ$ \\
+Doumeni~\cite{ArtemisDoumeniParetoAgentSimulator}         & 2024 & NSGA-II + AgentSim    & $\times$ & $\checkmark$ & $\times$ & $\circ$ & $\times$ & $\times$ & $\checkmark$ & $\circ$ \\
+Deb et al.~\cite{Deb2002ANSGA-II}                         & 2002 & NSGA-II               & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\circ$ \\
+\addlinespace
+Diaz et al.~\cite{Diaz2024Pareto-OptimalModels}           & 2024 & Branch \& Bound (DCR) & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\checkmark$ & $\times$ \\
+Felli et al.~\cite{Felli2023Multi-perspectiveApproach}    & 2023 & SMT Conformance       & $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+Boltenhagen et al.~\cite{Boltenhagen2021OptimizedArtefacts} & 2021 & SAT Conformance     & $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+Groefsema et al.~\cite{Groefsema2024SupportingFamilies}   & 2024 & Declarative BPM Survey& $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & $\circ$ \\
+\addlinespace
+Roijers et al.~\cite{Roijers2013ADecision-Making}         & 2013 & MOMDP Framework       & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\circ$ \\
+Vamplew et al.~\cite{Vamplew2008OnFronts}                 & 2008 & Pareto RL (tabular)   & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\circ$ \\
+Abels et al.~\cite{Abels2019DynamicLearning}              & 2019 & Deep MORL             & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ \\
+Hayes et al.~\cite{Hayes2022APlanning}                    & 2022 & MORL Survey           & $\times$ & $\checkmark$ & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ \\
+\addlinespace
+Altman~\cite{AltmanCONSTRAINEDPROCESSES}                  & 1999 & CMDP Theory           & $\times$ & $\circ$ & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & $\circ$ \\
+García \& Fernández~\cite{Garcia2015ALearning}            & 2015 & Safe RL Survey        & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ \\
+Alshiekh et al.~\cite{Alshiekh2017SafeShielding}          & 2018 & Shielded RL           & $\times$ & $\times$ & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ \\
+Achiam et al.~\cite{Achiam2017ConstrainedOptimization}    & 2017 & CPO                   & $\times$ & $\circ$ & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ \\
+\midrule
+\textbf{This thesis} & \textbf{--} & \textbf{PPO + DCR Shield + MORL} & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\circ$ \\
+\bottomrule
+\end{tabular}
+\end{sidewaystable}
+
+
+Symbolic and declarative methods, whether
+exact optimisers~\cite{Diaz2024Pareto-OptimalModels} or conformance
+checkers~\cite{Felli2023Data-awareSMT, Boltenhagen2021OptimizedArtefacts},
+provide strong compliance and optimality guarantees but rely on
+combinatorial search that scales poorly. Multi-objective methods,
+whether evolutionary~\cite{KirchdorferLukasFromPolicies,
+ArtemisDoumeniParetoAgentSimulator} or prediction-based
+PrPA~\cite{Le2026BalancingAnalytics}, approximate trade-offs effectively but either require many simulation evaluations or enforce feasibility only
+empirically, and none integrates a formal compliance guarantee into a
+learning policy. Safe and multi-objective \ac{RL}, finally, supply the
+two missing ingredients separately: shielding and constrained
+optimisation guarantee safety during
+learning~\cite{Alshiekh2017SafeShielding, Garcia2015ALearning,
+Achiam2017ConstrainedOptimization}, and \ac{MORL} learns
+Pareto-optimal trade-offs~\cite{Roijers2013ADecision-Making,
+Abels2019DynamicLearning}, but neither is applied to
+declarative process models.
+
+\medskip
+\textbf{Key insight.}
+No existing framework simultaneously (i) operates on declarative process
+models with formal semantics, (ii) guarantees compliance of every trace
+generated \emph{during} learning, (iii) supports multi-objective
+optimisation over process performance metrics, and (iv) learns policies
+rather than relying on exhaustive or evolutionary search. The result is
+a structural gap between symbolic correctness and learning-based
+scalability as Figure~\ref{fig:lit_taxonomy} shows.
+
+
+\medskip
+
+\textbf{This thesis addresses the gap by integrating Proximal Policy
+Optimisation with Dynamic Condition Response graphs through a shield
+intrinsic to the \ac{DCR} execution engine.} Every action proposed by the
+agent is checked against the current marking, so only enabled events take
+effect and every generated trace is compliant by construction, while
+\ac{PPO} learns a policy that optimises scalarised cost--duration
+objectives. This is, to our knowledge, the first compliance-by-construction
+reinforcement-learning approach to multi-objective optimisation over
+declarative process models.
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.7\textwidth]{Pictures/lit_taxonomy.png}
+\caption{Taxonomy of existing approaches to reinforcement learning for
+business process optimisation. Each cluster summarises a body of work by
+its principal strength and limitation; no existing framework occupies the
+centre, which combines declarative semantics, shielded learning, and
+multi-objective optimisation.}
+\label{fig:lit_taxonomy}
+\end{figure}

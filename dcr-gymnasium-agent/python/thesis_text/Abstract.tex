@@ -1,0 +1,40 @@
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+Declarative process models such as Dynamic Condition Response (DCR)
+graphs specify the constraints an execution must satisfy rather than a
+fixed control flow. This flexibility comes at a cost: every compliant
+trace is treated as equally valid, with no mechanism to identify which
+executions are operationally preferable in terms of cost, duration, or
+resource usage. Existing solutions are either exact but unscalable
+(constraint-based optimisers) or scalable but non-compliant (standard
+reinforcement learning, which optimises reward without regard for the
+process specification).
+
+This thesis proposes a compliance-aware, multi-objective reinforcement
+learning framework that closes this gap. A \ac{PPO} agent is trained
+inside a DCR execution engine whose shield intercepts any non-enabled
+action, leaving the marking unchanged; every trace generated during
+training is therefore valid by construction, independently of reward
+design or training budget. A normalised reward scalarises cost and
+duration under configurable weights $(\alpha,\beta)$, so that pooling
+the accepting traces of agents trained across a small weight grid
+approximates the Pareto front of compliant executions. The framework is
+further extended to a role-conditioned action space, where each event
+can be executed by one of several resource roles, and to a
+capacity-constrained variant that turns per-event role choice into a
+genuine opportunity-cost allocation problem.
+
+The framework is evaluated on two benchmark processes and externally
+validated on independently mined DCR graphs never used during
+development. It recovers the exact Pareto front on the smaller Expense
+Report benchmark, and a well-populated, seed-stable 26-point front on
+the larger Loan Application benchmark, where the role-conditioned
+extension also learns event-level resource specialisation consistent
+with the underlying cost--duration economics. External validation
+replicates both findings on graphs of independent provenance, but also
+exposes a genuine scalability ceiling: beyond roughly 42 activities
+the unmasked learning agent's accept rate collapses, while the
+shield alone, without learning, keeps producing valid executions well
+past that point. These results show that compliance-by-construction
+and multi-objective optimisation are not competing requirements, within
+the scale at which the learning component remains effective.

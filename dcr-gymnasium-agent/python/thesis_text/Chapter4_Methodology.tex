@@ -1,0 +1,580 @@
+% ============================================================
+% CHAPTER 4 — System Design and Methodology (REVISED v2)
+% ============================================================
+
+\chapter{System Design and Methodology}
+\label{chap:method}
+
+
+As discussed in Chapter~\ref{chap:literarture}, existing \ac{RL}
+approaches to process optimisation typically operate over imperative
+models or unconstrained action spaces, so invalid traces can be
+generated during training~\cite{Huang2011ReinforcementManagement,
+Kubrak2021PrescriptiveVadis}, and few works combine declarative
+semantics, multi-objective optimisation, and resource-aware decisions
+in one framework~\cite{Diaz2024Pareto-OptimalModels,
+KirchdorferLukasFromPolicies, Odriozola-Olalde2025TowardsFramework}.
+
+
+This chapter presents the proposed framework in four parts.
+Section~\ref{sec:compliance} integrates \ac{DCR} semantics into a
+\ac{RL} environment with a shield, intrinsic to the execution engine,
+that guarantees compliance-by-construction during
+training~\cite{Alshiekh2017SafeShielding} (contribution~C1).
+Section~\ref{sec:reward} introduces a normalised
+multi-objective reward that scalarises cost and duration under
+user-defined weights~\cite{Roijers2013ADecision-Making}, and
+Section~\ref{sec:mooptimisation} explains how this approximates the
+Pareto front (contribution~C2). Section~\ref{sec:roles} extends the
+environment to joint \textit{(event, role)} decisions
+(contribution~C3). Section~\ref{sec:ppo} describes the \ac{PPO}
+training setup.
+
+% ============================================================
+\section{System Architecture}
+\label{sec:architecture}
+
+The framework connects a declarative \ac{DCR} model with a \ac{PPO}
+agent in a closed training loop (Figure~\ref{fig:architecture}). The
+design separates \emph{process logic}, which actions are valid and
+when, from \emph{learning logic}, which actions are preferable and
+why. In Figure~\ref{fig:architecture}, process logic is the
+responsibility of the \ac{DCR} execution engine; learning logic is the
+responsibility of the \ac{PPO} agent and the reward function; the
+environment in between only translates one representation into the
+other and makes neither kind of decision itself. Only the \ac{DCR}
+execution engine can modify the process state, and the shield that
+protects that state is part of the engine itself.
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{Pictures/thesis_architecture.png}
+\caption{Overall system architecture. The \ac{PPO} agent (left)
+communicates with the \ac{DCR} execution engine (right) through the
+Node Adapter \ac{RL} environment (centre). The shield is part of the
+engine: any proposed action whose event is not enabled is intercepted
+before execution, so no invalid transition can modify the process
+state. Dashed arrows indicate logging and outputs; solid arrows
+indicate data flow within one environment step.}
+\label{fig:architecture}
+\end{figure}
+
+\textbf{Input.} A \ac{DCR} graph in XML, with activities, relations,
+cost and duration annotations, and optional role profiles, plus an
+experiment configuration with the weights $(\alpha, \beta)$, \ac{PPO}
+hyperparameters, and role multipliers.
+
+\textbf{\ac{PPO} agent.}
+At each step the agent observes the encoded \ac{DCR} marking and
+selects an action from the full discrete action space; no mask
+restricts this choice, so the agent may propose actions that are not
+currently enabled. The algorithm, network architecture, and
+hyperparameters are detailed in Section~\ref{sec:ppo}.
+
+
+\textbf{\ac{DCR} \ac{RL} environment.}
+The translation layer between the Python agent and the TypeScript
+engine. Its \emph{Action Decoder} maps the selected index to an
+\texttt{(event, role)} pair; its \emph{State Encoder} converts the
+updated marking into the observation vector. The environment also
+logs the engine's enabled-set as diagnostic information, but never
+uses it to restrict the agent (a deliberate decision, see
+Section~\ref{sec:shielding}).
+
+\textbf{\ac{DCR} execution engine.}
+Implements the formal \ac{DCR}
+semantics~\cite{Diaz2024Pareto-OptimalModels}: it tracks the marking,
+computes the enabled events, updates the state after execution, and
+detects acceptance. The shield is an inherent property of this
+engine. If the proposed event is not enabled, the engine returns
+$r = -10$ and leaves the marking unchanged
+(Section~\ref{sec:shielding}).
+
+\textbf{Output.} Each run produces the trained policy for its
+$(\alpha, \beta)$ configuration, the execution traces generated under
+that policy with their cost and duration, and training statistics
+(reward, illegal-action ratio, acceptance rate, role selections) used
+to build the Pareto front of Chapter~\ref{chap:results}.
+
+% ============================================================
+\section{Compliance-by-Construction via DCR Shielding}
+\label{sec:compliance}
+
+This section formalises contribution~C1. Standard \ac{RL} agents
+explore freely and may find reward-maximising behaviour that violates
+process constraints. Penalty-based and Lagrangian
+approaches~\cite{AltmanCONSTRAINEDPROCESSES, Achiam2017ConstrainedOptimization,
+Huang2011ReinforcementManagement} tolerate these violations during
+training and only discourage them statistically. Here, instead,
+violations are structurally impossible from the first
+episode~\cite{Alshiekh2017SafeShielding}: the engine intercepts any non-enabled
+action before the marking can change, so every trace generated during
+training consists only of valid \ac{DCR} transitions, regardless of
+reward design or training budget.
+
+\subsection{State Representation}
+\label{sec:state}
+
+The agent observes the marking
+$M = (\mathit{In}, \mathit{Ex}, \mathit{Pe})$ as a binary vector.
+Each event $e \in \mathcal{E}$ contributes three
+features~\cite{Diaz2024Pareto-OptimalModels, Trinh2024OnOfConstraints}:
+
+\begin{equation}
+\mathbf{o}_e =
+\bigl[\mathbf{1}[e \in \mathit{In}],\;
+      \mathbf{1}[e \in \mathit{Ex}],\;
+      \mathbf{1}[e \in \mathit{Pe}]\bigr]
+\in \{0,1\}^3
+\end{equation}
+
+and the observation is their concatenation,
+$\mathbf{o} \in \{0,1\}^{3|\mathcal{E}|}$. The dimensions per
+benchmark are given in Chapter~\ref{chap:experimental_setup}.
+
+\subsection{Action Space}
+\label{sec:action_space}
+
+The base action space has one action per event. The role-conditioned
+extension (Section~\ref{sec:roles}) expands it to one action per
+\texttt{(event, role)} pair, giving
+$|\mathcal{A}| = |\mathcal{E}| \times |\mathcal{R}|$. The agent
+samples from this full space at every step, including non-enabled
+events; whether the action is executed is decided by the shield.
+
+\subsection{Enabled Events and Accepting States}
+\label{sec:dcr_semantics}
+
+Following Definition~\ref{def:dcr_transitions}, an event is
+\emph{enabled} if it is included, all its conditions have been
+executed, and no blocking milestones remain pending. A marking is
+\emph{accepting} when no event is both included and pending:
+
+\begin{equation}
+\mathit{In} \cap \mathit{Pe} = \emptyset
+\label{eq:accepting}
+\end{equation}
+
+Accepting states correspond to valid process completions.
+
+\subsection{Shielding Mechanism}
+\label{sec:shielding}
+
+Figure~\ref{fig:shielding} shows the mechanism. At every step, the
+engine checks the proposed action against the enabled set
+\emph{before} executing it. If the action is enabled, it is executed
+and the marking advances. If not, the action is intercepted, the
+marking stays exactly as it was, and the agent receives $r = -10$
+with the episode continuing.
+
+In the placement taxonomy of Alshiekh et
+al.~\cite{Alshiekh2017SafeShielding}, the proposed action is examined only
+after the agent has selected it, which makes this a \emph{post-posed} shield
+rather than a \emph{preemptive} one; a preemptive shield would instead restrict
+the action set offered to the agent in advance. It departs from the standard
+post-posed formulation in one respect: a non-enabled action is rejected
+outright and the marking is left unchanged, rather than being overwritten by a
+safe substitute.
+
+Two designs could enforce this guarantee: masking the action space so
+the agent can only choose enabled actions, or letting the agent
+choose freely and intercepting invalid choices. The framework
+deliberately uses interception. The guarantee is the same, no invalid
+transition ever reaches the marking, but the agent's illegal attempts
+remain observable: each blocked attempt gives a learning signal
+through the penalty, and the illegal-attempt rate over training
+measures how well the agent has learned the legal structure of the
+process. Chapter~\ref{chap:internal_validation} uses exactly this
+property.
+
+Table~\ref{tab:shield-trace} shows the mechanism on real data: the
+first training episode of the Loan Application experiment, when the
+agent still acts randomly, a worst case for the shield. The 20
+intercepted attempts never change $|\mathit{Pending}|$; the 9 legal
+transitions advance the marking until acceptance at step 29.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{First training episode of the Loan Application roles experiment
+($\alpha{=}0$, $\beta{=}0$, seed $s{=}1$): 9 legal transitions, 20
+intercepted attempts, acceptance at step 29. Intercepted attempts leave
+$|\mathit{Pending}|$ unchanged; the full 29-step trace is given in
+Appendix~\ref{app:shield_trace}.}
+\label{tab:shield-trace}
+{\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{r l p{4.3cm} c r}
+\toprule
+\textbf{Step} & \textbf{Type} & \textbf{Activity} &
+\textbf{$|\mathit{Pending}|$} & \textbf{Reward} \\
+\midrule
+1  & \textcolor{BrickRed}{\textsf{illegal\;\ding{55}}} & Cancel application & $0 \!\to\! 0$ & $-10$  \\
+2  & legal\;\ding{51} & Check application form completeness & $0 \!\to\! 3$ & $-0.5$ \\
+3  & \textcolor{BrickRed}{\textsf{illegal\;\ding{55}}} & Cancel application & $3 \!\to\! 3$ & $-10$  \\
+4  & legal\;\ding{51} & Appraise property & $3 \!\to\! 3$ & $-0.5$ \\
+5  & \textcolor{BrickRed}{\textsf{illegal\;\ding{55}}} & Design loan offer & $3 \!\to\! 3$ & $-10$  \\
+6  & legal\;\ding{51} & Check credit history & $3 \!\to\! 2$ & $+1.5$ \\
+7  & \textcolor{BrickRed}{\textsf{illegal\;\ding{55}}} & Approve loan offer & $2 \!\to\! 2$ & $-10$  \\
+8  & legal\;\ding{51} & Appraise property (repeated) & $2 \!\to\! 2$ & $-1.5$ \\
+9  & \textcolor{BrickRed}{\textsf{illegal\;\ding{55}}} & Approve application & $2 \!\to\! 2$ & $-10$  \\
+10 & legal\;\ding{51} & AML check & $2 \!\to\! 1$ & $+1.5$ \\
+11 & legal\;\ding{51} & Appraise property (repeated) & $1 \!\to\! 1$ & $-1.5$ \\
+\multicolumn{5}{c}{\footnotesize\textit{$\cdots$\;steps 12--28: 15 further intercepted attempts and 2 legal repetitions, $|\mathit{Pending}|=1$ throughout\;$\cdots$}} \\
+29 & \textbf{accept\;\ding{51}} & Assess loan risk & $1 \!\to\! 0$ & $+100$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+The $-10$ penalty plays no role in the compliance guarantee, which
+comes from the environment design, not from the penalty
+size~\cite{Odriozola-Olalde2025TowardsFramework}; it only speeds up
+learning. The guarantee should also be stated precisely. What the
+shield makes logically necessary is the \emph{validity} of every
+trace: no trace can contain an invalid transition. Reaching an
+accepting state is not guaranteed; an episode may run out of steps
+and end as non-accepting (Section~\ref{sec:training_pipeline}). The
+acceptance rates in Chapter~\ref{chap:results} are therefore learned,
+empirical results, while the validity of every trace is structural.
+
+% ============================================================
+\section{Reward Design}
+\label{sec:reward}
+
+This section formalises the first part of contribution~C2.
+Compliance is already guaranteed by construction, so the reward's job
+is to distinguish between valid traces: a purely structural reward
+would leave the agent indifferent to cost and duration, converging to
+compliant but suboptimal executions.
+Table~\ref{tab:reward_components} lists every component of the
+per-step signal.
+
+\begin{table}[H]
+\centering
+\caption{Reward components. Structural components and the
+cost--duration penalties apply to legal, non-terminal actions; the
+illegal penalty and the terminal bonus each replace the whole step
+reward when triggered.}
+\label{tab:reward_components}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{14pt}
+\begin{tabular}{l l p{4.6cm}}
+\toprule
+\textbf{Component} & \textbf{Value} & \textbf{Trigger} \\
+\midrule
+Illegal action penalty & $-10$ &
+  Proposed event not enabled; shield intercepts \\
+Terminal bonus & $+100$ &
+  Accepting state reached \\
+Base step reward & $+1$ &
+  Every legal, non-terminal action \\
+Step penalty & $-1.5$ &
+  Every legal, non-terminal action; discourages long episodes \\
+Progress bonus & $+2$ per event &
+  Each pending event resolved for the first time in the episode \\
+Repetition penalty & $-1$ &
+  Event already executed earlier in the episode (any role) \\
+Cost penalty & $-\alpha \cdot c_{e,\rho} / c_{\max}$ &
+  Each legal action; role-adjusted cost \\
+Duration penalty & $-\beta \cdot d_{e,\rho} / d_{\max}$ &
+  Each legal action; role-adjusted duration \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+
+The complete per-step reward is:
+
+\begin{equation}
+r_t =
+\begin{cases}
+-10 & \text{if } a \notin \mathit{enabled}(M) \\[4pt]
++100 & \text{if the resulting marking is accepting} \\[4pt]
+1 - 1.5
++ 2\,n_{\text{res}}
+- \mathbf{1}[\text{repeat}]
+- \alpha\dfrac{c_{e,\rho}}{c_{\max}}
+- \beta\dfrac{d_{e,\rho}}{d_{\max}}
+& \text{otherwise}
+\end{cases}
+\label{eq:reward_total}
+\end{equation}
+
+where $n_{\text{res}}$ is the number of pending events resolved for
+the first time in this step and $\mathbf{1}[\text{repeat}]$ is 1 if
+the event was already executed in the episode. The step penalty is
+configurable and was $-1.5$ in all experiments.
+
+The auxiliary shaping terms, a per-step penalty discouraging long
+episodes, a progress bonus, and a repetition penalty---follow standard
+reward-design practice for episodic \ac{RL}~\cite{Sutton2018ReinforcementIntroduction,
+Mataric1994RewardLearning}, where Mataric's progress estimators are a
+direct precedent for rewarding incremental advancement. The
+potential-based analysis of Ng et al.~\cite{NgPolicyShaping}
+shows when such terms preserve the optimal policy; our progress and
+repetition terms are history-dependent and therefore not
+potential-based, of the form $\gamma\Phi(s')-\Phi(s)$, so they carry
+no such guarantee, they are deliberate biases, most visibly the
+brevity bias of Section~\ref{sec:discussion_reward}. The magnitudes
+were fixed empirically during development, not derived, and not
+tuned by systematic search.
+
+
+\textbf{Structural components.}
+The terminal bonus of $+100$ is the main objective signal and is
+large enough to dominate all other components, so completing the
+process is always the preferred outcome. The base reward $+1$ keeps
+the signal dense from the start of training, while the step penalty
+$-1.5$ makes each extra step costly. Two small shaping terms refine
+this: the progress bonus rewards resolving pending events, but only
+the first time each event is resolved within an episode, which
+prevents the agent from farming the bonus through cycles that resolve
+and re-trigger the same obligation; the repetition penalty
+discourages re-executing events, counted per event regardless of
+role. Both are deliberate, lightweight reward shaping, small relative
+to the terminal bonus, so they speed up convergence without changing
+which traces are optimal. The $-10$ penalty, as noted above, is only
+a learning signal.
+
+\textbf{Normalised cost--duration penalty.}
+\label{sec:reward_normalised}
+Subtracting raw cost and duration values would create scale problems:
+large durations could dominate the signal. Both terms are therefore
+divided by the maximum base values in the graph, $c_{\max}$ and
+$d_{\max}$, computed at load time, so all components stay on a
+comparable scale. When roles are active, the multipliers of
+Section~\ref{sec:roles} are applied to the base values \emph{before}
+normalisation, so the normalised terms range over
+$[0, \mu^\rho_{\max}]$ rather than $[0,1]$.
+
+The three reward levels visible among the legal steps of
+Table~\ref{tab:shield-trace} (where $\alpha = \beta = 0$) follow
+directly from Equation~\ref{eq:reward_total}: no progress gives
+$1 - 1.5 = -0.5$ (steps 2, 4), resolving one pending event gives
+$1 - 1.5 + 2 = +1.5$ (steps 6, 10), and a repetition gives
+$1 - 1.5 - 1 = -1.5$ (steps 8, 11).
+
+% ============================================================
+\section{Multi-objective Optimisation Strategy}
+\label{sec:mooptimisation}
+
+This section formalises the second part of contribution~C2: how the
+reward of Section~\ref{sec:reward} is used to approximate the Pareto
+front of compliant executions via linear scalarisation.
+
+\paragraph{Scalarisation and the role of $(\alpha, \beta)$.}
+\label{sec:scalarisation}
+Although DCR execution is not a general stochastic MDP, each episode is a finite deterministic decision problem in which the next marking depends only on the current marking and the executed action, so the Markov property holds. Concretely, the MDP of Definition~\ref{def:mdp} is instantiated directly on top of the DCR labelled transition system of Definition~\ref{def:dcr_transitions}: states are markings, actions are events, and the transition function $P$ is the (deterministic) transition relation of the LTS itself, with $P(s'\mid s,a)=1$ for the unique $s'$ it produces. The LTS therefore supplies the dynamics; the reward function of Section~\ref{sec:reward} is the only addition needed to
+frame the problem as an MDP.
+
+The framework therefore falls within the multi-objective MDPs of Roijers et
+al.~\cite{Roijers2013ADecision-Making}, and the scalarisation theory of Section~\ref{sec:lit_scalarisation} applies directly: training independent agents under different $(\alpha, \beta)$ weights and pooling their accepting traces approximates the Pareto front, with the known limitation that only solutions on the convex hull are
+recoverable~\cite{Vamplew2008OnFronts}. For the benchmarks evaluated
+here this does not affect the results: as Chapter~\ref{chap:results}
+shows, the scalarisation recovers all known Pareto-optimal solutions,
+consistent with a locally convex front.
+
+The weight configurations follow the principle of axis-aligned
+extremes, a symmetric centre, and asymmetric
+probes~\cite{DasDr.Das-NBIPaper-1998}:
+
+\begin{itemize}
+  \item $(1,0)$ and $(0,1)$: extremes that isolate each objective and
+        anchor the endpoints of the front;
+  \item $(0.5,\ 0.5)$: the balanced configuration;
+  \item $(2,\ 0.5)$ and $(0.5,\ 2)$: asymmetric probes of
+        intermediate regions;
+  \item $(0,\ 0)$: a baseline with no cost or duration incentive,
+        used for convergence analysis and excluded from the Pareto
+        front.
+\end{itemize}
+
+The values $(2, 0.5)$ are used instead of normalised equivalents like
+$(0.8, 0.2)$ because, with both objectives already normalised, only
+the ratio of $\alpha$ to $\beta$ matters; integer-like values are
+simply easier to read. The mapping from weights to front points is
+many-to-one over a discrete trace space, examined empirically in
+Chapter~\ref{chap:internal_validation}.
+
+
+% ============================================================
+\section{PPO Training Setup}
+\label{sec:ppo}
+
+This section describes the concrete training setup that instantiates
+the framework of Sections~\ref{sec:compliance}--\ref{sec:roles}: the
+learning algorithm, its hyperparameters, and the training pipeline
+shared by every experiment in this thesis.
+
+\subsection{Algorithm}
+\label{sec:ppo_algorithm}
+
+
+The agent is trained with the standard \texttt{PPO} class of Stable
+Baselines~3 (multilayer perceptron
+policy)~\cite{Raffin2021Stable-Baselines3:Implementations}. \ac{PPO} fits this framework for
+three reasons. First, the action space is discrete and small, between
+5 and 24 actions depending on the benchmark, a regime where on-policy
+policy-gradient methods work reliably. Second, on-policy learning
+pairs naturally with the shield: every state visited in a rollout is
+a valid \ac{DCR} marking, so the agent learns only over the legal
+state space of the process. Third, Stable Baselines~3 integrates
+cleanly with the Gymnasium environment~\cite{Towers2025Gymnasium:Environments}, avoiding a
+custom training loop. The dense structural reward of
+Section~\ref{sec:reward} reduces the credit assignment problem of a
+purely terminal formulation, making training feasible within a moderate budget and without curriculum learning.
+The policy network follows the Stable Baselines~3 \texttt{MlpPolicy}
+default: two separate networks for the actor and the critic, each
+with two hidden layers of 64 units and $\tanh$ activations, of
+identical shape but with independent weights ($\mathtt{net\_arch} = \{\texttt{pi}: [64,64], \texttt{vf}: [64,64]\}$).
+
+
+
+\subsection{Hyperparameters}
+\label{sec:training_config}
+
+Table~\ref{tab:hyperparams} lists the hyperparameters, shared by all
+experiments. They follow the Stable Baselines~3 defaults, which
+mirror Schulman et al.~\cite{Schulman2017ProximalAlgorithms}, except
+the entropy coefficient, raised to $0.1$ to sustain exploration. No
+hyperparameter search was performed; this is a threat to internal
+validity discussed in Section~\ref{sec:limitations}.
+
+\begin{table}[H]
+\centering
+\caption{\ac{PPO} hyperparameters, shared by all experiments.}
+\label{tab:hyperparams}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{14pt}
+\begin{tabular}{ll}
+\toprule
+\textbf{Hyperparameter} & \textbf{Value} \\
+\midrule
+Algorithm               & PPO (Stable Baselines 3, MlpPolicy) \\
+Learning rate           & $3 \times 10^{-4}$ \\
+Discount factor $\gamma$ & $0.99$ \\
+Steps per update        & $2{,}048$ \\
+Batch size              & $64$ \\
+Epochs per update       & $10$ \\
+Clip range              & $0.2$ \\
+Entropy coefficient     & $0.1$ \\
+Policy network          & MLP, 2 $\times$ 64 units, $\tanh$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+
+\subsection{Training Pipeline}
+\label{sec:training_pipeline}
+
+One independent agent is trained per scalarisation configuration.
+This keeps each policy purely optimised for its trade-off, with no
+interference from conflicting gradients. Episodes end on acceptance
+or when the step limit (\texttt{MAX\_EPISODE\_STEPS}) is reached; a truncated episode counts as non-accepting and receives no special reward. Truncation is reported to the learner as ordinary
+termination, a simplification noted in Section~\ref{sec:limitations}.
+Per-step logs record reward components, role selections, cost,
+duration, and compliance metrics.
+
+A brief terminological note: the \emph{policy} is the fixed set of
+network weights produced by training, a function from marking to
+action; a \emph{trace} is the sequence of executed events produced by
+applying that policy repeatedly within one episode. The same policy
+can produce different traces depending on the initial marking and
+which actions the shield intercepts along the way. A concrete
+worked example of this function evaluated on a real marking is given in Section~\ref{sec:discussion_csp_comparison}.
+
+
+The Pareto front is extracted from the accepting traces of the final
+20\,\% of each run, the converged phase as verified directly against
+the per-decile reward statistics of Section~\ref{sec:expense_baseline}
+(Appendix~\ref{app:expense_reward_deciles}); truncated episodes are excluded from the Pareto and acceptance statistics. Training budgets per
+benchmark are given in Chapter~\ref{chap:experimental_setup}.
+
+% ============================================================
+\section{Role-conditioned Extension of \ac{EDCR}}
+\label{sec:roles}
+
+This section formalises contribution~C3. Real processes often allow
+the same activity to be performed by different resources, a junior
+employee or an expert, each with its own cost--duration profile, so
+choosing the right resource is part of the optimisation problem. The
+environment is therefore extended to joint \texttt{(event, role)}
+decisions, a novel extension of \ac{EDCR} graphs in which role
+profiles are encoded directly in the process specification while
+remaining compatible with existing \ac{EDCR} graphs.
+
+Each role $\rho$ defines a cost multiplier $\mu^\rho_c$ and a
+duration multiplier $\mu^\rho_d$:
+
+\begin{equation}
+c_{e,\rho} = c_e \cdot \mu^\rho_c, \qquad
+d_{e,\rho} = d_e \cdot \mu^\rho_d
+\end{equation}
+
+where $c_e$ and $d_e$ are the base values in the graph. As noted in
+Section~\ref{sec:reward}, these role-adjusted values enter the reward
+before normalisation, so role choice directly scales the per-step
+penalty. The observation space is unchanged, the agent sees only the
+marking, so role specialisation must be learned from the reward
+alone. Table~\ref{tab:role_multipliers} lists the profiles used in
+the Loan Application experiment.
+
+\begin{table}[H]
+\centering
+\caption{Role profiles used in the Loan Application experiment. Both
+multipliers are dimensionless ratios applied to the base cost/duration
+of Table~\ref{tab:loan_costs}.}
+\label{tab:role_multipliers}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{14pt}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Role} & \shortstack{\textbf{Cost mult.} \\ (dimensionless)} &
+\shortstack{\textbf{Duration mult.} \\ (dimensionless)} & \textbf{Description} \\
+\midrule
+Junior & $\times 0.7$ & $\times 2.0$ &
+    Lower cost, slower execution \\
+Expert & $\times 2.0$ & $\times 0.5$ &
+    Higher cost, faster execution \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+
+The Junior/Expert structure follows the LoanJS variant of Kirchdorfer
+et al.~\cite{KirchdorferLukasFromPolicies}: juniors are cheaper but
+slower, seniors faster but more expensive. The multipliers are not
+empirically calibrated; they are chosen to create a clear reward
+difference between role assignments, enough to test whether the agent
+learns meaningful specialisation. Role information is encoded in the
+XML definition through the \texttt{roleOptions} extension, which
+assigns a cost and duration multiplier to each named role
+(Appendix~\ref{app:roleoptions_xml} lists the exact schema). Graphs
+without \texttt{roleOptions} fall back to the flat
+cost--duration model, preserving compatibility with existing
+\ac{EDCR} graphs.
+
+
+\paragraph{Capacity-constrained allocation.}
+With both roles always available, the weight-optimal role of each event
+is independent of the others, so role selection scales cost and duration
+but does not by itself constitute resource allocation. Contribution~C3
+therefore also covers a capacity-constrained variant, in which a
+per-case budget on the \emph{Expert} role, enforced by the same shield,
+couples the per-event choices into an opportunity-cost allocation
+problem. This variant is defined and evaluated in
+Section~\ref{sec:loan_dataset} and Chapter~\ref{chap:results}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{Pictures/thesis_shielding.drawio.png}
+\caption{Shielded action execution. When the selected action is
+enabled (green path), the engine executes it, updates the marking,
+and returns the step reward $r_{\text{step}}$ of
+Section~\ref{sec:reward}. When it is not (red path), the shield
+intercepts it, the marking is unchanged, and $r = -10$ is returned
+with \texttt{done = false}.}
+\label{fig:shielding}
+\end{figure}

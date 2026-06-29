@@ -1,6 +1,5 @@
 gymnasium==1.1.1
 stable-baselines3==2.7.1
-sb3-contrib==2.7.1
 tensorboard==2.20.0
 torch==2.8.0
 requests==2.32.5

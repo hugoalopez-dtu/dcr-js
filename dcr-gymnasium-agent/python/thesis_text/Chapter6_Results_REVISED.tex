@@ -1,23 +1,5 @@
 % ============================================================
 % CHAPTER 6 — Results (REVISED)
-% Cambios respecto a la versión original, marcados con %% CAMBIO:
-%   1. Quitado el comentario de cabecera "EXTERNAL VALIDATION" sobre
-%      la sección de LoanApp (era solo una nota interna, pero
-%      orientaba mal incluso como comentario).
-%   2. Reescrito el párrafo de apertura de la sección LoanApp: ya no
-%      dice "the purpose here is external" -- ahora se describe como
-%      extensión de escala/riqueza sobre el mismo benchmark interno.
-%   3. Añadida una frase de cross-reference en 6.2.1 (Pareto Front
-%      Recovery) apuntando a la estabilidad entre seeds y al ablation
-%      del Capítulo 7, en vez de dejar el número de 26 puntos como si
-%      fuera la única vez que se reporta.
-%   4. Reescrito el párrafo "External-validation role of this
-%      experiment" (dentro de Capacity-constrained Role Allocation):
-%      ya no reclama validación externa -- se describe como réplica
-%      del diseño de evaluación de Kirchdorfer et al.
-%   5. Mismo ajuste en el párrafo de cierre de Q3.
-% Nada de contenido se ha eliminado; solo se ha reencuadrado el
-% framing donde decía "external" sin serlo.
 % ============================================================
 
 \chapter{Results}
@@ -30,11 +12,9 @@ defined in Section~\ref{sec:experimental_objectives}.
 Section~\ref{sec:expense_results} reports on the Expense Report benchmark,
 covering Pareto recovery correctness and compliance behaviour
 (\textbf{EQ1} and \textbf{EQ2}).
-Section~\ref{sec:loanapp_results} reports on the role-conditioned Loan
+Section~\ref{sec:results_loanapp} reports on the role-conditioned Loan
 Application benchmark, evaluating scalability and comparative positioning
 against prior work (\textbf{EQ3} and \textbf{EQ4}).
-Section~\ref{sec:results_summary} summarises the main findings across
-both experiments.
 
 % ============================================================
 \section{Exact Pareto Recovery: Expense Report}
@@ -62,6 +42,8 @@ Following Diaz et al. \cite{Diaz2024Pareto-OptimalModels}, cost values are expre
 \caption{Exact Pareto front obtained with
          CSP+COP~\cite{Diaz2024Pareto-OptimalModels}.}
 \label{tab:expense_pareto_csp}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{8pt}
 \begin{tabular}{lrrl}
 \toprule
 \textbf{Point} & \textbf{Cost (€)} & \textbf{Duration (min)} & \textbf{Trace} \\
@@ -69,24 +51,36 @@ Following Diaz et al. \cite{Diaz2024Pareto-OptimalModels}, cost values are expre
 P1 & 50  & 10{,}500 & FillOut $\rightarrow$ Approve $\rightarrow$ PayOut \\
 P2 & 710 & 2{,}700  & FillOut $\rightarrow$ Withdraw \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 A PPO agent was trained using a normalised reward formulation
 (Section~\ref{sec:reward_normalised}).
 Under this formulation the agent recovers both Pareto-optimal points, matching the exact solver output.
 
-Reward normalisation is essential for stable learning in this setting. Without it, the raw penalty for a single high-cost action dominates the episodic signal, a five-step trace at maximum cost and duration yields a cumulative reward on the order of $-1{,}500$, while the structural completion bonus is at most $+100$. Under such magnitudes the cost/duration gradient overwhelms the signal that guides the agent toward accepting states. Normalising each objective to $[0,1]$ before scalarisation ensures that structural and economic reward components remain commensurable throughout training.
+Reward normalisation (Section~\ref{sec:reward_normalised}) is essential
+for stable learning in this setting: without it, a single high-cost
+action's raw penalty can dominate the episodic signal and overwhelm
+the gradient that guides the agent toward accepting states.
 
 The reward convergence curve under the normalised formulation is shown in Figure~\ref{fig:reward_convergence}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{Pictures/Expense_Report_reward_convergence.png}
+    \includegraphics[width=0.8\linewidth]{Pictures/Expense_Report_reward_convergence.png}
     \caption{Reward convergence across weight configurations after
              reward normalisation.}
     \label{fig:reward_convergence}
 \end{figure}
+
+Across all six configurations, the mean per-episode reward rises
+sharply during the first decile of training (from approximately $89$
+to $98$) and then stays within a narrow band ($96$--$101$) for the
+remaining $90\,\%$ of training (per-decile means in
+Appendix~\ref{app:expense_reward_deciles}). The final $20\,\%$ window
+used throughout this thesis for Pareto and compliance statistics
+(Section~\ref{sec:training_pipeline}) therefore lies well inside this
+converged regime, with substantial margin.
 
 % ------------------------------------------------------------
 \subsection{Compliance and Illegal-Action Ratio}
@@ -96,20 +90,27 @@ The shielding mechanism operates at the environment level: any action not enable
 penalty. This guarantee holds throughout training, the process never enters an invalid state regardless of agent behaviour.
 The illegal-action ratio therefore measures how frequently the agent \emph{attempted} blocked actions, and reflects learning dynamics rather than any compliance violation.
 
-Across the full training run, between 4.4\% and 8.7\% of all steps are illegal action attempts, a ratio that reflects early exploration of the 24-action space rather than systematic non-compliance. By the final 20\% of training this figure drops to below 10\% in all weight configurations, and below 1\% in four of the six (Table~\ref{tab:illegal_actions}).
+Across the full training run, between 4.4\% and 8.7\% of all steps
+are illegal action attempts, a ratio that reflects early exploration
+of the action space rather than systematic non-compliance. A
+complementary, episode-level view of the converged phase tells the
+same story: with the normalised reward, fewer than 15\,\% of episodes
+in the final 20\,\% of training contain even a single illegal
+attempt (Table~\ref{tab:illegal_actions}), and the acceptance rate
+reaches 100\,\% in all cases.
 
-
-With the normalised reward, this ratio remains below 15\% in the final 20\% of training across all six weight configurations, and the acceptance rate reaches 100\% in all cases (Table~\ref{tab:illegal_actions}).
 
 \begin{table}[H]
 \centering
-\caption{Illegal-action ratio in the final 20\% of training,
-         normalised reward.}
+\caption{Distribution of episodes by number of illegal-action attempts within them, final 20\,\% of training, normalised
+         reward. Each row is one weight pair;}
 \label{tab:illegal_actions}
-\begin{tabular}{lccc}
+{\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lrrr}
 \toprule
-\textbf{Weight pair} & \textbf{0 illegal (\%)} & \textbf{1 illegal (\%)}
-& \textbf{2+ illegal (\%)} \\
+\textbf{Weight pair} & \shortstack{\textbf{0 illegal}\\\textbf{(\% episodes)}} & \shortstack{\textbf{1 illegal}\\\textbf{(\% episodes)}}
+& \shortstack{\textbf{2+ illegal}\\\textbf{(\% episodes)}} \\
 \midrule
 $\alpha=0.0,\,\beta=0.0$ & 99.5 & 0.5 & 0.0 \\
 $\alpha=1.0,\,\beta=0.0$ & 85.9 & 7.5 & 6.7 \\
@@ -118,8 +119,9 @@ $\alpha=0.5,\,\beta=0.5$ & 99.6 & 0.4 & 0.0 \\
 $\alpha=2.0,\,\beta=0.5$ & 95.4 & 3.5 & 1.1 \\
 $\alpha=0.5,\,\beta=2.0$ & 98.8 & 1.2 & 0.0 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
+
 
 The two weight pairs with the highest illegal rates
 ($\alpha=1.0,\,\beta=0.0$ and $\alpha=0.0,\,\beta=1.0$) penalise a
@@ -132,7 +134,7 @@ the dominant strategy.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{%
+    \includegraphics[width=0.8\linewidth]{%
         Pictures/Expense_Report_illegal_curves_normalisation.png}
     \caption{Evolution of the illegal-action ratio during training after
              reward normalisation, across all weight configurations.}
@@ -146,7 +148,7 @@ the dominant strategy.
 Having established that the framework guarantees compliance and that the
 agent converges to legal behaviour, this section analyses whether the
 recovered policies are not only valid but also optimal, that is,
-whether they match the exact Pareto front produced by the CSP+COP solver.
+whether they match the exact Pareto front produced by the CSP+COP solver (see Figure \ref{fig:expense_pareto_scatter}) .
 
 Table~\ref{tab:expense_summary} summarises the acceptance rate, median
 cost and duration, and the proportion of episodes converging to each
@@ -156,10 +158,12 @@ Pareto point across all six weight configurations.
 \centering
 \caption{Training summary after reward normalisation.}
 \label{tab:expense_summary}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{ccrrrcc}
 \toprule
-$\alpha$ & $\beta$ & Accept & Median cost & Median dur.\ (min)
-& \% P1 & \% P2 \\
+\textbf{$\alpha$} & \textbf{$\beta$} & \textbf{Accept} & \textbf{Median cost (€)} & \textbf{Median dur.\ (min)}
+& \textbf{\% P1} & \textbf{\% P2} \\
 \midrule
 0.0 & 0.0 & 100\% & 735 & 9{,}900  & 41\% & 1\%  \\
 1.0 & 0.0 & 100\% & 735 & 10{,}500 & 44\% & 0\%  \\
@@ -168,7 +172,7 @@ $\alpha$ & $\beta$ & Accept & Median cost & Median dur.\ (min)
 2.0 & 0.5 & 100\% & 710 & 2{,}700  & 2\%  & 95\% \\
 0.5 & 2.0 & 100\% & 710 & 2{,}700  & 0\%  & 90\% \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 The results confirm that the agent recovers both Pareto-optimal traces
@@ -185,7 +189,7 @@ This bias is examined in Section~\ref{sec:discussion_reward_design} in the conte
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{Pictures/expense_pareto_scatter.png}
+    \includegraphics[width=0.9\linewidth]{Pictures/expense_pareto_scatter.png}
     \caption{Cost--duration distribution of accepting episodes after
              reward normalisation, across all weight configurations.}
     \label{fig:expense_pareto_scatter}
@@ -209,144 +213,86 @@ process.
 
 \begin{table}[H]
 \centering
-\setlength{\arrayrulewidth}{0.4pt}
-\renewcommand{\arraystretch}{1.3}
 \caption{Pareto-optimal trace sequences recovered by the \ac{RL} agent
          (legal steps only).
-         Costs in monetary units; durations in minutes.
+         Costs in euros (€); durations in minutes.
          $\checkmark$ denotes the accepting state.
          Step reward computed under $\alpha=0.0$, $\beta=1.0$.}
 \label{tab:pareto_traces}
-\begin{tabular}{@{} c l r r r @{}}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{c l r r r}
 \toprule
-\textbf{Step} & \textbf{Event} & \textbf{Cost} &
+\textbf{Step} & \textbf{Event} & \textbf{Cost (€)} &
 \textbf{Duration (min)} & \textbf{Step reward} \\
 \midrule
-\multicolumn{5}{@{}l@{}}{%
-  \cellcolor{gray!15}\quad
-  \textbf{P1}\enspace
-  \texttt{FillOut $\to$ Approve $\to$ PayOut}
-  \hfill
-  \textit{total cost: 50 \quad total duration: 10{,}500 min}
-  \quad}\\[-2pt]
-\arrayrulecolor{gray!40}\hline\arrayrulecolor{black}
+\multicolumn{5}{l}{\textbf{P1}\enspace \texttt{FillOut $\to$ Approve $\to$ PayOut}
+  \quad\textit{(total cost: 50, total duration: 10{,}500\,min)}} \\
+\midrule
 1 & \texttt{FillOutExpenseReport} & 10  & 1{,}500 & $+0.79$ \\
 2 & \texttt{Approve}              & 25  & 7{,}200 & $\phantom{+}0.00$ \\
 3 & \texttt{PayOut}\;$\checkmark$ & 15  & 1{,}800 & $+100.75$ \\
-\arrayrulecolor{gray!40}\hline\arrayrulecolor{black}
-\multicolumn{2}{@{\quad}l}{\textit{Trace total}} &
+\midrule
+\multicolumn{2}{l}{\textit{Trace total}} &
   \textbf{50} & \textbf{10{,}500} & \\
 \midrule
-\multicolumn{5}{@{}l@{}}{%
-  \cellcolor{gray!15}\quad
-  \textbf{P2}\enspace
-  \texttt{FillOut $\to$ Withdraw}
-  \hfill
-  \textit{total cost: 710 \quad total duration: 2{,}700 min}
-  \quad}\\[-2pt]
-\arrayrulecolor{gray!40}\hline\arrayrulecolor{black}
+\multicolumn{5}{l}{\textbf{P2}\enspace \texttt{FillOut $\to$ Withdraw}
+  \quad\textit{(total cost: 710, total duration: 2{,}700\,min)}} \\
+\midrule
 1 & \texttt{FillOutExpenseReport}                & 10  & 1{,}500 & $+0.79$ \\
 2 & \texttt{WithdrawExpenseReport}\;$\checkmark$ & 700 & 1{,}200 & $+100.83$ \\
-\arrayrulecolor{gray!40}\hline\arrayrulecolor{black}
-\multicolumn{2}{@{\quad}l}{\textit{Trace total}} &
+\midrule
+\multicolumn{2}{l}{\textit{Trace total}} &
   \textbf{710} & \textbf{2{,}700} & \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
-\noindent
-\textit{Step reward computation under $\alpha=0.0$, $\beta=1.0$,
-with $d_{\max}=7{,}200$\,min (duration of \texttt{Approve}):}
-
-\medskip
-\noindent
-\begin{tabular}{@{}ll@{}}
-\texttt{FillOut} (intermediate): &
-  $1 - 1.0 \times \frac{1{,}500}{7{,}200}
-  = 1 - 0.208 = +0.79$ \\[4pt]
-\texttt{Approve} (intermediate): &
-  $1 - 1.0 \times \frac{7{,}200}{7{,}200}
-  = 1 - 1.0 = \phantom{+}0.00$ \\[4pt]
-\texttt{PayOut} (accepting): &
-  $1 - 1.0 \times \frac{1{,}800}{7{,}200} + 100
-  = 0.75 + 100 = +100.75$ \\[4pt]
-\texttt{Withdraw} (accepting): &
-  $1 - 1.0 \times \frac{1{,}200}{7{,}200} + 100
-  = 0.833 + 100 = +100.83$ \\
-\end{tabular}
-
-
-The step rewards illustrate the normalised reward function operating as
-intended.
-
-\texttt{FillOutExpenseReport} incurs a duration penalty in both traces, while the accepting event delivers the terminal bonus regardless of the path taken.
-P2 reaches acceptance in two steps at a higher monetary cost, while P1 takes three steps at lower cost but longer duration --- precisely the trade-off the Pareto front captures.
+The step rewards in Table~\ref{tab:pareto_traces} follow directly from
+the normalised reward of Equation~\ref{eq:reward_total}
+(Section~\ref{sec:reward_normalised}); Appendix~\ref{app:expense_step_reward}
+works through the computation explicitly for both traces.
 
 % ===================================================
-
-% ============================================================
-%% CAMBIO 1: el comentario de cabecera anterior decía
-%%   "EXTERNAL VALIDATION — Role-conditioned Loan Application"
-%% y se ha quitado: esta sección no es validación externa
-%% (mismo benchmark que el Cap. 7 de Internal Validation), es la
-%% extensión de escala y riqueza del action space sobre ese
-%% mismo benchmark interno.
-% ============================================================
 
 \section{Loan Application: Scalability and Role-Conditioned Trade-offs}
 \label{sec:results_loanapp}
 
-%% CAMBIO 2: párrafo de apertura reescrito -- ya no dice
-%% "the purpose here is external". Se describe como extensión de
-%% escala/riqueza, y se referencia explícitamente que la validación
-%% de mecanismo (shield vs no-shield) vive en el Cap. 7, mientras que
-%% la validez frente a estructura nunca vista vive en el Cap. 8.
 This section evaluates the full framework on the role-conditioned Loan
-Application benchmark. The purpose here is to extend the scale and
-richness of the evaluation beyond the five-event Expense Report case:
-to assess whether the scalarised reward produces meaningful
-cost--duration trade-offs in a larger, role-conditioned action space,
-and what role-conditioned allocation adds once resource scarcity is
-introduced. This is the same benchmark used in
-Chapter~\ref{chap:internal_validation} to isolate the contribution of
-shielding and learning (EQ5); the two chapters analyse it from
-different angles rather than duplicating the same question. Whether
-this benchmark's findings generalise to process structures never seen
-during development is a separate question, addressed independently on
-the mined-graph benchmark grid of Chapter~\ref{chap:external_validation}.
-Compliance behaviour and its ablation are not re-analysed here, since
-that mechanism-level question is the subject of
-Chapter~\ref{chap:internal_validation}; the full-framework Pareto front
-characterised below is the same one that appears there as the Safe
-\ac{RL} arm of the ablation. For completeness,
-Appendix~\ref{app:loanapp_diagnostics} reports the omitted Loan
-Application diagnostics: reward convergence
-(Figure~\ref{fig:app_loanapp_reward}), accept rate
-(Figure~\ref{fig:app_loanapp_accept}), shielding activity
-(Figure~\ref{fig:app_loanapp_shielding}), and clean accepting episodes
-(Figure~\ref{fig:app_loanapp_clean}).
+Application benchmark, extending the scale and richness of the
+evaluation beyond the five-event Expense Report case: whether the
+scalarised reward produces meaningful cost--duration trade-offs in a
+larger action space, and what role-conditioned allocation adds once
+resource scarcity is introduced. This is the same benchmark
+Chapter~\ref{chap:internal_validation} uses to isolate the
+contribution of shielding and learning (EQ5), analysed here from a
+different angle; the full-framework Pareto front characterised below
+is the same one that appears there as the Safe \ac{RL} arm of that
+ablation, so compliance behaviour is not re-analysed here. Whether
+these findings generalise to process structures never seen during
+development is addressed separately on the mined-graph grid of
+Chapter~\ref{chap:external_validation}. Omitted diagnostics (reward
+convergence, accept rate, shielding activity, clean episodes) are
+reported in Appendix~\ref{app:loanapp_diagnostics}.
 
-The Loan Application process contains 12 events. With two available
-role profiles, Junior and Expert, the action space expands to 24
-event--role actions. The observation remains the encoded \ac{DCR}
-marking, while role choice affects only the cost and duration incurred
-by an executed event.
+The process contains 12 events; with the Junior/Expert role profiles,
+the action space expands to 24 event--role actions, while the
+observation remains the encoded \ac{DCR} marking and role choice
+affects only the cost and duration of an executed event.
 
 \paragraph{Two levels of resource modelling.}
-The evaluation proceeds in two levels, and it is important to delimit
-the claim of each. The first level treats Junior and Expert as
-always-available role profiles that scale event cost and duration. Under
-unlimited availability the weight-optimal role of each event is
-independent of the others, so role selection is separable across events
-and does not, on its own, constitute resource allocation. The second
-level introduces scarcity through a per-case Expert capacity budget,
-which couples the role decisions and turns role selection into an
-allocation problem under opportunity cost. Neither level models
-inter-case contention, queues, waiting time, or utilisation; the
-comparison with simulation-based approaches such as Kirchdorfer et
+The evaluation proceeds in two levels. The first treats Junior and
+Expert as always-available role profiles, under which role selection
+is separable across events and does not, on its own, constitute
+resource allocation. The second introduces scarcity through a per-case
+Expert capacity budget, turning role selection into an allocation
+problem under opportunity cost. Neither level models inter-case
+contention, queues, or utilisation, for the same reason already noted
+for this variant in Section~\ref{sec:loan_dataset}; the comparison with
+simulation-based approaches such as Kirchdorfer et
 al.~\cite{KirchdorferLukasFromPolicies} and
-Doumeni~\cite{ArtemisDoumeniParetoAgentSimulator} therefore remains a
-comparison of trade-off structure rather than of absolute figures.
+Doumeni~\cite{ArtemisDoumeniParetoAgentSimulator} therefore remains
+qualitative, not numerical.
 
 % ------------------------------------------------------------------
 \subsection{Pareto Front Recovery (Unlimited Capacity)}
@@ -357,7 +303,7 @@ the final 20\,\% of training, with both roles always available. As in
 the other Pareto analyses, the unweighted baseline $(\alpha=0,\beta=0)$
 is excluded from the dominance computation, since it does not express a
 cost--duration preference. The complete list of Pareto-optimal points is
-provided in Appendix~\ref{ap:loanapp_pareto_points}
+provided in Appendix~\ref{app:loanapp_pareto_points}
 (Table~\ref{tab:app_loanapp_pareto_points}).
 
 Figure~\ref{fig:loanapp_pareto_balanced} shows the recovered front. The
@@ -372,30 +318,12 @@ Kirchdorfer et al.~\cite{KirchdorferLukasFromPolicies}: rather than
 choosing one extreme, it identifies the compromise point with the
 smallest joint distance to the best observed value of each objective.
 
-%% CAMBIO 3: nota de cross-reference añadida -- este front de 26
-%% puntos (seed=1) se cita aquí como UN resultado, y se apunta
-%% explícitamente a dónde se valida su estabilidad y su necesidad,
-%% en vez de dejar que el Cap. 7 lo re-presente como si fuera nuevo.
 \textit{This is the single-seed (\(s=1\)) instance of the front. Its
-stability across four independent seeds (\(26.5 \pm 0.6\) points, with
+stability across four independent seeds (\(26.25 \pm 0.5\) points, with
 near-coincident range and shape) is established in
 Section~\ref{sec:policy_generalisation}, and its dependence on both the
 shield and the learning component, as opposed to either alone, is
 established by the ablation in Section~\ref{sec:shield_contribution}.}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{Pictures/LoanApp_pareto_balanced.png}
-  \caption{Pareto front recovered by the full \ac{PPO}+\ac{DCR}
-  framework on the role-conditioned Loan Application benchmark, with
-  both roles always available. Points correspond to accepting traces
-  from the final 20\,\% of training, with the unweighted baseline
-  excluded from dominance computation. Black stars denote non-dominated
-  traces; the orange diamond marks the most balanced point, selected by
-  minimum Euclidean distance to the ideal point after min--max
-  normalisation.}
-  \label{fig:loanapp_pareto_balanced}
-\end{figure}
 
 Table~\ref{tab:loanapp_pareto_summary} summarises the three
 representative regions of the recovered front: the minimum-cost
@@ -405,6 +333,33 @@ Appendix~\ref{app:loanapp_pareto_points} to keep the main result
 focused on the structure of the front rather than on the enumeration of
 all points.
 
+\begin{figure}[htpb]
+  \centering
+  \begin{minipage}{0.50\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{Pictures/LoanApp_pareto_balanced.png}
+    \par\footnotesize(a) Full recovered front.
+  \end{minipage}%
+  \hfill
+  \begin{minipage}{0.50\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{Pictures/LoanApp_pareto_balanced_zoom.png}
+    \par\footnotesize(b) Zoomed-in central cluster.
+  \end{minipage}
+  \caption{Pareto front recovered by the full \ac{PPO}+\ac{DCR}
+  framework on the role-conditioned Loan Application benchmark, with
+  both roles always available. Points correspond to accepting traces
+  from the final 20\,\% of training, with the unweighted baseline
+  excluded from dominance computation. Black stars denote non-dominated
+  traces; the orange diamond marks the most balanced point, selected by
+  minimum Euclidean distance to the ideal point after min--max
+  normalisation. (b) zooms into the central cluster where most
+  intermediate Pareto points concentrate.}
+  \label{fig:loanapp_pareto_balanced}
+\end{figure}
+
+
+
 \begin{table}[H]
 \centering
 \caption{Summary of representative Pareto points recovered on the
@@ -412,29 +367,50 @@ role-conditioned Loan Application benchmark (unlimited capacity). The
 balanced point is selected as the point closest to the ideal
 minimum-cost/minimum-duration corner after min--max normalisation.}
 \label{tab:loanapp_pareto_summary}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{8pt}
 \begin{tabular}{lrrl}
 \toprule
-\textbf{Point} & \textbf{Cost} & \textbf{Duration} & \textbf{Configuration} \\
+\textbf{Point} & \textbf{Cost (a.u.)} & \textbf{Duration (min)} & \textbf{Configuration} \\
 \midrule
 Minimum cost      & 1\,092.0 & 1\,632.0 & $\alpha=1.0,\ \beta=0.0$ \\
 Balanced          & 2\,044.9 & 1\,036.5 & $\alpha=0.5,\ \beta=0.5$ \\
 Minimum duration  & 3\,120.0 &   408.0 & $\alpha=0.0,\ \beta=1.0$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
-The minimum-cost point was independently checked against the exact
-CSP+COP solver: with role choice removed (flat, single-valued
-cost/duration per event), the solver's unconstrained optimum is
-cost\,=\,1\,560, duration\,=\,816 over the same five events
-(\textit{Check application form completeness}, \textit{Appraise
-property}, \textit{Check credit history}, \textit{AML check},
-\textit{Assess loan risk}), reached in 5.6\,s and proven optimal. Once
-both figures are rescaled by the Junior role multiplier
-($\times0.7$ cost, $\times2.0$ duration), they match the recovered
-minimum-cost point exactly (1\,092.0, 1\,632.0), confirming this
-extreme of the front is the true global optimum rather than an
-artefact of training.
+To check whether this extreme of the front is a true optimum rather
+than a training artefact, the minimum-cost point was verified
+independently against the exact CSP+COP solver. Role choice was
+removed for this check, reducing every event to a single, flat cost
+and duration value; under this simplification, the solver's Pareto
+front over the same five events (\textit{Check application form
+completeness}, \textit{Appraise property}, \textit{Check credit
+history}, \textit{AML check}, \textit{Assess loan risk}) contains
+exactly one non-dominated point, cost\,=\,1\,560, duration\,=\,816,
+reached in 5.6\,s and proven optimal. A single point is the expected
+outcome here, not a weakness of the check: unlike Expense Report,
+this flat sub-problem admits no genuine cost--duration trade-off.
+
+Rescaling both figures by the Junior role multiplier ($\times0.7$
+cost, $\times2.0$ duration) gives exactly $(1\,092.0,\,1\,632.0)$,
+matching the recovered minimum-cost point on the 26-point front
+exactly. This confirms that this extreme of the front is the true
+global optimum, not an artefact of training.
+
+This check is nonetheless narrow in scope: it covers only a flat,
+role-free problem with a single-point front. Unlike Expense Report,
+where both Pareto-optimal points are independently confirmed by the
+solver (Section~\ref{sec:expense_baseline}), no exact reference exists
+for the remaining 25 points of the Loan Application front, including
+its minimum-duration extreme and every intermediate point. ``Exact
+recovery'' in this thesis is therefore verified at the level of a
+full Pareto front only on benchmarks with small, degenerate fronts (at
+most two points, or one in this flat sub-problem); on the only
+non-trivial front recovered, only one extreme is anchored to a proven
+optimum.
+
 
 The location of these three points confirms that the scalarisation
 weights steer the trained policies towards different regions of the
@@ -442,8 +418,8 @@ trade-off surface. The cost-focused configuration reaches the cheapest
 valid executions, the duration-focused configuration reaches the
 fastest valid executions, and the balanced configuration contributes a
 central compromise. A notable pattern, visible in the complete table in
-Appendix~\ref{app:loanapp_pareto_points}, is that many intermediate
-Pareto points are produced by the balanced configuration
+Appendix~\ref{app:loanapp_pareto_points}, is that 15 of the 26 Pareto
+points are produced by the balanced configuration
 $(\alpha=0.5,\beta=0.5)$ rather than by the two extreme configurations.
 This suggests that balanced rewards maintain broader exploration of the
 valid trace space, whereas specialised objectives converge more quickly
@@ -456,16 +432,15 @@ Section~\ref{sec:discussion_reward}.
 
 Table~\ref{tab:loanapp_relative} reports the median cost and duration
 of accepting traces in the converged phase for each weight
-configuration, expressed relative to the unweighted baseline. The
-underlying cost and duration distributions are shown in
-Figures~\ref{fig:loanapp_cost_box} and
-\ref{fig:loanapp_duration_box}. Additional training diagnostics for the
-same runs are reported in Appendix~\ref{app:loanapp_diagnostics}.
-
-The results show the expected directional behaviour. Duration-dominant
-configurations reduce duration by 37.7\,\%, but increase cost by
-22--27\,\%. Conversely, cost-dominant configurations reduce cost by
-32.4\,\%, but increase duration.
+configuration, expressed relative to the unweighted baseline;
+additional training diagnostics for the same runs are reported in
+Appendix~\ref{app:loanapp_diagnostics}. The results show the expected
+directional behaviour: duration-dominant configurations reduce
+duration by 37.7\,\%, at a cost increase of 22--27\,\%, while
+cost-dominant configurations reduce cost by 32.4\,\% at the price of
+longer duration. This unconstrained effect is superseded by the
+richer, heuristic-compared analysis under scarcity in
+Section~\ref{sec:loanapp_capacity} below.
 
 \begin{table}[H]
 \centering
@@ -473,9 +448,11 @@ configurations reduce duration by 37.7\,\%, but increase cost by
 of training), with relative change against the unweighted baseline
 $(\alpha=0,\beta=0)$.}
 \label{tab:loanapp_relative}
+{\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrrrr}
 \toprule
-\textbf{Configuration} & \textbf{Median cost} & \textbf{Median duration}
+\textbf{Configuration} & \textbf{Median cost (a.u.)} & \textbf{Median duration (min)}
   & \textbf{$\Delta$ cost} & \textbf{$\Delta$ duration} \\
 \midrule
 $\alpha=0.0,\;\beta=0.0$ & 2\,248.1 & 1\,087.5 & --       & --       \\
@@ -485,40 +462,8 @@ $\alpha=0.5,\;\beta=2.0$ & 2\,858.5 &   678.0 & +27.2\,\% & -37.7\,\% \\
 $\alpha=1.0,\;\beta=0.0$ & 1\,520.1 & 1\,513.5 & -32.4\,\% & +39.2\,\% \\
 $\alpha=2.0,\;\beta=0.5$ & 1\,520.1 & 1\,399.5 & -32.4\,\% & +28.7\,\% \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
-
-The mixed configuration $(\alpha=2.0,\beta=0.5)$ is particularly
-informative. It reaches the same median cost as the pure cost-minimising
-configuration, but with a smaller duration overhead
-($+28.7\,\%$ instead of $+39.2\,\%$). This indicates that even a
-secondary duration weight can affect the final policy, reducing the
-temporal cost of cost-focused optimisation.
-
-Figures~\ref{fig:loanapp_cost_box} and~\ref{fig:loanapp_duration_box}
-show the corresponding distributions across accepting traces in the
-final 20\,\% of training. Cost-focused configurations concentrate around
-lower cost values, while duration-focused configurations shift towards
-lower duration at the expense of higher cost. These distributions
-support the same conclusion as the medians: changing the scalarisation
-weights changes not only isolated Pareto points, but the region of the
-valid trace space in which the trained policy concentrates.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{Pictures/loanapp_cost_boxplot.png}
-  \caption{Distribution of total cost across accepting traces in the
-  final 20\,\% of training, grouped by scalarisation weight pair.}
-  \label{fig:loanapp_cost_box}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{Pictures/loanapp_dur_boxplot.png}
-  \caption{Distribution of total duration across accepting traces in
-  the final 20\,\% of training, grouped by scalarisation weight pair.}
-  \label{fig:loanapp_duration_box}
-\end{figure}
 
 % ------------------------------------------------------------------
 \subsection{Role Specialisation Patterns}
@@ -535,7 +480,7 @@ objective.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{Pictures/LoanApp_role_slopegraph.png}
+  \includegraphics[width=0.8\textwidth]{Pictures/LoanApp_role_slopegraph.png}
   \caption{Expert-assignment rate per event under the cost-focused and
   duration-focused regimes. Each line is one event; a steep slope
   indicates strong sensitivity of the staffing decision to the
@@ -543,76 +488,27 @@ objective.
   \label{fig:loanapp_role_slopes}
 \end{figure}
 
-Three qualitative categories emerge and persist across the full weight
-sweep (Appendix~\ref{app:loanapp_role_distribution}). High-sensitivity
+Three qualitative categories emerge. High-sensitivity
 events such as \emph{AML check} and \emph{Appraise property} swing
-sharply between Junior and Expert dominance as the objective changes:
-their high base cost and duration produce the largest reward
-differential between roles, and therefore the strongest policy gradient.
+sharply between Junior and Expert dominance as the objective changes.
 Lower-impact events respond weakly. \emph{Assess loan risk} is a
 boundary case, remaining close to a balanced 50\,\% Expert assignment
-irrespective of the weights, because its normalised cost--duration
-profile lies near the indifference threshold of the reward.
+irrespective of the weights.
 
-This event-level view is the granularity the framework adds over pool-
-or policy-level resource approaches: it identifies not only that a
-cost--duration trade-off exists, but precisely which activities drive it
-and which are staffing-neutral. From a process-management standpoint,
-role-indifferent activities can be staffed on availability grounds with
-no measurable trade-off impact, while optimisation effort concentrates
-on the high-sensitivity events. The mechanism behind the three
-categories is analysed in Section~\ref{sec:discussion_roles}.
-
-\paragraph{Stability across seeds.}
-To confirm that these categories are not an artefact of a single
-training run, the role-conditioned experiment was repeated under $n=4$
-random seeds. At the front level, the recovered Pareto set is highly
-stable: $26.25 \pm 0.5$ points across seeds (Figure~\ref{fig:loanapp_seed_pareto_overlay}),
-with near-identical illegal-action rates ($1.13\% \pm 0.34\%$), mean cost
-at the cost-focused pole ($1\,503 \pm 65$), and mean duration at the
-duration-focused pole ($657 \pm 48$).
-
-At the per-event role-assignment level, stability is uneven across the
-three categories identified in Section~\ref{sec:discussion_roles}. The
-high-sensitivity events (AML check, Appraise property) and the
-role-indifferent event (Assess loan risk) are robust, varying by only
-3--9 percentage points in Expert-assignment rate across seeds. The
-moderate-response events (Check application form completeness, Check
-credit history, Return application back to applicant), by contrast,
-vary by 18--32 percentage points across seeds
-(Figure~\ref{fig:loanapp_seed_illegal_boxplot}). This is consistent with
-their cost--duration profiles sitting closer to the reward's
-indifference threshold than the high-sensitivity events: the gradient
-signal distinguishing Junior from Expert is weaker for these events, so
-the specific role split the policy converges to is more sensitive to
-the stochastic exploration of a given run. The qualitative three-category
-structure itself, however, replicates across all four seeds.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.75\textwidth]{Pictures/seed_robustness_roles_pareto_overlay.png}
-  \caption{Recovered Pareto front for the role-conditioned Loan
-  Application benchmark, one color per seed. The fronts are
-  near-identical across all four seeds.}
-  \label{fig:loanapp_seed_pareto_overlay}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.75\textwidth]{Pictures/seed_robustness_roles_illegal_boxplot.png}
-  \caption{Final illegal-trace rate per weight configuration, colored by
-  seed. All seeds remain below 5\% across every configuration.}
-  \label{fig:loanapp_seed_illegal_boxplot}
-\end{figure}
+The mechanism behind the three categories, and its implications for
+process management, are analysed in Section~\ref{sec:discussion_roles}.
+Their stability across random seeds, at both the front level and the
+per-event role-assignment level, is established in
+Section~\ref{sec:policy_generalisation}.
 
 % ------------------------------------------------------------------
 \subsection{Capacity-constrained Role Allocation}
 \label{sec:loanapp_capacity}
 
-The analysis so far assumes both roles are always available, under which
-role selection is separable across events: each event independently
-takes its weight-optimal role, and no decision constrains any other.
-This section removes that assumption by limiting the Expert role to a
+The analysis so far assumes both roles are always available, under
+which role selection is separable across events
+(Section~\ref{sec:results_loanapp}). This section removes that
+assumption by limiting the Expert role to a
 per-case budget of $k$ assignments, as defined in
 Section~\ref{sec:loan_dataset}. A finite budget couples the decisions,
 so the policy must allocate a scarce resource rather than apply a
@@ -632,10 +528,6 @@ sequential credit-assignment problem of the same kind the agent solves
 when recovering the Pareto front, and one that a myopic per-event
 heuristic cannot address by construction.
 
-%% CAMBIO 4: párrafo reescrito -- ya no reclama "external-validation
-%% role". Se describe como réplica metodológica del diseño de
-%% evaluación de Kirchdorfer et al., dejando claro que la pieza
-%% genuinamente externa (Cap. 8) es otra cosa.
 \paragraph{Relation to Kirchdorfer et al.'s evaluation design.}
 Because the Loan Application costs are synthetic and the metrics and
 granularity differ from prior work, the cost and duration figures
@@ -672,45 +564,84 @@ The experiment is organised around three questions:
 \end{description}
 
 \paragraph{Effect of the budget on the front (Q1).}
-Table~\ref{tab:loanapp_capacity_front} reports the recovered front for
-each budget $k \in \{1,2,3,\infty\}$, alongside the three allocation
-heuristics evaluated under the unconstrained budget. The $k=\infty$ row
-reproduces the unconstrained front of Section~\ref{sec:loanapp_pareto}.
-As the budget tightens, the front both shrinks (fewer Pareto points: 26
-at $k=\infty$ down to 6 at $k=1$) and shifts toward higher minimum
+Table~\ref{tab:q3_heuristics} reports the recovered front for each
+budget $k \in \{1,2,3,\infty\}$, alongside the three allocation
+heuristics evaluated at the same budgets (the full learned-vs-heuristic
+comparison is developed under Q3 below; this paragraph focuses on the
+\textbf{Learned front} column). The $k=\infty$ row reproduces the
+unconstrained front of Section~\ref{sec:loanapp_pareto}. As the budget
+tightens, the front both shrinks (fewer Pareto points: 26 at
+$k=\infty$ down to 6 at $k=1$) and shifts toward higher minimum
 duration (408 at $k=\infty$ versus 1\,245 at $k=1$), while the
 minimum-cost extreme (1\,092) is unaffected at every budget level, since
 the cheapest trace never needs Expert regardless of how much capacity is
 available. Always-Junior and Always-Expert are summarised by their
-median outcome rather than a range, since neither uses $(\alpha,\beta)$
-to target a trade-off and each instead produces a wide distribution of
-episode outcomes under random event ordering (Section~\ref{sec:loanapp_interpretation} discusses this further).
+accept rate and median outcome rather than a range, since neither uses
+$(\alpha,\beta)$ to target a trade-off and each instead produces a wide
+distribution of episode outcomes under random event ordering.
 
-\begin{table}[H]
+The same contraction is visible at the level of the full cost and
+duration distributions, not just the front's extremes.
+Figure~\ref{fig:loanapp_capacity_box} repeats the weight-pair comparison
+of Section~\ref{sec:loanapp_weight_effects} under each budget
+$k \in \{1,2,3\}$. At $k=1$ the six weight pairs collapse into nearly
+indistinguishable cost and duration distributions: with only one Expert
+assignment available per case, the weights have almost nothing left to
+act on. As $k$ grows to 2 and 3, the distributions separate cleanly by
+objective, cost-dominant pairs shifting to visibly lower cost,
+duration-dominant pairs to visibly lower duration, recovering the same
+directional pattern as the unconstrained case. Scarcity, in other
+words, does not just shrink the front, it narrows how much the
+scalarisation weights can differentiate outcomes at all.
+
+\begin{figure}[htpb]
+  \centering
+  \begin{minipage}{0.85\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{Pictures/loanapp_capacity_cost_boxplot.png}
+    \par\footnotesize(a) Total cost.
+  \end{minipage}
+
+  \medskip
+  \begin{minipage}{0.85\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{Pictures/loanapp_capacity_dur_boxplot.png}
+    \par\footnotesize(b) Total duration.
+  \end{minipage}
+  \caption{Distribution of total (a) cost and (b) duration across
+  accepting traces in the final 20\,\% of training, grouped by
+  scalarisation weight pair, under each Expert capacity budget
+  $k \in \{1,2,3\}$. At $k=1$ the weight pairs are barely
+  distinguishable; the separation by objective sharpens as the budget
+  grows.}
+  \label{fig:loanapp_capacity_box}
+\end{figure}
+
+
+\begin{table}[htpb]
 \centering
-\caption{Recovered cost--duration front under each Expert capacity
-budget $k$. The $k=\infty$ row reproduces the unconstrained front of
-Section~\ref{sec:loanapp_pareto}; the heuristic rows are evaluated under
-the same unconstrained budget for reference. Always-Junior and
-Always-Expert report the median (cost, duration) of their accepted
-episodes, not a Pareto front, since neither heuristic is
-weight-conditioned.}
-\label{tab:loanapp_capacity_front}
+\footnotesize
+\caption{Learned policy versus allocation heuristics at each Expert
+budget $k$, given as (Pareto points, cost range / duration range) for
+the learned and greedy fronts, and median (cost, duration) for
+Always-Expert; cost in a.u., duration in min throughout. All heuristic
+and learned configurations reach 100\,\% acceptance at every budget.
+Always-Junior never selects Expert and is therefore unaffected by $k$:
+median (cost, duration) $=(3\,126,\,4\,683)$ throughout.}
+\label{tab:q3_heuristics}
+{\renewcommand{\arraystretch}{1.5}
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{lrrr}
 \toprule
-\textbf{Policy / budget} & \textbf{Pareto points} &
-\textbf{Cost range} & \textbf{Duration range} \\
+\textbf{Budget} & \textbf{Learned front} & \textbf{Greedy front} &
+\textbf{Always-Expert} \\
 \midrule
-$k=1$        & 6  & 1\,092--1\,793 & 1\,245--1\,632 \\
-$k=2$        & 14 & 1\,092--2\,454 & 879--1\,632 \\
-$k=3$        & 21 & 1\,092--2\,868 & 616--1\,632 \\
-$k=\infty$   & 26 & 1\,092--3\,120 & 408--1\,632 \\
-\midrule
-Greedy per-event ($k=\infty$) & 5 & 1\,228--3\,120 & 408--1\,910 \\
-Always-Junior (median, all $k$)  & 1 (median) & 3\,126 & 4\,683 \\
-Always-Expert (median, $k=\infty$) & 1 (median) & 8\,932 & 1\,171 \\
+$k=1$      & 6 pts, 1\,092--1\,793 / 1\,245--1\,632 & 2 pts, 1\,092--1\,191 / 1\,550--1\,632 & median (3\,248, 4\,566) \\
+$k=2$      & 14 pts, 1\,092--2\,454 / 879--1\,632 & 5 pts, 1\,092--1\,892 / 1\,162--1\,632 & median (3\,541, 4\,380) \\
+$k=3$      & 21 pts, 1\,092--2\,868 / 616--1\,632 & 7 pts, 1\,092--2\,553 / 796--1\,632 & median (3\,996, 4\,200) \\
+$k=\infty$ & 26 pts, 1\,092--3\,120 / 408--1\,632 & 5 pts, 1\,228--3\,120 / 408--1\,910 & median (8\,932, 1\,171) \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 Figure~\ref{fig:loanapp_capacity_pareto} visualises this contraction
@@ -720,7 +651,7 @@ a strict sub-front of it, pivoting around the shared minimum-cost
 extreme while progressively losing the lower-duration, higher-cost
 region.
 
-\begin{figure}[H]
+\begin{figure}[htpb]
   \centering
   \includegraphics[width=0.75\textwidth]{Pictures/LoanApp_capacity_pareto_combined.png}
   \caption{Recovered Pareto front under each Expert capacity budget $k$.
@@ -753,7 +684,7 @@ pattern was not anticipated and indicates that scarcity does not simply
 scale down the unconstrained allocation uniformly --- it changes which
 events the policy treats as priorities.
 
-\begin{figure}[H]
+\begin{figure}[htpb]
   \centering
   \includegraphics[width=\textwidth]{Pictures/loanapp_capacity_allocation.png}
   \caption{Distribution of the scarce Expert budget across events under
@@ -762,52 +693,25 @@ events the policy treats as priorities.
   \label{fig:loanapp_capacity_allocation}
 \end{figure}
 
-%% CAMBIO 5: ajustado el cierre de Q3 -- ya no dice "is the
-%% external-validation core of this experiment".
+The pooled allocation pattern of Figure~\ref{fig:loanapp_capacity_allocation}
+aggregates over many episodes; Appendix~\ref{app:loanapp_capacity_trace}
+shows the same mechanism at the level of a single representative trace
+per budget, confirming that the agent allocates the scarce Expert
+budget selectively where it most affects the trade-off, rather than
+exhausting it as a fixed quota.
+
 \paragraph{Learned policy versus allocation heuristics (Q3).}
 The comparison against the three heuristics is the methodological core
 of this replication: it reproduces, on an independent method and
 benchmark, the optimised-policy-versus-heuristics design of Kirchdorfer
 et al.~\cite{KirchdorferLukasFromPolicies}. Table~\ref{tab:q3_heuristics}
-repeats the comparison at every budget $k$.
+(introduced under Q1 above) compares the methods at every budget $k$.
 
-\begin{table}[H]
-\centering
-\caption{Learned policy versus allocation heuristics at each Expert
-budget $k$. Greedy is weight-conditioned and so produces its own front,
-directly comparable to the learned policy's; Always-Junior and
-Always-Expert are not weight-conditioned and are summarised by accept
-rate and median outcome.}
-\label{tab:q3_heuristics}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{Budget} & \textbf{Learned front} & \textbf{Greedy front} &
-\textbf{Always-Expert} & \textbf{Always-Junior} \\
-\midrule
-$k=\infty$ & 26 pts, 1\,092--3\,120 / 408--1\,632 & 5 pts, 1\,228--3\,120 / 408--1\,910 & 100\% accept, median (8\,932, 1\,171) & 100\% accept, median (3\,126, 4\,683) \\
-$k=1$      & 6 pts, 1\,092--1\,793 / 1\,245--1\,632 & 2 pts, 1\,092--1\,191 / 1\,550--1\,632 & 100\% accept, median (3\,248, 4\,566) & 100\% accept, median (3\,126, 4\,683) \\
-$k=2$      & 14 pts, 1\,092--2\,454 / 879--1\,632 & 5 pts, 1\,092--1\,892 / 1\,162--1\,632 & 100\% accept, median (3\,541, 4\,380) & 100\% accept, median (3\,126, 4\,683) \\
-$k=3$      & 21 pts, 1\,092--2\,868 / 616--1\,632 & 7 pts, 1\,092--2\,553 / 796--1\,632 & 100\% accept, median (3\,996, 4\,200) & 100\% accept, median (3\,126, 4\,683) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.75\textwidth]{Pictures/q3_heuristics_k2.png}
-  \caption{Learned policy versus role-allocation heuristics at $k=2$.
-  The learned front (blue) extends further toward both ends of the
-  trade-off than the greedy heuristic (green), which tracks it closely
-  but does not reach the same extremes; Always-Junior and Always-Expert
-  (median outcomes) both fall far outside the plotted range, at
-  comparably high cost and duration.}
-  \label{fig:q3_heuristics_k2}
-\end{figure}
 
 Three findings follow. First, the learned policy extends the recovered
 front further than the greedy heuristic at every budget: the two track
 each other closely in the region where both operate
-(Figure~\ref{fig:q3_heuristics_k2}), but the learned policy alone
+(Figure~\ref{fig:q3_heuristics}b), but the learned policy alone
 reaches the cheapest and the most duration-efficient extremes, recovering
 the qualitative conclusion of Kirchdorfer et al.\ from a different
 paradigm while also retaining the compliance guarantee of
@@ -816,52 +720,48 @@ by construction. Second, both non-weight-conditioned heuristics are far
 worse than either optimised approach at every budget (median duration
 above 4\,000 against a learned-policy maximum of 1\,632), confirming
 that ignoring cost and duration entirely is costly even when
-feasibility is not at stake. Third, and more interesting than either:
-Always-Expert is not meaningfully better than Always-Junior, despite
-having access to a resource Always-Junior never uses. At $k=2$, for
-instance, Always-Expert trades a higher median cost (3\,541 against
-3\,126) for only a modest reduction in duration (4\,380 against
-4\,683) --- a far smaller return than the same budget yields under
-Greedy or the learned policy, which reach substantially lower duration
-at comparable or lower cost. Spending the scarce Expert role on
-whichever event happens to be selected first, without regard to which
-events the process most benefits from it, captures almost none of the
-value the resource could provide: the budget's value lies almost
-entirely in \emph{where} it is spent, not merely in having access to
-it, and a fixed rule with no notion of cost or duration cannot exploit
-that.
-% ------------------------------------------------------------------
-\subsection{Interpretation and Scope}
-\label{sec:loanapp_interpretation}
+feasibility is not at stake. Third, and the most informative
+comparison of the three: Always-Expert is barely better than
+Always-Junior, despite having access to a resource Always-Junior
+never uses at all. At $k=2$, for example, Always-Expert pays $415$
+more in median cost ($3\,541$ against $3\,126$) to save only $303$ in
+median duration ($4\,380$ against $4\,683$). The learned policy and
+Greedy get a far better return from the same budget: at $k=2$, the
+learned front alone reaches a duration as low as $879$ at a cost of
+only $2\,454$ (Table~\ref{tab:q3_heuristics}), well below
+Always-Expert's duration at comparable or lower cost.
 
-The Loan Application experiment provides three pieces of evidence on
-top of the Expense Report case. First, the framework scales from the
-five-event Expense Report benchmark to a larger 12-event process with a
-24-action role-conditioned action space. Second, the recovered front
-exhibits the expected economic structure: reducing duration requires
-accepting higher cost, and reducing cost leads to longer executions.
-Third, once the Expert role is made scarce, the framework expresses an
-allocation decision rather than a per-event rule, and the same shield
-that guarantees \ac{DCR} compliance also enforces the capacity limit.
+The difference is not whether the Expert budget is available, but
+\emph{where} it is spent. Always-Expert assigns it to whichever event
+happens to be selected first, with no regard for which events the
+process benefits from most, and captures almost none of its value as
+a result. A fixed rule with no notion of cost or duration cannot make
+that distinction; the learned policy and Greedy can.
 
-This trade-off structure is qualitatively consistent with
-resource-aware process optimisation studies such as Kirchdorfer et
-al.~\cite{KirchdorferLukasFromPolicies}, where faster or more capable
-resources reduce temporal metrics at higher cost. The comparison should
-be interpreted at the level of trade-off structure, not as a direct
-resource-allocation benchmark. The scope of the present model is
-bounded in two ways. In the unconstrained case, Junior and Expert are
-role profiles that scale event cost and duration, not individual
-resources, so role selection is separable across events. In the
-capacity-constrained case, scarcity couples the decisions within a case
-and yields opportunity-cost allocation, but the model still represents
-neither inter-case contention nor queues, waiting time, or utilisation.
-Full operational resource allocation, with shared resources across
-concurrent cases and stateful availability, would require a multi-case
-environment and is treated as future work in
-Chapter~\ref{chap:discussion}.
+\begin{figure}[htpb]
+  \centering
+  \begin{minipage}{0.47\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{Pictures/q3_heuristics_k1.png}
+    \par\footnotesize(a) $k=1$.
+  \end{minipage}\hfill
+  \begin{minipage}{0.47\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{Pictures/q3_heuristics_k2.png}
+    \par\footnotesize(b) $k=2$.
+  \end{minipage}
 
-Whether the scalability and role-conditioned behaviour established here
-hold beyond this single benchmark, on process structures never touched
-during the development of the method, is addressed independently in
-Chapter~\ref{chap:external_validation}.
+  \medskip
+  \begin{minipage}{0.47\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{Pictures/q3_heuristics_k3.png}
+    \par\footnotesize(c) $k=3$.
+  \end{minipage}
+  \caption{Learned policy versus role-allocation heuristics at budgets
+  (a)~$k=1$, (b)~$k=2$, and (c)~$k=3$. At every budget, the learned
+  policy (blue) extends beyond the greedy heuristic (green) at both
+  ends of the front, while Always-Expert (red) and Always-Junior
+  (purple), each shown at their median outcome, remain far from
+  either.}
+  \label{fig:q3_heuristics}
+\end{figure}
