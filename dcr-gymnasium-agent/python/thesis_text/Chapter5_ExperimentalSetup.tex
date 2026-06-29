@@ -386,16 +386,14 @@ Five metrics are used across the experiments:
 \label{sec:reproducibility}
 
 All code, process models, and notebooks are available at
-\url{https://github.com/Sofiaortizarce/dcr-js} (branch
-\texttt{feature/cost-roles}, which contains the full history of
-\texttt{feature/cost-duration-ui}).
+\url{https://github.com/Sofiaortizarce/dcr-js}, branch
+\texttt{feature/cost-roles}.
 
-The \ac{DCR} graphs are under
-\url{app/public/examples/diagrams/}: \texttt{Expense\_Report\_Diaz.xml},
-\texttt{Loan\_Application\_Diaz.xml} (no roles), and
-\texttt{LoanApp\_junior\_senior.xml} (with roles). Experiments are
-launched from the RL project directory
-(\url{dcr-gymnasium-agent/python/}) via
+The \ac{DCR} graphs are under \texttt{app/public/examples/diagrams/}:
+\texttt{Expense\_Report\_Diaz.xml}, \texttt{Loan\_Application\_Diaz.xml}
+(no roles), and \texttt{LoanApp\_junior\_senior.xml} (with roles).
+Experiments are launched from the RL project directory
+(\texttt{dcr-gymnasium-agent/python/}) via
 \texttt{scripts/run\_experiments.py}, which connects the Node.js
 adapter, the Gymnasium environment, and the \ac{PPO} agent. Python
 dependencies (gymnasium, stable-baselines3, torch,
@@ -406,12 +404,28 @@ across hardware due to GPU floating-point non-determinism. The
 sensitivity to seed variation is evaluated separately in
 Section~\ref{sec:policy_generalisation} over additional seeds, where the
 qualitative findings (Pareto front shape, role specialisation) are shown
-to be stable. Raw logs (about 500\,MB) are not stored in the repository
-but can be regenerated from the provided configurations; every figure
-and table of Chapter~\ref{chap:results} is reproduced by the standalone
-scripts in \url{dcr-gymnasium-agent/python/scripts/internal_validation/}
-and \url{dcr-gymnasium-agent/python/scripts/external_validation/} (one
-script per figure or analysis); earlier exploratory notebooks remain
-under \url{dcr-gymnasium-agent/python/scripts/notebooks/} for
-reference, but the figures and tables cited in this thesis are
-reproduced from the standalone scripts above, not from the notebooks.
+to be stable. Raw logs (about 1.1\,GB across all experiments,
+including the seed-robustness and ablation repetitions) are not
+stored in the repository but can be regenerated from the provided
+configurations; every figure and table of Chapter~\ref{chap:results}
+is reproduced by the standalone scripts under
+\texttt{dcr-gymnasium-agent/python/scripts/internal\_validation/} and
+\texttt{.../external\_validation/} (one script per figure or
+analysis); earlier exploratory notebooks remain under
+\texttt{scripts/notebooks/} for reference, but the figures and tables
+cited in this thesis are reproduced from the standalone scripts above,
+not from the notebooks.
+
+\paragraph{Use of AI in analysis and figure generation.} Some of the
+analysis and figure-generation scripts referenced above were written
+or debugged with the assistance of Claude (Anthropic), via Claude
+Code, and reviewed and verified by the author before use, consistent
+with the disclosure given in full at the start of this thesis. Claude
+was also used to cross-check specific reported values, in particular
+the per-step reward figures of Table~\ref{tab:pareto_traces} and
+Appendix~\ref{app:expense_step_reward}, against the raw training logs
+underlying them; this caught and corrected an arithmetic error in an
+earlier draft of that table. No experiment was designed, executed, or
+interpreted by AI; its role was limited to script implementation and
+arithmetic verification against data the author had already
+generated.

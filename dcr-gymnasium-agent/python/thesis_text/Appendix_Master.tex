@@ -148,33 +148,38 @@ The step rewards reported in the \textbf{Step reward} column of
 Table~\ref{tab:pareto_traces} follow directly from the normalised
 reward of Equation~\ref{eq:reward_total} (Section~\ref{sec:reward_normalised}),
 computed under $\alpha=0.0$, $\beta=1.0$, with $d_{\max}=7{,}200$\,min
-(the duration of \texttt{Approve}, the longest event in this benchmark):
+(the duration of \texttt{Approve}, the longest event in this benchmark).
+\texttt{FillOut} resolves no pending event; \texttt{Approve} resolves
+one, triggering the $+2$ progress bonus. Accepting transitions receive
+the flat $+100$ terminal bonus alone, the step penalty, base reward,
+progress bonus, and cost/duration penalties do not apply to them:
 
 \medskip
 \noindent
 \begin{tabular}{@{}ll@{}}
-\texttt{FillOut} (intermediate): &
-  $1 - 1.0 \times \frac{1{,}500}{7{,}200}
-  = 1 - 0.208 = +0.79$ \\[4pt]
-\texttt{Approve} (intermediate): &
-  $1 - 1.0 \times \frac{7{,}200}{7{,}200}
-  = 1 - 1.0 = \phantom{+}0.00$ \\[4pt]
+\texttt{FillOut} (intermediate, no progress): &
+  $1 - 1.5 - 1.0 \times \frac{1{,}500}{7{,}200}
+  = 1 - 1.5 - 0.21 = -0.71$ \\[4pt]
+\texttt{Approve} (intermediate, resolves 1 pending): &
+  $1 - 1.5 + 2 - 1.0 \times \frac{7{,}200}{7{,}200}
+  = 1.5 - 1.0 = +0.50$ \\[4pt]
 \texttt{PayOut} (accepting): &
-  $1 - 1.0 \times \frac{1{,}800}{7{,}200} + 100
-  = 0.75 + 100 = +100.75$ \\[4pt]
+  $+100.00$ \\[4pt]
 \texttt{Withdraw} (accepting): &
-  $1 - 1.0 \times \frac{1{,}200}{7{,}200} + 100
-  = 0.833 + 100 = +100.83$ \\
+  $+100.00$ \\
 \end{tabular}
 
 \medskip
 \noindent
 The step rewards illustrate the normalised reward function operating
-as intended: \texttt{FillOutExpenseReport} incurs a duration penalty
-in both traces, while the accepting event delivers the terminal bonus
-regardless of the path taken. P2 reaches acceptance in two steps at a
-higher monetary cost, while P1 takes three steps at lower cost but
-longer duration --- precisely the trade-off the Pareto front captures.
+as intended: \texttt{FillOutExpenseReport} pays both the step penalty
+and a duration penalty in both traces, since it resolves nothing yet;
+\texttt{Approve} recovers most of that cost by resolving a pending
+event; and the accepting event delivers the flat terminal bonus
+regardless of the path taken or of accumulated cost and duration. P2
+reaches acceptance in two steps at a higher monetary cost, while P1
+takes three steps at lower cost but longer duration --- precisely the
+trade-off the Pareto front captures.
 
 \section{Per-Decile Reward Convergence}
 \label{app:expense_reward_deciles}

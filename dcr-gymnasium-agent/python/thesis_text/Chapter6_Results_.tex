@@ -130,14 +130,17 @@ attractiveness of certain legal actions and encourages broader
 exploration early in training.
 Despite this, both configurations converge to 100\% acceptance,
 confirming that normalisation is sufficient to make legal behaviour
-the dominant strategy.
+the dominant strategy. Figure~\ref{fig:training_normalisation} shows
+this convergence over the full training run, decile by decile, rather
+than only in the final-20\,\% snapshot of Table~\ref{tab:illegal_actions}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{%
         Pictures/Expense_Report_illegal_curves_normalisation.png}
-    \caption{Evolution of the illegal-action ratio during training after
-             reward normalisation, across all weight configurations.}
+    \caption{Percentage of episodes with zero illegal-action attempts,
+             per training decile, after reward normalisation, across
+             all weight configurations.}
     \label{fig:training_normalisation}
 \end{figure}
 
@@ -229,9 +232,9 @@ process.
 \multicolumn{5}{l}{\textbf{P1}\enspace \texttt{FillOut $\to$ Approve $\to$ PayOut}
   \quad\textit{(total cost: 50, total duration: 10{,}500\,min)}} \\
 \midrule
-1 & \texttt{FillOutExpenseReport} & 10  & 1{,}500 & $+0.79$ \\
-2 & \texttt{Approve}              & 25  & 7{,}200 & $\phantom{+}0.00$ \\
-3 & \texttt{PayOut}\;$\checkmark$ & 15  & 1{,}800 & $+100.75$ \\
+1 & \texttt{FillOutExpenseReport} & 10  & 1{,}500 & $-0.71$ \\
+2 & \texttt{Approve}              & 25  & 7{,}200 & $+0.50$ \\
+3 & \texttt{PayOut}\;$\checkmark$ & 15  & 1{,}800 & $+100.00$ \\
 \midrule
 \multicolumn{2}{l}{\textit{Trace total}} &
   \textbf{50} & \textbf{10{,}500} & \\
@@ -239,8 +242,8 @@ process.
 \multicolumn{5}{l}{\textbf{P2}\enspace \texttt{FillOut $\to$ Withdraw}
   \quad\textit{(total cost: 710, total duration: 2{,}700\,min)}} \\
 \midrule
-1 & \texttt{FillOutExpenseReport}                & 10  & 1{,}500 & $+0.79$ \\
-2 & \texttt{WithdrawExpenseReport}\;$\checkmark$ & 700 & 1{,}200 & $+100.83$ \\
+1 & \texttt{FillOutExpenseReport}                & 10  & 1{,}500 & $-0.71$ \\
+2 & \texttt{WithdrawExpenseReport}\;$\checkmark$ & 700 & 1{,}200 & $+100.00$ \\
 \midrule
 \multicolumn{2}{l}{\textit{Trace total}} &
   \textbf{710} & \textbf{2{,}700} & \\
