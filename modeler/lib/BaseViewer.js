@@ -545,8 +545,13 @@ BaseViewer.prototype.destroy = function () {
   domRemove(this._container);
 };
 
+function formatShortDate(d) {
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+    + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
 // Update the visual representation of the graph with the states/markings of graph
-const update = (graph, modeling, elementReg) => {
+const update = (graph, modeling, elementReg, variableStore = {}, currentTime = new Date()) => {
 
   const updateGroup = (group) => {
     group.events.forEach((event) => {
@@ -555,8 +560,34 @@ const update = (graph, modeling, elementReg) => {
       modeling.updateProperties(element, { included: graph.marking.included.has(event) });
       modeling.updateProperties(element, { pending: graph.marking.pending.has(event) });
       if (event.includes('Event')) {
-        modeling.updateProperties(element, { enabled: isEnabledS(event, graph, group).enabled });
+        modeling.updateProperties(element, { enabled: isEnabledS(event, graph, group, variableStore, currentTime).enabled });
       }
+
+      // Deadline label: shown when event is pending with a deadline
+      const deadline = graph.marking.pending.get(event);
+      const deadlineLabel = (deadline instanceof Date)
+        ? 'Deadline: ' + formatShortDate(deadline)
+        : null;
+      modeling.updateProperties(element, { deadlineLabel: deadlineLabel || undefined });
+
+      // Delay label: latest delayUntil across all condition sources with a delay
+      let latestDelayUntil = null;
+      if (graph.timeConstraintMap && graph.conditionsFor[event]) {
+        for (const source of graph.conditionsFor[event]) {
+          const delayMs = graph.timeConstraintMap[source]?.[event]?.delay;
+          if (delayMs === undefined) continue;
+          const guard = graph.guardMap?.[source]?.[event]?.['condition'];
+          const executedAt = graph.marking.executed.get(source)?.time;
+          if (!executedAt) continue;
+          const delayUntil = new Date(executedAt.getTime() + delayMs);
+          if (delayUntil > currentTime) {
+            if (!latestDelayUntil || delayUntil > latestDelayUntil) {
+              latestDelayUntil = delayUntil;
+            }
+          }
+        }
+      }
+      modeling.updateProperties(element, { delayUntilLabel: latestDelayUntil ? 'Delay: ' + formatShortDate(latestDelayUntil) : undefined });
     });
   }
 
@@ -580,7 +611,7 @@ function hslToHex(h, s, l) {
 // https://stackoverflow.com/questions/65361477/how-to-generate-color-from-colormap-in-javascript
 const updateViolations = (arg, modeling, elementReg) => {
 
-  const { violations, activations } = arg ? arg : { violations: null, activations: null };
+  const { violations, timeViolations, activations } = arg ? arg : { violations: null, timeViolations: null, activations: null };
 
   const allViolations = violations && Object.values(violations).flatMap(elem => Object.values(elem).flatMap(elem2 => Object.values(elem2)));
 
@@ -602,6 +633,13 @@ const updateViolations = (arg, modeling, elementReg) => {
     return hslToHex(hue, 100, 30)
   }
 
+  function relationColor(structuralCount, temporalCount) {
+    if (!violations && !timeViolations) return null;
+    if (structuralCount > 0) return valueToColor(structuralCount);
+    if (temporalCount > 0) return hslToHex(54, 100, 50);
+    return valueToColor(0);
+  }
+
   for (const { element } of Object.values(elementReg._elements)) {
     if (element.type === "dcr:Relation") {
       const busObject = element.businessObject;
@@ -610,31 +648,31 @@ const updateViolations = (arg, modeling, elementReg) => {
         case "condition": {
           const source = busObject.targetRef.id;
           const target = busObject.sourceRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.conditionsFor[source]?.[target] ?? 0) : null, inactive: activations ? (activations.conditionsFor[source]?.[target] ?? 0) === 0 : null });
+          modeling.updateProperties(element, { violationColour: relationColor(violations?.conditionsFor[source]?.[target] ?? 0, timeViolations?.conditionsFor[source]?.[target] ?? 0), inactive: activations ? (activations.conditionsFor[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "milestone": {
           const source = busObject.targetRef.id;
           const target = busObject.sourceRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.milestonesFor[source]?.[target] ?? 0) : null, inactive: activations ? (activations.milestonesFor[source]?.[target] ?? 0) === 0 : null });
+          modeling.updateProperties(element, { violationColour: relationColor(violations?.milestonesFor[source]?.[target] ?? 0, timeViolations?.milestonesFor[source]?.[target] ?? 0), inactive: activations ? (activations.milestonesFor[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "response": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.responseTo[source]?.[target] ?? 0) : null, inactive: activations ? (activations.responseTo[source]?.[target] ?? 0) === 0 : null });
+          modeling.updateProperties(element, { violationColour: relationColor(violations?.responseTo[source]?.[target] ?? 0, timeViolations?.responseTo[source]?.[target] ?? 0), inactive: activations ? (activations.responseTo[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "exclude": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(violations.excludesTo[source]?.[target] ?? 0) : null, inactive: activations ? (activations.excludesTo[source]?.[target] ?? 0) === 0 : null });
+          modeling.updateProperties(element, { violationColour: relationColor(violations?.excludesTo[source]?.[target] ?? 0, timeViolations?.excludesTo[source]?.[target] ?? 0), inactive: activations ? (activations.excludesTo[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         case "include": {
           const source = busObject.sourceRef.id;
           const target = busObject.targetRef.id;
-          modeling.updateProperties(element, { violationColour: violations ? valueToColor(0) : null, inactive: activations ? (activations.includesTo[source]?.[target] ?? 0) === 0 : null });
+          modeling.updateProperties(element, { violationColour: relationColor(0, 0), inactive: activations ? (activations.includesTo[source]?.[target] ?? 0) === 0 : null });
           break;
         }
         default: {
@@ -657,9 +695,44 @@ BaseViewer.prototype.getElementRegistry = function () {
   return this.get('elementRegistry');
 }
 
-BaseViewer.prototype.updateRendering = function (graph) {
+var FEEL_KEYWORDS_BV = new Set(['and', 'or', 'not', 'true', 'false']);
+
+function extractGuardVarNamesBV(guard) {
+  var stripped = guard.replace(/"[^"]*"/g, '""').replace(/'[^']*'/g, "''");
+  var names = new Set();
+  var m;
+  var pat = /[A-Za-z_][A-Za-z0-9_]*/g;
+  while ((m = pat.exec(stripped)) !== null) {
+    if (!FEEL_KEYWORDS_BV.has(m[0])) names.add(m[0]);
+  }
+  return names;
+}
+
+BaseViewer.prototype.validateGuards = function () {
+  var elementRegistry = this.get('elementRegistry');
+  var varNames = new Set();
+  elementRegistry.filter(function (el) { return el.type === 'dcr:Event'; }).forEach(function (el) {
+    var ed = el.businessObject.get('eventData');
+    if (ed && ed.name) varNames.add(ed.name);
+  });
+
+  var invalid = [];
+  elementRegistry.filter(function (el) { return el.type === 'dcr:Relation'; }).forEach(function (el) {
+    var guard = el.businessObject.get('guard');
+    if (!guard) return;
+    var usedVars = extractGuardVarNamesBV(guard);
+    usedVars.forEach(function(name) {
+      if (!varNames.has(name)) {
+        invalid.push('Guard references undefined variable "' + name + '"');
+      }
+    });
+  });
+  return invalid;
+};
+
+BaseViewer.prototype.updateRendering = function (graph, variableStore = {}, currentTime = new Date()) {
   const modeling = this.get('modeling');
-  update(graph, modeling, this.get('elementRegistry'));
+  update(graph, modeling, this.get('elementRegistry'), variableStore, currentTime);
 }
 
 BaseViewer.prototype.updateViolations = function (arg) {

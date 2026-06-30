@@ -53,6 +53,30 @@
           "name": "enabled",
           "isAttr": true,
           "type": "Boolean"
+        },
+        {
+          "name": "eventData",
+          "type": "EventData"
+        }
+      ]
+    },
+    {
+      "name": "EventData",
+      "properties": [
+        {
+          "name": "name",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "type",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "default",
+          "isAttr": true,
+          "type": "String"
         }
       ]
     },
@@ -139,6 +163,16 @@
           "isAttr": true,
           "isReference": true,
           "type": "Event"
+        },
+        {
+          "name": "guard",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "time",
+          "isAttr": true,
+          "type": "String"
         }
       ]
     },
