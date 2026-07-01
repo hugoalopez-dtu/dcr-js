@@ -238,8 +238,8 @@ const EventLogGenerationState = ({
     data: string,
     parse: ((xml: string) => Promise<void>) | undefined,
   ) => {
-    if (data.includes("subProcess")) {
-      toast.warning("Subprocesses not supported...");
+    if (!isCompatible(data)) {
+      toast.warning("Log generation not supported for guards, time constraints, variables, and subprocesses...");
     } else {
       if (parse) {
         parse(data).catch((e) => {
@@ -357,14 +357,21 @@ const EventLogGenerationState = ({
     },
   ];
 
+  const isCompatible = (xml: string) =>
+    !xml.includes("subProcess") &&
+    !xml.includes("eventData") &&
+    !/<dcr:relation[^>]+time=/.test(xml) &&
+    !/<dcr:relation[^>]+guard=/.test(xml);
+
   const onInitModeler = useEffectEvent((modeler: DCRModeler) => {
     // Import the current graph (if any).
     // After this import will happen on action (manual calls to importXml),
     // so no need to do it reactively when current graph changes (is imported).
 
-    if (currentGraph && !currentGraph.graph.includes("subProcess")) {
+    if (currentGraph && isCompatible(currentGraph.graph)) {
       modeler.importXML(currentGraph.graph).catch((e: Error) => console.log(e));
     } else {
+      if (currentGraph) toast.warning("Log generation not supported for guards, time constraints, variables, and subprocesses...");
       modeler.importXML(emptyBoardXML).catch((e: Error) => console.log(e));
     }
   });
