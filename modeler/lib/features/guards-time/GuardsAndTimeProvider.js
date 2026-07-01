@@ -1,4 +1,5 @@
 import { is, getBusinessObject } from '../../util/ModelUtil';
+import { validateGuardSyntax } from 'dcr-engine';
 
 var VALID_DURATION = /^P(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+S)?)?$/;
 
@@ -400,6 +401,8 @@ GuardsAndTimeProvider.prototype._allVariableNames = function() {
 
 GuardsAndTimeProvider.prototype._validateGuard = function(guardVal) {
   if (!guardVal) return null;
+  var syntaxErr = validateGuardSyntax(guardVal);
+  if (syntaxErr) return syntaxErr;
   var knownVars = this._allVariableNames();
   var usedVars = extractGuardVarNames(guardVal);
   if (usedVars.size === 0) {

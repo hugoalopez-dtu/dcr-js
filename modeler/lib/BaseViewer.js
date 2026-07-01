@@ -31,7 +31,7 @@ import { setSetting } from './features/settings/DCRSettings';
 
 import { setSimulating } from './features/keyboard/DCRKeyboardBindings';
 
-import { isEnabled, isEnabledS } from "dcr-engine";
+import { isEnabled, isEnabledS, evaluateGuard, validateGuardSyntax } from "dcr-engine";
 
 /**
  * A base viewer for dcr graph diagrams.
@@ -577,6 +577,7 @@ const update = (graph, modeling, elementReg, variableStore = {}, currentTime = n
           const delayMs = graph.timeConstraintMap[source]?.[event]?.delay;
           if (delayMs === undefined) continue;
           const guard = graph.guardMap?.[source]?.[event]?.['condition'];
+          if (guard && !evaluateGuard(guard, variableStore)) continue;
           const executedAt = graph.marking.executed.get(source)?.time;
           if (!executedAt) continue;
           const delayUntil = new Date(executedAt.getTime() + delayMs);
@@ -720,6 +721,12 @@ BaseViewer.prototype.validateGuards = function () {
   elementRegistry.filter(function (el) { return el.type === 'dcr:Relation'; }).forEach(function (el) {
     var guard = el.businessObject.get('guard');
     if (!guard) return;
+    var syntaxErr = validateGuardSyntax(guard);
+    if (syntaxErr) {
+      invalid.push('Guard syntax error: ' + syntaxErr);
+      return;
+    }
+
     var usedVars = extractGuardVarNamesBV(guard);
     usedVars.forEach(function(name) {
       if (!varNames.has(name)) {
