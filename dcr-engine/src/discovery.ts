@@ -7,6 +7,7 @@ import type {
   DCRGraph,
   FuzzyRelation,
   VariantLog,
+  ExecutionRecord,
 } from "./types";
 import {
   copyEventMap,
@@ -155,8 +156,8 @@ export default function mineFromAbstraction(
     milestonesFor: {},
     responseTo: {},
     marking: {
-      executed: new Set<Event>(),
-      pending: new Set<Event>(),
+      executed: new Map<Event, ExecutionRecord>(),
+      pending: new Map<Event, Date | undefined>(),
       included: new Set(logAbstraction.events),
     },
   };
@@ -375,7 +376,7 @@ export default function mineFromAbstraction(
         mutatingIntersect(initiallyPending, localInitiallyPending);
       }
 
-      graph.marking.pending = initiallyPending;
+      graph.marking.pending = new Map([...initiallyPending].map(e => [e, undefined]));
     }
 
     // Removing redundant conditions

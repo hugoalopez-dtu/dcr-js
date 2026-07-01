@@ -32,8 +32,8 @@ function relationsDictToDCR(
       ? copyMarking(marking)
       : {
           included: events,
-          executed: new Set(),
-          pending: new Set(),
+          executed: new Map(),
+          pending: new Map(),
         },
   };
 

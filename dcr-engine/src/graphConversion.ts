@@ -1,5 +1,6 @@
 import type { EventMap, SubProcess, DCRGraphS } from "./types";
 import { isSubProcess } from "./types";
+import { parseDurationMs } from "./utility";
 
 let useDescriptionsGlobal = false;
 
@@ -63,7 +64,8 @@ export function moddleToDCR(
     const target: string = useDescriptionsGlobal
       ? element.businessObject.get("targetRef").description
       : element.businessObject.get("targetRef").id;
-    switch (element.businessObject.get("type")) {
+    const relType = element.businessObject.get("type");
+    switch (relType) {
       case "condition":
         addRelation(graph.conditionsFor, nestingElements, target, source);
         break;
@@ -79,6 +81,32 @@ export function moddleToDCR(
       case "exclude":
         addRelation(graph.excludesTo, nestingElements, source, target);
         break;
+    }
+
+    const guard = element.businessObject.get("guard");
+    if (guard) {
+      if (!graph.guardMap) graph.guardMap = {};
+      if (!graph.guardMap[source]) graph.guardMap[source] = {};
+      if (!graph.guardMap[source][target]) graph.guardMap[source][target] = {};
+      graph.guardMap[source][target][relType] = guard;
+    }
+
+    const time = element.businessObject.get("time");
+    if (time && (relType === "condition" || relType === "response")) {
+      const ms = parseDurationMs(time);
+      if (ms > 0) {
+        if (!graph.timeConstraintMap) graph.timeConstraintMap = {};
+        if (!graph.timeConstraintMap[source]) graph.timeConstraintMap[source] = {};
+        if (!graph.timeConstraintMap[source][target]) graph.timeConstraintMap[source][target] = {};
+        if (relType === "condition") {
+          const existing = graph.timeConstraintMap[source][target].delay;
+          graph.timeConstraintMap[source][target].delay = existing !== undefined ? Math.max(existing, ms) : ms;
+        }
+        if (relType === "response") {
+          const existing = graph.timeConstraintMap[source][target].deadline;
+          graph.timeConstraintMap[source][target].deadline = existing !== undefined ? Math.min(existing, ms) : ms;
+        }
+      }
     }
   });
 
@@ -174,13 +202,23 @@ function addEvents(
 
     // Add marking for event in graph
     if (element.businessObject.get("pending")) {
-      graph.marking.pending.add(eventId);
+      graph.marking.pending.set(eventId, undefined);
     }
     if (element.businessObject.get("executed")) {
-      graph.marking.executed.add(eventId);
+      graph.marking.executed.set(eventId, {});
     }
     if (element.businessObject.get("included")) {
       graph.marking.included.add(eventId);
+    }
+
+    // Extract default variable value
+    const ed = element.businessObject.get("eventData");
+    if (ed && ed.name && ed['default'] !== undefined && ed['default'] !== '') {
+      if (!graph.initialVariableStore) graph.initialVariableStore = {};
+      const val = ed.type === 'Int' ? Number(ed['default'])
+                : ed.type === 'Bool' ? ed['default'] === 'true'
+                : ed['default'];
+      graph.initialVariableStore[ed.name] = val;
     }
 
     // Initialize relations for event in graph
@@ -275,9 +313,9 @@ function emptyGraph(): DCRGraphS {
     includesTo: {},
     excludesTo: {},
     marking: {
-      executed: new Set(),
+      executed: new Map(),
       included: new Set(),
-      pending: new Set(),
+      pending: new Map(),
     },
   };
 }
