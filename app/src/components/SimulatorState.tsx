@@ -3,6 +3,7 @@ import {
   useEffect,
   useEffectEvent,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { StateEnum, type StateProps } from "../App";
@@ -32,7 +33,7 @@ import ModalMenu, { type ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";
 import FileUpload from "../utilComponents/FileUpload";
-import type { DCRGraphS, EventLog } from "dcr-engine";
+import type { DCRGraphS, EventLog, VariableStore, Value } from "dcr-engine";
 import Button from "../utilComponents/Button";
 
 import { saveAs } from "file-saver";
@@ -87,6 +88,141 @@ const FinalizeButton = styled(Button)`
   width: fit-content;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalBox = styled.div`
+  background: white;
+  border-radius: 8px;
+  padding: 20px 24px;
+  min-width: 280px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  font-family: sans-serif;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ModalTitle = styled.div`
+  font-weight: 700;
+  font-size: 14px;
+`;
+
+const ModalInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+`;
+
+const ModalSelect = styled.select`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+`;
+
+function VariableInputModal({
+  varName,
+  varType,
+  currentValue,
+  onConfirm,
+  onCancel,
+}: {
+  varName: string;
+  varType: string;
+  currentValue: string | number | boolean | undefined;
+  onConfirm: (value: string | number | boolean) => void;
+  onCancel: () => void;
+}) {
+  const [inputVal, setInputVal] = useState(
+    currentValue !== undefined ? String(currentValue) : "",
+  );
+
+  const handleConfirm = () => {
+    let parsed: string | number | boolean = inputVal;
+    if (varType === "Int") parsed = Number(inputVal);
+    else if (varType === "Bool") parsed = inputVal === "true";
+    onConfirm(parsed);
+  };
+
+  return (
+    <ModalOverlay onClick={onCancel}>
+      <ModalBox onClick={(e) => e.stopPropagation()}>
+        <ModalTitle>
+          Enter value for <em>{varName}</em>
+        </ModalTitle>
+        {varType === "Bool" ? (
+          <ModalSelect
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+          >
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </ModalSelect>
+        ) : (
+          <ModalInput
+            type={varType === "Int" ? "number" : "text"}
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleConfirm();
+              if (e.key === "Escape") onCancel();
+            }}
+            autoFocus
+          />
+        )}
+        <ModalButtons>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: "6px 14px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              cursor: "pointer",
+              background: "white",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            style={{
+              padding: "6px 14px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              background: "#28a745",
+              color: "white",
+              fontWeight: "bold",
+            }}
+          >
+            Confirm
+          </button>
+        </ModalButtons>
+      </ModalBox>
+    </ModalOverlay>
+  );
+}
+
 const SimulatingEnum = {
   Default: "Default",
   Wild: "Wild",
@@ -94,8 +230,6 @@ const SimulatingEnum = {
 } as const;
 
 type SimulatingEnum = (typeof SimulatingEnum)[keyof typeof SimulatingEnum];
-
-let id = 1;
 
 const DEFAULT_EVENT_LOG = {
   name: "Unnamed Event Log",
@@ -137,6 +271,8 @@ const SimulatorState = ({
   markerNotation,
   changeMarkerNotation,
 }: StateProps) => {
+  const traceIdCounter = useRef(1);
+
   const [modeler, setModeler] = useState<DCRModeler | null>(null);
   const [currentDcrGraph, setCurrentDcrGraph] = useState<DCRGraphS | null>(
     null,
@@ -151,10 +287,59 @@ const SimulatorState = ({
     }
 
     setCurrentDcrGraph(initialDcrGraph);
-    modeler.updateRendering(initialDcrGraph);
+    setVariableStore(initialDcrGraph.initialVariableStore ?? {});
+    setClock(new Date());
+    modeler.updateRendering(initialDcrGraph, initialDcrGraph.initialVariableStore ?? {}, clock);
   }, [currentDcrGraph, initialDcrGraph, modeler]);
 
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const [variableStore, setVariableStore] = useState<VariableStore>({});
+
+  const [clock, setClock] = useState<Date>(() => new Date());
+  const [advanceValue, setAdvanceValue] = useState<string>("1");
+  const [advanceUnit, setAdvanceUnit] = useState<"days" | "hours" | "minutes" | "seconds">("days");
+
+  const advanceTimeUnits: Record<string, number> = {
+    days: 86400000, hours: 3600000, minutes: 60000, seconds: 1000,
+  };
+
+  const advanceClock = () => {
+    const ms = (parseFloat(advanceValue) || 0) * advanceTimeUnits[advanceUnit];
+    if (ms <= 0) return;
+    const newClock = new Date(clock.getTime() + ms);
+
+    if (currentDcrGraph) {
+      const overdue = [...currentDcrGraph.marking.pending.entries()]
+        .filter(([, deadline]) => deadline && clock <= deadline && newClock > deadline)
+        .map(([eventId]) => currentDcrGraph.labelMap[eventId] || eventId);
+      if (overdue.length > 0) {
+        if (!window.confirm(`Advancing time will overrun the deadline for: ${overdue.join(", ")}.\n\nProceed?`)) return;
+      }
+
+      // Remove pending entries whose deadline has now passed
+      for (const [eventId, deadline] of currentDcrGraph.marking.pending.entries()) {
+        if (deadline && newClock > deadline) {
+          currentDcrGraph.marking.pending.delete(eventId);
+        }
+      }
+      setCurrentDcrGraph({ ...currentDcrGraph });
+    }
+
+    setClock(newClock);
+  };
+
+
+  function formatClock(d: Date): string {
+    return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  const [pendingExecution, setPendingExecution] = useState<{
+    element: TargetElement;
+    draftGraph: DCRGraphS;
+    varName: string;
+    varType: string;
+  } | null>(null);
 
   const [eventLog, setEventLog] = useState<{
     name: string;
@@ -193,7 +378,7 @@ const SimulatorState = ({
   );
 
   const addEventToTrace = useCallback(
-    (traceId: string, activity: string, role: string) =>
+    (traceId: string, activity: string, role: string, timestamp?: Date, varName?: string, value?: Value) =>
       setEventLog((currentEventLog) => {
         const trace = currentEventLog.traces[traceId];
         if (!trace) return currentEventLog;
@@ -203,7 +388,7 @@ const SimulatorState = ({
             ...currentEventLog.traces,
             [traceId]: {
               ...trace,
-              trace: [...trace.trace, { activity, role }],
+              trace: [...trace.trace, { activity, role, timestamp, varName, value }],
             },
           },
         };
@@ -288,9 +473,9 @@ const SimulatorState = ({
   }, [currentDcrGraph, selectedTrace?.trace]);
 
   const addEventToSelectedTrace = useCallback(
-    (activity: string, role: string) => {
+    (activity: string, role: string, timestamp?: Date, varName?: string, value?: Value) => {
       if (selectedTraceId === null) return;
-      addEventToTrace(selectedTraceId, activity, role);
+      addEventToTrace(selectedTraceId, activity, role, timestamp, varName, value);
     },
     [selectedTraceId, addEventToTrace],
   );
@@ -321,6 +506,10 @@ const SimulatorState = ({
           "This will override your current event log! Do you wish to continue?",
         )
       ) {
+        const traceNums = Object.keys(log.traces)
+          .map((k) => { const m = k.match(/^Trace (\d+)$/); return m ? parseInt(m[1]) : -1; })
+          .filter((n) => n >= 0);
+        traceIdCounter.current = traceNums.length > 0 ? Math.max(...traceNums) + 1 : 0;
         setSimulationStatus(SimulatingEnum.Not);
         setEventLog({
           name,
@@ -411,26 +600,29 @@ const SimulatorState = ({
   const executeEvent = (
     element: TargetElement,
     graph: DCRGraphS,
-  ): { msg: string; executedEvent: string; role: string } => {
+    varStore: VariableStore = {},
+  ): { msg: string; executedEvent: string; role: string; timestamp: Date } => {
     const eventId: Event = element.id;
 
     const group: SubProcess | DCRGraphS =
       (graph.subProcessMap[eventId] as SubProcess | undefined) ?? graph;
 
-    const enabledResponse = isEnabledS(eventId, graph, group);
+    const enabledResponse = isEnabledS(eventId, graph, group, varStore, clock);
     if (simulationStatus !== SimulatingEnum.Wild && !enabledResponse.enabled) {
       return {
         msg: enabledResponse.msg,
         executedEvent: "",
         role: "",
+        timestamp: clock,
       };
     }
 
-    executeS(eventId, graph);
+    executeS(eventId, graph, varStore, clock);
     return {
       msg: logExcecutionString(element),
       executedEvent: traceString(element),
       role: roleString(element),
+      timestamp: clock,
     };
   };
 
@@ -619,6 +811,11 @@ const SimulatorState = ({
     onInitModeler(modeler);
   }, [modeler]);
 
+  useEffect(() => {
+    if (!modeler || !currentDcrGraph) return;
+    modeler.updateRendering(currentDcrGraph, variableStore, clock);
+  }, [clock]);
+
   return (
     <>
       {simulationStatus === SimulatingEnum.Not ? <GreyOut /> : null}
@@ -655,22 +852,54 @@ const SimulatorState = ({
             marking: copyMarking(currentDcrGraph.marking), // Only marking is modified during execution
           };
 
-          const response = executeEvent(event.element, draftGraph);
-          if (response.executedEvent) {
-            addEventToSelectedTrace(response.executedEvent, response.role);
-          } else {
-            toast.warn(response.msg);
-          }
+          // Check if the event has a data variable
+          const eventData = event.element.businessObject?.get?.("eventData");
+          const eventVars: Array<{ name: string; type: string }> = eventData ? [eventData] : [];
 
-          setCurrentDcrGraph(draftGraph);
-          modeler.updateRendering(draftGraph);
+          if (eventVars.length > 0) {
+            // Pre-check enablement before showing popup
+            const eventId: Event = event.element.id;
+            const group: SubProcess | DCRGraphS =
+              (draftGraph.subProcessMap[eventId] as SubProcess | undefined) ??
+              draftGraph;
+            const enabledResponse = isEnabledS(
+              eventId,
+              draftGraph,
+              group,
+              variableStore,
+              clock,
+            );
+            if (
+              simulationStatus !== SimulatingEnum.Wild &&
+              !enabledResponse.enabled
+            ) {
+              toast.warn(enabledResponse.msg);
+              return;
+            }
+            setPendingExecution({
+              element: event.element,
+              draftGraph,
+              varName: eventVars[0].name,
+              varType: eventVars[0].type,
+            });
+          } else {
+            const response = executeEvent(event.element, draftGraph, variableStore);
+            if (response.executedEvent) {
+              addEventToSelectedTrace(response.executedEvent, response.role, response.timestamp);
+            } else {
+              toast.warn(response.msg);
+            }
+            setCurrentDcrGraph(draftGraph);
+            modeler.updateRendering(draftGraph, variableStore, clock);
+          }
         }}
         onImport={() => {
           if (modeler) {
             const graph = moddleToDCR(modeler.getElementRegistry());
             setCurrentDcrGraph(graph);
             setInitialDcrGraph(graph);
-            modeler.updateRendering(graph);
+            setVariableStore(graph.initialVariableStore ?? {});
+            modeler.updateRendering(graph, graph.initialVariableStore ?? {}, clock);
           }
         }}
       />
@@ -693,7 +922,7 @@ const SimulatorState = ({
           <Button
             disabled={simulationStatus !== SimulatingEnum.Not}
             onClick={() => {
-              const traceId = "Trace " + id++;
+              const traceId = "Trace " + traceIdCounter.current++;
               addTraceToLog(traceId);
               setSelectedTraceId(traceId);
               setSimulationStatus(SimulatingEnum.Default);
@@ -760,6 +989,69 @@ const SimulatorState = ({
           )}
         </TraceView>
       )}
+      {pendingExecution && (
+        <VariableInputModal
+          varName={pendingExecution.varName}
+          varType={pendingExecution.varType}
+          currentValue={variableStore[pendingExecution.varName]}
+          onConfirm={(value) => {
+            const newStore = {
+              ...variableStore,
+              [pendingExecution.varName]: value,
+            };
+            setVariableStore(newStore);
+            const response = executeEvent(
+              pendingExecution.element,
+              pendingExecution.draftGraph,
+              newStore,
+            );
+            if (response.executedEvent) {
+              addEventToSelectedTrace(response.executedEvent, response.role, response.timestamp, pendingExecution.varName, value);
+            } else {
+              toast.warn(response.msg);
+            }
+            setCurrentDcrGraph(pendingExecution.draftGraph);
+            modeler?.updateRendering(pendingExecution.draftGraph, newStore, clock);
+            setPendingExecution(null);
+          }}
+          onCancel={() => setPendingExecution(null)}
+        />
+      )}
+      <div style={{
+        position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)",
+        background: "white", borderRadius: "14px",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        padding: "10px 20px", display: "inline-flex", alignItems: "center",
+        gap: "12px", fontSize: "14px", zIndex: 100, whiteSpace: "nowrap",
+      }}>
+        <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 600 }}>
+          🕐 {formatClock(clock)}
+        </span>
+        <span style={{ color: "#ccc", fontSize: "18px", lineHeight: 1 }}>|</span>
+        <input
+          type="number"
+          min="0"
+          value={advanceValue}
+          onChange={e => setAdvanceValue(e.target.value)}
+          style={{ width: "56px", padding: "5px 8px", border: "1px solid #ccc", borderRadius: "6px", fontSize: "14px", textAlign: "center" }}
+        />
+        <select
+          value={advanceUnit}
+          onChange={e => setAdvanceUnit(e.target.value as typeof advanceUnit)}
+          style={{ padding: "5px 8px", border: "1px solid #ccc", borderRadius: "6px", fontSize: "14px", background: "white" }}
+        >
+          <option value="seconds">Seconds</option>
+          <option value="minutes">Minutes</option>
+          <option value="hours">Hours</option>
+          <option value="days">Days</option>
+        </select>
+        <button onClick={advanceClock} style={{
+          padding: "6px 16px", border: "none", borderRadius: "8px",
+          background: "#0d6efd", color: "white", fontWeight: 600,
+          fontSize: "14px", cursor: "pointer",
+        }}>Advance ▶</button>
+      </div>
+
       <TopRightIcons>
         <WildButton
           $disabled={simulationStatus === SimulatingEnum.Not}
