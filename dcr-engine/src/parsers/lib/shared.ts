@@ -268,6 +268,11 @@ export function extractAttributesWithRegex(xml: string) {
 }
 
 function decodeXmlEntities(value: string): string {
+  // Entities always start with '&' - skip the five regex passes entirely
+  // for the common case (activity names, timestamps, etc. never contain one).
+  if (value.indexOf("&") === -1) {
+    return value;
+  }
   return value
     .replace(/&apos;/g, "'")
     .replace(/&quot;/g, '"')
