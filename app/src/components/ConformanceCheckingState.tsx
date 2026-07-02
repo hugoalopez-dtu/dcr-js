@@ -423,10 +423,11 @@ const ConformanceCheckingState = ({
 
           if (individualTraces) {
             const subResults = individualTraces.map((it) => {
-              const isPositive = replayTraceS(graph, it.trace, graph.initialVariableStore ?? {});
+              const structurallyPositive = replayTraceS(graph, it.trace, graph.initialVariableStore ?? {});
               const violations = !hasNesting
                 ? quantifyViolations(graph, it.trace, graph.initialVariableStore ?? {})
                 : undefined;
+              const isPositive = structurallyPositive && (violations?.totalTimeViolations ?? 0) === 0;
               return {
                 traceId: it.traceId,
                 traceName: subTraceNames.get(it.traceId),
@@ -469,10 +470,11 @@ const ConformanceCheckingState = ({
             return { variantId, traceName, count, frequency, trace, isPositive, violations: aggregated, classification: classifyTrace(isPositive, aggregated), subResults };
           }
 
-          const isPositive = replayTraceS(graph, trace, graph.initialVariableStore ?? {});
+          const structurallyPositive = replayTraceS(graph, trace, graph.initialVariableStore ?? {});
           const violations = !hasNesting
             ? quantifyViolations(graph, trace, graph.initialVariableStore ?? {})
             : undefined;
+          const isPositive = structurallyPositive && (violations?.totalTimeViolations ?? 0) === 0;
           return { variantId, traceName, count, frequency, trace, isPositive, violations, classification: classifyTrace(isPositive, violations), subResults: undefined };
         });
 
