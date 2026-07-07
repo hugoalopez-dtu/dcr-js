@@ -1,5 +1,5 @@
 Arrange meeting.xml
-Prescribe medicine.xml
+Multi-perspective Medical Prescription.xml
 Legal Compliance by Design.xml
 Nesting.xml
 Pizza delivery process.xml

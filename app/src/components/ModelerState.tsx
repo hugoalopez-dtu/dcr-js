@@ -186,6 +186,8 @@ const ModelerState = ({
             parse(data)
                 .then(() => {
                     setGraphName(importName ? importName : initGraphName);
+                    setExtractionResult(undefined);
+                    setTextOpen(false);
                     warnIfInvalidGuards();
                 })
                 .catch((e) => {
@@ -524,6 +526,8 @@ const ModelerState = ({
                 onSubmit={async (config) => {
                     if(!modeler) return;
 
+                    if (!confirm("This will replace your current diagram. Continue?")) return;
+
                     setIsExtractingModel(true);
                     try {
                         const res = await extractGraph(config);
@@ -531,6 +535,7 @@ const ModelerState = ({
                         const xml = await layoutGraph(res.graph);
                         console.log(xml);
                         await modeler.importXML(xml);
+                        setGraphName("Extracted Model");
                     } catch (e) {
                         console.log(e);
                     } finally {
@@ -652,6 +657,7 @@ const ModelerState = ({
             {examplesOpen && (
                 <Examples
                     examplesData={examplesData}
+                    openEditorXML={(xml) => open(xml, modeler?.importXML)}
                     openCustomXML={(xml) => open(xml, modeler?.importCustomXML)}
                     openDCRXML={(xml) => open(xml, modeler?.importDCRPortalXML)}
                     setExamplesOpen={setExamplesOpen}
