@@ -352,9 +352,13 @@ GuardsAndTimeProvider.prototype.openEventVariablesPanel = function(element) {
         return;
       }
       var name = editVar.name.trim();
+      var errEl = panel.querySelector('#_var_err');
       if (!name) {
-        var errEl = panel.querySelector('#_var_err');
         if (errEl) errEl.textContent = 'Variable name is required.';
+        return;
+      }
+      if (self._isVariableNameTakenElsewhere(name, element)) {
+        if (errEl) errEl.textContent = 'Variable "' + name + '" is already declared on another event.';
         return;
       }
       var obj = self._moddle.create('dcr:EventData', { name: name, type: editVar.type });
@@ -397,6 +401,15 @@ GuardsAndTimeProvider.prototype._allVariableNames = function() {
     if (v && v.name) names.add(v.name);
   });
   return names;
+};
+
+GuardsAndTimeProvider.prototype._isVariableNameTakenElsewhere = function(name, element) {
+  return this._elementRegistry.filter(function(el) {
+    return el.type === 'dcr:Event' && el !== element;
+  }).some(function(el) {
+    var v = getBusinessObject(el).get('eventData');
+    return v && v.name === name;
+  });
 };
 
 GuardsAndTimeProvider.prototype._validateGuard = function(guardVal) {
