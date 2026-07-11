@@ -1,4 +1,5 @@
-import { evaluateGuard, executeS, isAcceptingS, isEnabledS } from "./executionEngine";
+import { executeS, isAcceptingS, isEnabledS } from "./executionEngine";
+import { evaluateGuard } from "./guardEval";
 import type {
   DCRGraphS,
   Event,
@@ -24,7 +25,8 @@ export function replayTraceS(
   graph: DCRGraphS,
   trace: RoleTrace,
   variableStore: VariableStore = {},
-  executionTimestamps: Map<Event, number> = new Map()
+  executionTimestamps: Map<Event, number> = new Map(),
+  lastKnownTime?: Date
 ): boolean {
   let retval = false;
 
@@ -32,7 +34,7 @@ export function replayTraceS(
 
   const [head, ...tail] = trace;
   if (!graph.labels.has(head.activity)) {
-    return replayTraceS(graph, tail, variableStore, executionTimestamps);
+    return replayTraceS(graph, tail, variableStore, executionTimestamps, lastKnownTime);
   }
 
   const updatedStore: VariableStore =
@@ -40,7 +42,7 @@ export function replayTraceS(
       ? { ...variableStore, [head.varName]: head.value }
       : variableStore;
 
-  const headTime = head.timestamp ?? new Date();
+  const headTime = head.timestamp ?? lastKnownTime ?? new Date();
   const initMarking = copyMarking(graph.marking);
 
   for (const event of graph.labelMapInv[head.activity]) {
@@ -52,7 +54,7 @@ export function replayTraceS(
     if (head.timestamp) updatedTimestamps.set(event, head.timestamp.getTime());
 
     executeS(event, graph, updatedStore, headTime);
-    retval = retval || replayTraceS(graph, tail, updatedStore, updatedTimestamps);
+    retval = retval || replayTraceS(graph, tail, updatedStore, updatedTimestamps, headTime);
     graph.marking = copyMarking(initMarking);
   }
 
@@ -300,7 +302,41 @@ export function quantifyViolations(
           (e2) => graph.guardMap?.[event]?.[e2]?.['include'], updatedStore),
       };
 
-      // Condition violations
+      const checkTemporalViolations = (
+        checkedEvent: Event,
+        timestamps: Map<Event, number>
+      ) => {
+        if (headTime === undefined || !graph.timeConstraintMap) return;
+
+        for (const otherEvent of graph.conditionsFor[checkedEvent] ?? []) {
+          if (!graph.marking.included.has(otherEvent)) continue;
+          if (!graph.marking.executed.has(otherEvent)) continue;
+          const guard = graph.guardMap?.[otherEvent]?.[checkedEvent]?.['condition'];
+          if (guard && !evaluateGuard(guard, updatedStore)) continue;
+          const delay = graph.timeConstraintMap[otherEvent]?.[checkedEvent]?.delay;
+          if (delay === undefined) continue;
+          const sourceTime = timestamps.get(otherEvent);
+          if (sourceTime !== undefined && headTime - sourceTime < delay) {
+            if (!localTimeViolations.conditionsFor[checkedEvent]) localTimeViolations.conditionsFor[checkedEvent] = {};
+            localTimeViolations.conditionsFor[checkedEvent][otherEvent] = (localTimeViolations.conditionsFor[checkedEvent][otherEvent] || 0) + 1;
+            localViolationCount++;
+            localTimeViolationCount++;
+          }
+        }
+
+        for (const source in graph.timeConstraintMap) {
+          const deadline = graph.timeConstraintMap[source]?.[checkedEvent]?.deadline;
+          if (deadline === undefined) continue;
+          const sourceTime = timestamps.get(source);
+          if (sourceTime !== undefined && headTime - sourceTime > deadline) {
+            if (!localTimeViolations.responseTo[source]) localTimeViolations.responseTo[source] = {};
+            localTimeViolations.responseTo[source][checkedEvent] = (localTimeViolations.responseTo[source][checkedEvent] || 0) + 1;
+            localViolationCount++;
+            localTimeViolationCount++;
+          }
+        }
+      };
+
       for (const otherEvent of mutatingDifference(
         new Set(graph.conditionsFor[event]),
         new Set(graph.marking.executed.keys())
@@ -313,24 +349,7 @@ export function quantifyViolations(
         localViolationCount++;
       }
 
-      // Condition delay violations
-      if (headTime !== undefined && graph.timeConstraintMap) {
-        for (const otherEvent of graph.conditionsFor[event]) {
-          if (!graph.marking.included.has(otherEvent)) continue;
-          if (!graph.marking.executed.has(otherEvent)) continue;
-          const guard = graph.guardMap?.[otherEvent]?.[event]?.['condition'];
-          if (guard && !evaluateGuard(guard, updatedStore)) continue;
-          const delay = graph.timeConstraintMap[otherEvent]?.[event]?.delay;
-          if (delay === undefined) continue;
-          const sourceTime = executionTimestamps.get(otherEvent);
-          if (sourceTime !== undefined && headTime - sourceTime < delay) {
-            if (!localTimeViolations.conditionsFor[event]) localTimeViolations.conditionsFor[event] = {};
-            localTimeViolations.conditionsFor[event][otherEvent] = (localTimeViolations.conditionsFor[event][otherEvent] || 0) + 1;
-            localViolationCount++;
-            localTimeViolationCount++;
-          }
-        }
-      }
+      checkTemporalViolations(event, executionTimestamps);
 
       // Milestone violations
       for (const otherEvent of mutatingIntersect(
@@ -345,21 +364,6 @@ export function quantifyViolations(
         localViolationCount++;
       }
 
-      // Deadline violations
-      if (headTime !== undefined && graph.timeConstraintMap) {
-        for (const source in graph.timeConstraintMap) {
-          const deadline = graph.timeConstraintMap[source]?.[event]?.deadline;
-          if (deadline === undefined) continue;
-          const sourceTime = executionTimestamps.get(source);
-          if (sourceTime !== undefined && headTime - sourceTime > deadline) {
-            if (!localTimeViolations.responseTo[source]) localTimeViolations.responseTo[source] = {};
-            localTimeViolations.responseTo[source][event] = (localTimeViolations.responseTo[source][event] || 0) + 1;
-            localViolationCount++;
-            localTimeViolationCount++;
-          }
-        }
-      }
-
       // Exclude violations
       if (!graph.marking.included.has(event)) {
         for (const otherEvent of mutatingIntersect(
@@ -372,10 +376,23 @@ export function quantifyViolations(
         }
       }
 
-      executeS(event, graph, updatedStore);
+      const beforeExecuted = new Set(graph.marking.executed.keys());
+      executeS(event, graph, updatedStore, headTime !== undefined ? new Date(headTime) : new Date());
+      const cascadedEvents = [...graph.marking.executed.keys()].filter(
+        (id) => id !== event && !beforeExecuted.has(id)
+      );
 
       const updatedTimestamps = new Map(executionTimestamps);
-      if (headTime !== undefined) updatedTimestamps.set(event, headTime);
+      if (headTime !== undefined) {
+        updatedTimestamps.set(event, headTime);
+        for (const cascadedEvent of cascadedEvents) {
+          updatedTimestamps.set(cascadedEvent, headTime);
+        }
+      }
+
+      for (const cascadedEvent of cascadedEvents) {
+        checkTemporalViolations(cascadedEvent, updatedTimestamps);
+      }
 
       for (const otherEvent of graph.includesTo[event]) {
         localExSinceIn[otherEvent] = new Set();
