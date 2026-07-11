@@ -2,6 +2,8 @@ import { useState } from "react";
 import { BiCheck, BiQuestionMark, BiReset, BiX } from "react-icons/bi";
 import styled from "styled-components";
 import type { RoleTrace } from "dcr-engine/src/types";
+import type { TraceClassification } from "../types";
+import { PartialViolationIcon } from "./ConformanceUtil";
 
 const TraceWindow = styled.div<{ $hugLeft: boolean }>`
   position: fixed;
@@ -124,12 +126,29 @@ const resultIcon = (val: boolean | undefined) => {
   }
 };
 
+const classificationIcon = (c: TraceClassification) => {
+  switch (c) {
+    case "conforming":
+      return <GreenCheck title="Conforming" />;
+    case "partiallyViolating":
+      return (
+        <PartialViolationIcon
+          title="Partially Violating"
+          style={{ display: "block", margin: "auto", marginLeft: "1rem", marginRight: "1rem", width: "1em", height: "1em" }}
+        />
+      );
+    case "violating":
+      return <RedX title="Violating" />;
+  }
+};
+
 interface TraceViewProps {
   selectedTrace: {
     traceId: string;
     traceName?: string;
     trace: RoleTrace;
     isPositive?: boolean;
+    classification?: TraceClassification;
   };
   setSelectedTraceId: React.Dispatch<React.SetStateAction<string | null>>;
   onResetTrace?: () => void;
@@ -172,7 +191,9 @@ const TraceView = ({
         ) : (
           traceName
         )}
-        {"isPositive" in selectedTrace
+        {selectedTrace.classification
+          ? classificationIcon(selectedTrace.classification)
+          : "isPositive" in selectedTrace
           ? resultIcon(selectedTrace.isPositive)
           : null}
         {onResetTrace && <ResetTrace onClick={onResetTrace} />}
