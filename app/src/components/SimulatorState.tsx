@@ -316,14 +316,6 @@ const SimulatorState = ({
       if (overdue.length > 0) {
         if (!window.confirm(`Advancing time will overrun the deadline for: ${overdue.join(", ")}.\n\nProceed?`)) return;
       }
-
-      // Remove pending entries whose deadline has now passed
-      for (const [eventId, deadline] of currentDcrGraph.marking.pending.entries()) {
-        if (deadline && newClock > deadline) {
-          currentDcrGraph.marking.pending.delete(eventId);
-        }
-      }
-      setCurrentDcrGraph({ ...currentDcrGraph });
     }
 
     setClock(newClock);
@@ -449,6 +441,7 @@ const SimulatorState = ({
     setSimulationStatus(DEFAULT_SIMULATION_STATUS);
     setEventLog(DEFAULT_EVENT_LOG);
     setSelectedTraceId(DEFAULT_SELECTED_TRACE);
+    traceIdCounter.current = 1;
     resetCurrentDcrGraph();
   }, [resetCurrentDcrGraph]);
 
