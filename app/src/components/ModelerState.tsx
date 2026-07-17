@@ -455,7 +455,7 @@ const ModelerState = ({
         if (!modeler) return;
         const elementRegistry = modeler.getElementRegistry();
         const events = Object.values(elementRegistry._elements).filter(
-            (element: any) => element.element.id.includes("Event")
+            (element: any) => element.element.type === "dcr:Event"
         );
         const uniqueActivities = new Set(
             events.map((element: any) => element.element.businessObject.description)
