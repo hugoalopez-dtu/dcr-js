@@ -16,25 +16,47 @@ import {
   mutatingDifference,
   mutatingIntersect,
   mutatingUnion,
-  reverseRelation,
 } from "./utility";
 
 // https://link.springer.com/book/10.1007/978-3-319-99414-7
+
+// Tracks currently-open response-deadline obligations during quantifyViolations' replay:
+// obligations[target][source] = the time source executed, creating that specific obligation.
+// Per-(source, target) rather than a single flag per target, so that one target with several
+// deadline-bearing sources doesn't confuse an already-discharged obligation from one source
+// with a still-open obligation from another.
+type DeadlineObligations = Record<Event, Record<Event, number>>;
+
+// Tracks which guarded exclude/response relations are currently "standing" - i.e. actually
+// fired (guard held) at the source's own execution time, and not yet undone:
+// guardedExcludes[source][target] = 1: source executed while its exclude guard toward target
+// held, and target has not been genuinely re-included since.
+// guardedResponses[source][target] = 1: source executed while its response guard toward target
+// held, and target has not executed since (the obligation is still undischarged).
+// Used instead of the static excludesTo/responseTo graph so that violation attribution reflects
+// what actually fired at runtime rather than every statically-possible source.
+type GuardedFiring = FuzzyRelation;
+
+function copyFuzzyRelation(rel: GuardedFiring): GuardedFiring {
+  return Object.fromEntries(
+    Object.entries(rel).map(([source, targets]) => [source, { ...targets }])
+  );
+}
 
 export function replayTraceS(
   graph: DCRGraphS,
   trace: RoleTrace,
   variableStore: VariableStore = {},
-  executionTimestamps: Map<Event, number> = new Map(),
-  lastKnownTime?: Date
+  executionTimestamps: Map<Event, number> = new Map()
 ): boolean {
   let retval = false;
 
   if (trace.length === 0) return isAcceptingS(graph, graph);
 
   const [head, ...tail] = trace;
+  // Open world principle!
   if (!graph.labels.has(head.activity)) {
-    return replayTraceS(graph, tail, variableStore, executionTimestamps, lastKnownTime);
+    return replayTraceS(graph, tail, variableStore, executionTimestamps);
   }
 
   const updatedStore: VariableStore =
@@ -42,7 +64,8 @@ export function replayTraceS(
       ? { ...variableStore, [head.varName]: head.value }
       : variableStore;
 
-  const headTime = head.timestamp ?? lastKnownTime ?? new Date();
+  
+  const headTime = head.timestamp;
   const initMarking = copyMarking(graph.marking);
 
   for (const event of graph.labelMapInv[head.activity]) {
@@ -54,7 +77,7 @@ export function replayTraceS(
     if (head.timestamp) updatedTimestamps.set(event, head.timestamp.getTime());
 
     executeS(event, graph, updatedStore, headTime);
-    retval = retval || replayTraceS(graph, tail, updatedStore, updatedTimestamps, headTime);
+    retval = retval || replayTraceS(graph, tail, updatedStore, updatedTimestamps);
     graph.marking = copyMarking(initMarking);
   }
 
@@ -155,9 +178,6 @@ export function quantifyViolations(
   stepTimeViolations: number[];
   finalStateAccepting: boolean;
 } {
-  const excludesFor = reverseRelation(graph.excludesTo);
-  const responseFor = reverseRelation(graph.responseTo);
-
   const allEvents = mutatingUnion(
     Object.values(graph.subProcesses).reduce(
       (acc, cum) => mutatingUnion(acc, cum.events),
@@ -172,7 +192,10 @@ export function quantifyViolations(
     exSinceIn: EventMap,
     exSinceEx: EventMap,
     variableStore: VariableStore,
-    executionTimestamps: Map<Event, number>
+    executionTimestamps: Map<Event, number>,
+    obligations: DeadlineObligations,
+    guardedExcludes: GuardedFiring,
+    guardedResponses: GuardedFiring
   ): {
     totalViolations: number;
     totalTimeViolations: number;
@@ -191,10 +214,8 @@ export function quantifyViolations(
         graph.marking.included
       );
       for (const event of pendingIncluded) {
-        for (const otherEvent of mutatingIntersect(
-          new Set(responseFor[event]),
-          exSinceEx[event]
-        )) {
+        for (const otherEvent in guardedResponses) {
+          if (!guardedResponses[otherEvent]?.[event]) continue;
           if (!responseTo[otherEvent]) responseTo[otherEvent] = {};
           responseTo[otherEvent][event] = (responseTo[otherEvent][event] || 0) + 1;
           totalViolations++;
@@ -231,7 +252,7 @@ export function quantifyViolations(
     const [head, ...tail] = trace;
 
     if (!graph.labels.has(head.activity)) {
-      const skipped = quantifyRec(graph, tail, exSinceIn, exSinceEx, variableStore, executionTimestamps);
+      const skipped = quantifyRec(graph, tail, exSinceIn, exSinceEx, variableStore, executionTimestamps, obligations, guardedExcludes, guardedResponses);
       return { ...skipped, stepViolations: [0, ...skipped.stepViolations], stepTimeViolations: [0, ...skipped.stepTimeViolations] };
     }
 
@@ -274,6 +295,8 @@ export function quantifyViolations(
 
       const localExSinceIn = copyEventMap(exSinceIn);
       const localExSinceEx = copyEventMap(exSinceEx);
+      const localGuardedExcludes = copyFuzzyRelation(guardedExcludes);
+      const localGuardedResponses = copyFuzzyRelation(guardedResponses);
       let localViolationCount = 0;
       let localTimeViolationCount = 0;
       const localViolations: RelationViolations = {
@@ -306,8 +329,11 @@ export function quantifyViolations(
         checkedEvent: Event,
         timestamps: Map<Event, number>
       ) => {
-        if (headTime === undefined || !graph.timeConstraintMap) return;
+        if (!graph.timeConstraintMap) return;
 
+        // A missing timestamp - either on checkedEvent itself (headTime) or on the
+        // relation's source event - means we can't confirm the delay/deadline was
+        // respected. Therefore that counts as a violation.
         for (const otherEvent of graph.conditionsFor[checkedEvent] ?? []) {
           if (!graph.marking.included.has(otherEvent)) continue;
           if (!graph.marking.executed.has(otherEvent)) continue;
@@ -316,7 +342,7 @@ export function quantifyViolations(
           const delay = graph.timeConstraintMap[otherEvent]?.[checkedEvent]?.delay;
           if (delay === undefined) continue;
           const sourceTime = timestamps.get(otherEvent);
-          if (sourceTime !== undefined && headTime - sourceTime < delay) {
+          if (headTime === undefined || sourceTime === undefined || headTime - sourceTime < delay) {
             if (!localTimeViolations.conditionsFor[checkedEvent]) localTimeViolations.conditionsFor[checkedEvent] = {};
             localTimeViolations.conditionsFor[checkedEvent][otherEvent] = (localTimeViolations.conditionsFor[checkedEvent][otherEvent] || 0) + 1;
             localViolationCount++;
@@ -324,11 +350,14 @@ export function quantifyViolations(
           }
         }
 
-        for (const source in graph.timeConstraintMap) {
+        // Only currently-open obligations on checkedEvent are in here (see DeadlineObligations) -
+        // an already-discharged obligation from an earlier execution simply isn't present, so
+        // there's no risk of confusing it with a still-open one from a different source.
+        for (const source in obligations[checkedEvent] ?? {}) {
           const deadline = graph.timeConstraintMap[source]?.[checkedEvent]?.deadline;
           if (deadline === undefined) continue;
-          const sourceTime = timestamps.get(source);
-          if (sourceTime !== undefined && headTime - sourceTime > deadline) {
+          const obligationTime = obligations[checkedEvent][source];
+          if (headTime === undefined || headTime - obligationTime > deadline) {
             if (!localTimeViolations.responseTo[source]) localTimeViolations.responseTo[source] = {};
             localTimeViolations.responseTo[source][checkedEvent] = (localTimeViolations.responseTo[source][checkedEvent] || 0) + 1;
             localViolationCount++;
@@ -366,10 +395,8 @@ export function quantifyViolations(
 
       // Exclude violations
       if (!graph.marking.included.has(event)) {
-        for (const otherEvent of mutatingIntersect(
-          new Set(localExSinceIn[event]),
-          excludesFor[event]
-        )) {
+        for (const otherEvent in guardedExcludes) {
+          if (!guardedExcludes[otherEvent]?.[event]) continue;
           if (!localViolations.excludesTo[otherEvent]) localViolations.excludesTo[otherEvent] = {};
           localViolations.excludesTo[otherEvent][event] = (localViolations.excludesTo[otherEvent][event] || 0) + 1;
           localViolationCount++;
@@ -377,7 +404,7 @@ export function quantifyViolations(
       }
 
       const beforeExecuted = new Set(graph.marking.executed.keys());
-      executeS(event, graph, updatedStore, headTime !== undefined ? new Date(headTime) : new Date());
+      executeS(event, graph, updatedStore, headTime !== undefined ? new Date(headTime) : undefined);
       const cascadedEvents = [...graph.marking.executed.keys()].filter(
         (id) => id !== event && !beforeExecuted.has(id)
       );
@@ -394,8 +421,73 @@ export function quantifyViolations(
         checkTemporalViolations(cascadedEvent, updatedTimestamps);
       }
 
+      // event (and any cascaded events) just executed, discharging whatever obligations were
+      // open on them, and potentially creating new ones on whoever they respond to.
+      const updatedObligations: DeadlineObligations = { ...obligations };
+      delete updatedObligations[event];
+      for (const cascadedEvent of cascadedEvents) {
+        delete updatedObligations[cascadedEvent];
+      }
+      const registerObligations = (sourceEvent: Event) => {
+        for (const rEvent of graph.responseTo[sourceEvent]) {
+          const guard = graph.guardMap?.[sourceEvent]?.[rEvent]?.['response'];
+          if (guard && !evaluateGuard(guard, updatedStore)) continue;
+          const deadlineMs = graph.timeConstraintMap?.[sourceEvent]?.[rEvent]?.deadline;
+          if (deadlineMs === undefined) continue;
+          if (headTime === undefined) {
+            // Can't record when this obligation started, so its deadline compliance can never
+            // be confirmed later - flag it as a violation now rather than silently losing track.
+            if (!localTimeViolations.responseTo[sourceEvent]) localTimeViolations.responseTo[sourceEvent] = {};
+            localTimeViolations.responseTo[sourceEvent][rEvent] = (localTimeViolations.responseTo[sourceEvent][rEvent] || 0) + 1;
+            localViolationCount++;
+            localTimeViolationCount++;
+            continue;
+          }
+          updatedObligations[rEvent] = { ...(updatedObligations[rEvent] ?? {}), [sourceEvent]: headTime };
+        }
+      };
+      registerObligations(event);
+      for (const cascadedEvent of cascadedEvents) {
+        registerObligations(cascadedEvent);
+      }
+
+      // event (and any cascaded events) just executed, discharging any standing response
+      // obligation targeting them - regardless of which source it came from.
+      for (const sourceEvent in localGuardedResponses) {
+        delete localGuardedResponses[sourceEvent][event];
+        for (const cascadedEvent of cascadedEvents) {
+          delete localGuardedResponses[sourceEvent][cascadedEvent];
+        }
+      }
+
+      const registerGuardedRelations = (sourceEvent: Event) => {
+        for (const targetEvent of graph.excludesTo[sourceEvent]) {
+          const guard = graph.guardMap?.[sourceEvent]?.[targetEvent]?.['exclude'];
+          if (guard && !evaluateGuard(guard, updatedStore)) continue;
+          if (!localGuardedExcludes[sourceEvent]) localGuardedExcludes[sourceEvent] = {};
+          localGuardedExcludes[sourceEvent][targetEvent] = 1;
+        }
+        for (const targetEvent of graph.responseTo[sourceEvent]) {
+          const guard = graph.guardMap?.[sourceEvent]?.[targetEvent]?.['response'];
+          if (guard && !evaluateGuard(guard, updatedStore)) continue;
+          if (!localGuardedResponses[sourceEvent]) localGuardedResponses[sourceEvent] = {};
+          localGuardedResponses[sourceEvent][targetEvent] = 1;
+        }
+      };
+      registerGuardedRelations(event);
+      for (const cascadedEvent of cascadedEvents) {
+        registerGuardedRelations(cascadedEvent);
+      }
+
       for (const otherEvent of graph.includesTo[event]) {
-        localExSinceIn[otherEvent] = new Set();
+        if (localActivations.includesTo[event]?.[otherEvent]) {
+          localExSinceIn[otherEvent] = new Set();
+          // otherEvent was genuinely re-included, so any standing exclude effect on it from
+          // an earlier execution is stale - if it gets excluded again, blame whoever does that.
+          for (const sourceEvent in localGuardedExcludes) {
+            delete localGuardedExcludes[sourceEvent][otherEvent];
+          }
+        }
       }
       for (const otherEvent of allEvents) {
         localExSinceEx[otherEvent].add(event);
@@ -412,7 +504,7 @@ export function quantifyViolations(
         stepViolations: recStepViolations,
         stepTimeViolations: recStepTimeViolations,
         finalStateAccepting: recFinalStateAccepting,
-      } = quantifyRec(graph, tail, localExSinceIn, localExSinceEx, updatedStore, updatedTimestamps);
+      } = quantifyRec(graph, tail, localExSinceIn, localExSinceEx, updatedStore, updatedTimestamps, updatedObligations, localGuardedExcludes, localGuardedResponses);
 
       if (localViolationCount + recTotalViolations < leastViolations) {
         leastViolations = localViolationCount + recTotalViolations;
@@ -446,6 +538,9 @@ export function quantifyViolations(
     emptyEventMap(allEvents),
     emptyEventMap(allEvents),
     initialVariableStore,
-    new Map()
+    new Map(),
+    {},
+    {},
+    {}
   );
 }
