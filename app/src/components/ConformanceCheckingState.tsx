@@ -26,9 +26,7 @@ import {
   alignTrace,
   mergeViolations,
   moddleToDCR,
-  quantifyViolations,
   getVariants,
-  replayTraceS,
   type DCRGraphS,
   StringTraceStreamParser,
   filterVariantByTopPercentage,
@@ -44,7 +42,7 @@ import type {
   Trace,
   VariantLog,
 } from "dcr-engine/src/types";
-import type { TraceClassification, ViolationResults } from "../types";
+import type { ViolationResults } from "../types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import ReplayResults from "./ReplayResults";
 import styled from "styled-components";
@@ -53,6 +51,7 @@ import { graphToGraphPP } from "dcr-engine/src/align";
 import AlignmentResults from "./AlignmentResults";
 import AlignmentTraceView from "./AlignmentTraceView";
 import { mergeActivations } from "dcr-engine/src/conformance";
+import { classifyTrace, evaluateTraceClassification } from "../utilComponents/ConformanceUtil";
 import {
   ColoredRelationsSetting,
   MarkerNotationSetting,
@@ -63,12 +62,6 @@ import RawFileUpload from "../utilComponents/RawFileUpload";
 import Label from "../utilComponents/Label";
 import MenuElement from "../utilComponents/MenuElement";
 import EmptyResults from "./EmptyResults";
-
-function classifyTrace(isPositive: boolean, violations?: ViolationResults): TraceClassification {
-  if (isPositive) return "conforming";
-  if (violations?.finalStateAccepting) return "partiallyViolating";
-  return "violating";
-}
 
 function hashRoleTrace(trace: RoleTrace): string {
   return trace.map((e) => e.activity + "##" + e.role).join(";;");
@@ -423,18 +416,14 @@ const ConformanceCheckingState = ({
 
           if (individualTraces) {
             const subResults = individualTraces.map((it) => {
-              const structurallyPositive = replayTraceS(graph, it.trace, graph.initialVariableStore ?? {});
-              const violations = !hasNesting
-                ? quantifyViolations(graph, it.trace, graph.initialVariableStore ?? {})
-                : undefined;
-              const isPositive = structurallyPositive && (violations?.totalTimeViolations ?? 0) === 0;
+              const { isPositive, violations, classification } = evaluateTraceClassification(graph, it.trace, hasNesting);
               return {
                 traceId: it.traceId,
                 traceName: subTraceNames.get(it.traceId),
                 trace: it.trace,
                 isPositive,
                 violations,
-                classification: classifyTrace(isPositive, violations),
+                classification,
               };
             });
 
@@ -470,12 +459,8 @@ const ConformanceCheckingState = ({
             return { variantId, traceName, count, frequency, trace, isPositive, violations: aggregated, classification: classifyTrace(isPositive, aggregated), subResults };
           }
 
-          const structurallyPositive = replayTraceS(graph, trace, graph.initialVariableStore ?? {});
-          const violations = !hasNesting
-            ? quantifyViolations(graph, trace, graph.initialVariableStore ?? {})
-            : undefined;
-          const isPositive = structurallyPositive && (violations?.totalTimeViolations ?? 0) === 0;
-          return { variantId, traceName, count, frequency, trace, isPositive, violations, classification: classifyTrace(isPositive, violations), subResults: undefined };
+          const { isPositive, violations, classification } = evaluateTraceClassification(graph, trace, hasNesting);
+          return { variantId, traceName, count, frequency, trace, isPositive, violations, classification, subResults: undefined };
         });
 
         setReplayLogResults(
