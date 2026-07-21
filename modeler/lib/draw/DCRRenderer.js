@@ -374,6 +374,7 @@ export default function DCRRenderer(
       }
 
       var deadlineLabel = element.businessObject.get('deadlineLabel');
+      var deadlineOverdue = element.businessObject.get('deadlineOverdue');
       var delayUntilLabel = element.businessObject.get('delayUntilLabel');
       var bottomY = element.height - 8;
       if (deadlineLabel) {
@@ -384,7 +385,7 @@ export default function DCRRenderer(
           'text-anchor': 'middle',
           'font-size': '10',
           'font-family': 'sans-serif',
-          fill: '#c0392b',
+          fill: deadlineOverdue ? '#c0392b' : colorResponse,
           'pointer-events': 'none',
         });
         dlText.textContent = deadlineLabel;
@@ -399,7 +400,7 @@ export default function DCRRenderer(
           'text-anchor': 'middle',
           'font-size': '10',
           'font-family': 'sans-serif',
-          fill: '#2980b9',
+          fill: colorCondition,
           'pointer-events': 'none',
         });
         duText.textContent = delayUntilLabel;
