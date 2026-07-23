@@ -60,9 +60,17 @@ const HeatmapResults = ({
     let violatingCount = 0;
 
     for (const result of violationLogResults) {
-      if (result.classification === "conforming") conformingCount++;
-      else if (result.classification === "partiallyViolating") partiallyViolatingCount++;
-      else violatingCount++;
+      if (result.subTraces?.length) {
+        for (const st of result.subTraces) {
+          if (st.classification === "conforming") conformingCount++;
+          else if (st.classification === "partiallyViolating") partiallyViolatingCount++;
+          else violatingCount++;
+        }
+      } else {
+        if (result.classification === "conforming") conformingCount++;
+        else if (result.classification === "partiallyViolating") partiallyViolatingCount++;
+        else violatingCount++;
+      }
     }
 
     return { conformingCount, partiallyViolatingCount, violatingCount };

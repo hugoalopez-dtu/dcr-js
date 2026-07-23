@@ -728,6 +728,10 @@ BaseViewer.prototype.validateGuards = function () {
     }
 
     var usedVars = extractGuardVarNamesBV(guard);
+    if (usedVars.size === 0) {
+      invalid.push('Guard must reference at least one variable');
+      return;
+    }
     usedVars.forEach(function(name) {
       if (!varNames.has(name)) {
         invalid.push('Guard references undefined variable "' + name + '"');

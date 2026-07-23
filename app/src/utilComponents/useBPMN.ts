@@ -92,44 +92,24 @@ ${cleanTranslationEngineCode}
 ${cleanDcrGeneratorCode}
 
 def convert_bpmn_to_dcr_xml(bpmn_xml_content):
-    import tempfile
-    import os
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.bpmn', delete=False, encoding='utf-8') as temp_bpmn:
-        temp_bpmn.write(bpmn_xml_content)
-        temp_bpmn_path = temp_bpmn.name
-    
-    try:
-        parser = BPMNParser(temp_bpmn_path)
-        bpmn_process, errors = parser.parse_and_validate()
-        
-        if errors:
-            error_message = "\\n".join(errors)
-            raise Exception(f"BPMN validation failed:\\n{error_message}")
-        
-        if bpmn_process is None:
-            raise Exception("Failed to parse BPMN process")
-        
-        translator = TranslationEngine(bpmn_process)
-        dcr_graph = translator.translate()
-        
-        generator = DCRGenerator(dcr_graph)
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False, encoding='utf-8') as temp_dcr:
-            temp_dcr_path = temp_dcr.name
-        
-        generator.to_xml(temp_dcr_path)
-        
-        with open(temp_dcr_path, 'r', encoding='utf-8') as f:
-            dcr_xml_content = f.read()
-        
-        os.unlink(temp_dcr_path)
-        
-        return dcr_xml_content
-        
-    finally:
-        if os.path.exists(temp_bpmn_path):
-            os.unlink(temp_bpmn_path)
+    from io import BytesIO
+
+    bpmn_file = BytesIO(bpmn_xml_content.encode('utf-8'))
+    parser = BPMNParser(bpmn_file)
+    bpmn_process, errors = parser.parse_and_validate()
+
+    if errors:
+        error_message = "\\n".join(errors)
+        raise Exception(f"BPMN validation failed:\\n{error_message}")
+
+    if bpmn_process is None:
+        raise Exception("Failed to parse BPMN process")
+
+    translator = TranslationEngine(bpmn_process)
+    dcr_graph = translator.translate()
+
+    generator = DCRGenerator(dcr_graph)
+    return generator.to_xml_string()
       `;
 
       await pyodide.runPython(combinedPythonCode);
@@ -150,7 +130,7 @@ except Exception as e:
       `);
 
       if (result.success) {
-        const dcrXmlContent = result.dcr_xml;
+        const dcrXmlContent = String(result.dcr_xml);
 
         if (modeler && modeler.importDCRPortalXML) {
           await modeler.importDCRPortalXML(dcrXmlContent);

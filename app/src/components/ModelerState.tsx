@@ -571,13 +571,15 @@ const ModelerState = ({
             />
             <div style={{width: 100, height: "100vh"}}>tze</div>
             <TopRightIcons>
-                <ModalMenu
-                    icon={TextButton}
-                    elements={[{customElement: renderExtractionResult()}]}
-                    bottomElements={[]}
-                    open={textOpen && !menuOpen && !modelExtractionOpen}
-                    setOpen={setTextOpen}
-                />
+                {extractionResult && (
+                    <ModalMenu
+                        icon={TextButton}
+                        elements={[{customElement: renderExtractionResult()}]}
+                        bottomElements={[]}
+                        open={textOpen && !menuOpen && !modelExtractionOpen}
+                        setOpen={setTextOpen}
+                    />
+                )}
                 <HeatmapButton
                     onClick={() => {
                         if (!modeler) return;
