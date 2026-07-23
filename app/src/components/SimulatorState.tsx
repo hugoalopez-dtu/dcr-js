@@ -322,16 +322,15 @@ const SimulatorState = ({
     if (currentDcrGraph) {
       const overdue = [...currentDcrGraph.marking.pending.entries()]
         .filter(([, deadline]) => deadline && clock <= deadline && newClock > deadline)
-        .map(([eventId, deadline]) => ({
+        .map(([eventId]) => ({
           name: currentDcrGraph.labelMap[eventId] || eventId,
-          overrunDays: (newClock.getTime() - deadline!.getTime()) / 86400000,
         }));
       if (overdue.length > 0) {
         if (simulationStatus === SimulatingEnum.Wild) {
           const names = overdue.map(({ name }) => name).join(", ");
           if (!window.confirm(`Advancing time will overrun the deadline for: ${names}.\n\nProceed?`)) return;
         } else {
-          overdue.forEach(({ name, overrunDays }) => {
+          overdue.forEach(({ name }) => {
             toast.warn(
               `This advancement would move past the deadline of event: ${name}, and is therefore not allowed.`,
             );
@@ -350,11 +349,6 @@ const SimulatorState = ({
 
   function formatClock(d: Date): string {
     return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  }
-
-  function formatDays(days: number): string {
-    const rounded = Math.round(days * 10) / 10;
-    return `${rounded} day${rounded === 1 ? "" : "s"}`;
   }
 
   const [pendingExecution, setPendingExecution] = useState<{
