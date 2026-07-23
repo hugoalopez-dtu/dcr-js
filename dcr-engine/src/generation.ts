@@ -66,7 +66,7 @@ export function generateEventLog(
       const group = graph.subProcessMap[event]
         ? graph.subProcessMap[event]
         : graph;
-      if (isEnabledS(event, graph, group).enabled) {
+      if (isEnabledS(event, graph, group, {}, new Date()).enabled) {
         console.log(event, " is enabled");
         retval.add(event);
       }
@@ -99,7 +99,7 @@ export function generateEventLog(
       const enabled = allEnabled();
       if (enabled.size === 0) break;
       const event = getRandomItem(enabled);
-      executeS(event, graph);
+      executeS(event, graph, {}, new Date());
       trace.push({
         activity: graph.labelMap[event],
         role: graph.roleMap[event],

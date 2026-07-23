@@ -64,7 +64,7 @@ export const executeS = (
   event: Event,
   graph: DCRGraphS,
   variableStore: VariableStore = {},
-  currentTime: Date = new Date()
+  currentTime?: Date
 ) => {
   graph.marking.executed.set(event, {
     time: currentTime,
@@ -88,7 +88,7 @@ export const executeS = (
     const guard = getGuard(graph.guardMap, event, rEvent, "response");
     if (evaluateGuard(guard, variableStore)) {
       const deadlineMs = graph.timeConstraintMap?.[event]?.[rEvent]?.deadline;
-      const deadline = deadlineMs !== undefined
+      const deadline = deadlineMs !== undefined && currentTime !== undefined
         ? new Date(currentTime.getTime() + deadlineMs)
         : undefined;
       graph.marking.pending.set(rEvent, deadline);
@@ -142,7 +142,7 @@ export function isEnabledS(
   graph: DCRGraphS,
   group: SubProcess | DCRGraph,
   variableStore: VariableStore = {},
-  currentTime: Date = new Date()
+  currentTime?: Date
 ): { enabled: boolean; msg: string } {
   if (!graph.marking.included.has(event)) {
     return {
@@ -174,7 +174,7 @@ export function isEnabledS(
     const delayMs = graph.timeConstraintMap?.[cEvent]?.[event]?.delay;
     if (delayMs !== undefined) {
       const executedAt = graph.marking.executed.get(cEvent)?.time;
-      if (!executedAt || currentTime.getTime() - executedAt.getTime() < delayMs) {
+      if (!executedAt || !currentTime || currentTime.getTime() - executedAt.getTime() < delayMs) {
         return {
           enabled: false,
           msg: `Delay from ${formatEmpty(graph.labelMap[cEvent], "Event")} to ${formatEmpty(graph.labelMap[event], "Event")} has not elapsed yet...`,
