@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 import { BiMenu, BiSolidDownArrow, BiSolidRightArrow } from "react-icons/bi";
-import React, { useState } from "react";
+import React, {useState} from "react";
 
 const MenuIcon = styled(BiMenu)<{ open: boolean }>`
   border-radius: 50%;
@@ -102,6 +102,7 @@ interface ModalMenuProps {
   bottomElements?: Array<ModalMenuElement>;
   open: boolean;
   setOpen: (val: boolean) => void;
+  icon?: React.FC<{onClick: () => void, open: boolean}>;
 }
 
 const isRegularElement = (obj: unknown): obj is RegularModalMenuElement => {
@@ -126,7 +127,13 @@ const ModalMenu = ({
   bottomElements,
   open,
   setOpen,
+  icon
 }: ModalMenuProps) => {
+  let Icon: React.FC<{onClick: () => void, open: boolean}> = MenuIcon;
+  if(icon) {
+    Icon = icon;
+  }
+
   const [openElements, setOpenElements] = useState<Set<string>>(new Set());
 
   const clickExpanding = (elementId: string) => {
@@ -190,7 +197,7 @@ const ModalMenu = ({
           )}
         </Menu>
       ) : null}
-      <MenuIcon
+      <Icon
         onClick={() => setOpen(!open)}
         open={open}
         data-testid="menu-icon"

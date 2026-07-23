@@ -1,12 +1,16 @@
 import type {
-  EventMap,
-  RelationType,
-  Event,
+  DataDCR,
   DCRGraph,
+  Event,
+  EventMap,
+  Expression,
   Nestings,
+  RelationType,
+  Variable,
+  VariableType,
 } from "./types";
 
-import ELK, { type ElkExtendedEdge, type ElkNode } from "elkjs";
+import ELK, {type ElkExtendedEdge, type ElkNode} from "elkjs";
 
 interface AbstractNode extends ElkNode {
   id: Event;
@@ -15,6 +19,7 @@ interface AbstractNode extends ElkNode {
   included: boolean;
   pending: boolean;
   executed: boolean;
+  variable?: Variable<VariableType>;
   children?: Array<AbstractNode>;
 }
 
@@ -23,6 +28,7 @@ interface AbstractEdge extends ElkExtendedEdge {
   type: RelationType;
   source: Event;
   target: Event;
+  expression?: Expression;
 }
 
 type AbstractGraph = {
@@ -64,7 +70,13 @@ function createXML(
           retval += createNodeArrayXML(node.children, nestings);
         retval += "</dcr:nesting>\n";
       } else {
-        retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
+        if(node.variable) {
+          retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false">\n`;
+          retval += `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n`
+          retval += ` </dcr:event>\n`
+        } else {
+          retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
+        }
       }
     });
     return retval;
@@ -74,13 +86,23 @@ function createXML(
     xmlContent += createNodeArrayXML(nodesAndEdges.nodes, nestings);
   } else {
     nodesAndEdges.nodes.forEach((node) => {
-      xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
+      if(node.variable) {
+        xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false">\n`;
+        xmlContent += `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n`
+        xmlContent += ` </dcr:event>\n`
+      } else {
+        xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
+      }
     });
   }
 
   let id = 0;
   nodesAndEdges.edges.forEach((edge) => {
-    xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${descToId(edge.source)}" targetRef="${descToId(edge.target)}"/>\n`;
+    if(edge.expression) {
+      xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${descToId(edge.source)}" targetRef="${descToId(edge.target)}" guard="${edge.expression.text}"/>\n`;
+    } else {
+      xmlContent += ` <dcr:relation id="Relation_${++id}" type="${edge.type}" sourceRef="${descToId(edge.source)}" targetRef="${descToId(edge.target)}"/>\n`;
+    }
   });
 
   xmlContent += " </dcr:dcrGraph>\n";
@@ -174,14 +196,16 @@ function listToTree(list: Array<{ id: string; parent: string }>) {
 
 function treesToAbstractNodeArray(
   trees: Array<TempNode>,
-  graph: DCRGraph,
+  graph: DCRGraph | DataDCR,
   nestings: Nestings
 ): Array<AbstractNode> {
+  const data = "data" in graph ? graph.data : {};
   return trees.map((node) => {
     return {
       id: node.id,
       width: 130,
       height: 150,
+      variable: data[node.id],
       included: graph.marking.included.has(node.id),
       pending: graph.marking.pending.has(node.id),
       executed: graph.marking.executed.has(node.id),
@@ -198,14 +222,16 @@ function treesToAbstractNodeArray(
   });
 }
 
-function getAbstractGraph(graph: DCRGraph, nestings?: Nestings): AbstractGraph {
+function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): AbstractGraph {
   let nodes: Array<AbstractNode> = [];
   const edges: Array<AbstractEdge> = [];
 
-  const loadEdge = (rel: EventMap, type: RelationType) => {
+  const loadEdge = (rel: EventMap, type: RelationType, guards?: DataDCR["expressions"]) => {
     if (type == "condition" || type == "milestone") {
       Object.keys(rel).forEach((target) => {
         rel[target].forEach((source) => {
+          const expression = guards?.[source]?.[target];
+          console.log(`Using guard: ${expression} for relation ${source}-${target}-${type}`);
           edges.push({
             id: `${source}-${target}-${type}`,
             source,
@@ -213,12 +239,15 @@ function getAbstractGraph(graph: DCRGraph, nestings?: Nestings): AbstractGraph {
             sources: [source],
             targets: [target],
             type,
+            expression,
           });
         });
       });
     } else {
       Object.keys(rel).forEach((source) => {
         rel[source].forEach((target) => {
+          const expression = guards?.[source]?.[target];
+          console.log(`Using guard: ${expression} for relation ${source}-${target}-${type}`);
           edges.push({
             id: `${source}-${target}-${type}`,
             source,
@@ -226,6 +255,7 @@ function getAbstractGraph(graph: DCRGraph, nestings?: Nestings): AbstractGraph {
             sources: [source],
             targets: [target],
             type,
+            expression,
           });
         });
       });
@@ -240,11 +270,14 @@ function getAbstractGraph(graph: DCRGraph, nestings?: Nestings): AbstractGraph {
     );
     nodes = treesToAbstractNodeArray(trees, graph, nestings);
   } else {
+    const data = "data" in graph ? graph.data : {};
     graph.events.forEach((event) => {
+      const variable = data[event];
       nodes.push({
         id: event,
         width: 130,
         height: 150,
+        variable: variable,
         included: graph.marking.included.has(event),
         pending: graph.marking.pending.has(event),
         executed: graph.marking.executed.has(event),
@@ -252,17 +285,19 @@ function getAbstractGraph(graph: DCRGraph, nestings?: Nestings): AbstractGraph {
     });
   }
 
-  loadEdge(graph.conditionsFor, "condition");
-  loadEdge(graph.milestonesFor, "milestone");
-  loadEdge(graph.responseTo, "response");
-  loadEdge(graph.excludesTo, "exclude");
-  loadEdge(graph.includesTo, "include");
+  const guards = "expressions" in graph ? graph["expressions"] : undefined;
+
+  loadEdge(graph.conditionsFor, "condition", guards);
+  loadEdge(graph.milestonesFor, "milestone", guards);
+  loadEdge(graph.responseTo, "response", guards);
+  loadEdge(graph.excludesTo, "exclude", guards);
+  loadEdge(graph.includesTo, "include", guards);
 
   return { nodes, edges };
 }
 
 export default async function layoutGraph(
-  graph: DCRGraph,
+  graph: DCRGraph | DataDCR,
   nestings?: Nestings
 ) {
   const abstractGraph = getAbstractGraph(graph, nestings);
