@@ -1,4 +1,4 @@
-import {type DataDCR, type Event, type EventMap} from "./types";
+import {type DataDCR, type Event, type EventMap, type ExecutionRecord} from "./types";
 import mentionPrompt from "./prompts/mentions";
 import relationsPrompt from "./prompts/relations";
 import dataPrompt from "./prompts/guards";
@@ -66,8 +66,8 @@ export default async function extractGraph(
         milestonesFor: {},
         responseTo: {},
         marking: {
-            executed: new Set<Event>(),
-            pending: new Set<Event>(),
+            executed: new Map<Event, ExecutionRecord>(),
+            pending: new Map<Event, Date | undefined>(),
             included: new Set<Event>(),
         },
         data: {},
