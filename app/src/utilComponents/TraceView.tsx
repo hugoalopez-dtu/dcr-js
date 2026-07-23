@@ -102,10 +102,15 @@ const OrangeQuestion = styled(BiQuestionMark)`
   background-color: orange;
 `;
 
-const Activity = styled.li`
+const Activity = styled.li<{ $color?: "green" | "red" | "yellow" }>`
   width: 100%;
   padding: 0.5rem 1rem 0.5rem 1rem;
   box-sizing: border-box;
+  background-color: ${({ $color }) =>
+    $color === "red" ? "#ffe0e0" :
+    $color === "yellow" ? "#fff8d0" :
+    $color === "green" ? "#e0f5e0" :
+    "transparent"};
 `;
 
 const resultIcon = (val: boolean | undefined) => {
@@ -132,6 +137,9 @@ interface TraceViewProps {
   onCloseCallback?: () => void;
   hugLeft?: boolean;
   children?: React.ReactNode;
+  stepViolations?: number[];
+  stepTimeViolations?: number[];
+  showDataFields?: boolean;
 }
 
 const TraceView = ({
@@ -142,6 +150,9 @@ const TraceView = ({
   onCloseCallback,
   hugLeft,
   children,
+  stepViolations,
+  stepTimeViolations,
+  showDataFields = true,
 }: TraceViewProps) => {
   const [traceName, setTraceName] = useState(
     selectedTrace.traceName || selectedTrace.traceId,
@@ -175,13 +186,31 @@ const TraceView = ({
         />
       </ResultsHeader>
       <ul>
-        {selectedTrace.trace.map((event, idx) => (
-          <Activity key={event.activity + event.role + idx}>
+        {selectedTrace.trace.map((event, idx) => {
+          const sv = stepViolations?.[idx];
+          const stv = stepTimeViolations?.[idx];
+          const color = stepViolations === undefined ? undefined
+            : (sv !== undefined && sv - (stv ?? 0) > 0) ? "red"
+            : (stv !== undefined && stv > 0) ? "yellow"
+            : "green";
+          return (
+          <Activity key={event.activity + event.role + idx} $color={color}>
             {event.role !== ""
               ? event.role + ": " + event.activity
               : event.activity}
+            {showDataFields && event.timestamp && (
+              <span style={{ fontSize: "0.75em", color: "#555", marginLeft: "0.5em" }}>
+                {event.timestamp.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+            {showDataFields && event.varName !== undefined && event.value !== undefined && (
+              <span style={{ fontSize: "0.75em", color: "#555", marginLeft: "0.5em" }}>
+                ({event.varName} = {String(event.value)})
+              </span>
+            )}
           </Activity>
-        ))}
+          );
+        })}
       </ul>
       {children}
     </TraceWindow>

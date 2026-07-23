@@ -220,6 +220,31 @@ export default function DCRRenderer(
     return line;
   }
 
+  function getMidpoint(waypoints) {
+    if (!waypoints || waypoints.length < 2) return waypoints && waypoints[0] || { x: 0, y: 0 };
+    var totalLen = 0;
+    var segs = [];
+    for (var i = 1; i < waypoints.length; i++) {
+      var dx = waypoints[i].x - waypoints[i - 1].x;
+      var dy = waypoints[i].y - waypoints[i - 1].y;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      segs.push({ len: len, p0: waypoints[i - 1], p1: waypoints[i] });
+      totalLen += len;
+    }
+    var half = totalLen / 2, acc = 0;
+    for (var j = 0; j < segs.length; j++) {
+      if (acc + segs[j].len >= half) {
+        var t = segs[j].len > 0 ? (half - acc) / segs[j].len : 0;
+        return {
+          x: segs[j].p0.x + t * (segs[j].p1.x - segs[j].p0.x),
+          y: segs[j].p0.y + t * (segs[j].p1.y - segs[j].p0.y),
+        };
+      }
+      acc += segs[j].len;
+    }
+    return waypoints[waypoints.length - 1];
+  }
+
   function createPathFromConnection(connection) {
     var waypoints = connection.waypoints;
 
@@ -341,6 +366,44 @@ export default function DCRRenderer(
 
       if (executed) {
         renderer('ExecutedMarker')(parentGfx, element);
+      }
+      
+      var eventData = element.businessObject.get('eventData');
+      if (eventData && eventData.name) {
+        renderer('VariablesBadge')(parentGfx, element, eventData.name);
+      }
+
+      var deadlineLabel = element.businessObject.get('deadlineLabel');
+      var delayUntilLabel = element.businessObject.get('delayUntilLabel');
+      var bottomY = element.height - 8;
+      if (deadlineLabel) {
+        var dlText = svgCreate('text');
+        svgAttr(dlText, {
+          x: element.width / 2,
+          y: bottomY,
+          'text-anchor': 'middle',
+          'font-size': '10',
+          'font-family': 'sans-serif',
+          fill: '#c0392b',
+          'pointer-events': 'none',
+        });
+        dlText.textContent = deadlineLabel;
+        svgAppend(parentGfx, dlText);
+        bottomY -= 13;
+      }
+      if (delayUntilLabel) {
+        var duText = svgCreate('text');
+        svgAttr(duText, {
+          x: element.width / 2,
+          y: bottomY,
+          'text-anchor': 'middle',
+          'font-size': '10',
+          'font-family': 'sans-serif',
+          fill: '#2980b9',
+          'pointer-events': 'none',
+        });
+        duText.textContent = delayUntilLabel;
+        svgAppend(parentGfx, duText);
       }
 
       return rect;
@@ -477,6 +540,53 @@ export default function DCRRenderer(
           settings.blackRelations ? colorBlack : "#4D6180", //green
           fill, startDirection, endDirection);
       }
+      
+      // Render time-constraint and guard
+      var timeVal = element.businessObject.get('time');
+      var guardVal = element.businessObject.get('guard');
+      if (timeVal || guardVal) {
+        var mid = getMidpoint(element.waypoints);
+        var annotColor = inactive ? colorGrey
+          : violationColour ? violationColour
+          : settings.blackRelations ? colorBlack
+          : type === 'condition' ? colorCondition
+          : type === 'response'  ? colorResponse
+          : type === 'include'   ? colorInclude
+          : type === 'exclude'   ? colorExclude
+          : type === 'milestone' ? colorMilestone
+          : colorBlack;
+
+        
+        if (timeVal) {
+          var tText = svgCreate('text');
+          svgAttr(tText, {
+            x: mid.x, y: mid.y - 8,
+            'font-size': '11',
+            'font-family': 'sans-serif',
+            'font-weight': 'bold',
+            'text-anchor': 'middle',
+            fill: annotColor,
+            'pointer-events': 'none',
+          });
+          tText.textContent = timeVal;
+          svgAppend(parentGfx, tText);
+        }
+
+        
+        if (guardVal) {
+          var gText = svgCreate('text');
+          svgAttr(gText, {
+            x: mid.x, y: mid.y + 19,
+            'font-size': '11',
+            'font-family': 'sans-serif',
+            'text-anchor': 'middle',
+            fill: annotColor,
+            'pointer-events': 'none',
+          });
+          gText.textContent = '[' + guardVal + ']';
+          svgAppend(parentGfx, gText);
+        }
+      }
 
       return path;
     },
@@ -573,6 +683,61 @@ export default function DCRRenderer(
         fill: getFillColor(element, defaultFillColor),
         stroke: getStrokeColor(element, defaultStrokeColor)
       });
+    },
+    VariablesBadge: function (parentGfx, element, varName) {
+      // Folded-corner indicator at top-right of the content area (below divider at y=30)
+      var foldSize = 14;
+      var cx = element.width;
+      var cy = 30;
+
+      var flap = svgCreate('path');
+      svgAttr(flap, {
+        d: 'M ' + (cx - foldSize) + ' ' + cy +
+           ' L ' + cx + ' ' + cy +
+           ' L ' + cx + ' ' + (cy + foldSize) + ' Z',
+        fill: '#ccc',
+        'pointer-events': 'none',
+      });
+      svgAppend(parentGfx, flap);
+
+      var crease = svgCreate('line');
+      svgAttr(crease, {
+        x1: cx - foldSize, y1: cy,
+        x2: cx,            y2: cy + foldSize,
+        stroke: '#999',
+        'stroke-width': 1,
+        'pointer-events': 'none',
+      });
+      svgAppend(parentGfx, crease);
+
+      // Variable name badge at bottom-left
+      if (varName) {
+        var approxW = varName.length * 6 + 10;
+        var by = element.height - 22;
+
+        var badge = svgCreate('rect');
+        svgAttr(badge, {
+          x: 5, y: by,
+          width: approxW, height: 16,
+          rx: 3, ry: 3,
+          fill: '#E3F2FD',
+          stroke: '#42A5F5',
+          'stroke-width': 1,
+          'pointer-events': 'none',
+        });
+        svgAppend(parentGfx, badge);
+
+        var label = svgCreate('text');
+        svgAttr(label, {
+          x: 10, y: by + 11,
+          'font-size': '10',
+          'font-family': 'sans-serif',
+          fill: '#1565C0',
+          'pointer-events': 'none',
+        });
+        label.textContent = varName;
+        svgAppend(parentGfx, label);
+      }
     },
   });
 }

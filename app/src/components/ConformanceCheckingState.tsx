@@ -44,6 +44,7 @@ import type {
   Trace,
   VariantLog,
 } from "dcr-engine/src/types";
+import type { TraceClassification, ViolationResults } from "../types";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import ReplayResults from "./ReplayResults";
 import styled from "styled-components";
@@ -63,6 +64,16 @@ import Label from "../utilComponents/Label";
 import MenuElement from "../utilComponents/MenuElement";
 import EmptyResults from "./EmptyResults";
 
+function classifyTrace(isPositive: boolean, violations?: ViolationResults): TraceClassification {
+  if (isPositive) return "conforming";
+  if (violations?.finalStateAccepting) return "partiallyViolating";
+  return "violating";
+}
+
+function hashRoleTrace(trace: RoleTrace): string {
+  return trace.map((e) => e.activity + "##" + e.role).join(";;");
+}
+
 function logMemory(label: string) {
   if ("gc" in window && typeof window.gc === "function") {
     window.gc();
@@ -79,6 +90,7 @@ function logMemory(label: string) {
 
 interface ConformanceCheckingSummary {
   totalViolations: number;
+  totalTimeViolations: number;
   violations: RelationViolations;
   activations: RelationActivations;
 }
@@ -248,47 +260,33 @@ const ConformanceCheckingState = ({
   }, [selectedTraceId, emptyLogResults]);
 
   const selectedReplayTrace = useMemo(() => {
-    if (!selectedTraceId) {
-      return null;
+    if (!selectedTraceId) return null;
+
+    for (const result of replayLogResults) {
+      if (result.traceId === selectedTraceId) {
+        return { traceId: result.traceId, traceName: result.traceName, trace: result.trace, count: result.count, frequency: result.frequency, isPositive: result.isPositive, classification: result.classification };
+      }
+      if (result.subTraces) {
+        const sub = result.subTraces.find((st) => st.traceId === selectedTraceId);
+        if (sub) return { traceId: sub.traceId, traceName: sub.traceName, trace: sub.trace, count: 1, frequency: undefined, isPositive: sub.isPositive, classification: sub.classification };
+      }
     }
-
-    const trace = replayLogResults.find((tr) => tr.traceId === selectedTraceId);
-
-    if (!trace) {
-      return null;
-    }
-
-    return {
-      traceId: selectedTraceId,
-      traceName: trace.traceName,
-      trace: trace.trace,
-      count: trace.count,
-      frequency: trace.frequency,
-      isPositive: trace.isPositive,
-    };
+    return null;
   }, [selectedTraceId, replayLogResults]);
 
   const selectedViolationTrace = useMemo(() => {
-    if (!selectedTraceId) {
-      return null;
+    if (!selectedTraceId) return null;
+
+    for (const result of violationLogResults) {
+      if (result.traceId === selectedTraceId) {
+        return { traceId: result.traceId, traceName: result.traceName, trace: result.trace, count: result.count, frequency: result.frequency, results: result.results, classification: result.classification };
+      }
+      if (result.subTraces) {
+        const sub = result.subTraces.find((st) => st.traceId === selectedTraceId);
+        if (sub) return { traceId: sub.traceId, traceName: sub.traceName, trace: sub.trace, count: 1, frequency: undefined, results: sub.results, classification: sub.classification };
+      }
     }
-
-    const trace = violationLogResults.find(
-      (tr) => tr.traceId === selectedTraceId,
-    );
-
-    if (!trace) {
-      return null;
-    }
-
-    return {
-      traceId: selectedTraceId,
-      traceName: trace.traceName,
-      trace: trace.trace,
-      count: trace.count,
-      frequency: trace.frequency,
-      results: trace.results,
-    };
+    return null;
   }, [selectedTraceId, violationLogResults]);
 
   const selectedAlignmentTrace = useMemo(() => {
@@ -329,8 +327,21 @@ const ConformanceCheckingState = ({
   const heatmapIsAllowed = !hasNesting;
   const alignmentIsAllowed = !(hasRole || hasSubProcess);
 
+  const hasData = useMemo(() => {
+    if (!currentDcrGraph) return false;
+    return (
+      (currentDcrGraph.guardMap !== undefined && Object.keys(currentDcrGraph.guardMap).length > 0) ||
+      (currentDcrGraph.initialVariableStore !== undefined && Object.keys(currentDcrGraph.initialVariableStore).length > 0) ||
+      (currentDcrGraph.timeConstraintMap !== undefined && Object.keys(currentDcrGraph.timeConstraintMap).length > 0)
+    );
+  }, [currentDcrGraph]);
+
   const performConformanceChecking = useCallback(
-    (graph: DCRGraphS, variantLog: VariantLog<RoleTrace>) => {
+    (
+      graph: DCRGraphS,
+      variantLog: VariantLog<RoleTrace>,
+      individualTraceMap?: Map<string, Array<{ traceId: string; trace: RoleTrace }>>,
+    ) => {
       const rawVariantsDirection = variantsDirectionRef.current?.value;
       const variantsDirection =
         rawVariantsDirection === "top" ? "top" : "bottom";
@@ -372,59 +383,144 @@ const ConformanceCheckingState = ({
         logMemory("After filtering variants");
         filteredVariantLogRef.current = filteredVariantLog;
 
-        console.info("Started replaying log...");
-        console.time("replay-log");
-        performance.mark("replay-log-start");
+        console.info("Started conformance analysis...");
+        console.time("conformance-analysis");
+        performance.mark("conformance-analysis-start");
+
+        // Pre-compute sub-trace names for consistent numbering across replay and violations
+        let globalTraceIndex = 0;
+        const subTraceNames = new Map<string, string>();
+        if (individualTraceMap) {
+          for (const variant of filteredVariantLog.variants) {
+            const traces = individualTraceMap.get(variant.variantId);
+            if (traces) {
+              for (const it of traces) {
+                subTraceNames.set(it.traceId, `Trace ${++globalTraceIndex}`);
+              }
+            }
+          }
+        }
+
+        const emptyRelViolations = (): RelationViolations => ({
+          conditionsFor: {},
+          responseTo: {},
+          excludesTo: {},
+          milestonesFor: {},
+        });
+        const emptyRelActivations = (): RelationActivations => ({
+          conditionsFor: {},
+          responseTo: {},
+          excludesTo: {},
+          milestonesFor: {},
+          includesTo: {},
+        });
+
+        // Compute replay + violations in one pass so classification can be set on both
+        const variantResults = filteredVariantLog.variants.map(({ variantId, trace, count }, variantIndex) => {
+          const traceName = `Trace Variant #${variantIndex + 1}`;
+          const frequency = count / variantLog.count;
+          const individualTraces = individualTraceMap?.get(variantId);
+
+          if (individualTraces) {
+            const subResults = individualTraces.map((it) => {
+              const isPositive = replayTraceS(graph, it.trace, graph.initialVariableStore ?? {});
+              const violations = !hasNesting
+                ? quantifyViolations(graph, it.trace, graph.initialVariableStore ?? {})
+                : undefined;
+              return {
+                traceId: it.traceId,
+                traceName: subTraceNames.get(it.traceId),
+                trace: it.trace,
+                isPositive,
+                violations,
+                classification: classifyTrace(isPositive, violations),
+              };
+            });
+
+            const isPositive = subResults.every((st) => st.isPositive);
+            const aggregated: ViolationResults | undefined = !hasNesting
+              ? subResults.reduce<ViolationResults>(
+                  (acc, st) => {
+                    if (!st.violations) return acc;
+                    return {
+                      totalViolations: acc.totalViolations + st.violations.totalViolations,
+                      totalTimeViolations: acc.totalTimeViolations + st.violations.totalTimeViolations,
+                      violations: mergeViolations(acc.violations, st.violations.violations),
+                      timeViolations: mergeViolations(acc.timeViolations, st.violations.timeViolations),
+                      activations: mergeActivations(acc.activations, st.violations.activations),
+                      stepViolations: [],
+                      stepTimeViolations: [],
+                      finalStateAccepting: acc.finalStateAccepting && st.violations.finalStateAccepting,
+                    };
+                  },
+                  {
+                    totalViolations: 0,
+                    totalTimeViolations: 0,
+                    violations: emptyRelViolations(),
+                    timeViolations: emptyRelViolations(),
+                    activations: emptyRelActivations(),
+                    stepViolations: [],
+          stepTimeViolations: [],
+                    finalStateAccepting: true,
+                  },
+                )
+              : undefined;
+
+            return { variantId, traceName, count, frequency, trace, isPositive, violations: aggregated, classification: classifyTrace(isPositive, aggregated), subResults };
+          }
+
+          const isPositive = replayTraceS(graph, trace, graph.initialVariableStore ?? {});
+          const violations = !hasNesting
+            ? quantifyViolations(graph, trace, graph.initialVariableStore ?? {})
+            : undefined;
+          return { variantId, traceName, count, frequency, trace, isPositive, violations, classification: classifyTrace(isPositive, violations), subResults: undefined };
+        });
 
         setReplayLogResults(
-          filteredVariantLog.variants.map(
-            ({ variantId, trace, count }, index) => {
-              return {
-                traceId: variantId,
-                traceName: `Trace Variant #${index + 1}`,
-                count,
-                frequency: count / variantLog.count, // relative to the original log
-                trace,
-                isPositive: replayTraceS(graph, trace),
-              };
-            },
-          ),
+          variantResults.map((r) => ({
+            traceId: r.variantId,
+            traceName: r.traceName,
+            count: r.count,
+            frequency: r.frequency,
+            trace: r.trace,
+            isPositive: r.isPositive,
+            classification: r.classification,
+            subTraces: r.subResults?.map((st) => ({
+              traceId: st.traceId,
+              traceName: st.traceName,
+              trace: st.trace,
+              isPositive: st.isPositive,
+              classification: st.classification,
+            })),
+          })),
         );
 
-        performance.mark("replay-log-end");
-        performance.measure("replay-log", "replay-log-start", "replay-log-end");
-        console.info("Finished replaying log!");
-        console.timeEnd("replay-log");
-        logMemory("After replaying log");
-
         if (!hasNesting) {
-          console.info("Started quantifying violations...");
-          console.time("quantify-violations");
-          performance.mark("quantify-violations-start");
-
           setViolationLogResults(
-            filteredVariantLog.variants.map(
-              ({ variantId, trace, count }, index) => ({
-                traceId: variantId,
-                traceName: `Trace Variant #${index + 1}`,
-                count,
-                frequency: count / variantLog.count, // relative to the original log
-                trace,
-                results: quantifyViolations(graph, trace),
-              }),
-            ),
+            variantResults.map((r) => ({
+              traceId: r.variantId,
+              traceName: r.traceName,
+              count: r.count,
+              frequency: r.frequency,
+              trace: r.trace,
+              results: r.violations,
+              classification: r.classification,
+              subTraces: r.subResults?.map((st) => ({
+                traceId: st.traceId,
+                traceName: st.traceName,
+                trace: st.trace,
+                results: st.violations,
+                classification: st.classification,
+              })),
+            })),
           );
-
-          performance.mark("quantify-violations-end");
-          performance.measure(
-            "quantify-violations",
-            "quantify-violations-start",
-            "quantify-violations-end",
-          );
-          console.info("Finished quantifying violations!");
-          console.timeEnd("quantify-violations");
-          logMemory("After quantifying violations");
         }
+
+        performance.mark("conformance-analysis-end");
+        performance.measure("conformance-analysis", "conformance-analysis-start", "conformance-analysis-end");
+        console.info("Finished conformance analysis!");
+        console.timeEnd("conformance-analysis");
+        logMemory("After conformance analysis");
 
         // Enable heatmap by default after conformance checking completes
         if (heatmapIsAllowed) {
@@ -497,19 +593,24 @@ const ConformanceCheckingState = ({
 
         return {
           totalViolations: acc.totalViolations + result.results.totalViolations,
-          violations: mergeViolations(
-            acc.violations,
-            result.results.violations,
-          ),
-          activations: mergeActivations(
-            acc.activations,
-            result.results.activations,
-          ),
+          totalTimeViolations: acc.totalTimeViolations + result.results.totalTimeViolations,
+          violations: mergeViolations(acc.violations, result.results.violations),
+          timeViolations: mergeViolations(acc.timeViolations, result.results.timeViolations),
+          activations: mergeActivations(acc.activations, result.results.activations),
+          stepViolations: [],
+          stepTimeViolations: [],
         };
       },
       {
         totalViolations: 0,
+        totalTimeViolations: 0,
         violations: {
+          conditionsFor: {},
+          responseTo: {},
+          excludesTo: {},
+          milestonesFor: {},
+        },
+        timeViolations: {
           conditionsFor: {},
           responseTo: {},
           excludesTo: {},
@@ -522,6 +623,7 @@ const ConformanceCheckingState = ({
           milestonesFor: {},
           includesTo: {},
         },
+        stepViolations: [],
       },
     );
   }, [violationLogResults]);
@@ -862,7 +964,40 @@ const ConformanceCheckingState = ({
 
   function handleCheck() {
     resetAllResults();
-    if (currentDcrGraph && variantLog) {
+    if (!currentDcrGraph) return;
+
+    const hasData =
+      (currentDcrGraph.guardMap !== undefined && Object.keys(currentDcrGraph.guardMap).length > 0) ||
+      (currentDcrGraph.initialVariableStore !== undefined && Object.keys(currentDcrGraph.initialVariableStore).length > 0) ||
+      (currentDcrGraph.timeConstraintMap !== undefined && Object.keys(currentDcrGraph.timeConstraintMap).length > 0);
+
+    if (hasData && currentLog) {
+      // Group individual traces by control-flow hash, preserving per-trace data
+      const tracesByHash = new Map<string, Array<{ traceId: string; trace: RoleTrace }>>();
+      for (const [traceId, trace] of Object.entries(currentLog.log.traces)) {
+        const hash = hashRoleTrace(trace);
+        if (!tracesByHash.has(hash)) tracesByHash.set(hash, []);
+        tracesByHash.get(hash)!.push({ traceId, trace });
+      }
+
+      let variantIdx = 0;
+      const individualTraceMap = new Map<string, Array<{ traceId: string; trace: RoleTrace }>>();
+      const groupedVariants = Array.from(tracesByHash.values())
+        .sort((a, b) => b.length - a.length)
+        .map((traces) => {
+          const variantId = `data-variant-${variantIdx++}`;
+          individualTraceMap.set(variantId, traces);
+          return { variantId, trace: traces[0].trace, count: traces.length };
+        });
+
+      const groupedVariantLog: VariantLog<RoleTrace> = {
+        events: currentLog.log.events,
+        count: Object.keys(currentLog.log.traces).length,
+        variants: groupedVariants,
+      };
+
+      performConformanceChecking(currentDcrGraph, groupedVariantLog, individualTraceMap);
+    } else if (variantLog) {
       performConformanceChecking(currentDcrGraph, variantLog);
     }
   }
@@ -920,6 +1055,7 @@ const ConformanceCheckingState = ({
           selectedTrace={selectedViolationTrace}
           setSelectedTraceId={setSelectedTraceId}
           onCheck={handleCheck}
+          hasTimeConstraints={!!(currentDcrGraph?.timeConstraintMap && Object.keys(currentDcrGraph.timeConstraintMap).length > 0)}
         />
       )}
       {/* Alignment view: When alignment is enabled (heatmap cannot be enabled at the same time) */}
@@ -938,6 +1074,7 @@ const ConformanceCheckingState = ({
           key={selectedEmptyTrace.traceId}
           selectedTrace={selectedEmptyTrace}
           setSelectedTraceId={setSelectedTraceId}
+          showDataFields={hasData}
         />
       )}
       {/* Default view: When alignment is disabled (heatmap can be enabled or disabled in this view) */}
@@ -946,6 +1083,9 @@ const ConformanceCheckingState = ({
           key={selectedReplayTrace.traceId}
           selectedTrace={selectedReplayTrace}
           setSelectedTraceId={setSelectedTraceId}
+          stepViolations={selectedViolationTrace?.results?.stepViolations}
+          stepTimeViolations={selectedViolationTrace?.results?.stepTimeViolations}
+          showDataFields={hasData}
         />
       )}
       {/* Alignment view: When alignment is enabled (heatmap cannot be enabled at the same time) */}

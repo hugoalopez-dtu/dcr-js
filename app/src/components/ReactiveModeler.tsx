@@ -5,7 +5,7 @@ import type { ColoredRelations, MarkerNotation } from "../types";
 export type TargetElement = {
   type: string;
   id: string;
-  businessObject: { description?: string | null; role?: string | null };
+  businessObject: { description?: string | null; role?: string | null; get?: (key: string) => any };
 };
 
 type ClickElementEventData = {

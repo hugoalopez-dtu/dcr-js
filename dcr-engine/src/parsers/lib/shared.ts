@@ -249,7 +249,7 @@ export function extractAttributesWithRegex(xml: string) {
       continue;
     }
 
-    const key = keyMatch[1];
+    const key = decodeXmlEntities(keyMatch[1]);
     if (key === "") {
       continue;
     }
@@ -259,12 +259,21 @@ export function extractAttributesWithRegex(xml: string) {
       continue;
     }
 
-    const value = valueMatch[1];
+    const value = decodeXmlEntities(valueMatch[1]);
 
     attributes[key] = parseAttribute(type, value);
   }
 
   return attributes;
+}
+
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
 }
 
 export function extractAttributesWithString(xml: string) {
@@ -309,7 +318,7 @@ export function extractAttributesWithString(xml: string) {
       continue;
     }
 
-    const key = tag.substring(keyStart, keyEnd);
+    const key = decodeXmlEntities(tag.substring(keyStart, keyEnd));
     if (key === "") {
       continue;
     }
@@ -325,7 +334,7 @@ export function extractAttributesWithString(xml: string) {
       continue;
     }
 
-    const value = tag.substring(valueStart, valueEnd);
+    const value = decodeXmlEntities(tag.substring(valueStart, valueEnd));
 
     attributes[key] = parseAttribute(type, value);
 

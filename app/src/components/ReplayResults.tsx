@@ -1,8 +1,9 @@
-import { useMemo } from "react";
-import { BiCheck, BiQuestionMark, BiX } from "react-icons/bi";
-import type { ReplayLogResults } from "../types";
+import { Fragment, useMemo, useState } from "react";
+import { BiCheck, BiChevronDown, BiChevronRight, BiQuestionMark, BiX } from "react-icons/bi";
+import type { ReplayLogResults, TraceClassification } from "../types";
 import Label from "../utilComponents/Label";
 import {
+  PartialViolationIcon,
   ResultsElement,
   ResultsHeader,
   ResultsWindow,
@@ -11,14 +12,16 @@ import FlexBox from "../utilComponents/FlexBox";
 import ResultContainer from "../utilComponents/ResultContainer";
 import Form from "../utilComponents/Form";
 
-const resultIcon = (val: boolean | undefined) => {
-  switch (val) {
-    case undefined:
+const classificationIcon = (c: TraceClassification | undefined) => {
+  switch (c) {
+    case "conforming":
+      return <BiCheck title="Conforming" style={{ backgroundColor: "green" }} />;
+    case "partiallyViolating":
+      return <PartialViolationIcon title="Partially Violating" />;
+    case "violating":
+      return <BiX title="Violating" style={{ backgroundColor: "red" }} />;
+    default:
       return <BiQuestionMark style={{ backgroundColor: "orange" }} />;
-    case true:
-      return <BiCheck title="Accepting" style={{ backgroundColor: "green" }} />;
-    case false:
-      return <BiX title="Non-accepting" style={{ backgroundColor: "red" }} />;
   }
 };
 
@@ -37,22 +40,20 @@ const ReplayResults = ({
   setSelectedTraceId,
   onCheck,
 }: ReplayResultsProps) => {
-  const { positiveCount, negativeCount } = useMemo<{
-    positiveCount: number;
-    negativeCount: number;
-  }>(() => {
-    let positiveCount = 0;
-    let negativeCount = 0;
+  const [expandedVariantId, setExpandedVariantId] = useState<string | null>(null);
+
+  const { conformingCount, partiallyViolatingCount, violatingCount } = useMemo(() => {
+    let conformingCount = 0;
+    let partiallyViolatingCount = 0;
+    let violatingCount = 0;
 
     for (const result of replayLogResults) {
-      if (result.isPositive !== undefined && result.isPositive) {
-        positiveCount++;
-      } else {
-        negativeCount++;
-      }
+      if (result.classification === "conforming") conformingCount++;
+      else if (result.classification === "partiallyViolating") partiallyViolatingCount++;
+      else violatingCount++;
     }
 
-    return { positiveCount, negativeCount };
+    return { conformingCount, partiallyViolatingCount, violatingCount };
   }, [replayLogResults]);
 
   return (
@@ -61,13 +62,17 @@ const ReplayResults = ({
         <FlexBox direction="column" $justify="start">
           <div>{logName}</div>
           <FlexBox direction="row" $justify="space-between">
-            <ResultContainer title="Accepting Traces">
-              {positiveCount}
-              {resultIcon(true)}
+            <ResultContainer title="Conforming">
+              {conformingCount}
+              <BiCheck style={{ backgroundColor: "green" }} />
             </ResultContainer>
-            <ResultContainer title="Non-accepting Traces">
-              {negativeCount}
-              {resultIcon(false)}
+            <ResultContainer title="Partially Violating">
+              {partiallyViolatingCount}
+              <PartialViolationIcon />
+            </ResultContainer>
+            <ResultContainer title="Violating">
+              {violatingCount}
+              <BiX style={{ backgroundColor: "red" }} />
             </ResultContainer>
           </FlexBox>
         </FlexBox>
@@ -75,19 +80,50 @@ const ReplayResults = ({
       <Form submitText="Check!" submit={onCheck} />
       <ul>
         {replayLogResults.map(
-          ({ traceName, traceId, isPositive, count, frequency }) => (
-            <ResultsElement
-              $selected={selectedTrace?.traceId === traceId}
-              key={traceId}
-              onClick={() => setSelectedTraceId(traceId)}
-            >
-              <Label>
-                {traceName || traceId} {`(${count} occurrences)`}{" "}
-                {frequency ? `(${(frequency * 100).toFixed(2)}%)` : ""}
-              </Label>
-              {resultIcon(isPositive)}
-            </ResultsElement>
-          ),
+          ({ traceName, traceId, classification, count, frequency, subTraces }) => {
+            const hasSubTraces = !!subTraces?.length;
+            const isExpanded =
+              expandedVariantId === traceId ||
+              (hasSubTraces && subTraces!.some((st) => st.traceId === selectedTrace?.traceId));
+
+            return (
+              <Fragment key={traceId}>
+                <ResultsElement
+                  $selected={!hasSubTraces && selectedTrace?.traceId === traceId}
+                  onClick={() => {
+                    if (hasSubTraces) {
+                      setExpandedVariantId(isExpanded ? null : traceId);
+                    } else {
+                      setSelectedTraceId(traceId);
+                    }
+                  }}
+                >
+                  <Label>
+                    {hasSubTraces && (
+                      isExpanded
+                        ? <BiChevronDown style={{ verticalAlign: "middle", marginRight: "0.25rem" }} />
+                        : <BiChevronRight style={{ verticalAlign: "middle", marginRight: "0.25rem" }} />
+                    )}
+                    {traceName || traceId} {`(${count} occurrences)`}{" "}
+                    {frequency ? `(${(frequency * 100).toFixed(2)}%)` : ""}
+                  </Label>
+                  {classificationIcon(classification)}
+                </ResultsElement>
+                {hasSubTraces && isExpanded &&
+                  subTraces!.map((st) => (
+                    <ResultsElement
+                      $selected={selectedTrace?.traceId === st.traceId}
+                      key={st.traceId}
+                      onClick={() => setSelectedTraceId(st.traceId)}
+                      style={{ paddingLeft: "2.5rem" }}
+                    >
+                      <Label>{st.traceName || st.traceId}</Label>
+                      {classificationIcon(st.classification)}
+                    </ResultsElement>
+                  ))}
+              </Fragment>
+            );
+          },
         )}
       </ul>
     </ResultsWindow>

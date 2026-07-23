@@ -45,7 +45,14 @@ const ImgLabel = styled.label`
 function HomeState({ setState }: StateProps) {
   return (
     <Container>
-      <Header>DCR-JS</Header>
+      <Header>
+        Process{" "}
+        <span style={{ color: "green" }}>D</span>
+        o
+        <span style={{ color: "orange" }}>C</span>
+        to
+        <span style={{ color: "#1E90FF" }}>R</span>
+      </Header>
       <FlexBox direction="row" $justify="space-around">
         <ImgContainer onClick={() => setState(StateEnum.Modeler)}>
           <ImgLabel>
