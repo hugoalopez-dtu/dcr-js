@@ -59,35 +59,35 @@ function HomeState({ setState }: StateProps) {
             <br />
             Modeling
           </ImgLabel>
-          <Img src="/dcr-js/icons/modeling.svg" />
+          <Img src={`${import.meta.env.BASE_URL}icons/modeling.svg`} />
         </ImgContainer>
         <ImgContainer onClick={() => setState(StateEnum.Simulator)}>
           <ImgLabel>
             <br />
             Simulation
           </ImgLabel>
-          <Img src="/dcr-js/icons/simulation.svg" />
+          <Img src={`${import.meta.env.BASE_URL}icons/simulation.svg`} />
         </ImgContainer>
         <ImgContainer onClick={() => setState(StateEnum.Conformance)}>
           <ImgLabel>
             <br />
             Conformance
           </ImgLabel>
-          <Img src="/dcr-js/icons/conformance.svg" />
+          <Img src={`${import.meta.env.BASE_URL}icons/conformance.svg`} />
         </ImgContainer>
         <ImgContainer onClick={() => setState(StateEnum.Discovery)}>
           <ImgLabel>
             <br />
             Discovery
           </ImgLabel>
-          <Img src="/dcr-js/icons/discovery.svg" />
+          <Img src={`${import.meta.env.BASE_URL}icons/discovery.svg`} />
         </ImgContainer>
         <ImgContainer onClick={() => setState(StateEnum.EventLogGeneration)}>
           <ImgLabel>
             <br />
             Log Generation
           </ImgLabel>
-          <Img src="/dcr-js/icons/logGeneration.svg" />
+          <Img src={`${import.meta.env.BASE_URL}icons/logGeneration.svg`} />
         </ImgContainer>
       </FlexBox>
     </Container>

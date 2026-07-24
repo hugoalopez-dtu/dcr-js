@@ -53,7 +53,7 @@ const Examples = ({
     if (confirm("Are you sure? This will override your current diagram!")) {
       setLoading(true);
 
-      fetch("/dcr-js/examples/diagrams/" + exampleStr + ".xml")
+      fetch(`${import.meta.env.BASE_URL}examples/diagrams/` + exampleStr + ".xml")
         .then((response) => {
           if (!response.ok) {
             toast.error("Failed to fetch example...");
@@ -107,7 +107,7 @@ const Examples = ({
                   onClick={() => exampleClick(exampleStr)}
                 >
                   <ExampleText>{exampleStr}</ExampleText>
-                  <Img src={`/dcr-js/examples/images/${exampleStr}.svg`} />
+                  <Img src={`${import.meta.env.BASE_URL}examples/images/${exampleStr}.svg`} />
                 </Example>
               );
             } else {

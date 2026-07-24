@@ -157,7 +157,7 @@ const ModelerState = ({
 
     useEffect(() => {
         // Fetch examples
-        fetch("/dcr-js/examples/generated_examples.txt")
+        fetch(`${import.meta.env.BASE_URL}examples/generated_examples.txt`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(
