@@ -33,6 +33,7 @@ const ExampleText = styled.h3`
 interface ExampleProps {
   examplesData: Array<string>;
   setExamplesOpen: (val: boolean) => void;
+  openEditorXML: (xml: string) => void;
   openCustomXML: (xml: string) => void;
   openDCRXML: (dcrXML: string) => void;
   setLoading: (val: boolean) => void;
@@ -41,6 +42,7 @@ interface ExampleProps {
 const Examples = ({
   examplesData,
   setExamplesOpen,
+  openEditorXML,
   openCustomXML,
   openDCRXML,
   setLoading,
@@ -62,8 +64,10 @@ const Examples = ({
         .then((data) => {
           setLoading(false);
           if (data) {
-            if (data.includes("<?xml")) {
-              // type check which type of save file. Only one of them has magic number '<?xml'
+            // detect format from the root element, not the XML prolog (both may have one)
+            if (data.includes("<dcr:definitions")) {
+              openEditorXML(data);
+            } else if (data.includes("<dcrgraph>")) {
               openCustomXML(data);
             } else {
               openDCRXML(data);

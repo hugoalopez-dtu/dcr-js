@@ -83,12 +83,17 @@ export function moddleToDCR(
         break;
     }
 
+    const pairs = resolveNestedPairs(nestingElements, source, target);
+
     const guard = element.businessObject.get("guard");
     if (guard) {
       if (!graph.guardMap) graph.guardMap = {};
-      if (!graph.guardMap[source]) graph.guardMap[source] = {};
-      if (!graph.guardMap[source][target]) graph.guardMap[source][target] = {};
-      graph.guardMap[source][target][relType] = guard;
+      const guardMap = graph.guardMap;
+      pairs.forEach(([s, t]) => {
+        if (!guardMap[s]) guardMap[s] = {};
+        if (!guardMap[s][t]) guardMap[s][t] = {};
+        guardMap[s][t][relType] = guard;
+      });
     }
 
     const time = element.businessObject.get("time");
@@ -96,16 +101,19 @@ export function moddleToDCR(
       const ms = parseDurationMs(time);
       if (ms > 0) {
         if (!graph.timeConstraintMap) graph.timeConstraintMap = {};
-        if (!graph.timeConstraintMap[source]) graph.timeConstraintMap[source] = {};
-        if (!graph.timeConstraintMap[source][target]) graph.timeConstraintMap[source][target] = {};
-        if (relType === "condition") {
-          const existing = graph.timeConstraintMap[source][target].delay;
-          graph.timeConstraintMap[source][target].delay = existing !== undefined ? Math.max(existing, ms) : ms;
-        }
-        if (relType === "response") {
-          const existing = graph.timeConstraintMap[source][target].deadline;
-          graph.timeConstraintMap[source][target].deadline = existing !== undefined ? Math.min(existing, ms) : ms;
-        }
+        const timeConstraintMap = graph.timeConstraintMap;
+        pairs.forEach(([s, t]) => {
+          if (!timeConstraintMap[s]) timeConstraintMap[s] = {};
+          if (!timeConstraintMap[s][t]) timeConstraintMap[s][t] = {};
+          if (relType === "condition") {
+            const existing = timeConstraintMap[s][t].delay;
+            timeConstraintMap[s][t].delay = existing !== undefined ? Math.max(existing, ms) : ms;
+          }
+          if (relType === "response") {
+            const existing = timeConstraintMap[s][t].deadline;
+            timeConstraintMap[s][t].deadline = existing !== undefined ? Math.min(existing, ms) : ms;
+          }
+        });
       }
     }
   });
@@ -294,6 +302,76 @@ function addRelation(
   } else {
     // Add direct relation if neither source nor target is a Nesting group
     relationSet[source].add(target);
+  }
+}
+
+function resolveNestedPairs(
+  nestings: Array<any>,
+  source: string,
+  target: string
+): Array<[string, string]> {
+  // Handle Nesting groupings by resolving pairs for all nested elements
+  if (
+    nestings.find(
+      (element) =>
+        (useDescriptionsGlobal
+          ? element.businessObject.description
+          : element.businessObject.id) === source
+    )
+  ) {
+    const pairs: Array<[string, string]> = [];
+    nestings.forEach((element: any) => {
+      const elementId = useDescriptionsGlobal
+        ? element.businessObject.description
+        : element.businessObject.id;
+      if (elementId === source) {
+        element.children.forEach((nestedElement: any) => {
+          const nestedElementId = useDescriptionsGlobal
+            ? nestedElement.businessObject.description
+            : nestedElement.businessObject.id;
+          if (
+            nestedElement.type === "dcr:SubProcess" ||
+            nestedElement.type === "dcr:Event" ||
+            nestedElement.type === "dcr:Nesting"
+          ) {
+            pairs.push(...resolveNestedPairs(nestings, nestedElementId, target));
+          }
+        });
+      }
+    });
+    return pairs;
+  } else if (
+    nestings.find(
+      (element) =>
+        (useDescriptionsGlobal
+          ? element.businessObject.description
+          : element.businessObject.id) === target
+    )
+  ) {
+    const pairs: Array<[string, string]> = [];
+    nestings.forEach((element: any) => {
+      const elementId = useDescriptionsGlobal
+        ? element.businessObject.description
+        : element.businessObject.id;
+      if (elementId === target) {
+        element.children.forEach((nestedElement: any) => {
+          const nestedElementId = useDescriptionsGlobal
+            ? nestedElement.businessObject.description
+            : nestedElement.businessObject.id;
+          if (
+            nestedElement.type === "dcr:SubProcess" ||
+            nestedElement.type === "dcr:Event" ||
+            nestedElement.type === "dcr:Nesting"
+          ) {
+            pairs.push(...resolveNestedPairs(nestings, source, nestedElementId));
+          }
+        });
+      }
+    });
+    return pairs;
+  } else {
+    // Both ends are real events
+    return [[source, target]];
   }
 }
 

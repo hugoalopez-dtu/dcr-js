@@ -1,5 +1,28 @@
 import { BiX } from "react-icons/bi";
 import styled from "styled-components";
+import { replayTraceS, quantifyViolations } from "dcr-engine";
+import type { DCRGraphS, RoleTrace } from "dcr-engine";
+import type { TraceClassification, ViolationResults } from "../types";
+
+export function classifyTrace(isPositive: boolean, violations?: ViolationResults): TraceClassification {
+  if (isPositive) return "conforming";
+  if (violations?.finalStateAccepting) return "partiallyViolating";
+  return "violating";
+}
+
+// Skips quantifyViolations for nested-subprocess graphs, which it doesn't support.
+export function evaluateTraceClassification(
+  graph: DCRGraphS,
+  trace: RoleTrace,
+  hasNesting: boolean
+): { isPositive: boolean; violations?: ViolationResults; classification: TraceClassification } {
+  const structurallyPositive = replayTraceS(graph, trace, graph.initialVariableStore ?? {});
+  const violations = !hasNesting
+    ? quantifyViolations(graph, trace, graph.initialVariableStore ?? {})
+    : undefined;
+  const isPositive = structurallyPositive && (violations?.totalTimeViolations ?? 0) === 0;
+  return { isPositive, violations, classification: classifyTrace(isPositive, violations) };
+}
 
 export const RelationViolationIcon = ({ title, style }: { title?: string; style?: React.CSSProperties }) => (
   <svg

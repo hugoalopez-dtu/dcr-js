@@ -26,9 +26,10 @@ import {
   moddleToDCR,
   isAcceptingS,
   type RoleTrace,
-  replayTraceS,
   StringTraceStreamParser,
+  evaluateGuard,
 } from "dcr-engine";
+import { evaluateTraceClassification } from "../utilComponents/ConformanceUtil";
 import ModalMenu, { type ModalMenuElement } from "../utilComponents/ModalMenu";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import styled from "styled-components";
@@ -175,6 +176,7 @@ function VariableInputModal({
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
           >
+            <option value="">-- select --</option>
             <option value="true">true</option>
             <option value="false">false</option>
           </ModalSelect>
@@ -205,11 +207,13 @@ function VariableInputModal({
           </button>
           <button
             onClick={handleConfirm}
+            disabled={varType === "Bool" && inputVal === ""}
             style={{
               padding: "6px 14px",
               border: "none",
               borderRadius: "4px",
-              cursor: "pointer",
+              cursor: varType === "Bool" && inputVal === "" ? "not-allowed" : "pointer",
+              opacity: varType === "Bool" && inputVal === "" ? 0.5 : 1,
               background: "#28a745",
               color: "white",
               fontWeight: "bold",
@@ -231,10 +235,16 @@ const SimulatingEnum = {
 
 type SimulatingEnum = (typeof SimulatingEnum)[keyof typeof SimulatingEnum];
 
+type ExecutionCompliance = {
+  deadline?: { time: Date; met: boolean };
+  delay?: { time: Date; met: boolean };
+  allowed: boolean;
+};
+
 const DEFAULT_EVENT_LOG = {
   name: "Unnamed Event Log",
   traces: {
-    "Trace 0": { traceId: "Trace 0", traceName: "Trace 0", trace: [] },
+    "Trace 0": { traceId: "Trace 0", traceName: "Trace 0", trace: [], clockAdvancements: [], executionCompliance: [] },
   },
 };
 
@@ -312,20 +322,27 @@ const SimulatorState = ({
     if (currentDcrGraph) {
       const overdue = [...currentDcrGraph.marking.pending.entries()]
         .filter(([, deadline]) => deadline && clock <= deadline && newClock > deadline)
-        .map(([eventId]) => currentDcrGraph.labelMap[eventId] || eventId);
+        .map(([eventId]) => ({
+          name: currentDcrGraph.labelMap[eventId] || eventId,
+        }));
       if (overdue.length > 0) {
-        if (!window.confirm(`Advancing time will overrun the deadline for: ${overdue.join(", ")}.\n\nProceed?`)) return;
-      }
-
-      // Remove pending entries whose deadline has now passed
-      for (const [eventId, deadline] of currentDcrGraph.marking.pending.entries()) {
-        if (deadline && newClock > deadline) {
-          currentDcrGraph.marking.pending.delete(eventId);
+        if (simulationStatus === SimulatingEnum.Wild) {
+          const names = overdue.map(({ name }) => name).join(", ");
+          if (!window.confirm(`Advancing time will overrun the deadline for: ${names}.\n\nProceed?`)) return;
+        } else {
+          overdue.forEach(({ name }) => {
+            toast.warn(
+              `This advancement would move past the deadline of event: ${name}, and is therefore not allowed.`,
+            );
+          });
+          return;
         }
       }
-      setCurrentDcrGraph({ ...currentDcrGraph });
     }
 
+    if (selectedTraceId !== null) {
+      addClockAdvancementToSelectedTrace(newClock);
+    }
     setClock(newClock);
   };
 
@@ -348,6 +365,8 @@ const SimulatorState = ({
         traceId: string;
         traceName: string;
         trace: RoleTrace;
+        clockAdvancements?: Array<{ afterEventCount: number; timestamp: Date }>;
+        executionCompliance?: Array<ExecutionCompliance | undefined>;
       };
     };
   }>(DEFAULT_EVENT_LOG);
@@ -362,7 +381,7 @@ const SimulatorState = ({
         ...currentEventLog,
         traces: {
           ...currentEventLog.traces,
-          [traceId]: { traceId, traceName: traceId, trace: [] },
+          [traceId]: { traceId, traceName: traceId, trace: [], clockAdvancements: [], executionCompliance: [] },
         },
       })),
     [],
@@ -378,7 +397,7 @@ const SimulatorState = ({
   );
 
   const addEventToTrace = useCallback(
-    (traceId: string, activity: string, role: string, timestamp?: Date, varName?: string, value?: Value) =>
+    (traceId: string, activity: string, role: string, timestamp?: Date, varName?: string, value?: Value, compliance?: ExecutionCompliance) =>
       setEventLog((currentEventLog) => {
         const trace = currentEventLog.traces[traceId];
         if (!trace) return currentEventLog;
@@ -389,6 +408,29 @@ const SimulatorState = ({
             [traceId]: {
               ...trace,
               trace: [...trace.trace, { activity, role, timestamp, varName, value }],
+              executionCompliance: [...(trace.executionCompliance ?? []), compliance],
+            },
+          },
+        };
+      }),
+    [],
+  );
+
+  const addClockAdvancementToTrace = useCallback(
+    (traceId: string, timestamp: Date) =>
+      setEventLog((currentEventLog) => {
+        const trace = currentEventLog.traces[traceId];
+        if (!trace) return currentEventLog;
+        return {
+          ...currentEventLog,
+          traces: {
+            ...currentEventLog.traces,
+            [traceId]: {
+              ...trace,
+              clockAdvancements: [
+                ...(trace.clockAdvancements ?? []),
+                { afterEventCount: trace.trace.length, timestamp },
+              ],
             },
           },
         };
@@ -427,6 +469,8 @@ const SimulatorState = ({
             [traceId]: {
               ...trace,
               trace: [],
+              clockAdvancements: [],
+              executionCompliance: [],
             },
           },
         };
@@ -449,6 +493,7 @@ const SimulatorState = ({
     setSimulationStatus(DEFAULT_SIMULATION_STATUS);
     setEventLog(DEFAULT_EVENT_LOG);
     setSelectedTraceId(DEFAULT_SELECTED_TRACE);
+    traceIdCounter.current = 1;
     resetCurrentDcrGraph();
   }, [resetCurrentDcrGraph]);
 
@@ -459,7 +504,11 @@ const SimulatorState = ({
     return trace;
   }, [eventLog.traces, selectedTraceId]);
 
-  const isSelectedTracePositive = useMemo(() => {
+  const hasNesting = useMemo(() => {
+    return currentGraph?.graph.includes("Nesting") ?? false;
+  }, [currentGraph?.graph]);
+
+  const selectedTraceClassification = useMemo(() => {
     if (!selectedTrace?.trace || !initialDcrGraph) {
       return;
     }
@@ -469,15 +518,23 @@ const SimulatorState = ({
       marking: copyMarking(initialDcrGraph.marking),
     };
 
-    return replayTraceS(draftDcrGraph, selectedTrace.trace);
-  }, [currentDcrGraph, selectedTrace?.trace]);
+    return evaluateTraceClassification(draftDcrGraph, selectedTrace.trace, hasNesting);
+  }, [currentDcrGraph, selectedTrace?.trace, hasNesting]);
 
   const addEventToSelectedTrace = useCallback(
-    (activity: string, role: string, timestamp?: Date, varName?: string, value?: Value) => {
+    (activity: string, role: string, timestamp?: Date, varName?: string, value?: Value, compliance?: ExecutionCompliance) => {
       if (selectedTraceId === null) return;
-      addEventToTrace(selectedTraceId, activity, role, timestamp, varName, value);
+      addEventToTrace(selectedTraceId, activity, role, timestamp, varName, value, compliance);
     },
     [selectedTraceId, addEventToTrace],
+  );
+
+  const addClockAdvancementToSelectedTrace = useCallback(
+    (timestamp: Date) => {
+      if (selectedTraceId === null) return;
+      addClockAdvancementToTrace(selectedTraceId, timestamp);
+    },
+    [selectedTraceId, addClockAdvancementToTrace],
   );
 
   const updateSelectedTraceName = useCallback(
@@ -597,11 +654,47 @@ const SimulatorState = ({
     return element.businessObject?.role ?? "";
   }
 
+  // Reads the deadline/delay obligations that applied to eventId just before it executes.
+  // Must run before executeS, since executeS clears the pending deadline on execution.
+  function computeExecutionCompliance(
+    eventId: Event,
+    graph: DCRGraphS,
+    varStore: VariableStore,
+    execTime: Date,
+  ): Omit<ExecutionCompliance, "allowed"> {
+    const compliance: Omit<ExecutionCompliance, "allowed"> = {};
+
+    const deadline = graph.marking.pending.get(eventId);
+    if (deadline instanceof Date) {
+      compliance.deadline = { time: deadline, met: execTime < deadline };
+    }
+
+    // Unlike a deadline (discharged via marking.pending on execution), a condition-delay has
+    // no consumable state - it's rechecked independently on every execution of eventId.
+    let delayUntil: Date | undefined;
+    for (const cEvent of graph.conditionsFor[eventId] ?? []) {
+      if (!graph.marking.included.has(cEvent)) continue;
+      const guard = graph.guardMap?.[cEvent]?.[eventId]?.["condition"];
+      if (guard && !evaluateGuard(guard, varStore)) continue;
+      const delayMs = graph.timeConstraintMap?.[cEvent]?.[eventId]?.delay;
+      if (delayMs === undefined) continue;
+      const executedAt = graph.marking.executed.get(cEvent)?.time;
+      if (!executedAt) continue;
+      const candidate = new Date(executedAt.getTime() + delayMs);
+      if (!delayUntil || candidate > delayUntil) delayUntil = candidate;
+    }
+    if (delayUntil) {
+      compliance.delay = { time: delayUntil, met: execTime >= delayUntil };
+    }
+
+    return compliance;
+  }
+
   const executeEvent = (
     element: TargetElement,
     graph: DCRGraphS,
     varStore: VariableStore = {},
-  ): { msg: string; executedEvent: string; role: string; timestamp: Date } => {
+  ): { msg: string; executedEvent: string; role: string; timestamp: Date; compliance?: ExecutionCompliance } => {
     const eventId: Event = element.id;
 
     const group: SubProcess | DCRGraphS =
@@ -617,12 +710,17 @@ const SimulatorState = ({
       };
     }
 
+    const compliance: ExecutionCompliance = {
+      ...computeExecutionCompliance(eventId, graph, varStore, clock),
+      allowed: enabledResponse.enabled,
+    };
     executeS(eventId, graph, varStore, clock);
     return {
       msg: logExcecutionString(element),
       executedEvent: traceString(element),
       role: roleString(element),
       timestamp: clock,
+      compliance,
     };
   };
 
@@ -885,7 +983,7 @@ const SimulatorState = ({
           } else {
             const response = executeEvent(event.element, draftGraph, variableStore);
             if (response.executedEvent) {
-              addEventToSelectedTrace(response.executedEvent, response.role, response.timestamp);
+              addEventToSelectedTrace(response.executedEvent, response.role, response.timestamp, undefined, undefined, response.compliance);
             } else {
               toast.warn(response.msg);
             }
@@ -950,7 +1048,8 @@ const SimulatorState = ({
           onCloseCallback={closeTraceCallback}
           selectedTrace={{
             ...selectedTrace,
-            isPositive: isSelectedTracePositive,
+            isPositive: selectedTraceClassification?.isPositive,
+            classification: selectedTraceClassification?.classification,
           }}
           setSelectedTraceId={setSelectedTraceId}
           {...(simulationStatus !== SimulatingEnum.Not
@@ -1006,7 +1105,7 @@ const SimulatorState = ({
               newStore,
             );
             if (response.executedEvent) {
-              addEventToSelectedTrace(response.executedEvent, response.role, response.timestamp, pendingExecution.varName, value);
+              addEventToSelectedTrace(response.executedEvent, response.role, response.timestamp, pendingExecution.varName, value, response.compliance);
             } else {
               toast.warn(response.msg);
             }
