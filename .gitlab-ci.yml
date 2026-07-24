@@ -1,0 +1,3 @@
+placeholder:
+  script:
+    - echo "CI placeholder"
