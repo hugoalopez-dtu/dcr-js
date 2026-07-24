@@ -1,7 +1,7 @@
 deploy:
   image: node:lts-alpine
-variables:
-  VITE_BASE: "/"
+  variables:
+    VITE_BASE: "/"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   script:
