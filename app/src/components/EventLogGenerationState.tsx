@@ -215,8 +215,8 @@ const EventLogGenerationState = ({
 
           saveEventLog(name, log);
           saveLog(name, log);
-        } catch {
-          toast.error("Cannot generate log from parameters...");
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Cannot generate log from parameters...");
         }
       },
     },
