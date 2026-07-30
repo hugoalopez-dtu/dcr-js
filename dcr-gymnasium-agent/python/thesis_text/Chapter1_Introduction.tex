@@ -19,7 +19,7 @@ While \ac{DCR} graphs guarantee that process executions satisfy the
 specified constraints, they provide limited support for identifying
 which compliant executions are operationally preferable, a problem
 characterised in the literature as the exploration of a flat conformance
-space \cite{AndreaBurattin2021Exploring_Conformance_Space}.
+space \cite{Burattin2021ExploringSpace}.
 
 In practice, a process may contain many valid traces with very different
 characteristics in terms of execution cost, duration, or resource
@@ -178,7 +178,7 @@ semantics.
 A normalised reward function is proposed that decomposes into
 structural, cost, and duration components, enabling independent \ac{PPO}
 agents trained under different scalarisation weights $(\alpha, \beta)$
-\cite{DasDr.Das-NBIPaper-1998}
+\cite{DasNormalBoundaryIntersection1998}
 to approximate the Pareto front of valid process executions.
 On the Expense Report benchmark, the framework recovers the exact Pareto
 front identified by a CSP+COP exact solver \cite{Diaz2024Pareto-OptimalModels}.

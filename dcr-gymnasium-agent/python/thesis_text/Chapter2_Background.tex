@@ -141,7 +141,7 @@ The open-world semantics of DCR graphs ensures that every accepting trace is
 formally compliant by construction.  However, this property reveals a critical
 limitation for optimisation: all accepting traces are treated as \emph{equally
 valid}, regardless of their cost, duration, or business utility.  Burattin
-et al.~\cite{AndreaBurattin2021Exploring_Conformance_Space} characterise this
+et al.~\cite{Burattin2021ExploringSpace} characterise this
 as the \emph{flat conformance space}, noting that purely declarative compliance
 checking provides no mechanism to rank or differentiate valid executions.  The
 present thesis addresses this gap directly by learning a policy that
@@ -359,7 +359,7 @@ sufficient and when non-linear alternatives such as Chebyshev scalarisation
 are required.
 
 The selection of weight vectors is itself a non-trivial design problem.  Das
-and Dennis~\cite{DasDr.Das-NBIPaper-1998} propose the \emph{simplex-lattice
+and Dennis~\cite{DasNormalBoundaryIntersection1998} propose the \emph{simplex-lattice
 design}, which generates $\binom{H+m-1}{m-1}$ evenly-spaced weight vectors
 for $m$ objectives and $H$ divisions per axis; for two objectives this yields
 $H+1$ vectors from $(1,0)$ to $(0,1)$ in steps of $1/H$.  This construction

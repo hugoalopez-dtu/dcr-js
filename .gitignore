@@ -43,6 +43,15 @@ dcr-gymnasium-agent/python/dcr_ppo.zip
 # Third-party repo accidentally cloned in-tree (not a real submodule)
 dcr-gymnasium-agent/python/dcrGraph/
 
+# LaTeX compilation artifacts (presentation lives in Overleaf)
+DTU-Beamer/
+main.aux
+main.nav
+main.out
+main.pdf
+main.snm
+main.toc
+
 # IDE
 .vscode/
 
