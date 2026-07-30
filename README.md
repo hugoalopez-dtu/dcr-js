@@ -1,3 +1,30 @@
+# MSc Thesis — Multi-objective Optimisation of Business Processes via Reinforcement Learning
+
+**Author:** Sofía Ortiz Arce · DTU Technical University of Denmark · 2026
+
+This repository contains the full implementation for the MSc thesis *"Multi-objective Optimisation of Business Processes via Reinforcement Learning: A Shielded Reinforcement Learning Approach over Declarative DCR Models"*.
+
+The work extends the DCR-js platform (see below) with a reinforcement learning pipeline that optimises business process executions for cost and time while guaranteeing formal compliance by construction.
+
+## Thesis code — where to find things
+
+| What | Path |
+|---|---|
+| RL environment (Gymnasium) | `dcr-gymnasium-agent/python/src/envs/dcr_env.py` |
+| PPO training agent | `dcr-gymnasium-agent/python/src/agents/train_agent.py` |
+| Training & evaluation scripts | `dcr-gymnasium-agent/python/scripts/` |
+| Analysis notebook (Pareto, plots) | `dcr-gymnasium-agent/python/scripts/notebooks/analysis.ipynb` |
+| MiniZinc ground truth (CSP+COP) | `dcr-gymnasium-agent/python/minizinc_ground_truth/` |
+| Experimental results & figures | `dcr-gymnasium-agent/python/scripts/logs/` |
+| DCR graphs used in experiments | `app/public/examples/diagrams/` |
+| Node adapter (REST API bridge) | `node-adapter/src/server.ts` |
+| DCR execution engine (TypeScript) | `dcr-engine/src/` |
+| Thesis LaTeX source | `dcr-gymnasium-agent/python/thesis_text/` |
+
+> **Note:** Training logs (raw PPO episode CSVs) are not included in the repository due to size. Available on request.
+
+---
+
 # DCR-js: an open-source process modelling and mining environment for DCR graphs
 
 [Try it live!](https://hugoalopez-dtu.github.io/dcr-js/)
