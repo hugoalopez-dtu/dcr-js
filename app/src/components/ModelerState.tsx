@@ -16,6 +16,7 @@ import {
     BiSave,
     BiSolidDashboard,
     BiTestTube,
+    BiInfoCircle,
 } from "react-icons/bi";
 
 import Examples from "./Examples";
@@ -36,6 +37,7 @@ import {BsFiletypeDoc, BsStars} from "react-icons/bs";
 import ModelExtractionDialogue from "./ModelExtractionDialogue.tsx";
 import type {ExtractionConfig, ExtractionResult} from "dcr-engine/src/extraction.ts";
 import ExtractionResultView from "./ExtractionResultView.tsx";
+import Popup from "../utilComponents/Popup";
 
 
 const TextButton = styled(BsFiletypeDoc)<{ open: boolean }>`
@@ -71,6 +73,21 @@ const HeatmapButton = styled(BiTestTube)<{
         }
     `
                     : ""}
+`;
+
+const BpmnInfoIcon = styled(BiInfoCircle)`
+  font-size: 18px;
+  color: grey;
+  cursor: pointer;
+
+  &:hover {
+    color: black;
+  }
+`;
+
+const BpmnSupportList = styled.ul`
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
 `;
 
 const defaultRelationsDescription = `**executes**: Focus on actors. Extract a relation of type "executes", if the text describes that this actor (head) is responsible for the event (tail).
@@ -112,6 +129,7 @@ const ModelerState = ({
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [textOpen, setTextOpen] = useState(false);
+    const [bpmnInfoOpen, setBpmnInfoOpen] = useState(false);
 
     const [loading, setLoading] = useState(false);
 
@@ -323,7 +341,17 @@ const ModelerState = ({
                                 setMenuOpen(false);
                             }}>
                                 <div/>
-                                <>Open BPMN 2.0 XML</>
+                                <span style={{display: "flex", alignItems: "center", gap: "0.4rem"}}>
+                                    Open BPMN 2.0 XML
+                                    <BpmnInfoIcon
+                                        title="Supported BPMN elements"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setBpmnInfoOpen(true);
+                                        }}
+                                    />
+                                </span>
                             </FileUpload>
                         </StyledFileUpload>
                     ),
@@ -536,6 +564,7 @@ const ModelerState = ({
                         console.log(xml);
                         await modeler.importXML(xml);
                         setGraphName("Extracted Model");
+                        alert(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
                     } catch (e) {
                         console.log(e);
                     } finally {
@@ -665,6 +694,30 @@ const ModelerState = ({
                 />
             )}
             {renderExtractionDialogue()}
+            {bpmnInfoOpen && (
+                <Popup close={() => setBpmnInfoOpen(false)}>
+                    <h3>Supported BPMN Elements</h3>
+                    <p>The BPMN import currently supports:</p>
+                    <BpmnSupportList>
+                        <li>Start Event</li>
+                        <li>End Event</li>
+                        <li>Task</li>
+                        <li>Exclusive Gateway (XOR)</li>
+                        <li>Parallel Gateway (AND)</li>
+                        <li>Inclusive Gateway (OR)</li>
+                    </BpmnSupportList>
+                    <p>
+                        Gateways must follow the single entry single exit (SESE) principle:
+                        each split gateway must be matched by exactly one corresponding join
+                        gateway of the same type.
+                    </p>
+                    <p>
+                        Other BPMN elements (e.g., subprocesses, timer/message/boundary events,
+                        pools and lanes, data objects) are not currently supported and may cause
+                        the import to fail or produce an incomplete graph.
+                    </p>
+                </Popup>
+            )}
         </>
     );
 };
