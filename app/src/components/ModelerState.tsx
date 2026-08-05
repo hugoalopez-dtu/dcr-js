@@ -563,10 +563,10 @@ const ModelerState = ({
                         const xml = await layoutGraph(res.graph);
                         console.log(xml);
                         await modeler.importXML(xml);
-                        setGraphName("Extracted Model");
-                        alert(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
+                        setGraphName("Extracted Model");    
                     } catch (e) {
                         console.log(e);
+                        alert(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
                     } finally {
                         setModelExtractionOpen(false);
                         setIsExtractingModel(false);
@@ -707,9 +707,9 @@ const ModelerState = ({
                         <li>Inclusive Gateway (OR)</li>
                     </BpmnSupportList>
                     <p>
-                        Gateways must follow the single entry single exit (SESE) principle:
-                        each split gateway must be matched by exactly one corresponding join
-                        gateway of the same type.
+                        Gateways must follow the single-entry-single-exit (SESE) principle: 
+                        each split gateway is matched by exactly one join gateway of the 
+                        same type, forming a self-contained block.
                     </p>
                     <p>
                         Other BPMN elements (e.g., subprocesses, timer/message/boundary events,
