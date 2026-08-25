@@ -32,6 +32,7 @@ const writingOptions = {
   format: true,
   indentBy: "  ",
   suppressEmptyNode: true,
+  suppressBooleanAttributes: false,
 };
 
 function* parseLogGenerator(
