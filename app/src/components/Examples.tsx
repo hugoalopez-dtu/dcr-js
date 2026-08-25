@@ -18,11 +18,24 @@ const Example = styled.div`
   }
   border-radius: 10px;
   cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ImgWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 `;
 
 const Img = styled.img`
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
-  width: 100%;
 `;
 
 const ExampleText = styled.h3`
@@ -107,7 +120,9 @@ const Examples = ({
                   onClick={() => exampleClick(exampleStr)}
                 >
                   <ExampleText>{exampleStr}</ExampleText>
-                  <Img src={`${import.meta.env.BASE_URL}examples/images/${exampleStr}.svg`} />
+                  <ImgWrapper>
+                    <Img src={`${import.meta.env.BASE_URL}examples/images/${exampleStr}.svg`} />
+                  </ImgWrapper>
                 </Example>
               );
             } else {
