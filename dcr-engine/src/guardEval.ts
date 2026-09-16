@@ -6,8 +6,8 @@ const decodeXMLEntities = (expr: string): string =>
     .replace(/&lt;=/g, "<=")
     .replace(/&gt;/g, ">")
     .replace(/&lt;/g, "<")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"');
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&");
 
 type FEELToken =
   | { type: 'IDENT'; value: string }
