@@ -567,8 +567,8 @@ const ModelerState = ({
                         await modeler.importXML(xml);
                         setGraphName("Extracted Model");    
                     } catch (e) {
-                        console.log(e);
-                        alert(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
+                        console.error(e);
+                        toast.error(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
                     } finally {
                         setModelExtractionOpen(false);
                         setIsExtractingModel(false);

@@ -92,11 +92,47 @@ export function buildGraph(doc: ProcessDescription): DataDCR {
         expressions: {}
     };
 
-    for (const m of doc.mentions) {
-        if (m.type.toLowerCase() !== "event") continue;
+    const mentionToEntity = new Map<number, Entity>();
+    for (const entity of doc.entities) {
+        for (const index of entity.mentionIndices) {
+            if (!mentionToEntity.has(index)) {
+                mentionToEntity.set(index, entity);
+            }
+        }
+    }
+
+    // Resolve a mention index to the event name of the entity it belongs to,
+    // falling back to the raw mention text for mentions outside any entity.
+    const eventNameOfMention = (index: number): string => {
+        const entity = mentionToEntity.get(index);
+        const eventName = entity
+            ? doc.mentions[entity.representativeIndex]?.text
+            : doc.mentions[index]?.text;
+        return eventName ?? `#[${index}]`;
+    };
+
+    // One event per entity, named after its representative mention.
+    for (const entity of doc.entities) {
+        const representative = doc.mentions[entity.representativeIndex];
+        if (!representative) continue;
+        if (representative.type.toLowerCase() !== "event") continue;
+        graph.events.add(representative.text);
+        graph.marking.included.add(representative.text);
+    }
+
+    // Mentions that are not covered by any entity still act as single events.
+    const coveredMentions = new Set<number>();
+    for (const entity of doc.entities) {
+        for (const index of entity.mentionIndices) {
+            coveredMentions.add(index);
+        }
+    }
+    doc.mentions.forEach((m, index) => {
+        if (m.type.toLowerCase() !== "event") return;
+        if (coveredMentions.has(index)) return;
         graph.events.add(m.text);
         graph.marking.included.add(m.text);
-    }
+    });
 
     graph.data = {};
     for (const v of doc.variables) {
@@ -108,26 +144,26 @@ export function buildGraph(doc: ProcessDescription): DataDCR {
     }
 
     for (const r of doc.relations) {
-        const head = doc.mentions[r.headMentionIndex];
-        const tail = doc.mentions[r.tailMentionIndex];
+        const head = eventNameOfMention(r.headMentionIndex);
+        const tail = eventNameOfMention(r.tailMentionIndex);
         switch (r.type.toLowerCase()) {
             case "executes": {
                 break;
             }
             case "condition": {
-                addToEventMap(graph.conditionsFor, tail.text, head.text);
+                addToEventMap(graph.conditionsFor, tail, head);
                 break;
             }
             case "response": {
-                addToEventMap(graph.responseTo, head.text, tail.text);
+                addToEventMap(graph.responseTo, head, tail);
                 break;
             }
             case "excludes": {
-                addToEventMap(graph.excludesTo, head.text, tail.text);
+                addToEventMap(graph.excludesTo, head, tail);
                 break;
             }
             case "includes": {
-                addToEventMap(graph.includesTo, head.text, tail.text);
+                addToEventMap(graph.includesTo, head, tail);
                 break;
             }
         }
@@ -136,12 +172,13 @@ export function buildGraph(doc: ProcessDescription): DataDCR {
     graph.expressions = {};
     for (const e of doc.expressions) {
         const r = doc.relations[e.boundToRelation];
-        const head = doc.mentions[r.headMentionIndex];
-        const tail = doc.mentions[r.tailMentionIndex];
-        if (graph.expressions[head.text] === undefined) {
-            graph.expressions[head.text] = {};
+        if (!r) continue;
+        const head = eventNameOfMention(r.headMentionIndex);
+        const tail = eventNameOfMention(r.tailMentionIndex);
+        if (graph.expressions[head] === undefined) {
+            graph.expressions[head] = {};
         }
-        graph.expressions[head.text][tail.text] = {text: e.text};
+        graph.expressions[head][tail] = {text: e.text};
     }
 
     return graph;
@@ -182,12 +219,29 @@ export function filterProcessDescription(
         expressions.push({...e, boundToRelation});
     }
 
+    // Filter entities: keep entities that still have at least one mention,
+    // remapping their mention indices to the filtered mentions array.
+    const entities: Entity[] = [];
+    doc.entities.forEach((entity) => {
+        const mentionIndices = entity.mentionIndices
+            .map((i) => mentionIndexMap.get(i))
+            .filter((i): i is number => i !== undefined);
+
+        if (mentionIndices.length === 0) return;
+
+        entities.push({
+            representativeIndex:
+                mentionIndexMap.get(entity.representativeIndex) ?? mentionIndices[0],
+            mentionIndices,
+        });
+    });
+
     return {
         ...doc,
         mentions,
         relations,
         expressions,
-        entities: [],
+        entities,
     };
 }
 
