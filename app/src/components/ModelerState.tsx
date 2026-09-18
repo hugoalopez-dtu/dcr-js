@@ -561,7 +561,6 @@ const ModelerState = ({
                         const res = await extractGraph(config);
                         setExtractionResult(res)
                         const xml = await layoutGraph(res.graph);
-                        console.log(xml);
                         await modeler.importXML(xml);
                         setGraphName("Extracted Model");    
                     } catch (e) {
@@ -582,7 +581,16 @@ const ModelerState = ({
 
     const renderExtractionResult = () => {
         if(!extractionResult) return null;
-        return <div style={{padding: 25}}>
+        return <div style={{
+            position: "absolute",
+            top: "5rem",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            flexDirection: "column",
+            boxSizing: "border-box",
+            padding: 25,
+        }}>
             <h4>Extraction Result</h4>
             <ExtractionResultView processDescription={extractionResult.doc} />
         </div>;
