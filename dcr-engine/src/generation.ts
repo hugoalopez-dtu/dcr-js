@@ -66,7 +66,7 @@ export function generateEventLog(
       const group = graph.subProcessMap[event]
         ? graph.subProcessMap[event]
         : graph;
-      if (isEnabledS(event, graph, group).enabled) {
+      if (isEnabledS(event, graph, group, {}, new Date()).enabled) {
         console.log(event, " is enabled");
         retval.add(event);
       }
@@ -80,7 +80,8 @@ export function generateEventLog(
   };
 
   let goodTraces = 0;
-  let botchedTraces = 0;
+  let tooShortCount = 0;
+  let tooLongCount = 0;
 
   const initMarking = copyMarking(graph.marking);
   while (goodTraces < noTraces) {
@@ -99,17 +100,28 @@ export function generateEventLog(
       const enabled = allEnabled();
       if (enabled.size === 0) break;
       const event = getRandomItem(enabled);
-      executeS(event, graph);
+      executeS(event, graph, {}, new Date());
       trace.push({
         activity: graph.labelMap[event],
         role: graph.roleMap[event],
       });
     }
-    if (trace.length > maxTraceLen || trace.length < minTraceLen) {
-      botchedTraces++;
-      if (botchedTraces > 2 * noTraces) {
-        throw new Error("Unable to generate log from parameters...");
+
+    if (trace.length < minTraceLen) {
+      tooShortCount++;
+    } else if (trace.length > maxTraceLen) {
+      tooLongCount++;
+    }
+
+    if (tooShortCount + tooLongCount > 2 * noTraces) {
+      if (tooShortCount >= tooLongCount) {
+        throw new Error(
+          "Unable to generate log from parameters: traces run out of enabled activities before reaching Min. Trace Length. Try lowering Min. Trace Length."
+        );
       }
+      throw new Error(
+        "Unable to generate log from parameters: traces reached Max. Trace Length without reaching an accepting state. Try raising Max. Trace Length."
+      );
     }
 
     graph.marking = copyMarking(initMarking);

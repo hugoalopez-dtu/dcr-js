@@ -22,31 +22,27 @@ import {
 // Mutates graph's marking
 function execute(event: Event, graph: LabelDCRPP) {
   if (graph.conditions.has(event)) {
-    graph.marking.executed.add(event);
+    graph.marking.executed.set(event, {});
   }
 
   graph.marking.pending.delete(event);
 
-  // Add sink of all response relations to pending
   for (const responseEvent of graph.responseTo[event]) {
-    graph.marking.pending.add(responseEvent);
+    graph.marking.pending.set(responseEvent, undefined);
   }
 
-  // Remove sink of all response relations from included
   for (const excludeEvent of graph.excludesTo[event]) {
     graph.marking.included.delete(excludeEvent);
   }
 
-  // Add sink of all include relations to included
   for (const includeEvent of graph.includesTo[event]) {
     graph.marking.included.add(includeEvent);
   }
 }
 
 function isAccepting(graph: DCRGraph): boolean {
-  // Graph is accepting if the intersections between pending and included events is empty
   return (
-    mutatingIntersect(new Set(graph.marking.pending), graph.marking.included)
+    mutatingIntersect(new Set(graph.marking.pending.keys()), graph.marking.included)
       .size === 0
   );
 }
@@ -121,12 +117,9 @@ function newGraphEnv<T>(graph: DCRGraph, fun: () => T): T {
 // Converts a marking to a uniquely identifying string (naively)
 function stateToString(marking: Marking): string {
   let retval = "";
-  for (const setI in marking) {
-    retval += Array.from(marking[setI as keyof Marking])
-      .sort()
-      .join();
-    retval += ";";
-  }
+  retval += [...marking.executed.keys()].sort().join() + ";";
+  retval += [...marking.included].sort().join() + ";";
+  retval += [...marking.pending.keys()].sort().join() + ";";
   return retval;
 }
 
@@ -508,7 +501,7 @@ export function alignTrace(
       } else {
         let isGood = true;
         for (const pEvent of mutatingIntersect(
-          new Set(graph.marking.pending),
+          new Set(graph.marking.pending.keys()),
           graph.marking.included
         )) {
           isGood = isGood && canBeExecutedOrExcluded(pEvent, graph, context);

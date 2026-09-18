@@ -26,7 +26,8 @@ class DCRModeler {
   getElementRegistry(): any;
   getSelection(): any;
 
-  updateRendering(graph: DCRGraph): void;
+  updateRendering(graph: DCRGraph, variableStore?: VariableStore, currentTime?: Date): void;
+  validateGuards(): string[];
   updateViolations(
     arg: {
       violations: RelationViolations;

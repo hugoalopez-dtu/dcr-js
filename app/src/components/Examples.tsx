@@ -18,11 +18,24 @@ const Example = styled.div`
   }
   border-radius: 10px;
   cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ImgWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 `;
 
 const Img = styled.img`
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
-  width: 100%;
 `;
 
 const ExampleText = styled.h3`
@@ -33,6 +46,7 @@ const ExampleText = styled.h3`
 interface ExampleProps {
   examplesData: Array<string>;
   setExamplesOpen: (val: boolean) => void;
+  openEditorXML: (xml: string) => void;
   openCustomXML: (xml: string) => void;
   openDCRXML: (dcrXML: string) => void;
   setLoading: (val: boolean) => void;
@@ -41,6 +55,7 @@ interface ExampleProps {
 const Examples = ({
   examplesData,
   setExamplesOpen,
+  openEditorXML,
   openCustomXML,
   openDCRXML,
   setLoading,
@@ -51,7 +66,7 @@ const Examples = ({
     if (confirm("Are you sure? This will override your current diagram!")) {
       setLoading(true);
 
-      fetch("/dcr-js/examples/diagrams/" + exampleStr + ".xml")
+      fetch(`${import.meta.env.BASE_URL}examples/diagrams/` + exampleStr + ".xml")
         .then((response) => {
           if (!response.ok) {
             toast.error("Failed to fetch example...");
@@ -62,8 +77,10 @@ const Examples = ({
         .then((data) => {
           setLoading(false);
           if (data) {
-            if (data.includes("<?xml")) {
-              // type check which type of save file. Only one of them has magic number '<?xml'
+            // detect format from the root element, not the XML prolog (both may have one)
+            if (data.includes("<dcr:definitions")) {
+              openEditorXML(data);
+            } else if (data.includes("<dcrgraph>")) {
               openCustomXML(data);
             } else {
               openDCRXML(data);
@@ -103,7 +120,9 @@ const Examples = ({
                   onClick={() => exampleClick(exampleStr)}
                 >
                   <ExampleText>{exampleStr}</ExampleText>
-                  <Img src={`/dcr-js/examples/images/${exampleStr}.svg`} />
+                  <ImgWrapper>
+                    <Img src={`${import.meta.env.BASE_URL}examples/images/${exampleStr}.svg`} />
+                  </ImgWrapper>
                 </Example>
               );
             } else {

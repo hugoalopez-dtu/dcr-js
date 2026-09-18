@@ -71,7 +71,8 @@ DCRPopupProvider.prototype.getEntries = function(element) {
       flowType: 'include',
       action: (event, entry) => {
         self._modeling.updateProperties(element, {
-          type: entry.flowType
+          type: entry.flowType,
+          time: undefined
         });
       },
     },
@@ -82,7 +83,8 @@ DCRPopupProvider.prototype.getEntries = function(element) {
       flowType: 'exclude',
       action: (event, entry) => {
         self._modeling.updateProperties(element, {
-          type: entry.flowType
+          type: entry.flowType,
+          time: undefined
         });
       },
     },
@@ -93,7 +95,8 @@ DCRPopupProvider.prototype.getEntries = function(element) {
       flowType: 'milestone',
       action: (event, entry) => {
         self._modeling.updateProperties(element, {
-          type: entry.flowType
+          type: entry.flowType,
+          time: undefined
         });
       },
     },
@@ -104,7 +107,8 @@ DCRPopupProvider.prototype.getEntries = function(element) {
       flowType: 'spawn',
       action: (event, entry) => {
         self._modeling.updateProperties(element, {
-          type: entry.flowType
+          type: entry.flowType,
+          time: undefined
         });
       },
     }

@@ -1,4 +1,4 @@
-import {type DataDCR, type Event, type EventMap} from "./types";
+import {type DataDCR, type Event, type EventMap, type ExecutionRecord} from "./types";
 import mentionPrompt from "./prompts/mentions";
 import relationsPrompt from "./prompts/relations";
 import dataPrompt from "./prompts/guards";
@@ -66,8 +66,8 @@ export default async function extractGraph(
         milestonesFor: {},
         responseTo: {},
         marking: {
-            executed: new Set<Event>(),
-            pending: new Set<Event>(),
+            executed: new Map<Event, ExecutionRecord>(),
+            pending: new Map<Event, Date | undefined>(),
             included: new Set<Event>(),
         },
         data: {},
@@ -139,6 +139,15 @@ export default async function extractGraph(
     return {graph, doc};
 }
 
+function extractOutputText(data: any): string {
+    console.log(JSON.stringify(data.output, null, 2));
+    const messageItem = data.output?.find((item: any) => item.type === "message");
+    if (!messageItem) {
+        throw new Error("No message item found in OpenAI response output");
+    }
+    return messageItem.content[0].text;
+}
+
 function addToEventMap(eventMap: EventMap, source: string, target: string) {
     if (!(source in eventMap)) {
         eventMap[source] = new Set<Event>();
@@ -195,7 +204,7 @@ export async function extractDataAndExpressions(model: string, doc: ProcessDescr
     }
 
     const data = await response.json();
-    const result: string = data.output[0].content[0].text;
+    const result: string = extractOutputText(data);
 
     console.log(result);
 
@@ -258,7 +267,7 @@ export async function extractRelations(model: string, doc: ProcessDescription, a
 
     const data = await response.json();
 
-    const result = data.output[0].content[0].text;
+    const result = extractOutputText(data);
 
     const relations: Relation[] = [];
     for (const rawRelation of result.trim().split("\n")) {
@@ -307,7 +316,7 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
 
     console.log(data)
 
-    const result = data.output[0].content[0].text;
+    const result = extractOutputText(data);
 
     for (const rawMention of result.trim().split("\n")) {
         const [mentionText, mentionType, mentionSentenceStr] = rawMention.trim().split("\t");

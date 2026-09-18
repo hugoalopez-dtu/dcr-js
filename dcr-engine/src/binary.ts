@@ -53,17 +53,14 @@ function findTraceCover(
 
   // Mutates graph's marking
   function execute(event: Event, graph: DCRGraph) {
-    graph.marking.executed.add(event);
+    graph.marking.executed.set(event, {});
     graph.marking.pending.delete(event);
-    // Add sink of all response relations to pending
     for (const rEvent of graph.responseTo[event]) {
-      graph.marking.pending.add(rEvent);
+      graph.marking.pending.set(rEvent, undefined);
     }
-    // Remove sink of all response relations from included
     for (const eEvent of graph.excludesTo[event]) {
       graph.marking.included.delete(eEvent);
     }
-    // Add sink of all include relations to included
     for (const iEvent of graph.includesTo[event]) {
       graph.marking.included.add(iEvent);
     }
@@ -92,7 +89,7 @@ function findTraceCover(
       // For all events that are included (based on the existing graph) but not executed, a conditionsFor would cover this trace
       const pConds = mutatingDifference(
         new Set(initGraph.marking.included),
-        initGraph.marking.executed
+        new Set(initGraph.marking.executed.keys())
       );
 
       // Possible conditions that also exists cover this trace
@@ -131,7 +128,7 @@ function findTraceCover(
     // s.t. otherEvent *-> event, where otherEvent has been executed
     // after event was last executed covers the trace
     for (const event of mutatingIntersect(
-      new Set(graphToCover.marking.pending),
+      new Set(graphToCover.marking.pending.keys()),
       initGraph.marking.included
     )) {
       for (const otherEvent of mutatingIntersect(

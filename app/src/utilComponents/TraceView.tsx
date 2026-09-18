@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { BiCheck, BiQuestionMark, BiReset, BiX } from "react-icons/bi";
+import { BiCheck, BiErrorCircle, BiQuestionMark, BiReset, BiX } from "react-icons/bi";
 import styled from "styled-components";
 import type { RoleTrace } from "dcr-engine/src/types";
+import type { TraceClassification } from "../types";
+import { PartialViolationIcon } from "./ConformanceUtil";
 
 const TraceWindow = styled.div<{ $hugLeft: boolean }>`
   position: fixed;
@@ -102,10 +104,33 @@ const OrangeQuestion = styled(BiQuestionMark)`
   background-color: orange;
 `;
 
-const Activity = styled.li`
+const NotAllowedIcon = styled(BiErrorCircle)`
+  display: inline-block;
+  vertical-align: middle;
+  color: #f39c12;
+  margin-left: 0.4em;
+  font-size: 0.9em;
+`;
+
+const Activity = styled.li<{ $color?: "green" | "red" | "yellow" }>`
   width: 100%;
   padding: 0.5rem 1rem 0.5rem 1rem;
   box-sizing: border-box;
+  background-color: ${({ $color }) =>
+    $color === "red" ? "#ffe0e0" :
+    $color === "yellow" ? "#fff8d0" :
+    $color === "green" ? "#e0f5e0" :
+    "transparent"};
+`;
+
+const ClockMarker = styled.li`
+  width: 100%;
+  padding: 0.35rem 1rem 0.35rem 1rem;
+  box-sizing: border-box;
+  font-style: italic;
+  font-size: 0.85em;
+  color: #555;
+  text-align: center;
 `;
 
 const resultIcon = (val: boolean | undefined) => {
@@ -119,12 +144,35 @@ const resultIcon = (val: boolean | undefined) => {
   }
 };
 
+const classificationIcon = (c: TraceClassification) => {
+  switch (c) {
+    case "conforming":
+      return <GreenCheck title="Conforming" />;
+    case "partiallyViolating":
+      return (
+        <PartialViolationIcon
+          title="Partially Violating"
+          style={{ display: "block", margin: "auto", marginLeft: "1rem", marginRight: "1rem", width: "1em", height: "1em" }}
+        />
+      );
+    case "violating":
+      return <RedX title="Violating" />;
+  }
+};
+
 interface TraceViewProps {
   selectedTrace: {
     traceId: string;
     traceName?: string;
     trace: RoleTrace;
     isPositive?: boolean;
+    classification?: TraceClassification;
+    clockAdvancements?: Array<{ afterEventCount: number; timestamp: Date }>;
+    executionCompliance?: Array<{
+      deadline?: { time: Date; met: boolean };
+      delay?: { time: Date; met: boolean };
+      allowed: boolean;
+    } | undefined>;
   };
   setSelectedTraceId: React.Dispatch<React.SetStateAction<string | null>>;
   onResetTrace?: () => void;
@@ -132,6 +180,9 @@ interface TraceViewProps {
   onCloseCallback?: () => void;
   hugLeft?: boolean;
   children?: React.ReactNode;
+  stepViolations?: number[];
+  stepTimeViolations?: number[];
+  showDataFields?: boolean;
 }
 
 const TraceView = ({
@@ -142,6 +193,9 @@ const TraceView = ({
   onCloseCallback,
   hugLeft,
   children,
+  stepViolations,
+  stepTimeViolations,
+  showDataFields = true,
 }: TraceViewProps) => {
   const [traceName, setTraceName] = useState(
     selectedTrace.traceName || selectedTrace.traceId,
@@ -161,7 +215,9 @@ const TraceView = ({
         ) : (
           traceName
         )}
-        {"isPositive" in selectedTrace
+        {selectedTrace.classification
+          ? classificationIcon(selectedTrace.classification)
+          : "isPositive" in selectedTrace
           ? resultIcon(selectedTrace.isPositive)
           : null}
         {onResetTrace && <ResetTrace onClick={onResetTrace} />}
@@ -175,13 +231,66 @@ const TraceView = ({
         />
       </ResultsHeader>
       <ul>
-        {selectedTrace.trace.map((event, idx) => (
-          <Activity key={event.activity + event.role + idx}>
-            {event.role !== ""
-              ? event.role + ": " + event.activity
-              : event.activity}
-          </Activity>
-        ))}
+        {(() => {
+          const clockAdvancements = selectedTrace.clockAdvancements ?? [];
+          const advancementsAt = (afterEventCount: number) =>
+            clockAdvancements.filter((a) => a.afterEventCount === afterEventCount);
+          const clockMarker = (timestamp: Date, key: string) => (
+            <ClockMarker key={key}>
+              ⏱ Clock advanced to{" "}
+              {timestamp.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </ClockMarker>
+          );
+          const items: React.ReactNode[] = [];
+          advancementsAt(0).forEach((a, i) => items.push(clockMarker(a.timestamp, `clock-0-${i}`)));
+          selectedTrace.trace.forEach((event, idx) => {
+            const sv = stepViolations?.[idx];
+            const stv = stepTimeViolations?.[idx];
+            const color = stepViolations === undefined ? undefined
+              : (sv !== undefined && sv - (stv ?? 0) > 0) ? "red"
+              : (stv !== undefined && stv > 0) ? "yellow"
+              : "green";
+            const compliance = selectedTrace.executionCompliance?.[idx];
+            items.push(
+              <Activity key={event.activity + event.role + idx} $color={color}>
+                <div>
+                  {event.role !== ""
+                    ? event.role + ": " + event.activity
+                    : event.activity}
+                  {compliance?.allowed === false && (
+                    <NotAllowedIcon title="Executed while not allowed by the model" />
+                  )}
+                  {compliance?.deadline && (
+                    <span style={{ fontSize: "0.75em", marginLeft: "0.5em", color: compliance.deadline.met ? "#27ae60" : "#c0392b" }}>
+                      Deadline: {compliance.deadline.time.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                  {compliance?.delay && (
+                    <span style={{ fontSize: "0.75em", marginLeft: "0.5em", color: compliance.delay.met ? "#27ae60" : "#c0392b" }}>
+                      Delay: {compliance.delay.time.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </div>
+                {showDataFields && (event.timestamp || (event.varName !== undefined && event.value !== undefined)) && (
+                  <div>
+                    {event.timestamp && (
+                      <span style={{ fontSize: "0.75em", color: "#555" }}>
+                        {event.timestamp.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                    {event.varName !== undefined && event.value !== undefined && (
+                      <span style={{ fontSize: "0.75em", color: "#555", marginLeft: event.timestamp ? "0.5em" : undefined }}>
+                        ({event.varName} = {String(event.value)})
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Activity>,
+            );
+            advancementsAt(idx + 1).forEach((a, i) => items.push(clockMarker(a.timestamp, `clock-${idx + 1}-${i}`)));
+          });
+          return items;
+        })()}
       </ul>
       {children}
     </TraceWindow>

@@ -32,6 +32,7 @@ import ResizeModule from 'diagram-js/lib/features/resize';
 import SnappingModule from './features/snapping';
 import PopupMenuModule from './features/popup-menu';
 import SettingsModule from './features/settings';
+import GuardsAndTimeModule from './features/guards-time'
 
 var initialDiagram =
   `<?xml version="1.0" encoding="UTF-8"?>
@@ -111,7 +112,8 @@ Modeler.prototype._modelingModules = [
   ResizeModule,
   SnappingModule,
   PopupMenuModule,
-  SettingsModule
+  SettingsModule,
+  GuardsAndTimeModule  
 ];
 
 

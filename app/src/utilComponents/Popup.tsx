@@ -9,6 +9,7 @@ const Background = styled.div`
     left: 0;
     opacity: 0.5;
     background-color: black;
+    z-index: 1000;
 `;
 
 const Window = styled.div`
@@ -22,6 +23,7 @@ const Window = styled.div`
     padding: 16px 32px;
     max-height: 100vh;
     overflow: scroll;
+    z-index: 1000;
 `;
 
 const CloseIcon = styled(BiX)`

@@ -11,6 +11,7 @@ import type {
   Variant,
   BinaryLog,
   BinaryVariantLog,
+  ExecutionRecord,
 } from "./types";
 
 export function isEventLog(
@@ -203,9 +204,9 @@ export function copyEventMap(eventMap: EventMap): EventMap {
 
 export function copyMarking(marking: Marking): Marking {
   return {
-    executed: new Set(marking.executed),
+    executed: new Map(marking.executed),
     included: new Set(marking.included),
-    pending: new Set(marking.pending),
+    pending: new Map(marking.pending),
   };
 }
 
@@ -316,8 +317,8 @@ export function makeEmptyGraph(events: Set<string>) {
     milestonesFor: {},
     responseTo: {},
     marking: {
-      executed: new Set<Event>(),
-      pending: new Set<Event>(),
+      executed: new Map<Event, ExecutionRecord>(),
+      pending: new Map<Event, Date | undefined>(),
       included: new Set(events),
     },
   };
@@ -340,8 +341,8 @@ export function makeFullGraph(events: Set<string>) {
     milestonesFor: {},
     responseTo: {},
     marking: {
-      executed: new Set<Event>(),
-      pending: new Set<Event>(),
+      executed: new Map<Event, ExecutionRecord>(),
+      pending: new Map<Event, Date | undefined>(),
       included: new Set(events),
     },
   };
@@ -396,4 +397,20 @@ export function mutatingIntersect<T>(a: Set<T>, b: Set<T>): Set<T> {
     }
   }
   return a;
+}
+
+export function parseDurationMs(iso: string): number {
+  const [datePart, timePart] = iso.split('T');
+  let ms = 0;
+  const days = datePart?.match(/(\d+)D/);
+  if (days) ms += parseInt(days[1]) * 86400000;
+  if (timePart) {
+    const hours   = timePart.match(/(\d+)H/);
+    const minutes = timePart.match(/(\d+)M/);
+    const seconds = timePart.match(/(\d+)S/);
+    if (hours)   ms += parseInt(hours[1]) * 3600000;
+    if (minutes) ms += parseInt(minutes[1]) * 60000;
+    if (seconds) ms += parseInt(seconds[1]) * 1000;
+  }
+  return ms;
 }

@@ -32,6 +32,7 @@ const writingOptions = {
   format: true,
   indentBy: "  ",
   suppressEmptyNode: true,
+  suppressBooleanAttributes: false,
 };
 
 function* parseLogGenerator(
@@ -112,7 +113,13 @@ function* parseLogGenerator(
       }
 
       const name = nameArr.join(":");
-      yield { traceId, traceLabel, event: { activity: name, role } };
+      const dateElem = (elem as any).date;
+      const timestamp = dateElem?.value ? new Date(dateElem.value as string) : undefined;
+      const toObj = (e: any) => Array.isArray(e) ? e[0] : e;
+      const varElem = toObj((elem as any).int) ?? toObj((elem as any).float) ?? toObj((elem as any).boolean);
+      const varName: string | undefined = varElem?.key;
+      const value: number | boolean | string | undefined = varElem?.value;
+      yield { traceId, traceLabel, event: { activity: name, role, timestamp, varName, value } };
     }
   }
 }
@@ -205,6 +212,20 @@ export function writeEventLog(log: EventLog<RoleTrace>): string {
           },
         ],
       };
+      if (event.timestamp) {
+        eventElem.date = {
+          "@key": "time:timestamp",
+          "@value": event.timestamp.toISOString(),
+        };
+      }
+      if (event.varName !== undefined && event.value !== undefined) {
+        const xesType =
+          typeof event.value === "boolean" ? "boolean" :
+          typeof event.value === "number" ? "int" : "string";
+        (eventElem as any)[xesType] = (eventElem as any)[xesType]
+          ? [...[].concat((eventElem as any)[xesType]), { "@key": event.varName, "@value": String(event.value) }]
+          : { "@key": event.varName, "@value": String(event.value) };
+      }
       traceElem.event.push(eventElem);
     }
 

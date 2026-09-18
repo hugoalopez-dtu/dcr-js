@@ -16,6 +16,7 @@ import {
     BiSave,
     BiSolidDashboard,
     BiTestTube,
+    BiInfoCircle,
 } from "react-icons/bi";
 
 import Examples from "./Examples";
@@ -36,6 +37,7 @@ import {BsFiletypeDoc, BsStars} from "react-icons/bs";
 import ModelExtractionDialogue from "./ModelExtractionDialogue.tsx";
 import type {ExtractionConfig, ExtractionResult} from "dcr-engine/src/extraction.ts";
 import ExtractionResultView from "./ExtractionResultView.tsx";
+import Popup from "../utilComponents/Popup";
 
 
 const TextButton = styled(BsFiletypeDoc)<{ open: boolean }>`
@@ -68,9 +70,24 @@ const HeatmapButton = styled(BiTestTube)<{
         cursor: default !important;
         &:hover {
             box-shadow: none !important;
-        }    
+        }
     `
                     : ""}
+`;
+
+const BpmnInfoIcon = styled(BiInfoCircle)`
+  font-size: 18px;
+  color: grey;
+  cursor: pointer;
+
+  &:hover {
+    color: black;
+  }
+`;
+
+const BpmnSupportList = styled.ul`
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
 `;
 
 const defaultRelationsDescription = `**executes**: Focus on actors. Extract a relation of type "executes", if the text describes that this actor (head) is responsible for the event (tail).
@@ -112,6 +129,7 @@ const ModelerState = ({
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [textOpen, setTextOpen] = useState(false);
+    const [bpmnInfoOpen, setBpmnInfoOpen] = useState(false);
 
     const [loading, setLoading] = useState(false);
 
@@ -122,12 +140,19 @@ const ModelerState = ({
         currentGraph?.name ?? initGraphName,
     );
 
+    function warnIfInvalidGuards(): boolean {
+        if (!modeler) return false;
+        const issues: string[] = modeler.validateGuards();
+        issues.forEach((msg: string) => toast.warning(msg));
+        return issues.length > 0;
+    }
 
     async function saveGraph() {
         if (!modeler) {
             return;
         }
 
+        if (warnIfInvalidGuards()) return false;
         let saved = false;
 
         try {
@@ -150,7 +175,7 @@ const ModelerState = ({
 
     useEffect(() => {
         // Fetch examples
-        fetch("/dcr-js/examples/generated_examples.txt")
+        fetch(`${import.meta.env.BASE_URL}examples/generated_examples.txt`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(
@@ -179,6 +204,9 @@ const ModelerState = ({
             parse(data)
                 .then(() => {
                     setGraphName(importName ? importName : initGraphName);
+                    setExtractionResult(undefined);
+                    setTextOpen(false);
+                    warnIfInvalidGuards();
                 })
                 .catch((e) => {
                     console.log(e);
@@ -193,6 +221,7 @@ const ModelerState = ({
             return;
         }
 
+        if (warnIfInvalidGuards()) return;
         const data = await modeler.saveXML({format: true});
         const blob = new Blob([data.xml]);
 
@@ -204,6 +233,7 @@ const ModelerState = ({
             return;
         }
 
+        if (warnIfInvalidGuards()) return;
         const data = await modeler.saveDCRXML();
         const blob = new Blob([data.xml]);
 
@@ -311,7 +341,17 @@ const ModelerState = ({
                                 setMenuOpen(false);
                             }}>
                                 <div/>
-                                <>Open BPMN 2.0 XML</>
+                                <span style={{display: "flex", alignItems: "center", gap: "0.4rem"}}>
+                                    Open BPMN 2.0 XML
+                                    <BpmnInfoIcon
+                                        title="Supported BPMN elements"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setBpmnInfoOpen(true);
+                                        }}
+                                    />
+                                </span>
                             </FileUpload>
                         </StyledFileUpload>
                     ),
@@ -443,7 +483,7 @@ const ModelerState = ({
         if (!modeler) return;
         const elementRegistry = modeler.getElementRegistry();
         const events = Object.values(elementRegistry._elements).filter(
-            (element: any) => element.element.id.includes("Event")
+            (element: any) => element.element.type === "dcr:Event"
         );
         const uniqueActivities = new Set(
             events.map((element: any) => element.element.businessObject.description)
@@ -514,6 +554,8 @@ const ModelerState = ({
                 onSubmit={async (config) => {
                     if(!modeler) return;
 
+                    if (!confirm("This will replace your current diagram. Continue?")) return;
+
                     setIsExtractingModel(true);
                     try {
                         const res = await extractGraph(config);
@@ -521,8 +563,10 @@ const ModelerState = ({
                         const xml = await layoutGraph(res.graph);
                         console.log(xml);
                         await modeler.importXML(xml);
+                        setGraphName("Extracted Model");    
                     } catch (e) {
                         console.log(e);
+                        alert(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
                     } finally {
                         setModelExtractionOpen(false);
                         setIsExtractingModel(false);
@@ -561,13 +605,15 @@ const ModelerState = ({
             />
             <div style={{width: 100, height: "100vh"}}>tze</div>
             <TopRightIcons>
-                <ModalMenu
-                    icon={TextButton}
-                    elements={[{customElement: renderExtractionResult()}]}
-                    bottomElements={[]}
-                    open={textOpen && !menuOpen && !modelExtractionOpen}
-                    setOpen={setTextOpen}
-                />
+                {extractionResult && (
+                    <ModalMenu
+                        icon={TextButton}
+                        elements={[{customElement: renderExtractionResult()}]}
+                        bottomElements={[]}
+                        open={textOpen && !menuOpen && !modelExtractionOpen}
+                        setOpen={setTextOpen}
+                    />
+                )}
                 <HeatmapButton
                     onClick={() => {
                         if (!modeler) return;
@@ -587,6 +633,21 @@ const ModelerState = ({
                             );
                             return;
                         }
+
+                        if (
+                            !tdmOpen &&
+                            Object.keys(elementRegistry._elements).find((element) => {
+                                const bo =
+                                    elementRegistry._elements[element].element.businessObject;
+                                return bo.guard || bo.time || bo.eventData;
+                            })
+                        ) {
+                            toast.warning(
+                                "Test driven modeling not supported for guards, time constraints, and variables...",
+                            );
+                            return;
+                        }
+
                         setTdmOpen(!tdmOpen);
                     }}
                     $clicked={tdmOpen}
@@ -625,6 +686,7 @@ const ModelerState = ({
             {examplesOpen && (
                 <Examples
                     examplesData={examplesData}
+                    openEditorXML={(xml) => open(xml, modeler?.importXML)}
                     openCustomXML={(xml) => open(xml, modeler?.importCustomXML)}
                     openDCRXML={(xml) => open(xml, modeler?.importDCRPortalXML)}
                     setExamplesOpen={setExamplesOpen}
@@ -632,6 +694,30 @@ const ModelerState = ({
                 />
             )}
             {renderExtractionDialogue()}
+            {bpmnInfoOpen && (
+                <Popup close={() => setBpmnInfoOpen(false)}>
+                    <h3>Supported BPMN Elements</h3>
+                    <p>The BPMN import currently supports:</p>
+                    <BpmnSupportList>
+                        <li>Start Event</li>
+                        <li>End Event</li>
+                        <li>Task</li>
+                        <li>Exclusive Gateway (XOR)</li>
+                        <li>Parallel Gateway (AND)</li>
+                        <li>Inclusive Gateway (OR)</li>
+                    </BpmnSupportList>
+                    <p>
+                        Gateways must follow the single-entry-single-exit (SESE) principle: 
+                        each split gateway is matched by exactly one join gateway of the 
+                        same type, forming a self-contained block.
+                    </p>
+                    <p>
+                        Other BPMN elements (e.g., subprocesses, timer/message/boundary events,
+                        pools and lanes, data objects) are not currently supported and may cause
+                        the import to fail or produce an incomplete graph.
+                    </p>
+                </Popup>
+            )}
         </>
     );
 };

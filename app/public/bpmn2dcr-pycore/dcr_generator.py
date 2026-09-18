@@ -9,6 +9,10 @@ class DCRGenerator:
         self.dcr_graph = dcr_graph
 
     def to_xml(self, output_file_path: str):
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            f.write(self.to_xml_string())
+
+    def to_xml_string(self) -> str:
         dcrgraph_root = ET.Element('dcrgraph')
 
         specification = self._create_specification()
@@ -17,12 +21,7 @@ class DCRGenerator:
         runtime = self._create_runtime()
         dcrgraph_root.append(runtime)
 
-        xml_str = ET.tostring(dcrgraph_root, 'unicode')
-        dom = minidom.parseString(xml_str)
-        pretty_xml_str = dom.toprettyxml(indent="  ")
-
-        with open(output_file_path, 'w', encoding='utf-8') as f:
-            f.write(pretty_xml_str)
+        return ET.tostring(dcrgraph_root, encoding='unicode')
 
     def _create_specification(self):
         specification = ET.Element('specification')
@@ -48,6 +47,7 @@ class DCRGenerator:
             event_el = ET.SubElement(events_xml, 'event', {'id': event.id})
 
             custom = ET.SubElement(event_el, 'custom')
+            ET.SubElement(custom, 'eventData')
             visualization = ET.SubElement(custom, 'visualization')
             ET.SubElement(visualization, 'location', {
                           'xLoc': str(x_pos), 'yLoc': str(y_pos)})

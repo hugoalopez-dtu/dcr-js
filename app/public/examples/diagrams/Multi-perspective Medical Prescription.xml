@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dcr:definitions xmlns:dcr="http://tk/schema/dcr" xmlns:dcrDi="http://tk/schema/dcrDi" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC">
+  <dcr:dcrGraph id="dcrGraph">
+    <dcr:event id="Event_1thqk39" role="Doctor" description="Diagnose Medicine" included="true" executed="false" pending="false" enabled="false">
+      <dcr:eventData name="Diagnosis" type="Bool" default="true" />
+    </dcr:event>
+    <dcr:event id="Event_0bfx7v8" role="Doctor" description="Prescribe Medicine" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:relation id="Relation_0kkb74w" type="condition" sourceRef="Event_1thqk39" targetRef="Event_0bfx7v8" />
+    <dcr:relation id="Relation_1el34pd" type="response" sourceRef="Event_1thqk39" targetRef="Event_0bfx7v8" guard="Diagnosis = true" />
+    <dcr:event id="Event_03upc4i" role="Patient" description="Buy Medicine" included="true" executed="false" pending="false" enabled="false" />
+    <dcr:relation id="Relation_0sf72wz" type="condition" sourceRef="Event_0bfx7v8" targetRef="Event_03upc4i" />
+    <dcr:relation id="Relation_0e57mx8" type="response" sourceRef="Event_0bfx7v8" targetRef="Event_03upc4i" time="P30D" />
+    <dcr:relation id="Relation_17mlo56" type="exclude" sourceRef="Event_03upc4i" targetRef="Event_03upc4i" />
+  </dcr:dcrGraph>
+  <dcrDi:dcrRootBoard id="RootBoard">
+    <dcrDi:dcrPlane id="Plane" boardElement="dcrGraph">
+      <dcrDi:relation id="Relation_17mlo56_di" boardElement="Relation_17mlo56">
+        <dcrDi:waypoint x="665" y="160" />
+        <dcrDi:waypoint x="700" y="160" />
+        <dcrDi:waypoint x="700" y="110" />
+        <dcrDi:waypoint x="665" y="110" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_0e57mx8_di" boardElement="Relation_0e57mx8">
+        <dcrDi:waypoint x="390" y="150" />
+        <dcrDi:waypoint x="535" y="150" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_0sf72wz_di" boardElement="Relation_0sf72wz">
+        <dcrDi:waypoint x="390" y="110" />
+        <dcrDi:waypoint x="535" y="110" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_1el34pd_di" boardElement="Relation_1el34pd">
+        <dcrDi:waypoint x="120" y="150" />
+        <dcrDi:waypoint x="260" y="150" />
+      </dcrDi:relation>
+      <dcrDi:relation id="Relation_0kkb74w_di" boardElement="Relation_0kkb74w">
+        <dcrDi:waypoint x="120" y="110" />
+        <dcrDi:waypoint x="260" y="110" />
+      </dcrDi:relation>
+      <dcrDi:dcrShape id="Event_1thqk39_di" boardElement="Event_1thqk39">
+        <dc:Bounds x="-10" y="50" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_0bfx7v8_di" boardElement="Event_0bfx7v8">
+        <dc:Bounds x="260" y="50" width="130" height="150" />
+      </dcrDi:dcrShape>
+      <dcrDi:dcrShape id="Event_03upc4i_di" boardElement="Event_03upc4i">
+        <dc:Bounds x="535" y="50" width="130" height="150" />
+      </dcrDi:dcrShape>
+    </dcrDi:dcrPlane>
+  </dcrDi:dcrRootBoard>
+</dcr:definitions>

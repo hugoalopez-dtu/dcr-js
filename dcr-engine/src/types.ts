@@ -14,9 +14,9 @@ export type RelationType =
   | "milestone";
 
 export interface Marking {
-  executed: Set<Event>;
+  executed: Map<Event, ExecutionRecord>;
   included: Set<Event>;
-  pending: Set<Event>;
+  pending: Map<Event, Date | undefined>;
 }
 
 export type Nestings = {
@@ -50,6 +50,24 @@ export type RelationActivations = {
   milestonesFor: FuzzyRelation;
   includesTo: FuzzyRelation;
 };
+
+export type Value = number | string | boolean;
+
+export type VariableStore = { [variableName: string]: Value };
+
+export type ExecutionRecord = {
+  time?: Date;
+  variableSnapshot?: VariableStore;
+};
+  
+  export type GuardMap = {
+    [source: string]: {
+      [target: string]: {
+        [relationType: string]: string;
+      };
+    };
+  };
+
 
 export interface DCRGraph {
   events: Set<Event>;
@@ -121,6 +139,9 @@ export type DCRGraphS = DCRGraph &
     };
     roles: Set<Role>;
     roleMap: { [event: Event]: Role };
+    guardMap?: GuardMap;
+    timeConstraintMap?: { [source: string]: { [target: string]: { delay?: number; deadline?: number } } };
+    initialVariableStore?: VariableStore;
   };
 
 export interface SubProcess {
@@ -134,7 +155,7 @@ export function isSubProcess(obj: unknown): obj is SubProcess {
 }
 
 export type Trace = Array<Event>;
-export type RoleTrace = Array<{ activity: Label; role: Role }>;
+export type RoleTrace = Array<{ activity: Label; role: Role; timestamp?: Date; varName?: string; value?: Value }>;
 
 export interface EventLog<T extends RoleTrace | Trace> {
   events: Set<Event>;
@@ -154,6 +175,10 @@ export interface XMLEvent {
       "@value": string;
     },
   ];
+  date?: {
+    "@key": "time:timestamp";
+    "@value": string;
+  };
 }
 
 export interface XMLTrace {

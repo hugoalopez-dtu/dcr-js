@@ -204,10 +204,25 @@ export function createParseAsRoleLog(
         const activity = getEventClassifier(eventAttributes);
         const role = getRole(eventAttributes, globalEventAttributes) ?? "";
 
+        const timestamp = typeof eventAttributes["time:timestamp"] === "number"
+          ? new Date(eventAttributes["time:timestamp"] as number)
+          : undefined;
+
+        const STANDARD_KEYS = new Set(["concept:name", "role", "org:role", "time:timestamp", "lifecycle:transition", "org:group", "concept:instance"]);
+        let varName: string | undefined;
+        let value: number | boolean | string | undefined;
+        for (const key of Object.keys(eventAttributes)) {
+          if (!STANDARD_KEYS.has(key)) {
+            varName = key;
+            value = eventAttributes[key] as number | boolean | string;
+            break;
+          }
+        }
+
         if (!(traceId in log.traces)) {
           log.traces[traceId] = [];
         }
-        log.traces[traceId].push({ activity, role });
+        log.traces[traceId].push({ activity, role, timestamp, varName, value });
 
         if (!log.events.has(activity)) {
           log.events.add(activity);

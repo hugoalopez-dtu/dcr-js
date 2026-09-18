@@ -281,6 +281,18 @@ const TestDrivenModeling = ({ modeler, show }: TestDrivenModelingProps) => {
       return;
     }
 
+    if (
+      Object.keys(elementRegistry._elements).find((element) => {
+        const bo = elementRegistry._elements[element].element.businessObject;
+        return bo.guard || bo.time || bo.eventData;
+      })
+    ) {
+      toast.warning(
+        "Test driven modeling not supported for guards, time constraints, and variables..."
+      );
+      return;
+    }
+
     const graph = moddleToDCR(elementRegistry, true);
     const graphPP = graphToGraphPP(graph);
 
@@ -478,6 +490,21 @@ const TestDrivenModeling = ({ modeler, show }: TestDrivenModelingProps) => {
                     );
                     return;
                   }
+
+                  if (
+                    Object.keys(elementRegistry._elements).find((element) => {
+                      const bo =
+                        elementRegistry._elements[element].element
+                          .businessObject;
+                      return bo.guard || bo.time || bo.eventData;
+                    })
+                  ) {
+                    toast.warning(
+                      "Test driven modeling not supported for guards, time constraints, and variables..."
+                    );
+                    return;
+                  }
+
                   const graph = moddleToDCR(modeler.getElementRegistry());
                   const exampleEvents = [...graph.events]
                     .slice(0, 3)
