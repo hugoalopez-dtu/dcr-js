@@ -62,8 +62,18 @@ const ListItem = styled.li`
 const CheckboxLabel = styled.label`
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 0.5rem;
   cursor: pointer;
+`;
+
+const CheckboxText = styled.span`
+  flex: 1;
+`;
+
+const Checkbox = styled.input`
+  flex: 0 0 auto;
+  width: auto;
 `;
 
 const RebuildButton = styled.button`
@@ -216,6 +226,8 @@ const ExtractionResultView: React.FC<Props> = ({
     };
 
     const toggleMention = (index: number) => {
+        const wasSelected = selectedMentions.has(index);
+
         setSelectedMentions((prev) => {
             const next = new Set(prev);
             if (next.has(index)) {
@@ -225,6 +237,25 @@ const ExtractionResultView: React.FC<Props> = ({
             }
             return next;
         });
+
+        if (wasSelected) {
+            // Deselecting a mention also deselects every relation relying on it.
+            const dependentRelations = new Set<number>();
+            relations.forEach((relation, relationIndex) => {
+                if (
+                    relation.headMentionIndex === index ||
+                    relation.tailMentionIndex === index
+                ) {
+                    dependentRelations.add(relationIndex);
+                }
+            });
+
+            setSelectedRelations((prev) => {
+                const next = new Set(prev);
+                dependentRelations.forEach((i) => next.delete(i));
+                return next;
+            });
+        }
     };
 
     const toggleRelation = (index: number) => {
@@ -257,13 +288,13 @@ const ExtractionResultView: React.FC<Props> = ({
                             return (
                                 <ListItem key={index}>
                                     <CheckboxLabel>
-                                        <span>
+                                        <CheckboxText>
                                             <span style={{color: color.text, fontWeight: 600}}>
                                                 {mention.text}
                                             </span>{" "}
                                             ({mention.type}, sentence {mention.sentence})
-                                        </span>
-                                        <input
+                                        </CheckboxText>
+                                        <Checkbox
                                             type="checkbox"
                                             checked={selectedMentions.has(index)}
                                             onChange={() => toggleMention(index)}
@@ -279,13 +310,13 @@ const ExtractionResultView: React.FC<Props> = ({
                         {relations.map((relation, index) => (
                             <ListItem key={index}>
                                 <CheckboxLabel>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedRelations.has(index)}
-                                        onChange={() => toggleRelation(index)}
-                                    />
-                                    <span>{relationLabel(relation)}</span>
-                                </CheckboxLabel>
+                                        <CheckboxText>{relationLabel(relation)}</CheckboxText>
+                                        <Checkbox
+                                            type="checkbox"
+                                            checked={selectedRelations.has(index)}
+                                            onChange={() => toggleRelation(index)}
+                                        />
+                                    </CheckboxLabel>
                             </ListItem>
                         ))}
                     </List>
