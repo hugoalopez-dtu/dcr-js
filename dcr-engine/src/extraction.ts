@@ -271,7 +271,8 @@ function preprocessText(text: string): ProcessDescription {
         expressions: [],
     };
 
-    text = text.replaceAll(/([^\p{P}\s])\s*\n/gi, "$1 ");
+    // fix manual new lines in input text, to prevent problems with segmenting
+    text = text.replace(/([\w,-])\s*\n/gm, "$1 ");
 
     const segmenter = new Intl.Segmenter('en', {granularity: 'sentence'});
     const segments = segmenter.segment(text);
@@ -490,7 +491,7 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
             continue;
         }
 
-        if (doc.sentences[mentionSentence].indexOf(mentionText) === -1) {
+        if (doc.sentences[mentionSentence].toLowerCase().indexOf(mentionText.toLowerCase()) === -1) {
             console.error(`Ignoring '${mentionText}', which is not in the referenced sentence ${mentionSentence} ('${doc.sentences[mentionSentence]}').`);
             continue;
         }
