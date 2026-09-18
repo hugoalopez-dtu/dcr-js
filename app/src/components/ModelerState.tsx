@@ -26,7 +26,7 @@ import {useHotkeys} from "react-hotkeys-hook";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import Loading from "../utilComponents/Loading";
-import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, type Nestings,} from "dcr-engine";
+import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, type Nestings, buildGraph, filterProcessDescription,} from "dcr-engine";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import styled from "styled-components";
 import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenuElements";
@@ -579,6 +579,26 @@ const ModelerState = ({
         );
     }
 
+    const rebuildModel = async (
+        selectedMentions: Set<number>,
+        selectedRelations: Set<number>
+    ) => {
+        if (!modeler || !extractionResult) return;
+        const filteredDoc = filterProcessDescription(
+            extractionResult.doc,
+            selectedMentions,
+            selectedRelations
+        );
+        try {
+            const graph = buildGraph(filteredDoc);
+            const xml = await layoutGraph(graph);
+            await modeler.importXML(xml);
+        } catch (e) {
+            console.log(e);
+            alert(`Unable to rebuild model: ${e instanceof Error ? e.message : e}`);
+        }
+    };
+
     const renderExtractionResult = () => {
         if(!extractionResult) return null;
         return <div style={{
@@ -586,13 +606,14 @@ const ModelerState = ({
             top: "5rem",
             left: 0,
             right: 0,
-            bottom: 0,
-            flexDirection: "column",
             boxSizing: "border-box",
             padding: 25,
         }}>
             <h4>Extraction Result</h4>
-            <ExtractionResultView processDescription={extractionResult.doc} />
+            <ExtractionResultView
+                processDescription={extractionResult.doc}
+                onRebuild={rebuildModel}
+            />
         </div>;
     }
 

@@ -57,7 +57,22 @@ export type ExtractionResult = {
 export default async function extractGraph(
     config: ExtractionConfig
 ): Promise<ExtractionResult> {
-    // Initialize graph
+    const doc = preprocessText(config.text);
+    doc.mentions = await extractEntityMentions(config.modelName, doc, config.apiKey, config.mentionDescription);
+    doc.relations = await extractRelations(config.modelName, doc, config.apiKey, config.relationDescription);
+    const {
+        variables,
+        expressions
+    } = await extractDataAndExpressions(config.modelName, doc, config.apiKey, config.dataDescription);
+    doc.variables = variables;
+    doc.expressions = expressions;
+
+    const graph = buildGraph(doc);
+
+    return {graph, doc};
+}
+
+export function buildGraph(doc: ProcessDescription): DataDCR {
     const graph: DataDCR = {
         events: new Set<Event>(),
         conditionsFor: {},
@@ -73,16 +88,6 @@ export default async function extractGraph(
         data: {},
         expressions: {}
     };
-
-    const doc = preprocessText(config.text);
-    doc.mentions = await extractEntityMentions(config.modelName, doc, config.apiKey, config.mentionDescription);
-    doc.relations = await extractRelations(config.modelName, doc, config.apiKey, config.relationDescription);
-    const {
-        variables,
-        expressions
-    } = await extractDataAndExpressions(config.modelName, doc, config.apiKey, config.dataDescription);
-    doc.variables = variables;
-    doc.expressions = expressions;
 
     for (const m of doc.mentions) {
         if (m.type.toLowerCase() !== "event") continue;
@@ -136,7 +141,51 @@ export default async function extractGraph(
         graph.expressions[head.text][tail.text] = {text: e.text};
     }
 
-    return {graph, doc};
+    return graph;
+}
+
+export function filterProcessDescription(
+    doc: ProcessDescription,
+    selectedMentionIndices: Set<number>,
+    selectedRelationIndices: Set<number>
+): ProcessDescription {
+    const mentionIndexMap = new Map<number, number>();
+    const mentions: Mention[] = [];
+    doc.mentions.forEach((m, i) => {
+        if (!selectedMentionIndices.has(i)) return;
+        mentionIndexMap.set(i, mentions.length);
+        mentions.push({...m});
+    });
+
+    const relationIndexMap = new Map<number, number>();
+    const relations: Relation[] = [];
+    doc.relations.forEach((r, i) => {
+        if (!selectedRelationIndices.has(i)) return;
+        const head = mentionIndexMap.get(r.headMentionIndex);
+        const tail = mentionIndexMap.get(r.tailMentionIndex);
+        if (head === undefined || tail === undefined) return;
+        relationIndexMap.set(i, relations.length);
+        relations.push({
+            type: r.type,
+            headMentionIndex: head,
+            tailMentionIndex: tail,
+        });
+    });
+
+    const expressions: Expression[] = [];
+    for (const e of doc.expressions) {
+        const boundToRelation = relationIndexMap.get(e.boundToRelation);
+        if (boundToRelation === undefined) continue;
+        expressions.push({...e, boundToRelation});
+    }
+
+    return {
+        ...doc,
+        mentions,
+        relations,
+        expressions,
+        entities: [],
+    };
 }
 
 function extractOutputText(data: any): string {

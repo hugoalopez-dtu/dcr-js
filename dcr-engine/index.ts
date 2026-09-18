@@ -51,6 +51,8 @@ import { RegexEventStreamParser } from "./src/parsers/RegexEventStreamParser";
 import { DOMEventStreamParser } from "./src/parsers/DOMEventStreamParser";
 import { SAXParser } from "./src/parsers/SAXParser";
 import extractGraph, {
+  buildGraph,
+  filterProcessDescription,
   type ExtractionResult,
   type ProcessDescription,
   type Mention,
@@ -95,6 +97,8 @@ export {
   executeS,
   isEnabledS,
   extractGraph,
+  buildGraph,
+  filterProcessDescription,
   replayTraceS,
   writeEventLog,
   layoutGraph,

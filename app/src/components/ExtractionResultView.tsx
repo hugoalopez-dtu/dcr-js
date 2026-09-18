@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import styled from "styled-components";
 import type {
     Mention,
@@ -8,6 +8,10 @@ import type {
 
 type Props = {
     processDescription: ProcessDescription;
+    onRebuild: (
+        selectedMentions: Set<number>,
+        selectedRelations: Set<number>
+    ) => void;
 };
 
 type Span = {
@@ -17,24 +21,9 @@ type Span = {
 };
 
 const Accordion = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
   border: 1px solid gainsboro;
   border-radius: 6px;
   overflow: hidden;
-`;
-
-const DrawerSection = styled.div<{ $open: boolean }>`
-  display: flex;
-  flex-direction: column;
-  flex: ${(props) => (props.$open ? 1 : 0)};
-  min-height: 0;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid gainsboro;
-  }
 `;
 
 const DrawerHeader = styled.button<{ $open: boolean }>`
@@ -44,7 +33,7 @@ const DrawerHeader = styled.button<{ $open: boolean }>`
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: none;
-  flex: 0 0 auto;
+  border-bottom: 1px solid gainsboro;
   background: ${(props) => (props.$open ? "gainsboro" : "white")};
   cursor: pointer;
   font-weight: 600;
@@ -56,10 +45,8 @@ const DrawerHeader = styled.button<{ $open: boolean }>`
 `;
 
 const DrawerBody = styled.div`
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
   padding: 0.75rem;
+  border-bottom: 1px solid gainsboro;
 `;
 
 const List = styled.ul`
@@ -70,6 +57,27 @@ const List = styled.ul`
 
 const ListItem = styled.li`
   padding: 0.25rem 0;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+`;
+
+const RebuildButton = styled.button`
+  padding: 0.5rem 0.75rem;
+  border: 1px solid gainsboro;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+
+  &:hover {
+    background: gainsboro;
+  }
 `;
 
 function hashString(str: string): number {
@@ -103,18 +111,37 @@ const Drawer: React.FC<{
     const [open, setOpen] = useState(defaultOpen);
 
     return (
-        <DrawerSection $open={open}>
+        <div>
             <DrawerHeader $open={open} onClick={() => setOpen((o) => !o)}>
                 <span>{title}</span>
                 <span aria-hidden="true">{open ? "▴" : "▾"}</span>
             </DrawerHeader>
             {open && <DrawerBody>{children}</DrawerBody>}
-        </DrawerSection>
+        </div>
     );
 };
 
-const ExtractionResultView: React.FC<Props> = ({processDescription}) => {
+const ExtractionResultView: React.FC<Props> = ({
+                                                   processDescription,
+                                                   onRebuild,
+                                               }) => {
     const {text, mentions, relations} = processDescription;
+
+    const [selectedMentions, setSelectedMentions] = useState<Set<number>>(
+        () => new Set(mentions.map((_, index) => index))
+    );
+    const [selectedRelations, setSelectedRelations] = useState<Set<number>>(
+        () => new Set(relations.map((_, index) => index))
+    );
+
+    useEffect(() => {
+        setSelectedMentions(
+            new Set(processDescription.mentions.map((_, index) => index))
+        );
+        setSelectedRelations(
+            new Set(processDescription.relations.map((_, index) => index))
+        );
+    }, [processDescription]);
 
     const spans: Span[] = [];
 
@@ -188,34 +215,83 @@ const ExtractionResultView: React.FC<Props> = ({processDescription}) => {
         return `${relation.type}: ${head?.text ?? `#[${relation.headMentionIndex}]`} → ${tail?.text ?? `#[${relation.tailMentionIndex}]`}`;
     };
 
+    const toggleMention = (index: number) => {
+        setSelectedMentions((prev) => {
+            const next = new Set(prev);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+    };
+
+    const toggleRelation = (index: number) => {
+        setSelectedRelations((prev) => {
+            const next = new Set(prev);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+    };
+
     return (
-        <Accordion>
-            <Drawer title="Text" defaultOpen>
-                <div>{elements}</div>
-            </Drawer>
-            <Drawer title="Entity mentions">
-                <List>
-                    {mentions.map((mention, index) => {
-                        const color = colorForType(mention.type);
-                        return (
+        <>
+            <RebuildButton
+                onClick={() => onRebuild(selectedMentions, selectedRelations)}
+            >
+                Rebuild model
+            </RebuildButton>
+            <Accordion>
+                <Drawer title="Text" defaultOpen>
+                    <div>{elements}</div>
+                </Drawer>
+                <Drawer title="Entity mentions">
+                    <List>
+                        {mentions.map((mention, index) => {
+                            const color = colorForType(mention.type);
+                            return (
+                                <ListItem key={index}>
+                                    <CheckboxLabel>
+                                        <span>
+                                            <span style={{color: color.text, fontWeight: 600}}>
+                                                {mention.text}
+                                            </span>{" "}
+                                            ({mention.type}, sentence {mention.sentence})
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedMentions.has(index)}
+                                            onChange={() => toggleMention(index)}
+                                        />
+                                    </CheckboxLabel>
+                                </ListItem>
+                            );
+                        })}
+                    </List>
+                </Drawer>
+                <Drawer title="Relations">
+                    <List>
+                        {relations.map((relation, index) => (
                             <ListItem key={index}>
-                                <span style={{color: color.text, fontWeight: 600}}>
-                                    {mention.text}
-                                </span>{" "}
-                                ({mention.type}, sentence {mention.sentence})
+                                <CheckboxLabel>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedRelations.has(index)}
+                                        onChange={() => toggleRelation(index)}
+                                    />
+                                    <span>{relationLabel(relation)}</span>
+                                </CheckboxLabel>
                             </ListItem>
-                        );
-                    })}
-                </List>
-            </Drawer>
-            <Drawer title="Relations">
-                <List>
-                    {relations.map((relation, index) => (
-                        <ListItem key={index}>{relationLabel(relation)}</ListItem>
-                    ))}
-                </List>
-            </Drawer>
-        </Accordion>
+                        ))}
+                    </List>
+                </Drawer>
+            </Accordion>
+        </>
     );
 };
 
