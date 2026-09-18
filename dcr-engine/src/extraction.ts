@@ -192,7 +192,6 @@ export function filterProcessDescription(
 }
 
 function extractOutputText(data: any): string {
-    console.log(JSON.stringify(data.output, null, 2));
     const messageItem = data.output?.find((item: any) => item.type === "message");
     if (!messageItem) {
         throw new Error("No message item found in OpenAI response output");
@@ -258,8 +257,6 @@ export async function extractDataAndExpressions(model: string, doc: ProcessDescr
     const data = await response.json();
     const result: string = extractOutputText(data);
 
-    console.log(result);
-
     const split = result.trim().split("\n\n");
 
     let rawVariables: string[] = [];
@@ -288,7 +285,7 @@ export async function extractDataAndExpressions(model: string, doc: ProcessDescr
         if (doc.relations[boundToRelation] !== undefined) {
             expressions.push({text, boundToRelation});
         } else {
-            console.log(`Skipping expression ${text}, as it is bound to a non existent relation with id ${boundToRelation}`);
+            console.error(`Skipping expression ${text}, as it is bound to a non existent relation with id ${boundToRelation}`);
         }
     }
 
@@ -360,8 +357,6 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
 
     const result = extractOutputText(data);
 
-    console.log(result);
-
     const entities: Entity[] = [];
 
     for (const rawEntity of result.trim().split("\n")) {
@@ -378,7 +373,6 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
         });
     }
 
-    console.log(entities);
     return entities;
 }
 
@@ -414,8 +408,6 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
 
     const data = await response.json();
 
-    console.log(data)
-
     const result = extractOutputText(data);
 
     for (const rawMention of result.trim().split("\n")) {
@@ -423,12 +415,12 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
         const mentionSentence = Number(mentionSentenceStr);
 
         if (doc.sentences.length <= mentionSentence){
-            console.log(`Ignoring '${mentionText}', references a non existent sentence ${mentionSentence} (${doc.sentences.length} sentences in doc).`);
+            console.error(`Ignoring '${mentionText}', references a non existent sentence ${mentionSentence} (${doc.sentences.length} sentences in doc).`);
             continue;
         }
 
         if (doc.sentences[mentionSentence].indexOf(mentionText) === -1) {
-            console.log(`Ignoring '${mentionText}', which is not in the referenced sentence ${mentionSentence} ('${doc.sentences[mentionSentence]}').`);
+            console.error(`Ignoring '${mentionText}', which is not in the referenced sentence ${mentionSentence} ('${doc.sentences[mentionSentence]}').`);
             continue;
         }
 
@@ -440,7 +432,6 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
 
         mentions.push(mention);
     }
-    console.log(mentions);
     return mentions;
 }
 
