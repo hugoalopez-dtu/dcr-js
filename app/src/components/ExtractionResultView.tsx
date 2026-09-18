@@ -90,6 +90,35 @@ const RebuildButton = styled.button`
   }
 `;
 
+const EntityCard = styled.div`
+  border: 1px solid gainsboro;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+`;
+
+const EntityCardHeader = styled.button<{ $open: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: ${(props) => (props.$open ? "gainsboro" : "white")};
+  cursor: pointer;
+  font-weight: 600;
+  text-align: left;
+
+  &:hover {
+    background: gainsboro;
+  }
+`;
+
+const EntityCardBody = styled.div`
+  padding: 0.25rem 0.5rem;
+`;
+
 function hashString(str: string): number {
     let hash = 0;
 
@@ -131,11 +160,28 @@ const Drawer: React.FC<{
     );
 };
 
+const EntityCardView: React.FC<{
+    title: React.ReactNode;
+    children: React.ReactNode;
+}> = ({title, children}) => {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <EntityCard>
+            <EntityCardHeader $open={open} onClick={() => setOpen((o) => !o)}>
+                <span>{title}</span>
+                <span aria-hidden="true">{open ? "▴" : "▾"}</span>
+            </EntityCardHeader>
+            {open && <EntityCardBody>{children}</EntityCardBody>}
+        </EntityCard>
+    );
+};
+
 const ExtractionResultView: React.FC<Props> = ({
                                                    processDescription,
                                                    onRebuild,
                                                }) => {
-    const {text, mentions, relations} = processDescription;
+    const {text, mentions, relations, entities} = processDescription;
 
     const [selectedMentions, setSelectedMentions] = useState<Set<number>>(
         () => new Set(mentions.map((_, index) => index))
@@ -270,6 +316,38 @@ const ExtractionResultView: React.FC<Props> = ({
         });
     };
 
+    const mentionItem = (mention: Mention, index: number) => {
+        const color = colorForType(mention.type);
+        return (
+            <ListItem key={index}>
+                <CheckboxLabel>
+                    <CheckboxText>
+                        <span style={{color: color.text, fontWeight: 600}}>
+                            {mention.text}
+                        </span>{" "}
+                        ({mention.type}, sentence {mention.sentence})
+                    </CheckboxText>
+                    <Checkbox
+                        type="checkbox"
+                        checked={selectedMentions.has(index)}
+                        onChange={() => toggleMention(index)}
+                    />
+                </CheckboxLabel>
+            </ListItem>
+        );
+    };
+
+    const coveredMentionIndices = new Set<number>();
+    for (const entity of entities) {
+        for (const index of entity.mentionIndices) {
+            coveredMentionIndices.add(index);
+        }
+    }
+
+    const uncoveredMentions = mentions
+        .map((mention, index) => ({mention, index}))
+        .filter(({index}) => !coveredMentionIndices.has(index));
+
     return (
         <>
             <RebuildButton
@@ -282,28 +360,46 @@ const ExtractionResultView: React.FC<Props> = ({
                     <div>{elements}</div>
                 </Drawer>
                 <Drawer title="Entity mentions">
-                    <List>
-                        {mentions.sort((m1, m2) => m1.type < m2.type ? -1 : 1).map((mention, index) => {
-                            const color = colorForType(mention.type);
-                            return (
-                                <ListItem key={index}>
-                                    <CheckboxLabel>
-                                        <CheckboxText>
-                                            <span style={{color: color.text, fontWeight: 600}}>
-                                                {mention.text}
-                                            </span>{" "}
-                                            ({mention.type}, sentence {mention.sentence})
-                                        </CheckboxText>
-                                        <Checkbox
-                                            type="checkbox"
-                                            checked={selectedMentions.has(index)}
-                                            onChange={() => toggleMention(index)}
-                                        />
-                                    </CheckboxLabel>
-                                </ListItem>
-                            );
-                        })}
-                    </List>
+                    {entities.map((entity, entityIndex) => {
+                        const representative = mentions[entity.representativeIndex];
+                        if (!representative) return null;
+
+                        const color = colorForType(representative.type);
+                        return (
+                            <EntityCardView
+                                key={entityIndex}
+                                title={
+                                    <span style={{color: color.text}}>
+                                        {representative.text}
+                                    </span>
+                                }
+                            >
+                                <List>
+                                    {entity.mentionIndices
+                                        .filter(
+                                            (index) =>
+                                                mentions[index] !== undefined
+                                        )
+                                        .map((index) => [
+                                            mentions[index],
+                                            index,
+                                        ] as const)
+                                        .map(([mention, index]) =>
+                                            mentionItem(mention, index)
+                                        )}
+                                </List>
+                            </EntityCardView>
+                        );
+                    })}
+                    {uncoveredMentions.length > 0 && (
+                        <EntityCardView title={<span>Other mentions</span>}>
+                            <List>
+                                {uncoveredMentions.map(({mention, index}) =>
+                                    mentionItem(mention, index)
+                                )}
+                            </List>
+                        </EntityCardView>
+                    )}
                 </Drawer>
                 <Drawer title="Relations">
                     <List>

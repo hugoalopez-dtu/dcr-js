@@ -271,6 +271,8 @@ function preprocessText(text: string): ProcessDescription {
         expressions: [],
     };
 
+    text = text.replaceAll(/([^\p{P}\s])\s*\n/gi, "$1 ");
+
     const segmenter = new Intl.Segmenter('en', {granularity: 'sentence'});
     const segments = segmenter.segment(text);
     processed.sentences = Array.from(segments).map(s => s.segment);
@@ -424,6 +426,21 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
         entities.push({
             representativeIndex: valid[0],
             mentionIndices: valid,
+        });
+    }
+
+    const covered = new Set<number>();
+    for (const entity of entities) {
+        for (const index of entity.mentionIndices) {
+            covered.add(index);
+        }
+    }
+
+    for (let i = 0; i < doc.mentions.length; i++) {
+        if (covered.has(i)) continue;
+        entities.push({
+            representativeIndex: i,
+            mentionIndices: [i],
         });
     }
 
