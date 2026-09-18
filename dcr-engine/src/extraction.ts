@@ -1,5 +1,6 @@
 import {type DataDCR, type Event, type EventMap, type ExecutionRecord} from "./types";
 import mentionPrompt from "./prompts/mentions";
+import entitiesPrompt from "./prompts/entities";
 import relationsPrompt from "./prompts/relations";
 import dataPrompt from "./prompts/guards";
 
@@ -45,6 +46,7 @@ export type ExtractionConfig = {
     modelName: string;
     apiKey: string;
     mentionDescription: string;
+    entityDescription: string;
     relationDescription: string;
     dataDescription: string;
 }
@@ -59,6 +61,7 @@ export default async function extractGraph(
 ): Promise<ExtractionResult> {
     const doc = preprocessText(config.text);
     doc.mentions = await extractEntityMentions(config.modelName, doc, config.apiKey, config.mentionDescription);
+    doc.entities = await resolveEntities(config.modelName, doc, config.apiKey, config.entityDescription);
     doc.relations = await extractRelations(config.modelName, doc, config.apiKey, config.relationDescription);
     const {
         variables,
@@ -331,6 +334,54 @@ export async function extractRelations(model: string, doc: ProcessDescription, a
     return relations;
 }
 
+export async function resolveEntities(model: string, doc: ProcessDescription, apiKey: string, entityDescription: string): Promise<Entity[]> {
+    const taggedSentences = tagMentions(doc.sentences, doc.mentions);
+    let prompt = entitiesPrompt;
+    prompt = prompt.replaceAll("{{text}}", taggedSentences.join('\n'));
+    prompt = prompt.replaceAll("{{description}}", entityDescription);
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            model: model,
+            input: prompt,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const result = extractOutputText(data);
+
+    console.log(result);
+
+    const entities: Entity[] = [];
+
+    for (const rawEntity of result.trim().split("\n")) {
+        const indices = rawEntity.trim().split("\t").map(Number);
+        const valid = Array.from(new Set(indices)).filter(
+            (i) => Number.isInteger(i) && i >= 0 && i < doc.mentions.length
+        );
+
+        if (valid.length === 0) continue;
+
+        entities.push({
+            representativeIndex: valid[0],
+            mentionIndices: valid,
+        });
+    }
+
+    console.log(entities);
+    return entities;
+}
+
 export async function extractEntityMentions(model: string, doc: ProcessDescription, apiKey: string, mentionDescription: string): Promise<Mention[]> {
     let text = "";
     let i = 0;
@@ -370,6 +421,11 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
     for (const rawMention of result.trim().split("\n")) {
         const [mentionText, mentionType, mentionSentenceStr] = rawMention.trim().split("\t");
         const mentionSentence = Number(mentionSentenceStr);
+
+        if (doc.sentences.length <= mentionSentence){
+            console.log(`Ignoring '${mentionText}', references a non existent sentence ${mentionSentence} (${doc.sentences.length} sentences in doc).`);
+            continue;
+        }
 
         if (doc.sentences[mentionSentence].indexOf(mentionText) === -1) {
             console.log(`Ignoring '${mentionText}', which is not in the referenced sentence ${mentionSentence} ('${doc.sentences[mentionSentence]}').`);

@@ -155,6 +155,12 @@ const ModelExtractionDialogue = (props: Props) => {
                         mentionDescription: e.target.value,
                     })}/>
 
+                    <div style={{fontSize: ".85em"}}>Entity Resolution</div>
+                    <TextArea value={props.config.entityDescription} onChange={e => props.onChange({
+                        ...props.config,
+                        entityDescription: e.target.value,
+                    })}/>
+
                     <div style={{fontSize: ".85em"}}>Relations</div>
                     <TextArea value={props.config.relationDescription} onChange={e => props.onChange({
                         ...props.config,
