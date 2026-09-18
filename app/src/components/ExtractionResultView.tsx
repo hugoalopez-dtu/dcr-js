@@ -41,26 +41,23 @@ const ExtractionResultView: React.FC<Props> = ({
 
     const spans: Span[] = [];
 
-    // Naive matching: finds the first unused occurrence of each mention text.
-    // Replace with true character offsets if available.
-    let searchFrom = 0;
-
     for (const mention of mentions) {
-        const start = text.indexOf(mention.text, searchFrom);
+        let start = text.indexOf(mention.text, 0);
 
-        if (start === -1) {
-            continue;
+        while (start !== -1) {
+            const end = start + mention.text.length;
+
+            const overlaps = spans.some(
+                (span) => start < span.end && span.start < end
+            );
+
+            if (!overlaps) {
+                spans.push({start, end, mention});
+                break;
+            }
+
+            start = text.indexOf(mention.text, start + 1);
         }
-
-        const end = start + mention.text.length;
-
-        spans.push({
-            start,
-            end,
-            mention,
-        });
-
-        searchFrom = end;
     }
 
     spans.sort((a, b) => a.start - b.start);
