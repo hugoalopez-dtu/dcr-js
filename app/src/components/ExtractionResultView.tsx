@@ -283,7 +283,7 @@ const ExtractionResultView: React.FC<Props> = ({
                 </Drawer>
                 <Drawer title="Entity mentions">
                     <List>
-                        {mentions.map((mention, index) => {
+                        {mentions.sort((m1, m2) => m1.type < m2.type ? -1 : 1).map((mention, index) => {
                             const color = colorForType(mention.type);
                             return (
                                 <ListItem key={index}>

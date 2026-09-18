@@ -247,7 +247,6 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
       Object.keys(rel).forEach((source) => {
         rel[source].forEach((target) => {
           const expression = guards?.[source]?.[target];
-          console.log(`Using guard: ${expression} for relation ${source}-${target}-${type}`);
           edges.push({
             id: `${source}-${target}-${type}`,
             source,
