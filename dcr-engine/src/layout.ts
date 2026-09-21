@@ -6,6 +6,8 @@ import type {
   Expression,
   Nestings,
   RelationType,
+  Role,
+  RoleDataDCR,
   Variable,
   VariableType,
 } from "./types";
@@ -19,6 +21,7 @@ interface AbstractNode extends ElkNode {
   included: boolean;
   pending: boolean;
   executed: boolean;
+  role?: Role;
   variable?: Variable<VariableType>;
   children?: Array<AbstractNode>;
 }
@@ -58,6 +61,14 @@ function createXML(
     return "Event_" + descToIdMap[desc];
   };
 
+  const eventXML = (node: AbstractNode): string => {
+    const roleAttr = node.role ? ` role="${node.role}"` : "";
+    if (node.variable) {
+      return ` <dcr:event id="${descToId(node.id)}" description="${node.id}"${roleAttr} included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false">\n`;
+    }
+    return ` <dcr:event id="${descToId(node.id)}" description="${node.id}"${roleAttr} included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
+  };
+
   const createNodeArrayXML = (
     nodes: Array<AbstractNode>,
     nestings: Nestings
@@ -70,13 +81,9 @@ function createXML(
           retval += createNodeArrayXML(node.children, nestings);
         retval += "</dcr:nesting>\n";
       } else {
-        if(node.variable) {
-          retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false">\n`;
-          retval += `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n`
-          retval += ` </dcr:event>\n`
-        } else {
-          retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
-        }
+        retval += node.variable
+          ? eventXML(node) + `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n` + " </dcr:event>\n"
+          : eventXML(node);
       }
     });
     return retval;
@@ -86,13 +93,9 @@ function createXML(
     xmlContent += createNodeArrayXML(nodesAndEdges.nodes, nestings);
   } else {
     nodesAndEdges.nodes.forEach((node) => {
-      if(node.variable) {
-        xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false">\n`;
-        xmlContent += `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n`
-        xmlContent += ` </dcr:event>\n`
-      } else {
-        xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
-      }
+      xmlContent += node.variable
+        ? eventXML(node) + `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n` + " </dcr:event>\n"
+        : eventXML(node);
     });
   }
 
@@ -196,15 +199,17 @@ function listToTree(list: Array<{ id: string; parent: string }>) {
 
 function treesToAbstractNodeArray(
   trees: Array<TempNode>,
-  graph: DCRGraph | DataDCR,
+  graph: DCRGraph | DataDCR | RoleDataDCR,
   nestings: Nestings
 ): Array<AbstractNode> {
   const data = "data" in graph ? graph.data : {};
+  const roleMap = "roleMap" in graph ? graph.roleMap : {};
   return trees.map((node) => {
     return {
       id: node.id,
       width: 130,
       height: 150,
+      role: roleMap[node.id],
       variable: data[node.id],
       included: graph.marking.included.has(node.id),
       pending: graph.marking.pending.has(node.id),
@@ -222,7 +227,7 @@ function treesToAbstractNodeArray(
   });
 }
 
-function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): AbstractGraph {
+function getAbstractGraph(graph: DCRGraph | DataDCR | RoleDataDCR, nestings?: Nestings): AbstractGraph {
   let nodes: Array<AbstractNode> = [];
   const edges: Array<AbstractEdge> = [];
 
@@ -270,12 +275,14 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
     nodes = treesToAbstractNodeArray(trees, graph, nestings);
   } else {
     const data = "data" in graph ? graph.data : {};
+    const roleMap = "roleMap" in graph ? graph.roleMap : {};
     graph.events.forEach((event) => {
       const variable = data[event];
       nodes.push({
         id: event,
         width: 130,
         height: 150,
+        role: roleMap[event],
         variable: variable,
         included: graph.marking.included.has(event),
         pending: graph.marking.pending.has(event),
@@ -296,7 +303,7 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
 }
 
 export default async function layoutGraph(
-  graph: DCRGraph | DataDCR,
+  graph: DCRGraph | DataDCR | RoleDataDCR,
   nestings?: Nestings
 ) {
   const abstractGraph = getAbstractGraph(graph, nestings);

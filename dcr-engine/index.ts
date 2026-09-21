@@ -1,6 +1,7 @@
 import type {
   DCRGraph,
   DataDCR,
+  RoleDataDCR,
   Marking,
   SubProcess,
   EventMap,
@@ -65,6 +66,7 @@ export {
   type DCRGraph,
   type DCRGraphS,
   type DataDCR,
+  type RoleDataDCR,
   type VariableStore,
   type Value,
   type EventLog,

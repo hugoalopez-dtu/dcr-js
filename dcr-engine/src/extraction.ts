@@ -1,4 +1,4 @@
-import {type DataDCR, type Event, type EventMap, type ExecutionRecord} from "./types";
+import {type Event, type EventMap, type ExecutionRecord, type Role, type RoleDataDCR} from "./types";
 import mentionPrompt from "./prompts/mentions";
 import entitiesPrompt from "./prompts/entities";
 import relationsPrompt from "./prompts/relations";
@@ -53,7 +53,7 @@ export type ExtractionConfig = {
 }
 
 export type ExtractionResult = {
-    graph: DataDCR;
+    graph: RoleDataDCR;
     doc: ProcessDescription;
 }
 
@@ -82,8 +82,8 @@ export default async function extractGraph(
     return {graph, doc};
 }
 
-export function buildGraph(doc: ProcessDescription): DataDCR {
-    const graph: DataDCR = {
+export function buildGraph(doc: ProcessDescription): RoleDataDCR {
+    const graph: RoleDataDCR = {
         events: new Set<Event>(),
         conditionsFor: {},
         excludesTo: {},
@@ -96,7 +96,9 @@ export function buildGraph(doc: ProcessDescription): DataDCR {
             included: new Set<Event>(),
         },
         data: {},
-        expressions: {}
+        expressions: {},
+        roles: new Set<Role>(),
+        roleMap: {},
     };
 
     const mentionToEntity = new Map<number, Entity>();
@@ -155,6 +157,8 @@ export function buildGraph(doc: ProcessDescription): DataDCR {
         const tail = eventNameOfMention(r.tailMentionIndex);
         switch (r.type.toLowerCase()) {
             case "executes": {
+                graph.roles.add(head);
+                if (!graph.roleMap[tail]) graph.roleMap[tail] = head;
                 break;
             }
             case "condition": {
