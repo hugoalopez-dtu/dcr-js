@@ -213,6 +213,7 @@ const ExtractionResultView: React.FC<Props> = ({
     const [draggedMentionIndex, setDraggedMentionIndex] = useState<number | null>(null);
     const [dragOverEntityIndex, setDragOverEntityIndex] = useState<number | null>(null);
     const [dragOverZone, setDragOverZone] = useState<string | null>(null);
+    const [dragOverMentionIndex, setDragOverMentionIndex] = useState<number | null>(null);
 
     useEffect(() => {
         setSelectedMentions(
@@ -340,69 +341,120 @@ const ExtractionResultView: React.FC<Props> = ({
         });
     };
 
-    const moveMention = (mentionIndex: number, targetEntityIndex: number | null) => {
+    const withRepresentativeFirst = (entity: Entity): Entity => ({
+        ...entity,
+        representativeIndex: entity.mentionIndices[0] ?? entity.representativeIndex,
+    });
+
+    const moveMention = (
+        mentionIndex: number,
+        targetEntityIndex: number | null,
+        insertBefore?: number
+    ) => {
         const sourceEntityIndex = entities.findIndex((entity) =>
             entity.mentionIndices.includes(mentionIndex)
         );
         if (sourceEntityIndex === -1) return;
 
-        if (targetEntityIndex !== null && sourceEntityIndex === targetEntityIndex) {
-            return;
-        }
-        if (
-            targetEntityIndex === null &&
-            entities[sourceEntityIndex].mentionIndices.length === 1
-        ) {
-            return;
-        }
-
-        const next = entities.map((entity) => ({
-            ...entity,
-            mentionIndices: [...entity.mentionIndices],
-        }));
-
-        next[sourceEntityIndex].mentionIndices = next[sourceEntityIndex].mentionIndices.filter(
-            (i) => i !== mentionIndex
-        );
-
-        if (targetEntityIndex !== null) {
-            next[targetEntityIndex].mentionIndices.push(mentionIndex);
-        }
-
-        const filtered = next
-            .map((entity) =>
-                entity.mentionIndices.includes(entity.representativeIndex)
-                    ? entity
-                    : {...entity, representativeIndex: entity.mentionIndices[0] ?? -1}
-            )
-            .filter((entity) => entity.mentionIndices.length > 0);
-
-        const nextEntityId =
-            entities.reduce((max, entity) => Math.max(max, entity.id), -1) + 1;
-
         if (targetEntityIndex === null) {
+            // Dropped outside of any entity: create a new singleton entity.
+            if (entities[sourceEntityIndex].mentionIndices.length === 1) {
+                return;
+            }
+
+            const next = entities.map((entity) => ({
+                ...entity,
+                mentionIndices: [...entity.mentionIndices],
+            }));
+            next[sourceEntityIndex].mentionIndices = next[sourceEntityIndex].mentionIndices.filter(
+                (i) => i !== mentionIndex
+            );
+            const filtered = next
+                .map(withRepresentativeFirst)
+                .filter((entity) => entity.mentionIndices.length > 0);
+
+            const nextEntityId =
+                entities.reduce((max, entity) => Math.max(max, entity.id), -1) + 1;
             filtered.push({
                 id: nextEntityId,
                 representativeIndex: mentionIndex,
                 mentionIndices: [mentionIndex],
             });
+
+            onProcessDescriptionChange({...processDescription, entities: filtered});
+            return;
         }
+
+        if (sourceEntityIndex === targetEntityIndex) {
+            // Reorder within the same entity. Dropping on a mention row places the
+            // dragged mention before that row; dropping on the card background is a no-op.
+            if (insertBefore === undefined) return;
+
+            const current = entities[sourceEntityIndex].mentionIndices;
+            const from = current.indexOf(mentionIndex);
+            if (from === -1) return;
+
+            let to = insertBefore;
+            if (from < to) to -= 1;
+            if (to === from) return;
+
+            const reordered = [...current];
+            reordered.splice(from, 1);
+            reordered.splice(to, 0, mentionIndex);
+
+            const next = entities.map((entity, entityIndex) =>
+                entityIndex === sourceEntityIndex
+                    ? withRepresentativeFirst({...entity, mentionIndices: reordered})
+                    : entity
+            );
+
+            onProcessDescriptionChange({...processDescription, entities: next});
+            return;
+        }
+
+        // Move to another entity.
+        const next = entities.map((entity) => ({
+            ...entity,
+            mentionIndices: [...entity.mentionIndices],
+        }));
+        next[sourceEntityIndex].mentionIndices = next[sourceEntityIndex].mentionIndices.filter(
+            (i) => i !== mentionIndex
+        );
+
+        if (insertBefore !== undefined) {
+            next[targetEntityIndex].mentionIndices.splice(insertBefore, 0, mentionIndex);
+        } else {
+            next[targetEntityIndex].mentionIndices.push(mentionIndex);
+        }
+
+        const filtered = next
+            .map(withRepresentativeFirst)
+            .filter((entity) => entity.mentionIndices.length > 0);
 
         onProcessDescriptionChange({...processDescription, entities: filtered});
     };
 
     const handleMentionDrop = (
         e: React.DragEvent,
-        targetEntityIndex: number | null
+        targetEntityIndex: number | null,
+        insertBefore?: number
     ) => {
         e.preventDefault();
-        moveMention(Number(e.dataTransfer.getData("text/plain")), targetEntityIndex);
+        const mentionIndex = Number(e.dataTransfer.getData("text/plain"));
+        if (Number.isInteger(mentionIndex)) {
+            moveMention(mentionIndex, targetEntityIndex, insertBefore);
+        }
         setDraggedMentionIndex(null);
         setDragOverEntityIndex(null);
         setDragOverZone(null);
+        setDragOverMentionIndex(null);
     };
 
-    const mentionItem = (mention: Mention, index: number) => {
+    const mentionItem = (
+        mention: Mention,
+        index: number,
+        entityIndex?: number
+    ) => {
         const color = colorForType(mention.type);
         return (
             <ListItem
@@ -417,8 +469,30 @@ const ExtractionResultView: React.FC<Props> = ({
                     setDraggedMentionIndex(null);
                     setDragOverEntityIndex(null);
                     setDragOverZone(null);
+                    setDragOverMentionIndex(null);
                 }}
-                style={{opacity: draggedMentionIndex === index ? 0.4 : 1}}
+                onDragOver={(e) => {
+                    if (entityIndex === undefined) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.dataTransfer.dropEffect = "move";
+                    setDragOverEntityIndex(entityIndex);
+                    setDragOverMentionIndex(index);
+                }}
+                onDrop={(e) => {
+                    if (entityIndex === undefined) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const insertBefore = entities[entityIndex].mentionIndices.indexOf(index);
+                    handleMentionDrop(e, entityIndex, insertBefore);
+                }}
+                style={{
+                    opacity: draggedMentionIndex === index ? 0.4 : 1,
+                    cursor:
+                        draggedMentionIndex === index ? "grabbing" : "grab",
+                    backgroundColor:
+                        dragOverMentionIndex === index ? "#dbe9ff" : undefined,
+                }}
             >
                 <CheckboxLabel>
                     <CheckboxText>
@@ -553,7 +627,11 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                                                             index,
                                                         ] as const)
                                                         .map(([mention, index]) =>
-                                                            mentionItem(mention, index)
+                                                            mentionItem(
+                                                                mention,
+                                                                index,
+                                                                entityIndex
+                                                            )
                                                         )}
                                                 </List>
                                             </EntityCardView>
