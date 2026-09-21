@@ -28,6 +28,10 @@ const Accordion = styled.div`
   overflow: hidden;
 `;
 
+const Root = styled.div`
+  font-size: 14px;
+`;
+
 const DrawerHeader = styled.button<{ $open: boolean }>`
   display: flex;
   align-items: center;
@@ -489,7 +493,7 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
     }
 
     return (
-        <>
+        <Root>
             <RebuildButton
                 onClick={() => onRebuild(selectedMentions, selectedRelations)}
             >
@@ -605,7 +609,7 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                     </List>
                 </Drawer>
             </Accordion>
-        </>
+        </Root>
     );
 };
 
