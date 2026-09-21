@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import styled from "styled-components";
 import type {
+    Entity,
     Mention,
     ProcessDescription,
     Relation,
@@ -12,6 +13,7 @@ type Props = {
         selectedMentions: Set<number>,
         selectedRelations: Set<number>
     ) => void;
+    onProcessDescriptionChange: (doc: ProcessDescription) => void;
 };
 
 type Span = {
@@ -119,6 +121,38 @@ const EntityCardBody = styled.div`
   padding: 0.25rem 0.5rem;
 `;
 
+const DropZone = styled.div<{ $active: boolean }>`
+  outline: ${(props) => (props.$active ? "2px dashed dodgerblue" : "none")};
+  outline-offset: 2px;
+  border-radius: 6px;
+  padding: 2px;
+`;
+
+const CardDropTarget = styled.div<{ $active: boolean }>`
+  outline: ${(props) => (props.$active ? "2px solid dodgerblue" : "none")};
+  border-radius: 6px;
+  padding: 2px;
+  margin: -2px;
+`;
+
+const TypeDivider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0.5rem;
+  color: #777;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid gainsboro;
+  }
+`;
+
 function hashString(str: string): number {
     let hash = 0;
 
@@ -180,6 +214,7 @@ const EntityCardView: React.FC<{
 const ExtractionResultView: React.FC<Props> = ({
                                                    processDescription,
                                                    onRebuild,
+                                                   onProcessDescriptionChange,
                                                }) => {
     const {text, mentions, relations, entities} = processDescription;
 
@@ -189,6 +224,8 @@ const ExtractionResultView: React.FC<Props> = ({
     const [selectedRelations, setSelectedRelations] = useState<Set<number>>(
         () => new Set(relations.map((_, index) => index))
     );
+    const [draggedMentionIndex, setDraggedMentionIndex] = useState<number | null>(null);
+    const [dragOverEntityIndex, setDragOverEntityIndex] = useState<number | null>(null);
 
     useEffect(() => {
         setSelectedMentions(
@@ -316,10 +353,84 @@ const ExtractionResultView: React.FC<Props> = ({
         });
     };
 
+    const moveMention = (mentionIndex: number, targetEntityIndex: number | null) => {
+        const sourceEntityIndex = entities.findIndex((entity) =>
+            entity.mentionIndices.includes(mentionIndex)
+        );
+        if (sourceEntityIndex === -1) return;
+
+        if (targetEntityIndex !== null && sourceEntityIndex === targetEntityIndex) {
+            return;
+        }
+        if (
+            targetEntityIndex === null &&
+            entities[sourceEntityIndex].mentionIndices.length === 1
+        ) {
+            return;
+        }
+
+        const next = entities.map((entity) => ({
+            ...entity,
+            mentionIndices: [...entity.mentionIndices],
+        }));
+
+        next[sourceEntityIndex].mentionIndices = next[sourceEntityIndex].mentionIndices.filter(
+            (i) => i !== mentionIndex
+        );
+
+        if (targetEntityIndex !== null) {
+            next[targetEntityIndex].mentionIndices.push(mentionIndex);
+        }
+
+        const filtered = next
+            .map((entity) =>
+                entity.mentionIndices.includes(entity.representativeIndex)
+                    ? entity
+                    : {...entity, representativeIndex: entity.mentionIndices[0] ?? -1}
+            )
+            .filter((entity) => entity.mentionIndices.length > 0);
+
+        const nextEntityId =
+            entities.reduce((max, entity) => Math.max(max, entity.id), -1) + 1;
+
+        if (targetEntityIndex === null) {
+            filtered.push({
+                id: nextEntityId,
+                representativeIndex: mentionIndex,
+                mentionIndices: [mentionIndex],
+            });
+        }
+
+        onProcessDescriptionChange({...processDescription, entities: filtered});
+    };
+
+    const handleMentionDrop = (
+        e: React.DragEvent,
+        targetEntityIndex: number | null
+    ) => {
+        e.preventDefault();
+        moveMention(Number(e.dataTransfer.getData("text/plain")), targetEntityIndex);
+        setDraggedMentionIndex(null);
+        setDragOverEntityIndex(null);
+    };
+
     const mentionItem = (mention: Mention, index: number) => {
         const color = colorForType(mention.type);
         return (
-            <ListItem key={index}>
+            <ListItem
+                key={index}
+                draggable
+                onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", String(index));
+                    setDraggedMentionIndex(index);
+                }}
+                onDragEnd={() => {
+                    setDraggedMentionIndex(null);
+                    setDragOverEntityIndex(null);
+                }}
+                style={{opacity: draggedMentionIndex === index ? 0.4 : 1}}
+            >
                 <CheckboxLabel>
                     <CheckboxText>
                         <span style={{color: color.text, fontWeight: 600}}>
@@ -348,6 +459,35 @@ const ExtractionResultView: React.FC<Props> = ({
         .map((mention, index) => ({mention, index}))
         .filter(({index}) => !coveredMentionIndices.has(index));
 
+    const typeGroups = new Map<string, {entity: Entity; entityIndex: number}[]>();
+    entities.forEach((entity, entityIndex) => {
+        const representative = mentions[entity.representativeIndex];
+        if (!representative) return;
+        const type = representative.type;
+        const list = typeGroups.get(type) ?? [];
+        list.push({entity, entityIndex});
+        typeGroups.set(type, list);
+    });
+const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
+        a.localeCompare(b, undefined, {sensitivity: "base"})
+    );
+
+    const typeCounts = new Map<string, {checked: number; total: number}>();
+    for (const [type, entries] of typeGroups) {
+        const counts = entries.reduce(
+            (accumulator, {entity}) => ({
+                checked:
+                    accumulator.checked +
+                    entity.mentionIndices.filter((index) =>
+                        selectedMentions.has(index)
+                    ).length,
+                total: accumulator.total + entity.mentionIndices.length,
+            }),
+            {checked: 0, total: 0}
+        );
+        typeCounts.set(type, counts);
+    }
+
     return (
         <>
             <RebuildButton
@@ -359,49 +499,96 @@ const ExtractionResultView: React.FC<Props> = ({
                 <Drawer title="Text" defaultOpen>
                     <div>{elements}</div>
                 </Drawer>
-                <Drawer title="Entity mentions">
-                    {entities.map((entity, entityIndex) => {
-                        const representative = mentions[entity.representativeIndex];
-                        if (!representative) return null;
+                <Drawer title={`Entity mentions (${selectedMentions.size}/${mentions.length})`}>
+                    <DropZone
+                        $active={
+                            draggedMentionIndex !== null &&
+                            dragOverEntityIndex === null
+                        }
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                            setDragOverEntityIndex(null);
+                        }}
+                        onDrop={(e) => handleMentionDrop(e, null)}
+                    >
+                        {sortedTypes.map((type) => {
+                            const {checked, total} = typeCounts.get(type)!;
+                            return (
+                                <div key={type}>
+                                    <TypeDivider>{`${type} (${checked}/${total})`}</TypeDivider>
+                                    {typeGroups.get(type)!.map(({entity, entityIndex}) => {
+                                        const representative =
+                                            mentions[entity.representativeIndex];
+                                        if (!representative) return null;
 
-                        const color = colorForType(representative.type);
-                        return (
+                                        const color = colorForType(representative.type);
+                                        const checkedMentionCount =
+                                            entity.mentionIndices.filter((index) =>
+                                                selectedMentions.has(index)
+                                            ).length;
+                                        return (
+                                            <CardDropTarget
+                                                key={entity.id}
+                                                $active={
+                                                    dragOverEntityIndex === entityIndex
+                                                }
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    e.dataTransfer.dropEffect = "move";
+                                                    setDragOverEntityIndex(entityIndex);
+                                                }}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleMentionDrop(e, entityIndex);
+                                                }}
+                                            >
+                                                <EntityCardView
+                                                    title={
+                                                        <span style={{color: color.text}}>
+                                                            {`${representative.text} (${checkedMentionCount}/${entity.mentionIndices.length})`}
+                                                        </span>
+                                                    }
+                                                >
+                                                    <List>
+                                                        {entity.mentionIndices
+                                                            .filter(
+                                                                (index) =>
+                                                                    mentions[index] !==
+                                                                    undefined
+                                                            )
+                                                            .map((index) => [
+                                                                mentions[index],
+                                                                index,
+                                                            ] as const)
+                                                            .map(([mention, index]) =>
+                                                                mentionItem(mention, index)
+                                                            )}
+                                                    </List>
+                                                </EntityCardView>
+                                            </CardDropTarget>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
+                        {uncoveredMentions.length > 0 && (
                             <EntityCardView
-                                key={entityIndex}
-                                title={
-                                    <span style={{color: color.text}}>
-                                        {representative.text}
-                                    </span>
-                                }
+                                title={<span>{`Other mentions (${uncoveredMentions.filter(({index}) => selectedMentions.has(index)).length}/${uncoveredMentions.length})`}</span>}
                             >
                                 <List>
-                                    {entity.mentionIndices
-                                        .filter(
-                                            (index) =>
-                                                mentions[index] !== undefined
-                                        )
-                                        .map((index) => [
-                                            mentions[index],
-                                            index,
-                                        ] as const)
-                                        .map(([mention, index]) =>
+                                    {uncoveredMentions.map(
+                                        ({mention, index}) =>
                                             mentionItem(mention, index)
-                                        )}
+                                    )}
                                 </List>
                             </EntityCardView>
-                        );
-                    })}
-                    {uncoveredMentions.length > 0 && (
-                        <EntityCardView title={<span>Other mentions</span>}>
-                            <List>
-                                {uncoveredMentions.map(({mention, index}) =>
-                                    mentionItem(mention, index)
-                                )}
-                            </List>
-                        </EntityCardView>
-                    )}
+                        )}
+                    </DropZone>
                 </Drawer>
-                <Drawer title="Relations">
+                <Drawer title={`Relations (${selectedRelations.size}/${relations.length})`}>
                     <List>
                         {relations.map((relation, index) => (
                             <ListItem key={index}>

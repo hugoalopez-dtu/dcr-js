@@ -21,6 +21,7 @@ export type Mention = {
 };
 
 export type Entity = {
+    id: number;
     representativeIndex: number;
     mentionIndices: number[];
 }
@@ -230,6 +231,7 @@ export function filterProcessDescription(
         if (mentionIndices.length === 0) return;
 
         entities.push({
+            id: entity.id,
             representativeIndex:
                 mentionIndexMap.get(entity.representativeIndex) ?? mentionIndices[0],
             mentionIndices,
@@ -416,6 +418,8 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
 
     const entities: Entity[] = [];
 
+    let nextEntityId = 0;
+
     for (const rawEntity of result.trim().split("\n")) {
         const indices = rawEntity.trim().split("\t").map(Number);
         const valid = Array.from(new Set(indices)).filter(
@@ -425,6 +429,7 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
         if (valid.length === 0) continue;
 
         entities.push({
+            id: nextEntityId++,
             representativeIndex: valid[0],
             mentionIndices: valid,
         });
@@ -440,6 +445,7 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
     for (let i = 0; i < doc.mentions.length; i++) {
         if (covered.has(i)) continue;
         entities.push({
+            id: nextEntityId++,
             representativeIndex: i,
             mentionIndices: [i],
         });

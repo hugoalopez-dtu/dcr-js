@@ -26,7 +26,7 @@ import {useHotkeys} from "react-hotkeys-hook";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import Loading from "../utilComponents/Loading";
-import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, type Nestings, buildGraph, filterProcessDescription,} from "dcr-engine";
+import {type DCRGraph, type ProcessDescription, extractGraph, layoutGraph, moddleToDCR, nestDCR, type Nestings, buildGraph, filterProcessDescription,} from "dcr-engine";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import styled from "styled-components";
 import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenuElements";
@@ -582,6 +582,12 @@ const ModelerState = ({
         );
     }
 
+    const handleProcessDescriptionChange = (doc: ProcessDescription) => {
+        setExtractionResult((prev) =>
+            prev ? {...prev, doc} : prev
+        );
+    };
+
     const rebuildModel = async (
         selectedMentions: Set<number>,
         selectedRelations: Set<number>
@@ -616,6 +622,7 @@ const ModelerState = ({
             <ExtractionResultView
                 processDescription={extractionResult.doc}
                 onRebuild={rebuildModel}
+                onProcessDescriptionChange={handleProcessDescriptionChange}
             />
         </div>;
     }
