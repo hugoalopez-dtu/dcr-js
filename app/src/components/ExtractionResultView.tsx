@@ -139,24 +139,6 @@ const CardDropTarget = styled.div<{ $active: boolean }>`
   margin: -2px;
 `;
 
-const TypeDivider = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.75rem 0 0.5rem;
-  color: #777;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-
-  &::after {
-    content: "";
-    flex: 1;
-    border-bottom: 1px solid gainsboro;
-  }
-`;
-
 function hashString(str: string): number {
     let hash = 0;
 
@@ -230,6 +212,7 @@ const ExtractionResultView: React.FC<Props> = ({
     );
     const [draggedMentionIndex, setDraggedMentionIndex] = useState<number | null>(null);
     const [dragOverEntityIndex, setDragOverEntityIndex] = useState<number | null>(null);
+    const [dragOverZone, setDragOverZone] = useState<string | null>(null);
 
     useEffect(() => {
         setSelectedMentions(
@@ -416,6 +399,7 @@ const ExtractionResultView: React.FC<Props> = ({
         moveMention(Number(e.dataTransfer.getData("text/plain")), targetEntityIndex);
         setDraggedMentionIndex(null);
         setDragOverEntityIndex(null);
+        setDragOverZone(null);
     };
 
     const mentionItem = (mention: Mention, index: number) => {
@@ -432,6 +416,7 @@ const ExtractionResultView: React.FC<Props> = ({
                 onDragEnd={() => {
                     setDraggedMentionIndex(null);
                     setDragOverEntityIndex(null);
+                    setDragOverZone(null);
                 }}
                 style={{opacity: draggedMentionIndex === index ? 0.4 : 1}}
             >
@@ -503,95 +488,109 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                 <Drawer title="Text" defaultOpen>
                     <div>{elements}</div>
                 </Drawer>
-                <Drawer title={`Entity mentions (${selectedMentions.size}/${mentions.length})`}>
-                    <DropZone
-                        $active={
-                            draggedMentionIndex !== null &&
-                            dragOverEntityIndex === null
-                        }
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.dataTransfer.dropEffect = "move";
-                            setDragOverEntityIndex(null);
-                        }}
-                        onDrop={(e) => handleMentionDrop(e, null)}
-                    >
-                        {sortedTypes.map((type) => {
-                            const {checked, total} = typeCounts.get(type)!;
-                            return (
-                                <div key={type}>
-                                    <TypeDivider>{`${type} (${checked}/${total})`}</TypeDivider>
-                                    {typeGroups.get(type)!.map(({entity, entityIndex}) => {
-                                        const representative =
-                                            mentions[entity.representativeIndex];
-                                        if (!representative) return null;
-
-                                        const color = colorForType(representative.type);
-                                        const checkedMentionCount =
-                                            entity.mentionIndices.filter((index) =>
-                                                selectedMentions.has(index)
-                                            ).length;
-                                        return (
-                                            <CardDropTarget
-                                                key={entity.id}
-                                                $active={
-                                                    dragOverEntityIndex === entityIndex
-                                                }
-                                                onDragOver={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    e.dataTransfer.dropEffect = "move";
-                                                    setDragOverEntityIndex(entityIndex);
-                                                }}
-                                                onDrop={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    handleMentionDrop(e, entityIndex);
-                                                }}
-                                            >
-                                                <EntityCardView
-                                                    title={
-                                                        <span style={{color: color.text}}>
-                                                            {`${representative.text} (${checkedMentionCount}/${entity.mentionIndices.length})`}
-                                                        </span>
-                                                    }
-                                                >
-                                                    <List>
-                                                        {entity.mentionIndices
-                                                            .filter(
-                                                                (index) =>
-                                                                    mentions[index] !==
-                                                                    undefined
-                                                            )
-                                                            .map((index) => [
-                                                                mentions[index],
-                                                                index,
-                                                            ] as const)
-                                                            .map(([mention, index]) =>
-                                                                mentionItem(mention, index)
-                                                            )}
-                                                    </List>
-                                                </EntityCardView>
-                                            </CardDropTarget>
-                                        );
-                                    })}
-                                </div>
-                            );
-                        })}
-                        {uncoveredMentions.length > 0 && (
-                            <EntityCardView
-                                title={<span>{`Other mentions (${uncoveredMentions.filter(({index}) => selectedMentions.has(index)).length}/${uncoveredMentions.length})`}</span>}
+                {sortedTypes.map((type) => {
+                    const {checked, total} = typeCounts.get(type)!;
+                    return (
+                        <Drawer key={type} title={`${type} (${checked}/${total})`}>
+                            <DropZone
+                                $active={
+                                    draggedMentionIndex !== null &&
+                                    dragOverEntityIndex === null &&
+                                    dragOverZone === type
+                                }
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = "move";
+                                    setDragOverZone(type);
+                                    setDragOverEntityIndex(null);
+                                }}
+                                onDrop={(e) => handleMentionDrop(e, null)}
                             >
-                                <List>
-                                    {uncoveredMentions.map(
-                                        ({mention, index}) =>
-                                            mentionItem(mention, index)
-                                    )}
-                                </List>
-                            </EntityCardView>
-                        )}
-                    </DropZone>
-                </Drawer>
+                                {typeGroups.get(type)!.map(({entity, entityIndex}) => {
+                                    const representative =
+                                        mentions[entity.representativeIndex];
+                                    if (!representative) return null;
+
+                                    const color = colorForType(representative.type);
+                                    const checkedMentionCount =
+                                        entity.mentionIndices.filter((index) =>
+                                            selectedMentions.has(index)
+                                        ).length;
+                                    return (
+                                        <CardDropTarget
+                                            key={entity.id}
+                                            $active={
+                                                dragOverEntityIndex === entityIndex
+                                            }
+                                            onDragOver={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                e.dataTransfer.dropEffect = "move";
+                                                setDragOverEntityIndex(entityIndex);
+                                            }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleMentionDrop(e, entityIndex);
+                                            }}
+                                        >
+                                            <EntityCardView
+                                                title={
+                                                    <span style={{color: color.text}}>
+                                                        {`${representative.text} (${checkedMentionCount}/${entity.mentionIndices.length})`}
+                                                    </span>
+                                                }
+                                            >
+                                                <List>
+                                                    {entity.mentionIndices
+                                                        .filter(
+                                                            (index) =>
+                                                                mentions[index] !==
+                                                                undefined
+                                                        )
+                                                        .map((index) => [
+                                                            mentions[index],
+                                                            index,
+                                                        ] as const)
+                                                        .map(([mention, index]) =>
+                                                            mentionItem(mention, index)
+                                                        )}
+                                                </List>
+                                            </EntityCardView>
+                                        </CardDropTarget>
+                                    );
+                                })}
+                            </DropZone>
+                        </Drawer>
+                    );
+                })}
+                {uncoveredMentions.length > 0 && (
+                    <Drawer
+                        title={`Other mentions (${uncoveredMentions.filter(({index}) => selectedMentions.has(index)).length}/${uncoveredMentions.length})`}
+                    >
+                        <DropZone
+                            $active={
+                                draggedMentionIndex !== null &&
+                                dragOverEntityIndex === null &&
+                                dragOverZone === "other"
+                            }
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                                setDragOverZone("other");
+                                setDragOverEntityIndex(null);
+                            }}
+                            onDrop={(e) => handleMentionDrop(e, null)}
+                        >
+                            <List>
+                                {uncoveredMentions.map(
+                                    ({mention, index}) =>
+                                        mentionItem(mention, index)
+                                )}
+                            </List>
+                        </DropZone>
+                    </Drawer>
+                )}
                 <Drawer title={`Relations (${selectedRelations.size}/${relations.length})`}>
                     <List>
                         {relations.map((relation, index) => (
