@@ -7,6 +7,7 @@ import {models, examples} from "../resources/llmResources";
 export interface Props {
     config: ExtractionConfig;
     busy: boolean;
+    step?: string | null;
     onChange: (config: ExtractionConfig) => void;
     onClose: () => void;
     onSubmit: (config: ExtractionConfig) => void;
@@ -92,10 +93,22 @@ const Spinner = styled(AiOutlineLoading)`
     animation: ${spin} 2s linear infinite;
 `;
 
+const ProgressText = styled.div`
+    margin-top: 10px;
+    text-align: center;
+    color: #555;
+    font-size: 0.9em;
+`;
+
 const ModelExtractionDialogue = (props: Props) => {
     
     const renderSubmit = ( )=> {
-        if (props.busy) return <Spinner size="25" />;
+        if (props.busy) return (
+            <>
+                <Spinner size="25" />
+                {props.step && <ProgressText>{props.step}</ProgressText>}
+            </>
+        );
 
         return (
             <SubmitButton

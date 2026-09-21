@@ -58,12 +58,17 @@ export type ExtractionResult = {
 }
 
 export default async function extractGraph(
-    config: ExtractionConfig
+    config: ExtractionConfig,
+    onStep?: (step: string) => void
 ): Promise<ExtractionResult> {
     const doc = preprocessText(config.text);
+    onStep?.("Extracting actors and events");
     doc.mentions = await extractEntityMentions(config.modelName, doc, config.apiKey, config.mentionDescription);
+    onStep?.("Resolving entities");
     doc.entities = await resolveEntities(config.modelName, doc, config.apiKey, config.entityDescription);
+    onStep?.("Extracting relations");
     doc.relations = await extractRelations(config.modelName, doc, config.apiKey, config.relationDescription);
+    onStep?.("Extracting data guards");
     const {
         variables,
         expressions
@@ -71,6 +76,7 @@ export default async function extractGraph(
     doc.variables = variables;
     doc.expressions = expressions;
 
+    onStep?.("Building DCR graph");
     const graph = buildGraph(doc);
 
     return {graph, doc};

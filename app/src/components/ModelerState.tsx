@@ -121,6 +121,7 @@ const ModelerState = ({
     const [tdmOpen, setTdmOpen] = useState(false);
     const [modelExtractionOpen, setModelExtractionOpen] = useState(false);
     const [isExtractingModel, setIsExtractingModel] = useState(false);
+    const [extractionStep, setExtractionStep] = useState<string | null>(null);
     const [extractConfig, setExtractConfig] = useState<ExtractionConfig>({
         modelName: "", apiKey: "", text: "",
         relationDescription: defaultRelationsDescription,
@@ -560,8 +561,9 @@ const ModelerState = ({
                     if (!confirm("This will replace your current diagram. Continue?")) return;
 
                     setIsExtractingModel(true);
+                    setExtractionStep(null);
                     try {
-                        const res = await extractGraph(config);
+                        const res = await extractGraph(config, setExtractionStep);
                         setExtractionResult(res)
                         const xml = await layoutGraph(res.graph);
                         await modeler.importXML(xml);
@@ -572,12 +574,14 @@ const ModelerState = ({
                     } finally {
                         setModelExtractionOpen(false);
                         setIsExtractingModel(false);
+                        setExtractionStep(null);
                         setTextOpen(true);
                     }
 
 
                 }}
                 busy={isExtractingModel}
+                step={extractionStep}
             />
         );
     }
