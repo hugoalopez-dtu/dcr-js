@@ -408,11 +408,24 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
 
         if (valid.length === 0) continue;
 
-        entities.push({
-            id: nextEntityId++,
-            representativeIndex: valid[0],
-            mentionIndices: valid,
-        });
+        const byType = new Map<string, number[]>();
+        for (const index of valid) {
+            const type = doc.mentions[index].type;
+            const list = byType.get(type);
+            if (list) {
+                list.push(index);
+            } else {
+                byType.set(type, [index]);
+            }
+        }
+
+        for (const indicesOfType of byType.values()) {
+            entities.push({
+                id: nextEntityId++,
+                representativeIndex: indicesOfType[0],
+                mentionIndices: indicesOfType,
+            });
+        }
     }
 
     const covered = new Set<number>();
