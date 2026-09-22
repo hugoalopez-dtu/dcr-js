@@ -26,7 +26,7 @@ import {useHotkeys} from "react-hotkeys-hook";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import Loading from "../utilComponents/Loading";
-import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, type Nestings,} from "dcr-engine";
+import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, type Nestings, type RoleMap,} from "dcr-engine";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import styled from "styled-components";
 import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenuElements";
@@ -560,7 +560,14 @@ const ModelerState = ({
                     try {
                         const res = await extractGraph(config);
                         setExtractionResult(res)
-                        const xml = await layoutGraph(res.graph);
+                        const roleMap: RoleMap = {};
+                        for (const r of res.doc.relations) {
+                            if (r.type.toLowerCase() !== "executes") continue;
+                            const actor = res.doc.mentions[r.headMentionIndex];
+                            const event = res.doc.mentions[r.tailMentionIndex];
+                            roleMap[event.text] = actor.text;
+                        }
+                        const xml = await layoutGraph(res.graph, undefined, roleMap);
                         console.log(xml);
                         await modeler.importXML(xml);
                         setGraphName("Extracted Model");    
