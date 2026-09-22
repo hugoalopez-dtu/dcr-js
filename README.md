@@ -27,7 +27,7 @@ A video walk-through explaining the main functionalities of the tool can be watc
 
 A video walk-through explaining the functionalities that were introduced as part of the Process DoCtoR update can be watched [here](https://www.youtube.com/watch?v=5Y-5Y0zOJPg)
 
-[![Screencast DCRjs](https://github.com/hugoalopez-dtu/dcr-js/blob/main/docs/screencastDCRJS.png)](https://www.youtube.com/watch?v=5Y-5Y0zOJPg)
+[![Screencast DCRjs](https://github.com/hugoalopez-dtu/dcr-js/blob/main/docs/screencastProcessDoCtoR.png)](https://www.youtube.com/watch?v=5Y-5Y0zOJPg)
 
 ## Development information
 
