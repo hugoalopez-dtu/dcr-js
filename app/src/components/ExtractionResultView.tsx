@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import type {
     Entity,
@@ -68,7 +68,6 @@ const ListItem = styled.li`
 const CheckboxLabel = styled.label`
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 0.5rem;
   cursor: pointer;
 `;
@@ -101,6 +100,15 @@ const EntityCard = styled.div`
   border-radius: 6px;
   margin-bottom: 0.5rem;
   overflow: hidden;
+`;
+
+const EntityCardHeaderRow = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const EntityCardHeaderCheckbox = styled(Checkbox)`
+  margin: 0 0.5rem;
 `;
 
 const EntityCardHeader = styled.button<{ $open: boolean }>`
@@ -183,15 +191,43 @@ const Drawer: React.FC<{
 const EntityCardView: React.FC<{
     title: React.ReactNode;
     children: React.ReactNode;
-}> = ({title, children}) => {
+    bulkChecked?: boolean;
+    bulkIndeterminate?: boolean;
+    onBulkToggle?: () => void;
+}> = ({
+         title,
+         children,
+         bulkChecked = false,
+         bulkIndeterminate = false,
+         onBulkToggle,
+     }) => {
     const [open, setOpen] = useState(false);
+    const bulkCheckboxRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (bulkCheckboxRef.current) {
+            bulkCheckboxRef.current.indeterminate = bulkIndeterminate;
+        }
+    }, [bulkIndeterminate]);
+
+    const toggleOpen = () => setOpen((o) => !o);
 
     return (
         <EntityCard>
-            <EntityCardHeader $open={open} onClick={() => setOpen((o) => !o)}>
-                <span>{title}</span>
-                <span aria-hidden="true">{open ? "▴" : "▾"}</span>
-            </EntityCardHeader>
+            <EntityCardHeaderRow>
+                {onBulkToggle && (
+                    <EntityCardHeaderCheckbox
+                        ref={bulkCheckboxRef}
+                        type="checkbox"
+                        checked={bulkChecked}
+                        onChange={onBulkToggle}
+                    />
+                )}
+                <EntityCardHeader $open={open} onClick={toggleOpen}>
+                    <span>{title}</span>
+                    <span aria-hidden="true">{open ? "▴" : "▾"}</span>
+                </EntityCardHeader>
+            </EntityCardHeaderRow>
             {open && <EntityCardBody>{children}</EntityCardBody>}
         </EntityCard>
     );
@@ -339,6 +375,42 @@ const ExtractionResultView: React.FC<Props> = ({
             }
             return next;
         });
+    };
+
+    const toggleEntityMentions = (entity: Entity) => {
+        const allSelected = entity.mentionIndices.every((index) =>
+            selectedMentions.has(index)
+        );
+
+        if (allSelected) {
+            // Deselecting all mentions also deselects every relation relying on them.
+            const dependentRelations = new Set<number>();
+            relations.forEach((relation, relationIndex) => {
+                if (
+                    entity.mentionIndices.includes(relation.headMentionIndex) ||
+                    entity.mentionIndices.includes(relation.tailMentionIndex)
+                ) {
+                    dependentRelations.add(relationIndex);
+                }
+            });
+
+            setSelectedMentions((prev) => {
+                const next = new Set(prev);
+                entity.mentionIndices.forEach((index) => next.delete(index));
+                return next;
+            });
+            setSelectedRelations((prev) => {
+                const next = new Set(prev);
+                dependentRelations.forEach((index) => next.delete(index));
+                return next;
+            });
+        } else {
+            setSelectedMentions((prev) => {
+                const next = new Set(prev);
+                entity.mentionIndices.forEach((index) => next.add(index));
+                return next;
+            });
+        }
     };
 
     const withRepresentativeFirst = (entity: Entity): Entity => ({
@@ -495,17 +567,17 @@ const ExtractionResultView: React.FC<Props> = ({
                 }}
             >
                 <CheckboxLabel>
+                    <Checkbox
+                        type="checkbox"
+                        checked={selectedMentions.has(index)}
+                        onChange={() => toggleMention(index)}
+                    />
                     <CheckboxText>
                         <span style={{color: color.text, fontWeight: 600}}>
                             {mention.text}
                         </span>{" "}
                         ({mention.type}, sentence {mention.sentence})
                     </CheckboxText>
-                    <Checkbox
-                        type="checkbox"
-                        checked={selectedMentions.has(index)}
-                        onChange={() => toggleMention(index)}
-                    />
                 </CheckboxLabel>
             </ListItem>
         );
@@ -590,6 +662,9 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                                         entity.mentionIndices.filter((index) =>
                                             selectedMentions.has(index)
                                         ).length;
+                                    const allMentionsSelected =
+                                        checkedMentionCount ===
+                                        entity.mentionIndices.length;
                                     return (
                                         <CardDropTarget
                                             key={entity.id}
@@ -613,6 +688,14 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                                                     <span style={{color: color.text}}>
                                                         {`${representative.text} (${checkedMentionCount}/${entity.mentionIndices.length})`}
                                                     </span>
+                                                }
+                                                bulkChecked={allMentionsSelected}
+                                                bulkIndeterminate={
+                                                    checkedMentionCount > 0 &&
+                                                    !allMentionsSelected
+                                                }
+                                                onBulkToggle={() =>
+                                                    toggleEntityMentions(entity)
                                                 }
                                             >
                                                 <List>
@@ -674,12 +757,12 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                         {relations.map((relation, index) => (
                             <ListItem key={index}>
                                 <CheckboxLabel>
-                                        <CheckboxText>{relationLabel(relation)}</CheckboxText>
                                         <Checkbox
                                             type="checkbox"
                                             checked={selectedRelations.has(index)}
                                             onChange={() => toggleRelation(index)}
                                         />
+                                        <CheckboxText>{relationLabel(relation)}</CheckboxText>
                                     </CheckboxLabel>
                             </ListItem>
                         ))}
