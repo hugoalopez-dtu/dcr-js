@@ -147,6 +147,48 @@ const CardDropTarget = styled.div<{ $active: boolean }>`
   margin: -2px;
 `;
 
+const TextBody = styled.div`
+  position: relative;
+  white-space: pre-wrap;
+`;
+
+const NewEntityPopover = styled.div`
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid gainsboro;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+`;
+
+const NewEntityPopoverRow = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const PopoverButton = styled.button`
+  padding: 0.25rem 0.75rem;
+  border: 1px solid gainsboro;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: gainsboro;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 function hashString(str: string): number {
     let hash = 0;
 
@@ -250,6 +292,14 @@ const ExtractionResultView: React.FC<Props> = ({
     const [dragOverEntityIndex, setDragOverEntityIndex] = useState<number | null>(null);
     const [dragOverZone, setDragOverZone] = useState<string | null>(null);
     const [dragOverMentionIndex, setDragOverMentionIndex] = useState<number | null>(null);
+    const [textSelection, setTextSelection] = useState<{
+        start: number;
+        end: number;
+        x: number;
+        y: number;
+    } | null>(null);
+    const textBodyRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setSelectedMentions(
@@ -261,6 +311,104 @@ const ExtractionResultView: React.FC<Props> = ({
     }, [processDescription]);
 
     const spans: Span[] = [];
+
+    const sentenceOfOffset = (offset: number): number => {
+        const sentences = processDescription.sentences;
+        let position = 0;
+        for (let i = 0; i < sentences.length; i++) {
+            const sentence = (sentences[i] ?? "").trim();
+            const found = text.indexOf(sentence, position);
+            const next =
+                found === -1 ? position + sentence.length : found + sentence.length;
+            position = next;
+            if (offset < next) {
+                return i;
+            }
+        }
+        return Math.max(processDescription.sentences.length - 1, 0);
+    };
+
+    const closeTextSelection = () => {
+        setTextSelection(null);
+        window.getSelection()?.removeAllRanges();
+    };
+
+    useEffect(() => {
+        if (!textSelection) return;
+
+        const handleMouseDown = (e: MouseEvent) => {
+            if (
+                popoverRef.current &&
+                !popoverRef.current.contains(e.target as Node)
+            ) {
+                closeTextSelection();
+            }
+        };
+
+        document.addEventListener("mousedown", handleMouseDown);
+        return () => document.removeEventListener("mousedown", handleMouseDown);
+    }, [textSelection]);
+
+    const handleTextMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (popoverRef.current?.contains(e.target as Node)) return;
+
+        const container = textBodyRef.current;
+        const selection = window.getSelection();
+        const range =
+            selection && selection.rangeCount > 0
+                ? selection.getRangeAt(0)
+                : null;
+
+        if (container && range && container.contains(range.commonAncestorContainer)) {
+            const preRange = document.createRange();
+            preRange.selectNodeContents(container);
+            preRange.setEnd(range.startContainer, range.startOffset);
+            const start = preRange.toString().length;
+            const end = start + range.toString().length;
+
+            if (end > start) {
+                const rect = container.getBoundingClientRect();
+                setTextSelection({
+                    start,
+                    end,
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top,
+                });
+                return;
+            }
+        }
+
+        setTextSelection(null);
+    };
+
+    const addMentionFromSelection = (type: string) => {
+        if (!textSelection) return;
+
+        const selectedText = text.slice(textSelection.start, textSelection.end);
+        if (selectedText.length === 0) return;
+
+        const mentionIndex = mentions.length;
+        const newMention: Mention = {
+            text: selectedText,
+            type,
+            sentence: sentenceOfOffset(textSelection.start),
+        };
+        const nextEntityId =
+            entities.reduce((max, entity) => Math.max(max, entity.id), -1) + 1;
+        const newEntity: Entity = {
+            id: nextEntityId,
+            representativeIndex: mentionIndex,
+            mentionIndices: [mentionIndex],
+        };
+
+        onProcessDescriptionChange({
+            ...processDescription,
+            mentions: [...mentions, newMention],
+            entities: [...entities, newEntity],
+        });
+        setSelectedMentions((prev) => new Set(prev).add(mentionIndex));
+        closeTextSelection();
+    };
 
     for (const mention of mentions) {
         let start = text.indexOf(mention.text, 0);
@@ -632,7 +780,54 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
             </RebuildButton>
             <Accordion>
                 <Drawer title="Text" defaultOpen>
-                    <div>{elements}</div>
+                    <TextBody ref={textBodyRef} onMouseUp={handleTextMouseUp}>
+                        {elements}
+                        {textSelection && (
+                            <NewEntityPopover
+                                ref={popoverRef}
+                                style={{
+                                    left: textSelection.x,
+                                    top: textSelection.y,
+                                }}
+                            >
+                                <div>
+                                    Create entity from{" "}
+                                    <strong>
+                                        "
+                                        {(text.slice(
+                                             textSelection.start,
+                                             textSelection.end
+                                         ).length > 40
+                                             ? text.slice(
+                                                   textSelection.start,
+                                                   textSelection.start + 40
+                                               ) + "…"
+                                             : text.slice(
+                                                   textSelection.start,
+                                                   textSelection.end
+                                               ))}
+                                        "
+                                    </strong>
+                                </div>
+                                <NewEntityPopoverRow>
+                                    <PopoverButton
+                                        onClick={() =>
+                                            addMentionFromSelection("Event")
+                                        }
+                                    >
+                                        Event
+                                    </PopoverButton>
+                                    <PopoverButton
+                                        onClick={() =>
+                                            addMentionFromSelection("Actor")
+                                        }
+                                    >
+                                        Actor
+                                    </PopoverButton>
+                                </NewEntityPopoverRow>
+                            </NewEntityPopover>
+                        )}
+                    </TextBody>
                 </Drawer>
                 {sortedTypes.map((type) => {
                     const {checked, total} = typeCounts.get(type)!;
