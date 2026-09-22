@@ -307,17 +307,7 @@ export async function extractDataAndExpressions(model: string, doc: ProcessDescr
     prompt = prompt.replaceAll("{{relations}}", relations.join('\n'));
     prompt = prompt.replaceAll("{{description}}", description);
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            model: model,
-            input: prompt,
-        }),
-    });
+    const response = await callAi(apiKey, model, prompt);
 
     if (!response.ok) {
         throw new Error(`OpenAI API error: ${response.status}`);
@@ -367,17 +357,7 @@ export async function extractRelations(model: string, doc: ProcessDescription, a
     prompt = prompt.replaceAll("{{text}}", taggedSentences.join('\n'));
     prompt = prompt.replaceAll("{{description}}", relationDescription);
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            model: model,
-            input: prompt,
-        }),
-    });
+    const response = await callAi(apiKey, model, prompt);
 
     if (!response.ok) {
         throw new Error(`OpenAI API error: ${response.status}`);
@@ -406,17 +386,7 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
     prompt = prompt.replaceAll("{{text}}", taggedSentences.join('\n'));
     prompt = prompt.replaceAll("{{description}}", entityDescription);
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            model: model,
-            input: prompt,
-        }),
-    });
+    const response = await callAi(apiKey, model, prompt);
 
     if (!response.ok) {
         throw new Error(`OpenAI API error: ${response.status}`);
@@ -464,6 +434,20 @@ export async function resolveEntities(model: string, doc: ProcessDescription, ap
     return entities;
 }
 
+async function callAi(apiKey: string, model: string, prompt: string) {
+    return await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+            model: model,
+            input: prompt,
+        }),
+    });
+}
+
 export async function extractEntityMentions(model: string, doc: ProcessDescription, apiKey: string, mentionDescription: string): Promise<Mention[]> {
     let text = "";
     let i = 0;
@@ -477,18 +461,7 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
     let prompt = mentionPrompt;
     prompt = prompt.replaceAll("{{text}}", text);
     prompt = prompt.replaceAll("{{description}}", mentionDescription);
-
-    const response = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            model: model,
-            input: prompt,
-        }),
-    });
+    const response = await callAi(apiKey, model, prompt);
 
     if (!response.ok) {
         throw new Error(`OpenAI API error: ${response.status}`);
