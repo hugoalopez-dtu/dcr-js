@@ -26,7 +26,7 @@ import {useHotkeys} from "react-hotkeys-hook";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import Loading from "../utilComponents/Loading";
-import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, buildGraph, filterProcessDescription, type Nestings, type RoleMap,} from "dcr-engine";
+import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, buildGraph, filterProcessDescription, type Nestings, type RoleMap, type ProcessDescription,} from "dcr-engine";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import styled from "styled-components";
 import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenuElements";

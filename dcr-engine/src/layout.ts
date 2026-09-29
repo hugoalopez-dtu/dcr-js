@@ -6,6 +6,7 @@ import type {
   Expression,
   Nestings,
   RelationType,
+  RoleDataDCR,
   RoleMap,
   Variable,
   VariableType,
@@ -301,7 +302,7 @@ function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): Abstr
 }
 
 export default async function layoutGraph(
-  graph: DCRGraph | DataDCR,
+  graph: DCRGraph | DataDCR | RoleDataDCR,
   nestings?: Nestings,
   roleMap?: RoleMap
 ) {
@@ -321,7 +322,13 @@ export default async function layoutGraph(
   const elk = new ELK();
   const result = await elk.layout(layout);
 
-  const xmlContent = createXML(result, abstractGraph, nestings, roleMap);
+  // Prefer an explicitly provided roleMap, but fall back to the one embedded
+  // in the graph (RoleDataDCR) so callers that rebuild from buildGraph keep
+  // emitting role attributes.
+  const resolvedRoleMap: RoleMap | undefined =
+    roleMap ?? ("roleMap" in graph ? graph.roleMap : undefined);
+
+  const xmlContent = createXML(result, abstractGraph, nestings, resolvedRoleMap);
 
   return xmlContent;
 }
