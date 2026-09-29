@@ -6,8 +6,7 @@ import type {
   Expression,
   Nestings,
   RelationType,
-  Role,
-  RoleDataDCR,
+  RoleMap,
   Variable,
   VariableType,
 } from "./types";
@@ -21,7 +20,6 @@ interface AbstractNode extends ElkNode {
   included: boolean;
   pending: boolean;
   executed: boolean;
-  role?: Role;
   variable?: Variable<VariableType>;
   children?: Array<AbstractNode>;
 }
@@ -46,7 +44,8 @@ type LayoutType = Omit<ElkNode, "children"> & {
 function createXML(
   laidOutGraph: LayoutType,
   nodesAndEdges: AbstractGraph,
-  nestings?: Nestings
+  nestings?: Nestings,
+  roleMap?: RoleMap
 ) {
   var xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xmlContent +=
@@ -61,14 +60,6 @@ function createXML(
     return "Event_" + descToIdMap[desc];
   };
 
-  const eventXML = (node: AbstractNode): string => {
-    const roleAttr = node.role ? ` role="${node.role}"` : "";
-    if (node.variable) {
-      return ` <dcr:event id="${descToId(node.id)}" description="${node.id}"${roleAttr} included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false">\n`;
-    }
-    return ` <dcr:event id="${descToId(node.id)}" description="${node.id}"${roleAttr} included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false" />\n`;
-  };
-
   const createNodeArrayXML = (
     nodes: Array<AbstractNode>,
     nestings: Nestings
@@ -81,9 +72,14 @@ function createXML(
           retval += createNodeArrayXML(node.children, nestings);
         retval += "</dcr:nesting>\n";
       } else {
-        retval += node.variable
-          ? eventXML(node) + `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n` + " </dcr:event>\n"
-          : eventXML(node);
+        const roleAttr = roleMap?.[node.id] ? ` role="${roleMap[node.id]}"` : "";
+        if(node.variable) {
+          retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false"${roleAttr}>\n`;
+          retval += `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n`
+          retval += ` </dcr:event>\n`
+        } else {
+          retval += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false"${roleAttr} />\n`;
+        }
       }
     });
     return retval;
@@ -93,9 +89,14 @@ function createXML(
     xmlContent += createNodeArrayXML(nodesAndEdges.nodes, nestings);
   } else {
     nodesAndEdges.nodes.forEach((node) => {
-      xmlContent += node.variable
-        ? eventXML(node) + `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n` + " </dcr:event>\n"
-        : eventXML(node);
+      const roleAttr = roleMap?.[node.id] ? ` role="${roleMap[node.id]}"` : "";
+      if(node.variable) {
+        xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false"${roleAttr}>\n`;
+        xmlContent += `  <dcr:eventData name="${node.variable.name}" type="${node.variable.type}" />\n`
+        xmlContent += ` </dcr:event>\n`
+      } else {
+        xmlContent += ` <dcr:event id="${descToId(node.id)}" description="${node.id}" included="${node.included}" executed="${node.executed}" pending="${node.pending}" enabled="false"${roleAttr} />\n`;
+      }
     });
   }
 
@@ -199,17 +200,15 @@ function listToTree(list: Array<{ id: string; parent: string }>) {
 
 function treesToAbstractNodeArray(
   trees: Array<TempNode>,
-  graph: DCRGraph | DataDCR | RoleDataDCR,
+  graph: DCRGraph | DataDCR,
   nestings: Nestings
 ): Array<AbstractNode> {
   const data = "data" in graph ? graph.data : {};
-  const roleMap = "roleMap" in graph ? graph.roleMap : {};
   return trees.map((node) => {
     return {
       id: node.id,
       width: 130,
       height: 150,
-      role: roleMap[node.id],
       variable: data[node.id],
       included: graph.marking.included.has(node.id),
       pending: graph.marking.pending.has(node.id),
@@ -227,7 +226,7 @@ function treesToAbstractNodeArray(
   });
 }
 
-function getAbstractGraph(graph: DCRGraph | DataDCR | RoleDataDCR, nestings?: Nestings): AbstractGraph {
+function getAbstractGraph(graph: DCRGraph | DataDCR, nestings?: Nestings): AbstractGraph {
   let nodes: Array<AbstractNode> = [];
   const edges: Array<AbstractEdge> = [];
 
@@ -252,6 +251,7 @@ function getAbstractGraph(graph: DCRGraph | DataDCR | RoleDataDCR, nestings?: Ne
       Object.keys(rel).forEach((source) => {
         rel[source].forEach((target) => {
           const expression = guards?.[source]?.[target];
+          console.log(`Using guard: ${expression} for relation ${source}-${target}-${type}`);
           edges.push({
             id: `${source}-${target}-${type}`,
             source,
@@ -275,14 +275,12 @@ function getAbstractGraph(graph: DCRGraph | DataDCR | RoleDataDCR, nestings?: Ne
     nodes = treesToAbstractNodeArray(trees, graph, nestings);
   } else {
     const data = "data" in graph ? graph.data : {};
-    const roleMap = "roleMap" in graph ? graph.roleMap : {};
     graph.events.forEach((event) => {
       const variable = data[event];
       nodes.push({
         id: event,
         width: 130,
         height: 150,
-        role: roleMap[event],
         variable: variable,
         included: graph.marking.included.has(event),
         pending: graph.marking.pending.has(event),
@@ -303,8 +301,9 @@ function getAbstractGraph(graph: DCRGraph | DataDCR | RoleDataDCR, nestings?: Ne
 }
 
 export default async function layoutGraph(
-  graph: DCRGraph | DataDCR | RoleDataDCR,
-  nestings?: Nestings
+  graph: DCRGraph | DataDCR,
+  nestings?: Nestings,
+  roleMap?: RoleMap
 ) {
   const abstractGraph = getAbstractGraph(graph, nestings);
 
@@ -322,7 +321,7 @@ export default async function layoutGraph(
   const elk = new ELK();
   const result = await elk.layout(layout);
 
-  const xmlContent = createXML(result, abstractGraph, nestings);
+  const xmlContent = createXML(result, abstractGraph, nestings, roleMap);
 
   return xmlContent;
 }

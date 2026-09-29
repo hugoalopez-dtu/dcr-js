@@ -1,4 +1,4 @@
-# DCR-js: an open-source process modelling and mining environment for DCR graphs
+# Process-DoCtoR: an open-source process modelling and mining environment for DCR graphs
 
 [Try it live!](https://hugoalopez-dtu.github.io/dcr-js/)
 
@@ -8,21 +8,26 @@ For a formal definition of DCR graphs, please [read this paper](https://arxiv.or
 
 This tool supports a wide range of process mining activities for DCR graphs:
 
-* Modeling, automatic layout, and nesting, and open test cases to support **Test Driven Modeling**.
+* Modeling with model elicitation from natural-language descriptions, BPMN import, automatic layout, nesting, and open test cases to support **Test Driven Modeling**.
 
 * Discovery with automatic layouting and nesting.
 
-* Conformance checking, both rule-based and alignment-based, with an additional heatmap feature to highlight both activations and violations, both log-based and trace-based.
+* Conformance checking, both rule-based and alignment-based, with an additional heatmap feature to highlight both activations and violations, both log-based and trace-based. Three-way trace classification into conforming, partially violating, and violating, with a distinction between structural and temporal violations.
 
-* Simulation and manual event log generation with both conforming and non-conforming traces.
+* Simulation and manual event log generation supporting time and data perspectives of processes with both conforming and non-conforming traces.
 
 * Automatic event log generation by sampling models.
 
 ## User Manual ##
-The user manual for DCR-js can be found in the [docs folder](https://github.com/hugoalopez-dtu/dcr-js/blob/main/docs/UserManual-DCR-js.pdf) (Document version June 27, 2025)
-A video walk-through explaining the main functionalities of the tool can be watched [here](http://tiny.cc/ya1o001)
+The user manual for Process-DoCtoR can be found in the [docs folder](https://github.com/hugoalopez-dtu/dcr-js/blob/main/docs/UserManual-DCR-js.pdf) (Document version June 27, 2025)
+
+A video walk-through explaining the main functionalities of the tool can be watched [here](http://tiny.cc/ya1o001). 
 
 [![Screencast DCRjs](https://github.com/hugoalopez-dtu/dcr-js/blob/main/docs/screencastDCRJS.png)](http://tiny.cc/ya1o001)
+
+A video walk-through explaining the functionalities that were introduced as part of the Process DoCtoR update can be watched [here](https://www.youtube.com/watch?v=5Y-5Y0zOJPg)
+
+[![Screencast DCRjs](https://github.com/hugoalopez-dtu/dcr-js/blob/main/docs/screencastProcessDoCtoR.png)](https://www.youtube.com/watch?v=5Y-5Y0zOJPg)
 
 ## Development information
 
@@ -34,7 +39,7 @@ This project is organized into three separate modules.
 
 * [**DCR-engine**](https://github.com/hugoalopez-dtu/dcr-js/tree/main/dcr-engine): The underlying DCR engine. This module contains a typescript implementation of DCR graphs, all process mining algorithms, as well as all types used for these.
 
-# Citing DCR-js
+# Citing Process DoCtoR
 We are happy that you are using our project for research purposes. We would appreciate it if you cite our project in case you decide to use the models in your publication:
 
 If you use only the editor capabilities:
@@ -60,10 +65,18 @@ If you use the process mining or simulation capabilities:
   year={2025}
 }
 ```
+If you use the model elicitation or data-and-time capabilities:
+```bibtex
+@inproceedings{varvoutas2026ProcessDoCtoR,
+title = "Streamlining the education of Declarative Process Management with Process DoCtoR",
+author = "Konstantinos Varvoutas and Julian Neuberger and Hugo-Andr{\'e}s L{\'o}pez-Acosta",
+booktitle = {24th International Conference on Business Process Management},
+year={2026}
+}
+```
 
 # License
 This package is published using an MIT license
-
 
 
 

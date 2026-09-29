@@ -5,6 +5,7 @@
 export type Event = string;
 export type Label = string;
 export type Role = string;
+export type RoleMap = { [event: Event]: Role };
 
 export type RelationType =
   | "condition"
@@ -149,7 +150,7 @@ export type DCRGraphS = DCRGraph &
       [event: Event]: SubProcess;
     };
     roles: Set<Role>;
-    roleMap: { [event: Event]: Role };
+    roleMap: RoleMap;
     guardMap?: GuardMap;
     timeConstraintMap?: { [source: string]: { [target: string]: { delay?: number; deadline?: number } } };
     initialVariableStore?: VariableStore;
