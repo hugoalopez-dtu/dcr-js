@@ -198,7 +198,9 @@ export function buildGraph(doc: ProcessDescription): RoleDataDCR {
 export function filterProcessDescription(
     doc: ProcessDescription,
     selectedMentionIndices: Set<number>,
-    selectedRelationIndices: Set<number>
+    selectedRelationIndices: Set<number>,
+    selectedVariableIndices: Set<number>,
+    selectedExpressionIndices: Set<number>
 ): ProcessDescription {
     const mentionIndexMap = new Map<number, number>();
     const mentions: Mention[] = [];
@@ -224,11 +226,18 @@ export function filterProcessDescription(
     });
 
     const expressions: Expression[] = [];
-    for (const e of doc.expressions) {
+    doc.expressions.forEach((e, i) => {
+        if (!selectedExpressionIndices.has(i)) return;
         const boundToRelation = relationIndexMap.get(e.boundToRelation);
-        if (boundToRelation === undefined) continue;
+        if (boundToRelation === undefined) return;
         expressions.push({...e, boundToRelation});
-    }
+    });
+
+    const variables: Variable[] = [];
+    doc.variables.forEach((v, i) => {
+        if (!selectedVariableIndices.has(i)) return;
+        variables.push({...v});
+    });
 
     // Filter entities: keep entities that still have at least one mention,
     // remapping their mention indices to the filtered mentions array.
@@ -253,6 +262,7 @@ export function filterProcessDescription(
         mentions,
         relations,
         expressions,
+        variables,
         entities,
     };
 }

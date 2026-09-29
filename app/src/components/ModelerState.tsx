@@ -601,13 +601,17 @@ const ModelerState = ({
 
     const rebuildModel = async (
         selectedMentions: Set<number>,
-        selectedRelations: Set<number>
+        selectedRelations: Set<number>,
+        selectedVariables: Set<number>,
+        selectedExpressions: Set<number>
     ) => {
         if (!modeler || !extractionResult) return;
         const filteredDoc = filterProcessDescription(
             extractionResult.doc,
             selectedMentions,
-            selectedRelations
+            selectedRelations,
+            selectedVariables,
+            selectedExpressions
         );
         try {
             const graph = buildGraph(filteredDoc);

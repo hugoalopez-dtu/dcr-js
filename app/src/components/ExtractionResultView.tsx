@@ -11,7 +11,9 @@ type Props = {
     processDescription: ProcessDescription;
     onRebuild: (
         selectedMentions: Set<number>,
-        selectedRelations: Set<number>
+        selectedRelations: Set<number>,
+        selectedVariables: Set<number>,
+        selectedExpressions: Set<number>
     ) => void;
     onProcessDescriptionChange: (doc: ProcessDescription) => void;
 };
@@ -290,13 +292,20 @@ const ExtractionResultView: React.FC<Props> = ({
                                                    onRebuild,
                                                    onProcessDescriptionChange,
                                                }) => {
-    const {text, mentions, relations, entities} = processDescription;
+    const {text, mentions, relations, entities, variables, expressions} =
+        processDescription;
 
     const [selectedMentions, setSelectedMentions] = useState<Set<number>>(
         () => new Set(mentions.map((_, index) => index))
     );
     const [selectedRelations, setSelectedRelations] = useState<Set<number>>(
         () => new Set(relations.map((_, index) => index))
+    );
+    const [selectedVariables, setSelectedVariables] = useState<Set<number>>(
+        () => new Set(variables.map((_, index) => index))
+    );
+    const [selectedExpressions, setSelectedExpressions] = useState<Set<number>>(
+        () => new Set(expressions.map((_, index) => index))
     );
     const [draggedMentionIndex, setDraggedMentionIndex] = useState<number | null>(null);
     const [dragOverEntityIndex, setDragOverEntityIndex] = useState<number | null>(null);
@@ -318,6 +327,12 @@ const ExtractionResultView: React.FC<Props> = ({
         );
         setSelectedRelations(
             new Set(processDescription.relations.map((_, index) => index))
+        );
+        setSelectedVariables(
+            new Set(processDescription.variables.map((_, index) => index))
+        );
+        setSelectedExpressions(
+            new Set(processDescription.expressions.map((_, index) => index))
         );
     }, [processDescription]);
 
@@ -505,7 +520,8 @@ const ExtractionResultView: React.FC<Props> = ({
         });
 
         if (wasSelected) {
-            // Deselecting a mention also deselects every relation relying on it.
+            // Deselecting a mention also deselects every relation relying on it
+            // and every guard bound to those relations.
             const dependentRelations = new Set<number>();
             relations.forEach((relation, relationIndex) => {
                 if (
@@ -521,11 +537,59 @@ const ExtractionResultView: React.FC<Props> = ({
                 dependentRelations.forEach((i) => next.delete(i));
                 return next;
             });
+            setSelectedExpressions((prev) => {
+                const next = new Set(prev);
+                expressions.forEach((expression, expressionIndex) => {
+                    if (dependentRelations.has(expression.boundToRelation)) {
+                        next.delete(expressionIndex);
+                    }
+                });
+                return next;
+            });
         }
     };
 
     const toggleRelation = (index: number) => {
+        const wasSelected = selectedRelations.has(index);
+
         setSelectedRelations((prev) => {
+            const next = new Set(prev);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+
+        if (wasSelected) {
+            // Deselecting a relation also deselects every guard bound to it.
+            setSelectedExpressions((prev) => {
+                const next = new Set(prev);
+                expressions.forEach((expression, expressionIndex) => {
+                    if (expression.boundToRelation === index) {
+                        next.delete(expressionIndex);
+                    }
+                });
+                return next;
+            });
+        }
+    };
+
+    const toggleVariable = (index: number) => {
+        setSelectedVariables((prev) => {
+            const next = new Set(prev);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+    };
+
+    const toggleExpression = (index: number) => {
+        setSelectedExpressions((prev) => {
             const next = new Set(prev);
             if (next.has(index)) {
                 next.delete(index);
@@ -542,7 +606,8 @@ const ExtractionResultView: React.FC<Props> = ({
         );
 
         if (allSelected) {
-            // Deselecting all mentions also deselects every relation relying on them.
+            // Deselecting all mentions also deselects every relation relying on
+            // them and every guard bound to those relations.
             const dependentRelations = new Set<number>();
             relations.forEach((relation, relationIndex) => {
                 if (
@@ -561,6 +626,15 @@ const ExtractionResultView: React.FC<Props> = ({
             setSelectedRelations((prev) => {
                 const next = new Set(prev);
                 dependentRelations.forEach((index) => next.delete(index));
+                return next;
+            });
+            setSelectedExpressions((prev) => {
+                const next = new Set(prev);
+                expressions.forEach((expression, expressionIndex) => {
+                    if (dependentRelations.has(expression.boundToRelation)) {
+                        next.delete(expressionIndex);
+                    }
+                });
                 return next;
             });
         } else {
@@ -797,7 +871,14 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
     return (
         <Root>
             <RebuildButton
-                onClick={() => onRebuild(selectedMentions, selectedRelations)}
+                onClick={() =>
+                    onRebuild(
+                        selectedMentions,
+                        selectedRelations,
+                        selectedVariables,
+                        selectedExpressions
+                    )
+                }
             >
                 Rebuild model
             </RebuildButton>
@@ -1008,6 +1089,59 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                                     </CheckboxLabel>
                             </ListItem>
                         ))}
+                    </List>
+                </Drawer>
+                <Drawer
+                    title={`Variables (${selectedVariables.size}/${variables.length})`}
+                >
+                    <List>
+                        {variables.map((variable, index) => (
+                            <ListItem key={index}>
+                                <CheckboxLabel>
+                                    <Checkbox
+                                        type="checkbox"
+                                        checked={selectedVariables.has(index)}
+                                        onChange={() => toggleVariable(index)}
+                                    />
+                                    <CheckboxText>
+                                        <span style={{fontWeight: 600}}>
+                                            {variable.name || `#[${index}]`}
+                                        </span>{" "}
+                                        ({variable.type})
+                                    </CheckboxText>
+                                </CheckboxLabel>
+                            </ListItem>
+                        ))}
+                    </List>
+                </Drawer>
+                <Drawer
+                    title={`Guards (${selectedExpressions.size}/${expressions.length})`}
+                >
+                    <List>
+                        {expressions.map((expression, index) => {
+                            const boundRelation = relations[expression.boundToRelation];
+                            return (
+                                <ListItem key={index}>
+                                    <CheckboxLabel>
+                                        <Checkbox
+                                            type="checkbox"
+                                            checked={selectedExpressions.has(index)}
+                                            onChange={() => toggleExpression(index)}
+                                        />
+                                        <CheckboxText>
+                                            <span style={{fontWeight: 600}}>
+                                                {expression.text || `#[${index}]`}
+                                            </span>{" "}
+                                            {boundRelation && (
+                                                <span style={{color: "#666"}}>
+                                                    ({relationLabel(boundRelation)})
+                                                </span>
+                                            )}
+                                        </CheckboxText>
+                                    </CheckboxLabel>
+                                </ListItem>
+                            );
+                        })}
                     </List>
                 </Drawer>
             </Accordion>
