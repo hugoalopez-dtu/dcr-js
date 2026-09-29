@@ -147,6 +147,16 @@ const CardDropTarget = styled.div<{ $active: boolean }>`
   margin: -2px;
 `;
 
+const CreateEntityTarget = styled.div<{ $active: boolean }>`
+  margin: 0.25rem 0.5rem 0.5rem;
+  padding: 0.5rem;
+  border: 1px dashed ${(props) => (props.$active ? "dodgerblue" : "gainsboro")};
+  border-radius: 6px;
+  text-align: center;
+  color: ${(props) => (props.$active ? "dodgerblue" : "#666")};
+  font-weight: 600;
+`;
+
 const TextBody = styled.div`
   position: relative;
   white-space: pre-wrap;
@@ -292,6 +302,7 @@ const ExtractionResultView: React.FC<Props> = ({
     const [dragOverEntityIndex, setDragOverEntityIndex] = useState<number | null>(null);
     const [dragOverZone, setDragOverZone] = useState<string | null>(null);
     const [dragOverMentionIndex, setDragOverMentionIndex] = useState<number | null>(null);
+    const [dragOverCreateNew, setDragOverCreateNew] = useState(false);
     const [textSelection, setTextSelection] = useState<{
         start: number;
         end: number;
@@ -668,6 +679,7 @@ const ExtractionResultView: React.FC<Props> = ({
         setDragOverEntityIndex(null);
         setDragOverZone(null);
         setDragOverMentionIndex(null);
+        setDragOverCreateNew(false);
     };
 
     const mentionItem = (
@@ -690,6 +702,7 @@ const ExtractionResultView: React.FC<Props> = ({
                     setDragOverEntityIndex(null);
                     setDragOverZone(null);
                     setDragOverMentionIndex(null);
+                    setDragOverCreateNew(false);
                 }}
                 onDragOver={(e) => {
                     if (entityIndex === undefined) return;
@@ -770,6 +783,16 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
         );
         typeCounts.set(type, counts);
     }
+
+    const draggedSourceEntityIndex =
+        draggedMentionIndex === null
+            ? -1
+            : entities.findIndex((entity) =>
+                  entity.mentionIndices.includes(draggedMentionIndex)
+              );
+    const canCreateNewFromDrag =
+        draggedSourceEntityIndex !== -1 &&
+        (entities[draggedSourceEntityIndex]?.mentionIndices.length ?? 0) > 1;
 
     return (
         <Root>
@@ -913,6 +936,30 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                                                         )}
                                                 </List>
                                             </EntityCardView>
+                                            {entityIndex ===
+                                                draggedSourceEntityIndex &&
+                                                canCreateNewFromDrag && (
+                                                    <CreateEntityTarget
+                                                        $active={dragOverCreateNew}
+                                                        onDragOver={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            e.dataTransfer.dropEffect =
+                                                                "move";
+                                                            setDragOverCreateNew(true);
+                                                        }}
+                                                        onDragLeave={() =>
+                                                            setDragOverCreateNew(false)
+                                                        }
+                                                        onDrop={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            handleMentionDrop(e, null);
+                                                        }}
+                                                    >
+                                                        Drop to create new entity
+                                                    </CreateEntityTarget>
+                                                )}
                                         </CardDropTarget>
                                     );
                                 })}
