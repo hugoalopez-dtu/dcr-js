@@ -120,7 +120,7 @@ const ModelerState = ({
     const [modelExtractionOpen, setModelExtractionOpen] = useState(false);
     const [isExtractingModel, setIsExtractingModel] = useState(false);
     const [extractConfig, setExtractConfig] = useState<ExtractionConfig>({
-        modelName: "", apiKey: "", text: "",
+        modelName: "", apiKey: import.meta.env.VITE_EXTRACTION_API_KEY ?? "", text: "",
         relationDescription: defaultRelationsDescription,
         mentionDescription: defaultMentionsDescription,
         dataDescription: defaultDataDescription

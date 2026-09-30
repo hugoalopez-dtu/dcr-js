@@ -39,6 +39,8 @@ jobs:
 
       - name: Build project
         run: cd app && npm run predeploy
+        env:
+          VITE_EXTRACTION_API_KEY: ${{ secrets.EXTRACTION_API_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3 
