@@ -26,7 +26,7 @@ import {useHotkeys} from "react-hotkeys-hook";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import Loading from "../utilComponents/Loading";
-import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, type Nestings, type RoleMap,} from "dcr-engine";
+import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, buildGraph, filterProcessDescription, type Nestings, type RoleMap, type ProcessDescription,} from "dcr-engine";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import styled from "styled-components";
 import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenuElements";
@@ -99,6 +99,8 @@ const defaultRelationsDescription = `**executes**: Focus on actors. Extract a re
 const defaultMentionsDescription = `**Event**: These are events, preconditions or outcomes relevant to law and regulation. Events can be immaterial, e.g., providing support, help or compensation. Beyond that events can also be inputs, that is data that is relevant to the law (e.g. numbers, strings).
 **Actor**: Nouns and pronouns, that describe a person, system, or company that is responsible for executing an event in the process.`;
 
+const defaultEntitiesDescription = `**Entity**: A real-world object that can be referred to by multiple mentions, e.g., a person, company, or event. Mentions contained in the same entity must refer to the same real-world object.`;
+
 const defaultDataDescription = `**Variable**: Data that is relevant to the process, e.g., by changing rules or outcomes. Examples are the age of process participants, distances, weights, number of units, etc. Time does not need to be extracted separately and will always be a variable available by default.
 **Expression**: Rules that change behaviour and constraints, e.g., if a response is only valid if some variable is below a certain threshold. Such expressions are called Guards. If the expression uses the time variable, they are called Deadlines (for responses) and Timeouts (for conditions). Expressions always shall be extracted in the FEEL notation, deadlines and timeouts use the time period format, e.g., PT2h for a period of 2 hours.`;
 
@@ -119,10 +121,12 @@ const ModelerState = ({
     const [tdmOpen, setTdmOpen] = useState(false);
     const [modelExtractionOpen, setModelExtractionOpen] = useState(false);
     const [isExtractingModel, setIsExtractingModel] = useState(false);
+    const [extractionStep, setExtractionStep] = useState<string | null>(null);
     const [extractConfig, setExtractConfig] = useState<ExtractionConfig>({
         modelName: "", apiKey: import.meta.env.VITE_EXTRACTION_API_KEY ?? "", text: "",
         relationDescription: defaultRelationsDescription,
         mentionDescription: defaultMentionsDescription,
+        entityDescription: defaultEntitiesDescription,
         dataDescription: defaultDataDescription
     });
     const [extractionResult, setExtractionResult] = useState<ExtractionResult | undefined>();
@@ -557,8 +561,9 @@ const ModelerState = ({
                     if (!confirm("This will replace your current diagram. Continue?")) return;
 
                     setIsExtractingModel(true);
+                    setExtractionStep(null);
                     try {
-                        const res = await extractGraph(config);
+                        const res = await extractGraph(config, setExtractionStep);
                         setExtractionResult(res)
                         const roleMap: RoleMap = {};
                         for (const r of res.doc.relations) {
@@ -568,30 +573,72 @@ const ModelerState = ({
                             roleMap[event.text] = actor.text;
                         }
                         const xml = await layoutGraph(res.graph, undefined, roleMap);
-                        console.log(xml);
                         await modeler.importXML(xml);
                         setGraphName("Extracted Model");    
                     } catch (e) {
-                        console.log(e);
-                        alert(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
+                        console.error(e);
+                        toast.error(`Model extraction failed: ${e instanceof Error ? e.message : e}`);
                     } finally {
                         setModelExtractionOpen(false);
                         setIsExtractingModel(false);
+                        setExtractionStep(null);
                         setTextOpen(true);
                     }
 
 
                 }}
                 busy={isExtractingModel}
+                step={extractionStep}
             />
         );
     }
 
+    const handleProcessDescriptionChange = (doc: ProcessDescription) => {
+        setExtractionResult((prev) =>
+            prev ? {...prev, doc} : prev
+        );
+    };
+
+    const rebuildModel = async (
+        selectedMentions: Set<number>,
+        selectedRelations: Set<number>,
+        selectedVariables: Set<number>,
+        selectedExpressions: Set<number>
+    ) => {
+        if (!modeler || !extractionResult) return;
+        const filteredDoc = filterProcessDescription(
+            extractionResult.doc,
+            selectedMentions,
+            selectedRelations,
+            selectedVariables,
+            selectedExpressions
+        );
+        try {
+            const graph = buildGraph(filteredDoc);
+            const xml = await layoutGraph(graph);
+            await modeler.importXML(xml);
+        } catch (e) {
+            console.log(e);
+            alert(`Unable to rebuild model: ${e instanceof Error ? e.message : e}`);
+        }
+    };
+
     const renderExtractionResult = () => {
         if(!extractionResult) return null;
-        return <div style={{padding: 25}}>
+        return <div style={{
+            position: "absolute",
+            top: "5rem",
+            left: 0,
+            right: 0,
+            boxSizing: "border-box",
+            padding: 25,
+        }}>
             <h4>Extraction Result</h4>
-            <ExtractionResultView processDescription={extractionResult.doc} />
+            <ExtractionResultView
+                processDescription={extractionResult.doc}
+                onRebuild={rebuildModel}
+                onProcessDescriptionChange={handleProcessDescriptionChange}
+            />
         </div>;
     }
 

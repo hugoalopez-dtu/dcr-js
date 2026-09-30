@@ -120,7 +120,6 @@ const isCustomElement = (obj: unknown): obj is CustomModalMenuElement => {
 // Renders a modal menu that toggles in the top right corner.
 // Elements can either be objects with an icon, a description, and an onClick handler, or they can be a concrete element.
 // If the Element is custom, styling is your own job!!!
-let id = 0;
 
 const ModalMenu = ({
   elements,
@@ -148,11 +147,11 @@ const ModalMenu = ({
     }
   };
 
-  const renderElement = (element: ModalMenuElement) => {
+  const renderElement = (element: ModalMenuElement, index: number) => {
     if (isRegularElement(element)) {
       const { icon, text, onClick } = element;
       return (
-        <MenuItem key={"Modal" + id++} onClick={onClick}>
+        <MenuItem key={`modal-${index}`} onClick={onClick}>
           <>{icon}</>
           <>{text}</>
         </MenuItem>
@@ -161,26 +160,30 @@ const ModalMenu = ({
       const { text, elements } = element;
       const isOpen = openElements.has(text);
       return (
-        <>
+        <React.Fragment key={`modal-${index}`}>
           <MenuItem
             $isOpen={isOpen}
-            key={"Modal" + id++}
+            key={`modal-${index}-header`}
             onClick={() => clickExpanding(text)}
           >
             {isOpen ? <BiSolidDownArrow /> : <BiSolidRightArrow />}
             <>{text}</>
           </MenuItem>
           {isOpen ? (
-            <li key={"Modal" + id++}>
-              <ul>{elements.map((element) => renderElement(element))}</ul>
-              <Divider key={"Modal" + id++} />
+            <li key={`modal-${index}-body`}>
+              <ul>
+                {elements.map((child, childIndex) =>
+                  renderElement(child, childIndex)
+                )}
+              </ul>
+              <Divider key={`modal-${index}-divider`} />
             </li>
           ) : null}
-        </>
+        </React.Fragment>
       );
     } else if (isCustomElement(element)) {
       return (
-        <CustomMenuItem key={"Modal" + id++}>
+        <CustomMenuItem key={`modal-${index}`}>
           {element.customElement}
         </CustomMenuItem>
       );
@@ -191,9 +194,15 @@ const ModalMenu = ({
     <>
       {open ? (
         <Menu>
-          <ul>{elements.map((element) => renderElement(element))}</ul>
+          <ul>
+            {elements.map((element, index) => renderElement(element, index))}
+          </ul>
           {bottomElements && (
-            <ul>{bottomElements.map((element) => renderElement(element))}</ul>
+            <ul>
+              {bottomElements.map((element, index) =>
+                renderElement(element, index)
+              )}
+            </ul>
           )}
         </Menu>
       ) : null}
