@@ -1,6 +1,7 @@
 import type {
   DCRGraph,
   DataDCR,
+  RoleDataDCR,
   Marking,
   SubProcess,
   EventMap,
@@ -53,6 +54,8 @@ import { RegexEventStreamParser } from "./src/parsers/RegexEventStreamParser";
 import { DOMEventStreamParser } from "./src/parsers/DOMEventStreamParser";
 import { SAXParser } from "./src/parsers/SAXParser";
 import extractGraph, {
+  buildGraph,
+  filterProcessDescription,
   type ExtractionResult,
   type ProcessDescription,
   type Mention,
@@ -65,6 +68,7 @@ export {
   type DCRGraph,
   type DCRGraphS,
   type DataDCR,
+  type RoleDataDCR,
   type VariableStore,
   type Value,
   type EventLog,
@@ -99,6 +103,8 @@ export {
   executeS,
   isEnabledS,
   extractGraph,
+  buildGraph,
+  filterProcessDescription,
   replayTraceS,
   writeEventLog,
   layoutGraph,
