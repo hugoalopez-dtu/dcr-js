@@ -128,6 +128,17 @@ export type DataDCR = DCRGraph & {
   };
 };
 
+export type RoleDataDCR = DCRGraph & {
+  expressions: {
+    [startEvent: Event]: {[endEvent: Event]: Expression}
+  };
+  data: {
+    [event: Event]: Variable<VariableType>
+  };
+  roles: Set<Role>;
+  roleMap: { [event: Event]: Role };
+};
+
 export type LabelDCRPP = DCRGraph & Labelling & Optimizations;
 
 export type DCRGraphS = DCRGraph &
