@@ -1,81 +1,246 @@
-import Popup from "../utilComponents/Popup";
+import {useState} from "react";
 import styled, {keyframes} from "styled-components";
 import {AiOutlineLoading} from "react-icons/ai";
-import type {ExtractionConfig} from "dcr-engine/src/extraction.ts";
-import {models, examples} from "../resources/llmResources";
+import Popup from "../utilComponents/Popup";
+import type {ExtractionConfig} from "dcr-engine/src/extraction";
+import {examples} from "../resources/llmResources";
+
+interface ModelInfo {
+    label: string;
+    id: string;
+    pricing: {
+        inputPer1M: number;
+        outputPer1M: number;
+    }
+}
+
+interface ProviderMap {
+    [providerName: string]: ModelInfo[];
+}
+
+const modelsByProvider: ProviderMap = {
+    "OpenAI": [
+        {
+            label: "GPT-6 Astra",
+            id: "gpt-6-astra",
+            pricing: { inputPer1M: 10.00, outputPer1M: 50.00 }
+        },
+        {
+            label: "GPT-6.1 Sol",
+            id: "gpt-6.1-sol",
+            pricing: { inputPer1M: 2.00, outputPer1M: 10.00 }
+        },
+        {
+            label: "GPT-6.1 Terra",
+            id: "gpt-6.1-terra",
+            pricing: { inputPer1M: 1.00, outputPer1M: 5.00 }
+        },
+        {
+            label: "GPT-6 Luna",
+            id: "gpt-6-luna",
+            pricing: { inputPer1M: 0.10, outputPer1M: 0.50 }
+        },
+    ],
+
+    "Anthropic": [
+        {
+            label: "Claude Opus 5.5",
+            id: "claude-opus-5-5",
+            pricing: { inputPer1M: 4.00, outputPer1M: 20.00 }
+        },
+        {
+            label: "Claude Sonnet 5.5",
+            id: "claude-sonnet-5-5",
+            pricing: { inputPer1M: 2.00, outputPer1M: 10.00 }
+        },
+        {
+            label: "Claude Haiku 5.5",
+            id: "claude-haiku-5-5",
+            pricing: { inputPer1M: 0.10, outputPer1M: 0.50 }
+        },
+        {
+            label: "Claude Sonnet 5",
+            id: "claude-sonnet-5",
+            pricing: { inputPer1M: 2.00, outputPer1M: 10.00 }
+        },
+        {
+            label: "Claude Opus 4.8",
+            id: "claude-opus-4-8",
+            pricing: { inputPer1M: 5.00, outputPer1M: 25.00 }
+        },
+        {
+            label: "Claude Sonnet 4.6",
+            id: "claude-sonnet-4-6",
+            pricing: { inputPer1M: 3.00, outputPer1M: 15.00 }
+        },
+    ],
+
+    "Google": [
+        {
+            label: "Gemini 4 Argon",
+            id: "gemini-4-argon",
+            pricing: { inputPer1M: 2.00, outputPer1M: 10.00 }
+        },
+        {
+            label: "Gemini 3.8 Flash",
+            id: "gemini-3.8-flash",
+            pricing: { inputPer1M: 0.75, outputPer1M: 3.75 }
+        },
+        {
+            label: "Gemini 3.6 Flash",
+            id: "gemini-3.6-flash",
+            pricing: { inputPer1M: 0.75, outputPer1M: 3.75 }
+        },
+        {
+            label: "Gemini 3.5 Flash-Lite",
+            id: "gemini-3.5-flash-lite",
+            pricing: { inputPer1M: 0.30, outputPer1M: 2.50 }
+        },
+        {
+            label: "Gemini 3.1 Flash-Lite",
+            id: "gemini-3.1-flash-lite",
+            pricing: { inputPer1M: 0.25, outputPer1M: 1.50 }
+        },
+    ],
+};
 
 export interface Props {
     config: ExtractionConfig;
     busy: boolean;
+    step?: string | null;
     onChange: (config: ExtractionConfig) => void;
     onClose: () => void;
     onSubmit: (config: ExtractionConfig) => void;
 }
 
-const FormContainer = styled.div`
-    display: block;
+const Root = styled.div`
+    font-size: 14px;
     width: 500px;
+`;
+
+const Heading = styled.h2`
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+`;
+
+const Accordion = styled.div`
+    border: 1px solid gainsboro;
+    border-radius: 6px;
+    overflow: hidden;
+`;
+
+const DrawerHeader = styled.button<{ $open: boolean }>`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-bottom: 1px solid gainsboro;
+    background: ${(props) => (props.$open ? "gainsboro" : "white")};
+    cursor: pointer;
+    font-weight: 600;
+    text-align: left;
+
+    &:hover {
+        background: gainsboro;
+    }
+`;
+
+const DrawerBody = styled.div`
+    padding: 0.75rem;
+    border-bottom: 1px solid gainsboro;
+`;
+
+const Field = styled.div`
+    display: block;
+    margin-bottom: 0.75rem;
+    position: relative;
+`;
+
+const FieldLabelRow = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    position: relative;
+`;
+
+const FieldLabel = styled.span`
+    display: block;
+    font-weight: 600;
+`;
+
+const ExamplesList = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid gainsboro;
+    border-radius: 6px;
 `;
 
 const Input = styled.input`
     display: block;
     width: 100%;
-    border-radius: 3px;
+    box-sizing: border-box;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid gainsboro;
+    border-radius: 6px;
+    font-size: 14px;
 `;
 
 const Select = styled.select`
     display: block;
     width: 100%;
-    border-radius: 3px;
-    padding: 5px 10px;
+    box-sizing: border-box;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid gainsboro;
+    border-radius: 6px;
+    font-size: 14px;
 `;
 
-const Label = styled.label`
-    display: block;
-    width: 100%;
-    margin-top: 20px;
-    margin-bottom: 5px;
-    padding-top: 10px;
-    border-top: solid 1px darkgrey;
-`;
+
 
 const TextArea = styled.textarea`
     display: block;
     width: 100%;
-    border-radius: 3px;
-    padding: 5px 10px;
-    min-height: 100px;
+    box-sizing: border-box;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid gainsboro;
+    border-radius: 6px;
+    font-size: 14px;
+    min-height: 80px;
+    font-family: inherit;
 `;
 
 const Button = styled.button`
-    margin-top: 10px;
-    border-radius: 3px;
-    padding: 5px 10px;
-    border: solid 1px black;
-    background-color: #f6f6f6;
-
-    &:disabled {
-        cursor: not-allowed;
-    }
+    padding: 0.4rem 0.75rem;
+    border: 1px solid gainsboro;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
 
     &:hover {
-        background-color: #e6e6e6;
+        background: gainsboro;
     }
 `;
 
-const SubmitButton = styled(Button)`
-    /*TODO: fix colors, take from theme?*/
-    display: block;
-    padding-left: 15px;
-    padding-right: 15px;
-    margin-left: auto;
-    margin-right: auto;
-    background-color: #d0d0ef;
+const ExampleToggle = styled(Button)`
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8em;
+    font-weight: 500;
+`;
 
-    &:hover {
-        background-color: #b4b4e8;
-    }
-`
+const SubmitButton = styled(Button)`
+    display: block;
+    margin: 0.75rem auto 0;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+`;
 
 const spin = keyframes`
     0%{transform: rotate(0deg);}
@@ -92,85 +257,181 @@ const Spinner = styled(AiOutlineLoading)`
     animation: ${spin} 2s linear infinite;
 `;
 
+const ProgressText = styled.div`
+    margin-top: 10px;
+    text-align: center;
+    color: #555;
+    font-size: 0.9em;
+`;
+
 const ModelExtractionDialogue = (props: Props) => {
-    
-    const renderSubmit = ( )=> {
-        if (props.busy) return <Spinner size="25" />;
+    const [descriptionsOpen, setDescriptionsOpen] = useState(false);
+    const [showExamples, setShowExamples] = useState(false);
+
+    const fields = [
+        {
+            id: "mentionDescription",
+            caption: "Entities",
+        },
+        {
+            id: "entityDescription",
+            caption: "Entity Resolution",
+        },
+        {
+            id: "relationDescription",
+            caption: "Relations",
+        },
+        {
+            id: "dataDescription",
+            caption: "Data and Time",
+        },
+    ] as const;
+
+    const renderSubmit = () => {
+        if (props.busy) {
+            return (
+                <>
+                    <Spinner size="25" />
+                    {props.step && <ProgressText>{props.step}</ProgressText>}
+                </>
+            );
+        }
 
         return (
             <SubmitButton
                 disabled={!props.config.apiKey || !props.config.modelName || !props.config.text}
                 onClick={() => {
-                    props.onSubmit(props.config)
+                    props.onSubmit(props.config);
                 }}
             >
                 Extract
             </SubmitButton>
         );
-    }
+    };
 
     return (
         <Popup close={() => props.onClose()}>
-            <div>
-                <h2>Extract Model from Text</h2>
+            <Root>
+                <Heading>Extract Model from Text</Heading>
 
-                <FormContainer>
-                    <Label htmlFor={"api-key"}>API Key</Label>
-                    <Input name={"api-key"} value={props.config.apiKey} onChange={e => props.onChange({
-                        ...props.config,
-                        apiKey: e.target.value,
-                    })} />
+                <Accordion>
+                    <DrawerBody>
+                        <Field>
+                            <FieldLabel>API Key</FieldLabel>
+                            <Input
+                                name={"api-key"}
+                                value={props.config.apiKey}
+                                onChange={(e) =>
+                                    props.onChange({
+                                        ...props.config,
+                                        apiKey: e.target.value,
+                                    })
+                                }
+                            />
+                        </Field>
 
-                    <Label htmlFor={"model"}>Model Name</Label>
-                    <Select value={props.config.modelName} name="model" onChange={e => props.onChange({
-                        ...props.config,
-                        modelName: e.target.value,
-                    })}>
-                        <option id={""} value={""}>Select Model</option>
-                        {
-                            models.map(m => (
-                                <option id={m.id} value={m.id}>
-                                    {m.label}
-                                </option>
-                            ))
-                        }
-                    </Select>
+                        <Field>
+                            <FieldLabel>Model</FieldLabel>
+                            <Select
+                                name="model"
+                                value={props.config.modelName}
+                                onChange={(e) =>
+                                    props.onChange({
+                                        ...props.config,
+                                        modelName: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value={""}>Select Model</option>
+                                {Object.keys(modelsByProvider).map((provider) => (
+                                    <optgroup key={provider} label={provider}>
+                                        {modelsByProvider[provider].map((m) => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.label}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                ))}
+                            </Select>
+                        </Field>
 
-                    <Label>Textual Description</Label>
-                    <div style={{fontSize: ".85em"}}>Examples</div>
-                    {
-                        examples.map(e => <Button id={e.id} onClick={() => {props.onChange({...props.config, text: e.text})}}>{e.id}</Button>)
-                    }
+                        <Field>
+                            <FieldLabelRow>
+                                <FieldLabel>Textual Description</FieldLabel>
+                                <ExampleToggle
+                                    type="button"
+                                    onClick={() => setShowExamples((o) => !o)}
+                                >
+                                    {showExamples
+                                        ? "Use custom description"
+                                        : "Use an example"}
+                                </ExampleToggle>
+                            </FieldLabelRow>
+                            {showExamples ? (
+                                <ExamplesList>
+                                    {examples.map((e) => (
+                                        <Button
+                                            key={e.id}
+                                            type="button"
+                                            onClick={() => {
+                                                props.onChange({
+                                                    ...props.config,
+                                                    text: e.text,
+                                                });
+                                                setShowExamples(false);
+                                            }}
+                                        >
+                                            {e.id}
+                                        </Button>
+                                    ))}
+                                </ExamplesList>
+                            ) : (
+                                <TextArea
+                                    value={props.config.text}
+                                    onChange={(e) =>
+                                        props.onChange({
+                                            ...props.config,
+                                            text: e.target.value,
+                                        })
+                                    }
+                                />
+                            )}
+                        </Field>
+                    </DrawerBody>
 
-                    <div style={{fontSize: ".85em"}}>Custom</div>
-                    <TextArea value={props.config.text} onChange={e => props.onChange({
-                        ...props.config,
-                        text: e.target.value,
-                    })}/>
+                    <DrawerHeader
+                        $open={descriptionsOpen}
+                        onClick={() => setDescriptionsOpen((o) => !o)}
+                    >
+                        <span>Descriptions</span>
+                        <span aria-hidden="true">
+                            {descriptionsOpen ? "▴" : "▾"}
+                        </span>
+                    </DrawerHeader>
+                    {descriptionsOpen && (
+                        <DrawerBody>
+                            {fields.map((field) => (
+                                <Field key={field.id}>
+                                    <FieldLabel>{field.caption}</FieldLabel>
+                                    <TextArea
+                                        value={props.config[field.id]}
+                                        onChange={(e) =>
+                                            props.onChange({
+                                                ...props.config,
+                                                [field.id]: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </Field>
+                            ))}
+                        </DrawerBody>
+                    )}
+                </Accordion>
 
-                    <Label>Descriptions</Label>
-                    <div style={{fontSize: ".85em"}}>Entities</div>
-                    <TextArea value={props.config.mentionDescription} onChange={e => props.onChange({
-                        ...props.config,
-                        mentionDescription: e.target.value,
-                    })}/>
-
-                    <div style={{fontSize: ".85em"}}>Relations</div>
-                    <TextArea value={props.config.relationDescription} onChange={e => props.onChange({
-                        ...props.config,
-                        relationDescription: e.target.value,
-                    })}/>
-
-                    <div style={{fontSize: ".85em"}}>Data and Time</div>
-                    <TextArea value={props.config.dataDescription} onChange={e => props.onChange({
-                        ...props.config,
-                        dataDescription: e.target.value,
-                    })}/>
-                    {renderSubmit()}
-                </FormContainer>
-            </div>
+                {renderSubmit()}
+            </Root>
         </Popup>
     );
-}
+};
 
 export default ModelExtractionDialogue;
