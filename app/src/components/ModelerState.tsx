@@ -33,6 +33,7 @@ import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenu
 import ReactiveModeler from "./ReactiveModeler";
 import TestDrivenModeling from "./TestDrivenModeling";
 import {useBPMN} from '../utilComponents/useBPMN';
+import {useSMVExport} from '../utilComponents/useSMVExport';
 import {BsFiletypeDoc, BsStars} from "react-icons/bs";
 import ModelExtractionDialogue from "./ModelExtractionDialogue.tsx";
 import type {ExtractionConfig, ExtractionResult} from "dcr-engine/src/extraction.ts";
@@ -251,6 +252,26 @@ const ModelerState = ({
         saveAs(blob, `${graphName}.svg`);
     }
 
+    async function saveAsSMV() {
+        if (!modeler) {
+            return;
+        }
+
+        if (warnIfInvalidGuards()) return;
+
+        try {
+            setLoading(true);
+            const data = await modeler.saveXML({format: true});
+            const smv = await exportSMV(data.xml);
+            const blob = new Blob([smv]);
+            saveAs(blob, `${graphName}.smv`);
+        } catch (e) {
+            toast.error(`SMV export failed: ${e instanceof Error ? e.message : "Unknown error"}`);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     function savedGraphElements(): Array<ModalMenuElement> {
         if (savedGraphs.size === 0) {
             return [];
@@ -382,6 +403,14 @@ const ModelerState = ({
                     text: "Download SVG",
                     onClick: () => {
                         saveAsSvg();
+                        setMenuOpen(false);
+                    },
+                },
+                {
+                    icon: <div/>,
+                    text: "Download SMV",
+                    onClick: () => {
+                        saveAsSMV();
                         setMenuOpen(false);
                     },
                 },
@@ -526,6 +555,7 @@ const ModelerState = ({
     };
 
     const {convertBpmnToDcr, loading: bpmnLoading} = useBPMN(modeler, setGraphName, setLoading, autoLayout);
+    const {exportSMV} = useSMVExport();
 
     const onInitModeler = useEffectEvent((modeler: DCRModeler) => {
         modeler
