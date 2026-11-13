@@ -4,10 +4,6 @@ declare global {
   function loadPyodide(): Promise<any>;
 }
 
-// Runs Jonas's thesis DCR->SMV translation script (dcr_smv.py, bundled as a
-// static asset) inside a Pyodide (WASM Python) instance — same approach
-// useBPMN.ts already uses for the BPMN->DCR import feature. No server-side
-// Python involved; runs entirely in this browser tab.
 export const useSMVExport = () => {
   const [pyodideState, setPyodideState] = useState<{
     pyodide: any | null;
