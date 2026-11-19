@@ -1,4 +1,5 @@
 import type { ProcessDescription } from "./models";
+import type { Mention } from "./models";
 
 export function preprocessText(text: string): ProcessDescription {
     const processed: ProcessDescription = {
@@ -23,10 +24,10 @@ export function preprocessText(text: string): ProcessDescription {
 
 export function tagMentions(
     sentences: string[],
-    mentions: import("./models").Mention[]
+    mentions: Mention[]
 ): string[] {
     // Group mentions by sentence index
-    const mentionsBySentence: Record<number, (import("./models").Mention & { index: number })[]> =
+    const mentionsBySentence: Record<number, (Mention & { index: number })[]> =
         {};
 
     mentions.forEach((m, index) => {
@@ -65,4 +66,25 @@ export function tagMentions(
 
         return result;
     });
+}
+
+export function buildTaggedText(
+    sentences: string[],
+    mentions: Mention[]
+): string {
+    return tagMentions(sentences, mentions).join('\n');
+}
+
+export function buildTaggedNumberedText(
+    sentences: string[],
+    mentions: Mention[]
+): string {
+    const tagged = tagMentions(sentences, mentions);
+    let text = "";
+    let i = 0;
+    for (const s of tagged) {
+        text += `${i}: ${s.trim()}\n`;
+        i++;
+    }
+    return text;
 }

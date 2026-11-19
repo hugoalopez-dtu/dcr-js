@@ -402,6 +402,7 @@ const ExtractionResultView: React.FC<Props> = ({
         const newMention: Mention = {
             text: selectedText,
             type,
+            name: type,
             sentence: sentenceOfOffset(textSelection.start),
         };
         const nextEntityId =
@@ -456,7 +457,7 @@ const ExtractionResultView: React.FC<Props> = ({
         }
 
         // Highlighted mention
-        const color = colorForType(span.mention.type);
+        const color = colorForType(span.mention.name);
         elements.push(
             <span
                 key={`mention-${index}`}
@@ -467,7 +468,7 @@ const ExtractionResultView: React.FC<Props> = ({
                     padding: "0 2px",
                     fontWeight: 600,
                 }}
-                title={span.mention.type}
+                title={span.mention.name}
             >
               {text.slice(span.start, span.end)}
             </span>
@@ -488,7 +489,7 @@ const ExtractionResultView: React.FC<Props> = ({
     const relationLabel = (relation: Relation): string => {
         const head = mentions[relation.headMentionIndex];
         const tail = mentions[relation.tailMentionIndex];
-        return `${relation.type}: ${head?.text ?? `#[${relation.headMentionIndex}]`} → ${tail?.text ?? `#[${relation.tailMentionIndex}]`}`;
+        return `${relation.name}: ${head?.text ?? `#[${relation.headMentionIndex}]`} → ${tail?.text ?? `#[${relation.tailMentionIndex}]`}`;
     };
 
     const toggleMention = (index: number) => {
@@ -746,7 +747,7 @@ const ExtractionResultView: React.FC<Props> = ({
         index: number,
         entityIndex?: number
     ) => {
-        const color = colorForType(mention.type);
+        const color = colorForType(mention.name);
         return (
             <ListItem
                 key={index}
@@ -814,21 +815,21 @@ const ExtractionResultView: React.FC<Props> = ({
         .map((mention: Mention, index: number) => ({mention, index}))
         .filter(({index}: {index: number}) => !coveredMentionIndices.has(index));
 
-    const typeGroups = new Map<string, {entity: Entity; entityIndex: number}[]>();
+    const entitiesByName = new Map<string, {entity: Entity; entityIndex: number}[]>();
     (entities as Entity[]).forEach((entity: Entity, entityIndex: number) => {
         const representative = (mentions as Mention[])[entity.representativeIndex];
         if (!representative) return;
-        const type = representative.type;
-        const list = typeGroups.get(type) ?? [];
+        const type = representative.name;
+        const list = entitiesByName.get(type) ?? [];
         list.push({entity, entityIndex});
-        typeGroups.set(type, list);
+        entitiesByName.set(type, list);
     });
-const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
+    const sortedNames = Array.from(entitiesByName.keys()).sort((a, b) =>
         a.localeCompare(b, undefined, {sensitivity: "base"})
     );
 
-    const typeCounts = new Map<string, {checked: number; total: number}>();
-    for (const [type, entries] of Array.from(typeGroups) as [string, {entity: Entity; entityIndex: number}[]][]) {
+    const nameCounts = new Map<string, {checked: number; total: number}>();
+    for (const [name, entries] of Array.from(entitiesByName) as [string, {entity: Entity; entityIndex: number}[]][]) {
         const counts = (entries as {entity: Entity; entityIndex: number}[]).reduce(
             (accumulator: {checked: number, total: number}, {entity}: {entity: Entity}) => ({
                 checked:
@@ -840,7 +841,7 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
             }),
             {checked: 0, total: 0}
         );
-        typeCounts.set(type, counts);
+        nameCounts.set(name, counts);
     }
 
     const draggedSourceEntityIndex =
@@ -918,8 +919,8 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                         )}
                     </TextBody>
                 </Drawer>
-                {sortedTypes.map((type) => {
-                    const {checked, total} = typeCounts.get(type)!;
+                {sortedNames.map((type) => {
+                    const {checked, total} = nameCounts.get(type)!;
                     return (
                         <Drawer key={type} title={`${type} (${checked}/${total})`}>
                             <DropZone
@@ -936,12 +937,12 @@ const sortedTypes = Array.from(typeGroups.keys()).sort((a, b) =>
                                 }}
                                 onDrop={(e) => handleMentionDrop(e, null)}
                             >
-                                {typeGroups.get(type)!.map(({entity, entityIndex}) => {
+                                {entitiesByName.get(type)!.map(({entity, entityIndex}) => {
                                     const representative =
                                         mentions[entity.representativeIndex];
                                     if (!representative) return null;
 
-                                    const color = colorForType(representative.type);
+                                    const color = colorForType(representative.name);
                                     const checkedMentionCount =
                                         entity.mentionIndices.filter((index) =>
                                             selectedMentions.has(index)

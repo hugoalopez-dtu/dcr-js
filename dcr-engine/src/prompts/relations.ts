@@ -20,7 +20,7 @@ Retrieve a relation by listing the type, the head mention index, and the tail me
 
 Given the following input:
 
-the <actor id=1> LLM </actor> <event id=0> extracts the text </event> once, and only then must <event id=2> send it back </event>.
+the <actor id=1> LLM </actor> <event id=0> extracts the text </event> once, and only then must <obliation id=2> send it back </obliation>.
 
 You will extract these relations
 
@@ -34,15 +34,15 @@ excludes\t0\t0
 
 Given the textual description:
 
-(13) <Actor id=0> Passengers </Actor> whose <Event id=1> flights are cancelled </Event> should be able either to <Event id=2> obtain reimbursement of their tickets </Event> or to <Event id=3> obtain re-routing under satisfactory conditions </Event>, and should <Event id=4> be adequately cared for </Event> while awaiting a later flight.
+(13) <Actor id=0> Passengers </Actor> whose <Event id=1> flights are cancelled </Event> should be able either to <Permission id=2> obtain reimbursement of their tickets </Permission> or to <Permission id=3> obtain re-routing under satisfactory conditions </Permission>, and should <Obligation id=4> be adequately cared for </Obligation> while awaiting a later flight.
 
 You are expected to extract:
 
 executes\t0\t2
 executes\t0\t3
 executes\t0\t4
-response\t1\t2
-response\t1\t3
+condition\t1\t2
+condition\t1\t3
 response\t1\t4
 excludes\t2\t3
 excludes\t3\t2

@@ -53,7 +53,8 @@ import { StringEventStreamParser } from "./src/parsers/StringEventStreamParser";
 import { RegexEventStreamParser } from "./src/parsers/RegexEventStreamParser";
 import { DOMEventStreamParser } from "./src/parsers/DOMEventStreamParser";
 import { SAXParser } from "./src/parsers/SAXParser";
-import extractGraph, {
+import {
+  extractGraph,
   buildGraph,
   filterProcessDescription,
   type ExtractionResult,

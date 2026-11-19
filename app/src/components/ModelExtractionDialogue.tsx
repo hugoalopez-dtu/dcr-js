@@ -268,25 +268,6 @@ const ModelExtractionDialogue = (props: Props) => {
     const [descriptionsOpen, setDescriptionsOpen] = useState(false);
     const [showExamples, setShowExamples] = useState(false);
 
-    const fields = [
-        {
-            id: "mentionDescription",
-            caption: "Entities",
-        },
-        {
-            id: "entityDescription",
-            caption: "Entity Resolution",
-        },
-        {
-            id: "relationDescription",
-            caption: "Relations",
-        },
-        {
-            id: "dataDescription",
-            caption: "Data and Time",
-        },
-    ] as const;
-
     const renderSubmit = () => {
         if (props.busy) {
             return (
@@ -357,6 +338,22 @@ const ModelExtractionDialogue = (props: Props) => {
 
                         <Field>
                             <FieldLabelRow>
+                                <FieldLabel>Include Data &amp; Expressions</FieldLabel>
+                                <input
+                                    type="checkbox"
+                                    checked={props.config.includeData}
+                                    onChange={(e) =>
+                                        props.onChange({
+                                            ...props.config,
+                                            includeData: e.target.checked,
+                                        })
+                                    }
+                                />
+                            </FieldLabelRow>
+                        </Field>
+
+                        <Field>
+                            <FieldLabelRow>
                                 <FieldLabel>Textual Description</FieldLabel>
                                 <ExampleToggle
                                     type="button"
@@ -410,20 +407,116 @@ const ModelExtractionDialogue = (props: Props) => {
                     </DrawerHeader>
                     {descriptionsOpen && (
                         <DrawerBody>
-                            {fields.map((field) => (
-                                <Field key={field.id}>
-                                    <FieldLabel>{field.caption}</FieldLabel>
-                                    <TextArea
-                                        value={props.config[field.id]}
-                                        onChange={(e) =>
-                                            props.onChange({
-                                                ...props.config,
-                                                [field.id]: e.target.value,
-                                            })
-                                        }
-                                    />
-                                </Field>
-                            ))}
+                            <Field>
+                                <FieldLabel>Mention Types</FieldLabel>
+                                {props.config.mentionDescriptions.map((d, i) => (
+                                    <div key={i} style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                                        <span style={{ width: '80px', fontSize: '12px', color: '#666', fontWeight: 500 }}>
+                                            {d.type}
+                                        </span>
+                                        <Input
+                                            style={{ width: '140px' }}
+                                            value={d.name}
+                                            placeholder="Name"
+                                            onChange={(e) => {
+                                                const next = [...props.config.mentionDescriptions];
+                                                next[i] = { ...next[i], name: e.target.value };
+                                                props.onChange({ ...props.config, mentionDescriptions: next });
+                                            }}
+                                        />
+                                        <Select
+                                            style={{ width: '60px' }}
+                                            value={String(d.order ?? 1)}
+                                            onChange={(e) => {
+                                                const next = [...props.config.mentionDescriptions];
+                                                next[i] = { ...next[i], order: Number(e.target.value) };
+                                                props.onChange({ ...props.config, mentionDescriptions: next });
+                                            }}
+                                        >
+                                            {Array.from({ length: 10 }, (_, k) => k + 1).map((n) => (
+                                                <option key={n} value={String(n)}>{n}</option>
+                                            ))}
+                                        </Select>
+                                        <TextArea
+                                            style={{ width: 'calc(100% - 290px)', minHeight: '60px' }}
+                                            value={d.description}
+                                            placeholder="Description"
+                                            onChange={(e) => {
+                                                const next = [...props.config.mentionDescriptions];
+                                                next[i] = { ...next[i], description: e.target.value };
+                                                props.onChange({ ...props.config, mentionDescriptions: next });
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </Field>
+                            <Field>
+                                <FieldLabel>Entity Resolution</FieldLabel>
+                                <TextArea
+                                    value={props.config.entityDescription}
+                                    onChange={(e) =>
+                                        props.onChange({
+                                            ...props.config,
+                                            entityDescription: e.target.value,
+                                        })
+                                    }
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel>Relation Types</FieldLabel>
+                                {props.config.relationDescriptions.map((d, i) => (
+                                    <div key={i} style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
+                                        <span style={{ width: '80px', fontSize: '12px', color: '#666', fontWeight: 500 }}>
+                                            {d.type}
+                                        </span>
+                                        <Input
+                                            style={{ width: '140px' }}
+                                            value={d.name}
+                                            placeholder="Name"
+                                            onChange={(e) => {
+                                                const next = [...props.config.relationDescriptions];
+                                                next[i] = { ...next[i], name: e.target.value };
+                                                props.onChange({ ...props.config, relationDescriptions: next });
+                                            }}
+                                        />
+                                        <Select
+                                            style={{ width: '60px' }}
+                                            value={String(d.order ?? 1)}
+                                            onChange={(e) => {
+                                                const next = [...props.config.relationDescriptions];
+                                                next[i] = { ...next[i], order: Number(e.target.value) };
+                                                props.onChange({ ...props.config, relationDescriptions: next });
+                                            }}
+                                        >
+                                            {Array.from({ length: 10 }, (_, k) => k + 1).map((n) => (
+                                                <option key={n} value={String(n)}>{n}</option>
+                                            ))}
+                                        </Select>
+                                        <TextArea
+                                            style={{ width: 'calc(100% - 290px)', minHeight: '60px' }}
+                                            value={d.description}
+                                            placeholder="Description"
+                                            onChange={(e) => {
+                                                const next = [...props.config.relationDescriptions];
+                                                next[i] = { ...next[i], description: e.target.value };
+                                                props.onChange({ ...props.config, relationDescriptions: next });
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </Field>
+                            <Field>
+                                <FieldLabel>Data and Time</FieldLabel>
+                                <TextArea
+                                    value={props.config.dataDescription}
+                                    onChange={(e) =>
+                                        props.onChange({
+                                            ...props.config,
+                                            dataDescription: e.target.value,
+                                        })
+                                    }
+                                />
+                            </Field>
                         </DrawerBody>
                     )}
                 </Accordion>

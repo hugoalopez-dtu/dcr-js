@@ -51,9 +51,9 @@ You are expected to extract:
 
 Passengers\tActor\t0
 flights are cancelled\tEvent\t0
-obtain reimbursement of their tickets\tEvent\t0
-obtain re-routing under satisfactory conditions\tEvent\t0
-should be adequately cared for\tEvent\t0
+obtain reimbursement of their tickets\tObligation\t0
+obtain re-routing under satisfactory conditions\tObligation\t0
+should be adequately cared for\tObligation\t0
 
 # The text
 
