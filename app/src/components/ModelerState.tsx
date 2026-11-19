@@ -26,7 +26,7 @@ import {useHotkeys} from "react-hotkeys-hook";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import Loading from "../utilComponents/Loading";
-import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, buildGraph, filterProcessDescription, type Nestings, type RoleMap, type ProcessDescription,} from "dcr-engine";
+import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, buildGraph, filterProcessDescription, type Nestings, type ProcessDescription,} from "dcr-engine";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import styled from "styled-components";
 import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenuElements";
@@ -131,6 +131,7 @@ const ModelerState = ({
         dataDescription: defaultDataDescription
     });
     const [extractionResult, setExtractionResult] = useState<ExtractionResult | undefined>();
+    const [extractionRun, setExtractionRun] = useState(0);
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [textOpen, setTextOpen] = useState(false);
@@ -595,14 +596,8 @@ const ModelerState = ({
                     try {
                         const res = await extractGraph(config, setExtractionStep);
                         setExtractionResult(res)
-                        const roleMap: RoleMap = {};
-                        for (const r of res.doc.relations) {
-                            if (r.type.toLowerCase() !== "executes") continue;
-                            const actor = res.doc.mentions[r.headMentionIndex];
-                            const event = res.doc.mentions[r.tailMentionIndex];
-                            roleMap[event.text] = actor.text;
-                        }
-                        const xml = await layoutGraph(res.graph, undefined, roleMap);
+                        setExtractionRun((n) => n + 1);
+                        const xml = await layoutGraph(res.graph);
                         await modeler.importXML(xml);
                         setGraphName("Extracted Model");    
                     } catch (e) {
@@ -665,6 +660,7 @@ const ModelerState = ({
         }}>
             <h4>Extraction Result</h4>
             <ExtractionResultView
+                key={extractionRun}
                 processDescription={extractionResult.doc}
                 onRebuild={rebuildModel}
                 onProcessDescriptionChange={handleProcessDescriptionChange}

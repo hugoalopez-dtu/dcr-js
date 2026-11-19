@@ -321,21 +321,6 @@ const ExtractionResultView: React.FC<Props> = ({
     const textBodyRef = useRef<HTMLDivElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        setSelectedMentions(
-            new Set(processDescription.mentions.map((_, index) => index))
-        );
-        setSelectedRelations(
-            new Set(processDescription.relations.map((_, index) => index))
-        );
-        setSelectedVariables(
-            new Set(processDescription.variables.map((_, index) => index))
-        );
-        setSelectedExpressions(
-            new Set(processDescription.expressions.map((_, index) => index))
-        );
-    }, [processDescription]);
-
     const spans: Span[] = [];
 
     const sentenceOfOffset = (offset: number): number => {
