@@ -105,7 +105,7 @@ const defaultEntitiesDescription = `**Entity**: A real-world object that can be 
 const defaultDataDescription = `**Variable**: Data that is relevant to the process, e.g., by changing rules or outcomes. Examples are the age of process participants, distances, weights, number of units, etc. Time does not need to be extracted separately and will always be a variable available by default.
 **Expression**: Rules that change behaviour and constraints, e.g., if a response is only valid if some variable is below a certain threshold. Such expressions are called Guards. If the expression uses the time variable, they are called Deadlines (for responses) and Timeouts (for conditions). Expressions always shall be extracted in the FEEL notation, deadlines and timeouts use the time period format, e.g., PT2h for a period of 2 hours.`;
 
-const initGraphName = "DCR-JS Graph";
+const initGraphName = "Process DoCtoR Graph";
 
 const ModelerState = ({
                           setState,
