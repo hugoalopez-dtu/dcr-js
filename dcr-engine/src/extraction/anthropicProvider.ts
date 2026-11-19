@@ -31,7 +31,8 @@ export class AnthropicProvider extends LLMProvider {
             headers: {
                 "Content-Type": "application/json",
                 "x-api-key": this.config.apiKey,
-                "anthropic-version": "2023-06-13",
+                "anthropic-version": "2023-06-01",
+                "anthropic-dangerous-direct-browser-access": "true",
                 ...(options?.headers || {}),
             },
             body: JSON.stringify({
