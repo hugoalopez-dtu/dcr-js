@@ -133,7 +133,7 @@ const DiscoveryState = ({
           <Label>Event Log:</Label>
           <FileInput>
             <RawFileUpload
-              accept=".xes"
+              accept=".xes,.gz"
               fileCallback={(file) =>
                 setCustomFormState({ ...customFormState, logFile: file })
               }
@@ -430,7 +430,7 @@ const DiscoveryState = ({
               console.error("Failed discovery!");
               toast.error("Invalid xml...");
             } finally {
-              setGraphName(logFile.name.slice(0, -4));
+              setGraphName(logFile.name.replace(/\.xes(\.gz)?$/i, ""));
               if (save) {
                 console.info("Started saving log...");
                 console.time("save-log");
@@ -487,7 +487,7 @@ const DiscoveryState = ({
           <Label>Binary Event Log:</Label>
           <FileInput>
             <RawFileUpload
-              accept=".xes"
+              accept=".xes,.gz"
               fileCallback={(file) =>
                 setCustomFormState({ ...customFormState, logFile: file })
               }
@@ -661,7 +661,7 @@ const DiscoveryState = ({
               console.error("Failed discovery!");
               toast.error("Invalid xml...");
             } finally {
-              setGraphName(logFile.name.slice(0, -4));
+              setGraphName(logFile.name.replace(/\.xes(\.gz)?$/i, ""));
               if (save) {
                 console.info("Started saving log...");
                 console.time("save-log");

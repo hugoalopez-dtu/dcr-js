@@ -855,7 +855,7 @@ const ConformanceCheckingState = ({
       customElement: (
         <StyledFileUpload>
           <RawFileUpload
-            accept=".xes"
+            accept=".xes,.gz"
             fileCallback={async (file) => {
               logMemory("Before parsing log");
               console.info("Started parsing log...");

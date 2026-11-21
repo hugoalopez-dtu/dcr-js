@@ -851,11 +851,11 @@ const SimulatorState = ({
       customElement: (
         <StyledFileUpload>
           <RawFileUpload
-            accept=".xes"
+            accept=".xes,.gz"
             fileCallback={async (file) => {
               try {
                 const log = await StringTraceStreamParser.parseAsRoleLog(file);
-                openLog(file.name.slice(0, -4), log);
+                openLog(file.name.replace(/\.xes(\.gz)?$/i, ""), log);
               } catch {
                 toast.error("Unable to parse log...");
               }

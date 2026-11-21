@@ -10,6 +10,7 @@ import {
   type XesEventClassifiers,
   isScalarAttributeTag,
   parseAttribute,
+  getXesTextStream,
 } from "./lib/shared";
 
 export const SAXParser = createParser(parseWithSAX);
@@ -92,7 +93,7 @@ async function parseWithSAX(
     parser.resume();
   };
 
-  const reader = file.stream().pipeThrough(new TextDecoderStream()).getReader();
+  const reader = (await getXesTextStream(file)).getReader();
 
   try {
     while (true) {

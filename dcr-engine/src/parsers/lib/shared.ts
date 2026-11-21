@@ -64,8 +64,27 @@ export const CUSTOM_LOG_ATTRIBUTES_END_TAG = "</_logAttributes>";
 export const CUSTOM_TRACE_ATTRIBUTES_START_TAG = "<_traceAttributes>";
 export const CUSTOM_TRACE_ATTRIBUTES_END_TAG = "</_traceAttributes>";
 
+// gzip files always start with these two bytes
+const GZIP_MAGIC = [0x1f, 0x8b];
+
+async function isGzipped(file: File) {
+  const header = new Uint8Array(await file.slice(0, 2).arrayBuffer());
+  return header[0] === GZIP_MAGIC[0] && header[1] === GZIP_MAGIC[1];
+}
+
+// Returns the contents of the log as a text stream. Handles both plain .xes
+// files and compressed .xes.gz files. We check the magic bytes instead of
+// the file name since people rename files all the time.
+export async function getXesTextStream(file: File) {
+  let stream: ReadableStream<Uint8Array> = file.stream();
+  if (await isGzipped(file)) {
+    stream = stream.pipeThrough(new DecompressionStream("gzip"));
+  }
+  return stream.pipeThrough(new TextDecoderStream());
+}
+
 export async function* getXesTraceBlocks(file: File) {
-  const reader = file.stream().pipeThrough(new TextDecoderStream()).getReader();
+  const reader = (await getXesTextStream(file)).getReader();
 
   try {
     let buffer = "";
@@ -124,7 +143,7 @@ export async function* getXesTraceBlocks(file: File) {
 }
 
 export async function* getXesEventBlocks(file: File) {
-  const reader = file.stream().pipeThrough(new TextDecoderStream()).getReader();
+  const reader = (await getXesTextStream(file)).getReader();
 
   try {
     let buffer = "";
