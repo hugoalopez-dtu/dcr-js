@@ -41,7 +41,16 @@ import { parseRoleLog, parseNonRoleLog, writeEventLog, parseBinaryLog } from "./
 import { replayTraceS, mergeViolations, quantifyViolations } from "./src/conformance";
 import layoutGraph from "./src/layout";
 import { nestDCR } from "./src/nesting";
-import { generateEventLog } from "./src/generation";
+import {
+  generateEventLog,
+  generateEventLogWithSupport,
+  type ConstraintSupportGenerationOptions,
+  type ConstraintSupportGenerationResult,
+} from "./src/generation";
+import {
+  calculateConstraintSupport,
+  type ConstraintSupport,
+} from "./src/constraintSupport";
 import runTest from "./src/tdm";
 import { alignTrace } from "./src/align";
 import rejectionMiner from "./src/binary";
@@ -76,6 +85,9 @@ export {
   type Marking,
   type SubProcess,
   type Event,
+  type ConstraintSupport,
+  type ConstraintSupportGenerationOptions,
+  type ConstraintSupportGenerationResult,
   type Trace,
   type Role,
   type RoleMap,
@@ -116,6 +128,8 @@ export {
   quantifyViolations,
   getVariants,
   generateEventLog,
+  generateEventLogWithSupport,
+  calculateConstraintSupport,
   runTest,
   alignTrace,
   rejectionMiner,
