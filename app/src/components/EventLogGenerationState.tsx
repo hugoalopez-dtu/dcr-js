@@ -202,7 +202,7 @@ const EventLogGenerationState = ({
         try {
           const draftDcrGraph = {
             ...currentDcrGraph,
-            markeing: copyMarking(currentDcrGraph.marking),
+            marking: copyMarking(currentDcrGraph.marking),
           };
 
           const log = generateEventLog(
