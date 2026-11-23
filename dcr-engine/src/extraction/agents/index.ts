@@ -4,6 +4,8 @@ export { MentionsAgent } from "./mentionsAgent";
 export type { MentionsAgentInput } from "./mentionsAgent";
 export { EntitiesAgent } from "./entitiesAgent";
 export type { EntitiesAgentInput } from "./entitiesAgent";
+export { RelabelAgent } from "./relabelAgent";
+export type { RelabelAgentInput } from "./relabelAgent";
 export { RelationsAgent } from "./relationsAgent";
 export type { RelationsAgentInput } from "./relationsAgent";
 export { DataAgent } from "./dataAgent";

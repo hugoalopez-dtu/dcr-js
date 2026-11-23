@@ -43,6 +43,7 @@ import {
     defaultRelationDescriptions,
     defaultEntityDescription,
     defaultDataDescription,
+    defaultRelabelDescription,
     initGraphName,
 } from "dcr-engine/src/extraction/definitions";
 import ExtractionResultView from "./ExtractionResultView.tsx";
@@ -122,7 +123,9 @@ const ModelerState = ({
         relationDescriptions: defaultRelationDescriptions,
         entityDescription: defaultEntityDescription,
         dataDescription: defaultDataDescription,
-        includeData: false
+        includeData: false,
+        relabelDescription: defaultRelabelDescription,
+        relabel: true,
     });
     const [extractionResult, setExtractionResult] = useState<ExtractionResult | undefined>();
     const [extractionRun, setExtractionRun] = useState(0);

@@ -6,6 +6,6 @@ export {OpenAIProvider} from "./openaiProvider";
 export {AnthropicProvider} from "./anthropicProvider";
 export {GeminiProvider} from "./geminiProvider";
 export {LLMProvider} from "./llmProvider";
-export {buildGraph} from "./graph";
+export {buildGraph, entityName, mentionName} from "./graph";
 export * from "./agents";
 

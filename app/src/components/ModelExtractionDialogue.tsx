@@ -167,6 +167,23 @@ const FieldLabelRow = styled.div`
     position: relative;
 `;
 
+/** Label + checkbox on one line; the fixed label width keeps the checkboxes of all rows aligned. */
+const CheckboxRow = styled.label`
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    & > span {
+        flex: 0 0 14rem;
+        font-weight: 600;
+    }
+
+    & > input {
+        width: auto;
+        margin: 0;
+    }
+`;
+
 const FieldLabel = styled.span`
     display: block;
     font-weight: 600;
@@ -337,8 +354,24 @@ const ModelExtractionDialogue = (props: Props) => {
                         </Field>
 
                         <Field>
-                            <FieldLabelRow>
-                                <FieldLabel>Include Data &amp; Expressions</FieldLabel>
+                            <CheckboxRow>
+                                <span>Relabel Activities</span>
+                                <input
+                                    type="checkbox"
+                                    checked={props.config.relabel}
+                                    onChange={(e) =>
+                                        props.onChange({
+                                            ...props.config,
+                                            relabel: e.target.checked,
+                                        })
+                                    }
+                                />
+                            </CheckboxRow>
+                        </Field>
+
+                        <Field>
+                            <CheckboxRow>
+                                <span>Include Data &amp; Expressions</span>
                                 <input
                                     type="checkbox"
                                     checked={props.config.includeData}
@@ -349,7 +382,7 @@ const ModelExtractionDialogue = (props: Props) => {
                                         })
                                     }
                                 />
-                            </FieldLabelRow>
+                            </CheckboxRow>
                         </Field>
 
                         <Field>
@@ -458,6 +491,18 @@ const ModelExtractionDialogue = (props: Props) => {
                                         props.onChange({
                                             ...props.config,
                                             entityDescription: e.target.value,
+                                        })
+                                    }
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel>Relabelling</FieldLabel>
+                                <TextArea
+                                    value={props.config.relabelDescription}
+                                    onChange={(e) =>
+                                        props.onChange({
+                                            ...props.config,
+                                            relabelDescription: e.target.value,
                                         })
                                     }
                                 />

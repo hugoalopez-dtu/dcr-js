@@ -3,11 +3,13 @@ import {preprocessText} from "../preprocessing";
 import {buildGraph} from "../graph";
 import {MentionsAgent} from "./mentionsAgent";
 import {EntitiesAgent} from "./entitiesAgent";
+import {RelabelAgent} from "./relabelAgent";
 import {RelationsAgent} from "./relationsAgent";
 import {DataAgent} from "./dataAgent";
 
 export interface ExtractionHarnessOptions {
     includeData?: boolean;
+    relabel?: boolean;
 }
 
 function groupByOrder<T extends { order: number }>(items: T[]): T[][] {
@@ -50,10 +52,12 @@ export async function extractGraph(
     options: ExtractionHarnessOptions = {}
 ): Promise<ExtractionResult> {
     const includeData = options.includeData ?? config.includeData ?? true;
+    const relabel = options.relabel ?? config.relabel ?? true;
     const doc = preprocessText(config.text);
 
     const mentionsAgent = new MentionsAgent(config);
     const entitiesAgent = new EntitiesAgent(config);
+    const relabelAgent = new RelabelAgent(config);
     const relationsAgent = new RelationsAgent(config);
     const dataAgent = new DataAgent(config);
 
@@ -81,6 +85,18 @@ export async function extractGraph(
         description: config.entityDescription,
     });
     doc.entities = entitiesResult.data;
+
+    // --- Relabelling: give activities names following the guidelines ---
+    if (relabel) {
+        onStep?.("Relabelling activities");
+        const relabelResult = await relabelAgent.run({
+            doc,
+            apiKey: config.apiKey,
+            modelName: config.modelName,
+            description: config.relabelDescription,
+        });
+        doc.entities = relabelResult.data;
+    }
 
     // --- Relations: run by order groups ---
     const relationGroups = groupByOrder(config.relationDescriptions);

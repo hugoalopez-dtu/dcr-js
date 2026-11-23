@@ -8,6 +8,23 @@ function addToEventMap(eventMap: EventMap, source: string, target: string) {
     eventMap[source].add(target);
 }
 
+/**
+ * The name of an entity in the graph: its label (from relabelling) if it has
+ * one, otherwise the text of its representative mention.
+ */
+export function entityName(doc: ProcessDescription, entity: Entity): string | undefined {
+    return entity.label || doc.mentions[entity.representativeIndex]?.text;
+}
+
+/**
+ * The name the graph uses for a mention: the name of the first entity that
+ * contains it, or its own text when it is in no entity. Same rule as buildGraph.
+ */
+export function mentionName(doc: ProcessDescription, index: number): string | undefined {
+    const entity = doc.entities.find((e) => e.mentionIndices.includes(index));
+    return entity ? entityName(doc, entity) : doc.mentions[index]?.text;
+}
+
 export function buildGraph(doc: ProcessDescription): RoleDataDCR {
     const graph: RoleDataDCR = {
         events: new Set<Event>(),
@@ -41,7 +58,7 @@ export function buildGraph(doc: ProcessDescription): RoleDataDCR {
     const eventNameOfMention = (index: number): string => {
         const entity = mentionToEntity.get(index);
         const eventName = entity
-            ? doc.mentions[entity.representativeIndex]?.text
+            ? entityName(doc, entity)
             : doc.mentions[index]?.text;
         return eventName ?? `#[${index}]`;
     };
@@ -51,8 +68,9 @@ export function buildGraph(doc: ProcessDescription): RoleDataDCR {
         const representative = doc.mentions[entity.representativeIndex];
         if (!representative) continue;
         if (representative.type.toLowerCase() !== "event") continue;
-        graph.events.add(representative.text);
-        graph.marking.included.add(representative.text);
+        const name = entityName(doc, entity)!;
+        graph.events.add(name);
+        graph.marking.included.add(name);
     }
 
     // Mentions that are not covered by any entity still act as single events.

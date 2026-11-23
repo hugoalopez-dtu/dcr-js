@@ -19,6 +19,8 @@ export type Entity = {
     id: number;
     representativeIndex: number;
     mentionIndices: number[];
+    /** Name of the activity, set by the relabelling step; falls back to the representative mention's text. */
+    label?: string;
 }
 
 export type Relation = {
@@ -61,6 +63,8 @@ export type ExtractionConfig = {
     relationDescriptions: RelationTypeDefinition[];
     dataDescription: string;
     includeData: boolean;
+    relabelDescription: string;
+    relabel: boolean;
 }
 
 export type ExtractionResult = {

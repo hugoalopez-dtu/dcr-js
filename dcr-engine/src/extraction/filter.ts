@@ -60,6 +60,7 @@ export function filterProcessDescription(
             representativeIndex:
                 mentionIndexMap.get(entity.representativeIndex) ?? mentionIndices[0],
             mentionIndices,
+            ...(entity.label ? {label: entity.label} : {}),
         });
     });
 
