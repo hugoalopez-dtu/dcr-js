@@ -32,3 +32,15 @@ body,
 .simulating .djs-element .djs-hit-stroke {
   cursor: default;
 }
+/* Canvas element (or part of it) corresponding to what is under the mouse in the extraction view */
+.djs-element.extraction-hover .dcr-relation-halo {
+  stroke: var(--extraction-hover-color, #00BFA5);
+  stroke-width: 8px;
+  stroke-opacity: 0.6;
+}
+
+.djs-element.extraction-hover-label .dcr-description-area,
+.djs-element.extraction-hover-role .dcr-role-area {
+  stroke: var(--extraction-hover-color, dodgerblue);
+  stroke-width: 4px;
+}

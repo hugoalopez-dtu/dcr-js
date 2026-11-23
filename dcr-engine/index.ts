@@ -57,6 +57,8 @@ import { SAXParser } from "./src/parsers/SAXParser";
 import {
   extractGraph,
   buildGraph,
+  entityName,
+  mentionName,
   filterProcessDescription,
   type ExtractionResult,
   type ProcessDescription,
@@ -110,6 +112,8 @@ export {
   isEnabledS,
   extractGraph,
   buildGraph,
+  entityName,
+  mentionName,
   filterProcessDescription,
   replayTraceS,
   writeEventLog,

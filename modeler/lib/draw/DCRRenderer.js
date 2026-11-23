@@ -146,7 +146,7 @@ export default function DCRRenderer(
   function renderTitleLabel(parentGfx, element) {
     let semantic = getSemantic(element);
     let text = semantic.role || '';
-    renderLabel(parentGfx, text, {
+    let label = renderLabel(parentGfx, text, {
       box: {
         height: 30,
         width: element.width,
@@ -157,12 +157,13 @@ export default function DCRRenderer(
         fill: defaultStrokeColor,
       },
     });
+    svgClasses(label).add('dcr-role-label');
   }
 
   function renderDescription(parentGfx, element, align, topPadding) {
     var semantic = getSemantic(element);
     if (semantic.description) {
-      renderLabel(parentGfx, semantic.description, {
+      let label = renderLabel(parentGfx, semantic.description, {
         box: {
           height: element.height + topPadding,
           width: element.width,
@@ -178,6 +179,7 @@ export default function DCRRenderer(
           fill: defaultStrokeColor,
         },
       });
+      svgClasses(label).add('dcr-description-label');
     }
   }
 
@@ -190,6 +192,33 @@ export default function DCRRenderer(
       case "HM2011":
         return DefaultMarkers;
     }
+  }
+
+  /**
+   * Invisible areas behind an event's role (above the divider) and name
+   * (below it), so the app can tint just one part via CSS
+   * (classes dcr-role-area / dcr-description-area). They ignore the mouse.
+   */
+  function addPartAreas(parentGfx, element) {
+    var w = element.width, h = element.height, r = 7, d = 30;
+    var areas = [
+      [ 'dcr-role-area',
+        'M0,' + d + ' V' + r + ' Q0,0 ' + r + ',0 H' + (w - r) + ' Q' + w + ',0 ' + w + ',' + r + ' V' + d + ' Z' ],
+      [ 'dcr-description-area',
+        'M0,' + d + ' H' + w + ' V' + (h - r) + ' Q' + w + ',' + h + ' ' + (w - r) + ',' + h +
+        ' H' + r + ' Q0,' + h + ' 0,' + (h - r) + ' Z' ]
+    ];
+    areas.forEach(function(area) {
+      var path = svgCreate('path');
+      // Plain attributes, not svgAttr: svgAttr writes fill/stroke as inline
+      // styles, which the hover CSS could not override.
+      path.setAttribute('d', area[1]);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'none');
+      path.setAttribute('pointer-events', 'none');
+      svgClasses(path).add(area[0]);
+      svgAppend(parentGfx, path);
+    });
   }
 
   function addDivider(parentGfx, element, dashed = false) {
@@ -356,6 +385,9 @@ export default function DCRRenderer(
 
       addDivider(parentGfx, element, !included);
 
+      // after the divider, so a highlighted part's outline covers it
+      addPartAreas(parentGfx, element);
+
       renderTitleLabel(parentGfx, element);
 
       renderDescription(parentGfx, element, 'center-middle', 30);
@@ -491,6 +523,18 @@ export default function DCRRenderer(
         strokeLinejoin: 'round',
         stroke,
       });
+
+      // Invisible copy of the line behind it, so the app can highlight the
+      // relation via CSS (class dcr-relation-halo). It ignores the mouse.
+      var halo = svgCreate('path');
+      halo.setAttribute('d', pathData);
+      halo.setAttribute('fill', 'none');
+      halo.setAttribute('stroke', 'none');
+      halo.setAttribute('stroke-linejoin', 'round');
+      halo.setAttribute('stroke-linecap', 'round');
+      halo.setAttribute('pointer-events', 'none');
+      svgClasses(halo).add('dcr-relation-halo');
+      parentGfx.insertBefore(halo, path);
 
       // Determine direction of the arrow based on the connection waypoints
       let waypoints = element.waypoints;

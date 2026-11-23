@@ -6,6 +6,7 @@ import type {
     ProcessDescription,
     Relation,
 } from "dcr-engine/src/extraction";
+import type {ExtractionHoverTarget, ViewHighlight} from "../utilComponents/extractionHighlight";
 
 type Props = {
     processDescription: ProcessDescription;
@@ -16,12 +17,15 @@ type Props = {
         selectedExpressions: Set<number>
     ) => void;
     onProcessDescriptionChange: (doc: ProcessDescription) => void;
+    onHover?: (target: ExtractionHoverTarget | null) => void;
+    highlighted?: ViewHighlight | null;
 };
 
 type Span = {
     start: number;
     end: number;
     mention: Mention;
+    mentionIndex: number;
 };
 
 const Accordion = styled.div`
@@ -201,6 +205,13 @@ const PopoverButton = styled.button`
   }
 `;
 
+
+const RELATION_HIGHLIGHT_COLOR = "#00BFA5";
+
+function outlineStyle(on: boolean | undefined, color: string): React.CSSProperties {
+    return on ? {outline: `2px solid ${color}`, outlineOffset: 1, borderRadius: 4} : {};
+}
+
 function hashString(str: string): number {
     let hash = 0;
 
@@ -291,6 +302,8 @@ const ExtractionResultView: React.FC<Props> = ({
                                                    processDescription,
                                                    onRebuild,
                                                    onProcessDescriptionChange,
+                                                   onHover,
+                                                   highlighted,
                                                }) => {
     const {text, mentions, relations, entities, variables, expressions} =
         processDescription;
@@ -320,6 +333,7 @@ const ExtractionResultView: React.FC<Props> = ({
     } | null>(null);
     const textBodyRef = useRef<HTMLDivElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
+
 
     const spans: Span[] = [];
 
@@ -422,7 +436,7 @@ const ExtractionResultView: React.FC<Props> = ({
         closeTextSelection();
     };
 
-    for (const mention of mentions) {
+    mentions.forEach((mention, mentionIndex) => {
         let start = text.indexOf(mention.text, 0);
 
         while (start !== -1) {
@@ -433,13 +447,13 @@ const ExtractionResultView: React.FC<Props> = ({
             );
 
             if (!overlaps) {
-                spans.push({start, end, mention});
+                spans.push({start, end, mention, mentionIndex});
                 break;
             }
 
             start = text.indexOf(mention.text, start + 1);
         }
-    }
+    });
 
     spans.sort((a, b) => a.start - b.start);
 
@@ -467,8 +481,11 @@ const ExtractionResultView: React.FC<Props> = ({
                     borderRadius: 4,
                     padding: "0 2px",
                     fontWeight: 600,
+                    ...outlineStyle(highlighted?.mentions.has(span.mentionIndex), color.text),
                 }}
                 title={span.mention.name}
+                onMouseEnter={() => onHover?.({kind: "mention", index: span.mentionIndex, color: color.text})}
+                onMouseLeave={() => onHover?.(null)}
             >
               {text.slice(span.start, span.end)}
             </span>
@@ -751,6 +768,8 @@ const ExtractionResultView: React.FC<Props> = ({
         return (
             <ListItem
                 key={index}
+                onMouseEnter={() => onHover?.({kind: "mention", index, color: color.text})}
+                onMouseLeave={() => onHover?.(null)}
                 draggable
                 onDragStart={(e) => {
                     e.dataTransfer.effectAllowed = "move";
@@ -780,6 +799,7 @@ const ExtractionResultView: React.FC<Props> = ({
                     handleMentionDrop(e, entityIndex, insertBefore);
                 }}
                 style={{
+                    ...outlineStyle(highlighted?.mentions.has(index), color.text),
                     opacity: draggedMentionIndex === index ? 0.4 : 1,
                     cursor:
                         draggedMentionIndex === index ? "grabbing" : "grab",
@@ -970,8 +990,22 @@ const ExtractionResultView: React.FC<Props> = ({
                                         >
                                             <EntityCardView
                                                 title={
-                                                    <span style={{color: color.text}}>
-                                                        {`${representative.text} (${checkedMentionCount}/${entity.mentionIndices.length})`}
+                                                    <span
+                                                        style={{
+                                                            color: color.text,
+                                                            ...outlineStyle(
+                                                                entity.mentionIndices.some((i) => highlighted?.mentions.has(i)),
+                                                                color.text
+                                                            ),
+                                                        }}
+                                                        onMouseEnter={() => onHover?.({
+                                                            kind: "mention",
+                                                            index: entity.representativeIndex,
+                                                            color: color.text,
+                                                        })}
+                                                        onMouseLeave={() => onHover?.(null)}
+                                                    >
+                                                        {`${entity.label || representative.text} (${checkedMentionCount}/${entity.mentionIndices.length})`}
                                                     </span>
                                                 }
                                                 bulkChecked={allMentionsSelected}
@@ -1063,8 +1097,19 @@ const ExtractionResultView: React.FC<Props> = ({
                 )}
                 <Drawer title={`Relations (${selectedRelations.size}/${relations.length})`}>
                     <List>
-                        {relations.map((relation, index) => (
-                            <ListItem key={index}>
+                        {relations.map((relation, index) => {
+                            // "executes" rows are about a role: highlight it on the canvas in the actor's colour.
+                            const actor = relation.type.toLowerCase() === "executes"
+                                ? mentions[relation.headMentionIndex]
+                                : undefined;
+                            const color = actor ? colorForType(actor.name).text : undefined;
+                            return (
+                            <ListItem
+                                key={index}
+                                style={outlineStyle(highlighted?.relations.has(index), color ?? RELATION_HIGHLIGHT_COLOR)}
+                                onMouseEnter={() => onHover?.({kind: "relation", index, color})}
+                                onMouseLeave={() => onHover?.(null)}
+                            >
                                 <CheckboxLabel>
                                         <Checkbox
                                             type="checkbox"
@@ -1074,7 +1119,8 @@ const ExtractionResultView: React.FC<Props> = ({
                                         <CheckboxText>{relationLabel(relation)}</CheckboxText>
                                     </CheckboxLabel>
                             </ListItem>
-                        ))}
+                            );
+                        })}
                     </List>
                 </Drawer>
                 <Drawer

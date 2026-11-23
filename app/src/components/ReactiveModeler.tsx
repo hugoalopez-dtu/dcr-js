@@ -80,6 +80,7 @@ function Modeler({
     }
 
     const modeler = new DCRModeler(options);
+    (window as any).modeler = modeler;
     setModeler(modeler);
 
     return () => {
