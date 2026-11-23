@@ -63,6 +63,7 @@ export function buildGraph(doc: ProcessDescription): RoleDataDCR {
         }
     }
     doc.mentions.forEach((m, index) => {
+        console.log(`${m.text} (${m.type})`);
         if (m.type.toLowerCase() !== "event") return;
         if (coveredMentions.has(index)) return;
         graph.events.add(m.text);

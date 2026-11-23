@@ -25,6 +25,7 @@ export function filterProcessDescription(
         relationIndexMap.set(i, relations.length);
         relations.push({
             type: r.type,
+            name: r.name,
             headMentionIndex: head,
             tailMentionIndex: tail,
         });

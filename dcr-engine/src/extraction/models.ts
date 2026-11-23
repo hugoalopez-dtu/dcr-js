@@ -11,6 +11,7 @@ export type Expression = {
 export type Mention = {
     text: string;
     type: string;
+    name: string;
     sentence: number;
 };
 
@@ -22,6 +23,7 @@ export type Entity = {
 
 export type Relation = {
     type: string;
+    name: string;
     headMentionIndex: number;
     tailMentionIndex: number;
 };
@@ -36,14 +38,29 @@ export type ProcessDescription = {
     expressions: Expression[];
 }
 
+export type MentionTypeDefinition = {
+    type: string;
+    name: string;
+    description: string;
+    order: number;
+};
+
+export type RelationTypeDefinition = {
+    type: string;
+    name: string;
+    description: string;
+    order: number;
+};
+
 export type ExtractionConfig = {
     text: string;
     modelName: string;
     apiKey: string;
-    mentionDescription: string;
+    mentionDescriptions: MentionTypeDefinition[];
     entityDescription: string;
-    relationDescription: string;
+    relationDescriptions: RelationTypeDefinition[];
     dataDescription: string;
+    includeData: boolean;
 }
 
 export type ExtractionResult = {

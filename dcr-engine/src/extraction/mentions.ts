@@ -1,8 +1,13 @@
-import type { Mention, ProcessDescription } from "./models";
+import type { Mention, MentionTypeDefinition, ProcessDescription } from "./models";
 import mentionPrompt from "../prompts/mentions";
 import { routePrompt } from "./router";
 
-export async function extractEntityMentions(model: string, doc: ProcessDescription, apiKey: string, mentionDescription: string): Promise<Mention[]> {
+export async function extractEntityMentions(
+    model: string,
+    doc: ProcessDescription,
+    apiKey: string,
+    mentionDescriptions: MentionTypeDefinition[]
+): Promise<Mention[]> {
     let text = "";
     let i = 0;
     for (const s of doc.sentences) {
@@ -10,15 +15,25 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
         i++;
     }
 
+    const typeByName = new Map<string, string>();
+    for (const d of mentionDescriptions) {
+        typeByName.set(d.name, d.type);
+    }
+
     const mentions: Mention[] = [];
+
+    const descriptionText = mentionDescriptions
+        .filter((d) => d.type && d.name && d.description)
+        .map((d) => `${d.name}: ${d.description}`)
+        .join("\n");
 
     let prompt = mentionPrompt;
     prompt = prompt.replaceAll("{{text}}", text);
-    prompt = prompt.replaceAll("{{description}}", mentionDescription);
+    prompt = prompt.replaceAll("{{description}}", descriptionText);
     const result = await routePrompt(prompt, apiKey, model);
 
     for (const rawMention of result.trim().split("\n")) {
-        const [mentionText, mentionType, mentionSentenceStr] = rawMention.trim().split("\t");
+        const [mentionText, mentionName, mentionSentenceStr] = rawMention.trim().split("\t");
         const mentionSentence = Number(mentionSentenceStr);
 
         if (doc.sentences.length <= mentionSentence){
@@ -31,9 +46,16 @@ export async function extractEntityMentions(model: string, doc: ProcessDescripti
             continue;
         }
 
+        const mentionType = typeByName.get(mentionName);
+        if (!mentionType) {
+            console.error(`Ignoring '${mentionText}', no matching mention type definition for name '${mentionName}'.`);
+            continue;
+        }
+
         const mention: Mention = {
             text: mentionText,
             type: mentionType,
+            name: mentionName,
             sentence: mentionSentence,
         }
 
