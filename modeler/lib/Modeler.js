@@ -33,6 +33,7 @@ import SnappingModule from './features/snapping';
 import PopupMenuModule from './features/popup-menu';
 import SettingsModule from './features/settings';
 import GuardsAndTimeModule from './features/guards-time'
+import GraphEditingModule from './features/graph-editing';
 
 var initialDiagram =
   `<?xml version="1.0" encoding="UTF-8"?>
@@ -113,7 +114,8 @@ Modeler.prototype._modelingModules = [
   SnappingModule,
   PopupMenuModule,
   SettingsModule,
-  GuardsAndTimeModule  
+  GuardsAndTimeModule,
+  GraphEditingModule
 ];
 
 
