@@ -26,7 +26,8 @@ import {useHotkeys} from "react-hotkeys-hook";
 import FullScreenIcon from "../utilComponents/FullScreenIcon";
 import StyledFileUpload from "../utilComponents/StyledFileUpload";
 import Loading from "../utilComponents/Loading";
-import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, buildGraph, filterProcessDescription, type Nestings, type ProcessDescription,} from "dcr-engine";
+import {type DCRGraph, extractGraph, layoutGraph, moddleToDCR, nestDCR, buildGraph, filterProcessDescription, diffGraphs, type Nestings, type ProcessDescription, type RoleDataDCR,} from "dcr-engine";
+import {applyGraphEdits, eventIdsFromCanvas, type EventIdMap} from "../utilComponents/applyGraphEdits";
 import GraphNameInput from "../utilComponents/GraphNameInput";
 import styled from "styled-components";
 import {ColoredRelationsSetting, MarkerNotationSetting,} from "./GlobalModalMenuElements";
@@ -125,6 +126,9 @@ const ModelerState = ({
     });
     const [extractionResult, setExtractionResult] = useState<ExtractionResult | undefined>();
     const [extractionRun, setExtractionRun] = useState(0);
+    // The graph the canvas was last built from by extraction (Rebuild applies only the difference to it),
+    // and which canvas event each of its events is (so renamed events are still found).
+    const [built, setBuilt] = useState<{graph: RoleDataDCR; eventIds: EventIdMap} | undefined>();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [textOpen, setTextOpen] = useState(false);
@@ -204,6 +208,7 @@ const ModelerState = ({
                 .then(() => {
                     setGraphName(importName ? importName : initGraphName);
                     setExtractionResult(undefined);
+                    setBuilt(undefined);
                     setTextOpen(false);
                     warnIfInvalidGuards();
                 })
@@ -592,6 +597,7 @@ const ModelerState = ({
                         setExtractionRun((n) => n + 1);
                         const xml = await layoutGraph(res.graph);
                         await modeler.importXML(xml);
+                        setBuilt({graph: res.graph, eventIds: eventIdsFromCanvas(modeler.get("dcrGraphEditing"))});
                         setGraphName("Extracted Model");    
                     } catch (e) {
                         console.error(e);
@@ -633,8 +639,21 @@ const ModelerState = ({
         );
         try {
             const graph = buildGraph(filteredDoc);
-            const xml = await layoutGraph(graph);
-            await modeler.importXML(xml);
+            const api = modeler.get("dcrGraphEditing");
+            if (!built || api.listEvents().length === 0) {
+                // Nothing to update in place: draw from scratch.
+                const xml = await layoutGraph(graph);
+                await modeler.importXML(xml);
+                setBuilt({graph, eventIds: eventIdsFromCanvas(api)});
+            } else {
+                // Apply only what changed since the last build, keeping layout and manual edits.
+                const {applied, skipped, eventIds} = applyGraphEdits(api, diffGraphs(built.graph, graph), built.eventIds);
+                setBuilt({graph, eventIds});
+                if (skipped.length > 0) {
+                    console.warn("Rebuild: skipped edits", skipped);
+                    toast.warning(`Model updated (${applied} changes); ${skipped.length} skipped, see console.`);
+                }
+            }
         } catch (e) {
             console.log(e);
             alert(`Unable to rebuild model: ${e instanceof Error ? e.message : e}`);
