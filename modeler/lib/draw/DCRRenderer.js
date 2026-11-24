@@ -143,41 +143,111 @@ export default function DCRRenderer(
     });
   }
 
+  var MIN_FIT_FONT_SIZE = 10;
+
+  /**
+   * Make text fit into a width x height area: first shrink the font
+   * (down to MIN_FIT_FONT_SIZE), then drop trailing words and add an
+   * ellipsis. Returns { text, style } to render with.
+   */
+  function fitText(text, width, height, baseStyle) {
+    var defaults = textRenderer.getDefaultStyle();
+    var maxSize = parseInt(defaults.fontSize, 10) || DEFAULT_TEXT_SIZE;
+
+    function measure(t, size) {
+      var style = assign({}, defaults, baseStyle, { fontSize: size });
+      return textRenderer.getDimensions(t, {
+        box: { width: width, height: height },
+        padding: 0,
+        align: 'center-top',
+        style: style,
+      });
+    }
+
+    function fits(t, size) {
+      var d = measure(t, size);
+      return d.height <= height + 0.5 && d.width <= width + 0.5;
+    }
+
+    var size = maxSize;
+    while (size > MIN_FIT_FONT_SIZE && !fits(text, size)) {
+      size--;
+    }
+
+    if (!fits(text, size)) {
+      var fitted = null;
+
+      // prefer cutting at word boundaries
+      var words = text.split(/\s+/);
+      while (words.length > 1) {
+        words.pop();
+        var candidate = words.join(' ').replace(/[\s,.;:-]+$/, '') + '…';
+        if (fits(candidate, size)) {
+          fitted = candidate;
+          break;
+        }
+      }
+
+      if (fitted === null) {
+        var lo = 0, hi = text.length;
+        while (lo < hi) {
+          var mid = Math.ceil((lo + hi) / 2);
+          if (fits(text.slice(0, mid).replace(/[\s,.;:-]+$/, '') + '…', size)) {
+            lo = mid;
+          } else {
+            hi = mid - 1;
+          }
+        }
+        fitted = text.slice(0, lo).replace(/[\s,.;:-]+$/, '') + '…';
+      }
+
+      text = fitted;
+    }
+
+    return { text: text, style: assign({}, baseStyle, { fontSize: size }) };
+  }
+
   function renderTitleLabel(parentGfx, element) {
     let semantic = getSemantic(element);
-    let text = semantic.role || '';
-    let label = renderLabel(parentGfx, text, {
+    let fitted = fitText(semantic.role || '', element.width - 10, 30 - 4, {
+      fill: defaultStrokeColor,
+    });
+    let label = renderLabel(parentGfx, fitted.text, {
       box: {
         height: 30,
         width: element.width,
       },
       padding: 5,
       align: 'center-middle',
-      style: {
-        fill: defaultStrokeColor,
-      },
+      style: fitted.style,
     });
     svgClasses(label).add('dcr-role-label');
   }
 
-  function renderDescription(parentGfx, element, align, topPadding) {
+  function renderDescription(parentGfx, element, align, topPadding, bottomReserve, sidePadding) {
     var semantic = getSemantic(element);
     if (semantic.description) {
-      let label = renderLabel(parentGfx, semantic.description, {
+      bottomReserve = bottomReserve || 0;
+      sidePadding = sidePadding || 5;
+      let fitted = fitText(
+        semantic.description,
+        element.width - 2 * sidePadding,
+        element.height - topPadding - 10 - bottomReserve,
+        { fill: defaultStrokeColor }
+      );
+      let label = renderLabel(parentGfx, fitted.text, {
         box: {
-          height: element.height + topPadding,
+          height: element.height + topPadding - bottomReserve,
           width: element.width,
         },
         padding: {
           top: 5 + topPadding,
-          bottom: 5,
-          left: 5,
-          right: 5,
+          bottom: 5 + bottomReserve,
+          left: sidePadding,
+          right: sidePadding,
         },
         align: align,
-        style: {
-          fill: defaultStrokeColor,
-        },
+        style: fitted.style,
       });
       svgClasses(label).add('dcr-description-label');
     }
@@ -194,11 +264,7 @@ export default function DCRRenderer(
     }
   }
 
-  /**
-   * Invisible areas behind an event's role (above the divider) and name
-   * (below it), so the app can tint just one part via CSS
-   * (classes dcr-role-area / dcr-description-area). They ignore the mouse.
-   */
+  
   function addPartAreas(parentGfx, element) {
     var w = element.width, h = element.height, r = 7, d = 30;
     var areas = [
@@ -390,7 +456,16 @@ export default function DCRRenderer(
 
       renderTitleLabel(parentGfx, element);
 
-      renderDescription(parentGfx, element, 'center-middle', 30);
+      var timeLabelCount =
+        (element.businessObject.get('deadlineLabel') ? 1 : 0) +
+        (element.businessObject.get('delayUntilLabel') ? 1 : 0);
+      var eventData = element.businessObject.get('eventData');
+      var hasVariable = !!(eventData && eventData.name);
+      var bottomReserve = Math.max(timeLabelCount * 13, hasVariable ? 18 : 0);
+      
+      renderDescription(parentGfx, element, 'center-middle',
+        executed ? 64 : 30, bottomReserve,
+        (pending && !executed) ? 15 : 5);
 
       if (pending) {
         renderer('PendingMarker')(parentGfx, element);
@@ -400,8 +475,7 @@ export default function DCRRenderer(
         renderer('ExecutedMarker')(parentGfx, element);
       }
       
-      var eventData = element.businessObject.get('eventData');
-      if (eventData && eventData.name) {
+      if (hasVariable) {
         renderer('VariablesBadge')(parentGfx, element, eventData.name);
       }
 
@@ -524,8 +598,7 @@ export default function DCRRenderer(
         stroke,
       });
 
-      // Invisible copy of the line behind it, so the app can highlight the
-      // relation via CSS (class dcr-relation-halo). It ignores the mouse.
+      
       var halo = svgCreate('path');
       halo.setAttribute('d', pathData);
       halo.setAttribute('fill', 'none');

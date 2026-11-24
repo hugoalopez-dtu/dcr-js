@@ -69,6 +69,18 @@ export default function TextRenderer(config) {
   };
 
   /**
+   * Get the dimensions of a layouted text without rendering it.
+   *
+   * @param {String} text
+   * @param {Object} [options]
+   *
+   * @return {Dimensions}
+   */
+  this.getDimensions = function(text, options) {
+    return textUtil.getDimensions(text, options || {});
+  };
+
+  /**
    * Get default text style.
    */
   this.getDefaultStyle = function() {
