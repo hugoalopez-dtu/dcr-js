@@ -104,6 +104,19 @@ const modelsByProvider: ProviderMap = {
     ],
 };
 
+// Keys baked in at build time (CI secrets), one per provider. Empty when not set.
+const defaultKeys: Record<string, string> = {
+    OpenAI: import.meta.env.VITE_OPENAI_KEY ?? "",
+    Anthropic: import.meta.env.VITE_ANTHROPIC_KEY ?? "",
+    Google: import.meta.env.VITE_GOOGLE_KEY ?? "",
+};
+
+const providerOf = (modelId: string) =>
+    Object.keys(modelsByProvider).find((p) => modelsByProvider[p].some((m) => m.id === modelId));
+
+// True when the key field holds nothing the user typed themselves.
+const isDefaultKey = (key: string) => key === "" || Object.values(defaultKeys).includes(key);
+
 export interface Props {
     config: ExtractionConfig;
     busy: boolean;
@@ -207,6 +220,13 @@ const Input = styled.input`
     border: 1px solid gainsboro;
     border-radius: 6px;
     font-size: 14px;
+`;
+
+const Note = styled.div`
+    font-size: 0.85em;
+    padding: 6px 8px;
+    border-left: 3px solid #4a90e2;
+    background: rgba(74, 144, 226, 0.1);
 `;
 
 const Select = styled.select`
@@ -326,6 +346,11 @@ const ModelExtractionDialogue = (props: Props) => {
                                     })
                                 }
                             />
+                            {Object.values(defaultKeys).some(Boolean) && (
+                                <Note>
+                                    For the purposes of ICPM 2027 Demo Track review, an API key is provided and fills in automatically when you select a model.
+                                </Note>
+                            )}
                         </Field>
 
                         <Field>
@@ -333,12 +358,18 @@ const ModelExtractionDialogue = (props: Props) => {
                             <Select
                                 name="model"
                                 value={props.config.modelName}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                    const modelName = e.target.value;
+                                    const provider = providerOf(modelName);
                                     props.onChange({
                                         ...props.config,
-                                        modelName: e.target.value,
-                                    })
-                                }
+                                        modelName,
+                                        // Follow the provider's built-in key, unless the user typed their own.
+                                        apiKey: provider && isDefaultKey(props.config.apiKey)
+                                            ? defaultKeys[provider]
+                                            : props.config.apiKey,
+                                    });
+                                }}
                             >
                                 <option value={""}>Select Model</option>
                                 {Object.keys(modelsByProvider).map((provider) => (

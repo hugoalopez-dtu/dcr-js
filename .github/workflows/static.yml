@@ -39,6 +39,10 @@ jobs:
 
       - name: Build project
         run: cd app && npm run predeploy
+        env:
+          VITE_OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          VITE_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
+          VITE_GOOGLE_KEY: ${{ secrets.GOOGLE_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3 
