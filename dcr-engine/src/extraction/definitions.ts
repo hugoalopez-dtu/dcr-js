@@ -101,9 +101,10 @@ export const defaultEntityDescription: string =
 
 export const defaultRelabelDescription: string =
     "**Activity name**: A short verb–object name in imperative form, e.g., \"Apply Method\" or \"Develop Tool\". " +
+    "If the activity is a statement of fact rather than a task someone performs (e.g., \"the passenger is under 18\"), " +
+    "change as little as possible: keep the original wording and only shorten it, e.g., \"Passenger under 18\". " +
     "Use 2–4 words. Keep only the core action and what it acts on: drop manner, conditions, reasons, " +
-    "qualifiers and adverbs. Do not include actors or roles in the name. " +
-    "Every activity must get a different name.";
+    "qualifiers and adverbs. Do not include actors or roles in the name. ";
 
 export const defaultDataDescription: string =
     "**Variable**: Data that is relevant to the process, e.g., by changing rules or outcomes. Examples are the age of " +
